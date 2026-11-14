@@ -1,0 +1,55 @@
+// Every model call in the game goes through llm(), so the game doesn't care where the model runs.
+//   local       POST /api/llm on server.mjs, which runs `claude -p` (bills to your Claude plan)
+//   openrouter  straight from the browser with the shared OpenRouter key (for a web build)
+// Default: local on localhost, openrouter anywhere else. Override with ?llm=local|openrouter.
+
+const params = new URLSearchParams(location.search);
+const onLocalhost = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
+export const BACKEND = params.get("llm") || (onLocalhost ? "local" : "openrouter");
+
+// Not tested yet: check the id at openrouter.ai/models before shipping a web build.
+export const OPENROUTER_MODEL = "anthropic/claude-haiku-5.5";
+
+export const backendLabel = BACKEND === "openrouter"
+  ? "Claude Haiku 5.5 through OpenRouter"
+  : "Claude Haiku 5.5 through your Claude plan (local server)";
+
+const MAX_IN_FLIGHT = 4;
+let inFlight = 0;
+const queue = [];
+async function slot() {
+  if (inFlight >= MAX_IN_FLIGHT) await new Promise((r) => queue.push(r));
+  inFlight++;
+}
+function release() { inFlight--; queue.shift()?.(); }
+
+/** Ask the model. `schema` is a JSON schema for the reply; resolves to the parsed object. */
+export async function llm({ system, prompt, schema }) {
+  await slot();
+  try {
+    return BACKEND === "openrouter" ? await viaOpenRouter(system, prompt, schema) : await viaLocal(system, prompt, schema);
+  } finally { release(); }
+}
+
+async function viaLocal(system, prompt, schema) {
+  const res = await fetch("/api/llm", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ system, prompt, schema }),
+  });
+  const j = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(j.error || `server ${res.status}`);
+  return j.data;
+}
+
+async function viaOpenRouter(system, prompt, schema) {
+  const { openrouterChat } = await import("https://quasarbright.github.io/sketches/shared/cohesion.js");
+  const { content } = await openrouterChat({
+    model: OPENROUTER_MODEL,
+    messages: [{ role: "system", content: system }, { role: "user", content: prompt }],
+    response_format: { type: "json_schema", json_schema: { name: "reply", strict: true, schema } },
+    reasoning: { enabled: false },
+  });
+  const t = content.replace(/^```(?:json)?\s*|\s*```$/g, "").trim();
+  return JSON.parse(t);
+}

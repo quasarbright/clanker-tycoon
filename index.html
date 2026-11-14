@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Clanker Tycoon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://quasarbright.github.io/sketches/shared/cohesion.css">
+  <style>
+    :root {
+      --bg: #121417; --panel: #1b1f24; --panel-2: #242a31; --border: #333a43;
+      --text: #eceae4; --muted: #9aa0a8; --faint: #626872;
+      --accent: #f2c230; --accent-hi: #ffd95c; --on-accent: #17140a;
+      --danger: #e5534b; --success: #5fd08a;
+      --red: #e5534b; --blue: #4f8ff0; --green: #4cc06b;
+      --font-ui: "Barlow", system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+      --font-display: "Bungee", "Barlow", sans-serif;
+    }
+    html { text-size-adjust: 100%; -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-ui); }
+    * { box-sizing: border-box; }
+    button, input, textarea { font: inherit; color: inherit; touch-action: manipulation; }
+
+    /* chunky pressable buttons with a lip */
+    .ct-btn {
+      --lip: #0b0c0e; border: 0; border-radius: 12px; padding: 9px 16px; cursor: pointer;
+      background: var(--panel-2); color: var(--text); font-weight: 700;
+      box-shadow: 0 4px 0 var(--lip); transition: transform .06s, box-shadow .06s;
+    }
+    .ct-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--lip); }
+    .ct-btn:disabled { opacity: .45; cursor: default; }
+    .ct-btn.is-gold { background: var(--accent); color: var(--on-accent); --lip: #8f6d0c; }
+    .ct-round { width: 46px; height: 46px; border-radius: 50%; padding: 0; display: grid; place-items: center; }
+
+    /* ---------- top bar ---------- */
+    .ct-top { position: relative; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; min-height: 72px; }
+    .ct-cash { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .ct-cash-label, .ct-clock-label { display: block; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+    .ct-cash-value { font: 400 2rem/1.05 var(--font-display); color: var(--accent); }
+    .ct-cash-value.is-neg { color: var(--danger); }
+    .ct-clock { text-align: right; }
+    .ct-clock-value { font: 600 1.3rem var(--font-mono); }
+
+    /* ---------- layout ---------- */
+    .ct-main { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 16px; padding: 0 16px 16px; align-items: start; }
+    @media (max-width: 900px) { .ct-main { grid-template-columns: 1fr; } }
+
+    .ct-orders { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+    .ct-orders-label { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-right: 2px; }
+    .ct-ticket { display: flex; align-items: center; gap: 8px; background: #efe9d8; color: #1d1a12; border-radius: 6px; padding: 6px 10px; font-weight: 700; box-shadow: 0 2px 0 #9b927a; }
+    .ct-ticket-dots { display: flex; gap: 3px; }
+    .ct-ticket-pay { font-family: var(--font-mono); }
+
+    /* ---------- the floor ---------- */
+    .ct-floor {
+      --u: 8px; position: relative; width: 100%; aspect-ratio: 100 / 64; border-radius: 14px; overflow: hidden;
+      background-color: #191d22;
+      background-image: linear-gradient(#ffffff08 1px, transparent 1px), linear-gradient(90deg, #ffffff08 1px, transparent 1px);
+      background-size: calc(var(--u) * 5) calc(var(--u) * 5);
+      border: 1px solid var(--border);
+    }
+    .ct-floor::before { /* hazard tape along the top edge */
+      content: ""; position: absolute; left: 0; right: 0; top: 0; height: calc(var(--u) * 1.1);
+      background: repeating-linear-gradient(-45deg, var(--accent) 0 12px, #17140a 12px 24px); opacity: .85;
+    }
+    .ct-st {
+      position: absolute; transform: translate(-50%, -50%); width: calc(var(--u) * 15); min-height: calc(var(--u) * 9);
+      background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: calc(var(--u) * .7);
+    }
+    .ct-st-label { font: 400 calc(var(--u) * 1.5) var(--font-display); color: var(--muted); letter-spacing: .02em; display: flex; justify-content: space-between; gap: 4px; }
+    .ct-st-cap { font: 500 calc(var(--u) * 1.3) var(--font-mono); color: var(--faint); }
+    .ct-st-items { display: flex; flex-wrap: wrap; gap: calc(var(--u) * .5); margin-top: calc(var(--u) * .7); }
+    .ct-st.is-jammed { border-color: var(--danger); box-shadow: 0 0 0 2px #e5534b55; }
+    .ct-st.is-jammed .ct-st-label::after { content: "JAMMED"; color: var(--danger); }
+    .ct-belt { /* the conveyor runs in from the left wall to the belt station */
+      position: absolute; left: 0; height: calc(var(--u) * 5); transform: translateY(-50%); overflow: hidden;
+      background: #0f1114; border-top: 2px solid #2c323a; border-bottom: 2px solid #2c323a;
+    }
+    .ct-belt-tread { position: absolute; inset: 0 -40px 0 0; background: repeating-linear-gradient(90deg, #ffffff10 0 2px, transparent 2px 20px); animation: tread 1s linear infinite; }
+    @keyframes tread { to { transform: translateX(20px); } }
+    .ct-desk { position: absolute; transform: translate(-50%, -50%); width: calc(var(--u) * 20); padding: calc(var(--u) * .9); border-radius: 10px; background: #2a2418; border: 1px solid #4a3f22; text-align: center; font: 400 calc(var(--u) * 1.5) var(--font-display); color: var(--accent); }
+
+    .ct-dot { width: calc(var(--u) * 1.6); height: calc(var(--u) * 1.6); border-radius: 50%; display: inline-block; box-shadow: inset 0 -2px 0 #0004; }
+    .ct-box { width: calc(var(--u) * 2.6); height: calc(var(--u) * 2.2); border-radius: 3px; background: #b88a52; display: inline-flex; align-items: center; justify-content: center; gap: 1px; box-shadow: inset 0 -2px 0 #0004; }
+    .ct-box i { width: calc(var(--u) * .55); height: calc(var(--u) * .55); border-radius: 50%; }
+    .c-red { background: var(--red); } .c-blue { background: var(--blue); } .c-green { background: var(--green); }
+    .ct-ticket .ct-dot { width: 12px; height: 12px; }
+
+    /* robots */
+    .ct-bot { position: absolute; left: 0; top: 0; width: calc(var(--u) * 6); margin: calc(var(--u) * -3.4) 0 0 calc(var(--u) * -3); will-change: transform; cursor: pointer; z-index: 2; }
+    .ct-bot-head {
+      position: relative; width: 100%; aspect-ratio: 1.1; border-radius: 28%; background: var(--c);
+      box-shadow: inset 0 calc(var(--u) * -.5) 0 #0003, 0 calc(var(--u) * .4) 0 #0006;
+    }
+    .ct-bot-head::before { /* antenna */
+      content: ""; position: absolute; left: 50%; top: calc(var(--u) * -1.2); width: 2px; height: calc(var(--u) * 1.2); background: var(--c); transform: translateX(-50%);
+    }
+    .ct-bot-eyes { position: absolute; left: 22%; right: 22%; top: 34%; display: flex; justify-content: space-between; }
+    .ct-bot-eyes i { width: calc(var(--u) * 1.1); height: calc(var(--u) * 1.1); border-radius: 50%; background: #17140a; }
+    .ct-bot-held { position: absolute; right: calc(var(--u) * -.8); bottom: calc(var(--u) * -.6); }
+    .ct-bot-name { text-align: center; font-weight: 700; font-size: calc(var(--u) * 1.5); margin-top: calc(var(--u) * .5); text-shadow: 0 1px 2px #000; white-space: nowrap; }
+    .ct-bot.is-selected .ct-bot-head { outline: 3px solid var(--accent); outline-offset: 3px; }
+    .ct-bot.is-thinking .ct-bot-eyes i { animation: blink 1s ease-in-out infinite; }
+    @keyframes blink { 50% { transform: scaleY(.2); } }
+
+    .ct-bubble {
+      position: absolute; bottom: calc(100% + var(--u) * 1.6); left: 50%; transform: translateX(-50%);
+      width: max-content; max-width: calc(var(--u) * 30); background: #f4f1e8; color: #1d1a12; border-radius: 10px;
+      padding: 6px 10px; font-size: .85rem; line-height: 1.25; font-weight: 500; box-shadow: 0 3px 0 #0005; z-index: 5; pointer-events: none;
+    }
+    .ct-bubble.is-left { left: 0; transform: none; }
+    .ct-bubble.is-right { left: auto; right: 0; transform: none; }
+    .ct-bubble.is-thinking { font-weight: 700; letter-spacing: .15em; }
+    .ct-bubble.is-problem { background: var(--accent); }
+    .ct-oops { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: calc(var(--u) * 2.4); white-space: nowrap; font-size: .72rem; color: #ffb4ae; text-shadow: 0 1px 2px #000; pointer-events: none; }
+    .ct-float { position: absolute; transform: translate(-50%, -50%); font: 400 1.1rem var(--font-display); color: var(--success); text-shadow: 0 2px 0 #0008; pointer-events: none; animation: floatUp 1.6s ease-out forwards; z-index: 6; }
+    .ct-float.is-scrap { color: var(--muted); }
+    @keyframes floatUp { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 -40px; } }
+
+    .ct-nudge { position: absolute; right: 16px; bottom: 14px; background: var(--accent); color: var(--on-accent); font-weight: 700; padding: 8px 14px; border-radius: 999px; box-shadow: 0 3px 0 #8f6d0c; pointer-events: none; z-index: 6; }
+    .ct-nudge.is-gone { display: none; }
+
+    .ct-yell { display: flex; gap: 10px; margin-top: 12px; }
+    .ct-input { flex: 1; min-width: 0; background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; }
+    .ct-input:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+
+    /* ---------- crew ---------- */
+    .ct-side { display: flex; flex-direction: column; gap: 12px; }
+    .ct-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+    .ct-card.is-selected { border-color: var(--accent); }
+    .ct-card.is-waiting { box-shadow: 0 0 0 2px var(--accent); }
+    .ct-card-head { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+    .ct-face { width: 26px; height: 24px; border-radius: 8px; background: var(--c); position: relative; flex: none; }
+    .ct-face::after { content: ""; position: absolute; left: 6px; right: 6px; top: 8px; height: 5px; background: radial-gradient(circle at 2.5px 50%, #17140a 2.5px, transparent 3px), radial-gradient(circle at calc(100% - 2.5px) 50%, #17140a 2.5px, transparent 3px); }
+    .ct-card-name { font-weight: 700; font-size: 1.05rem; }
+    .ct-wage { font: 500 .8rem var(--font-mono); color: var(--muted); }
+    .ct-status { margin-left: auto; font-size: .78rem; color: var(--muted); }
+    .ct-status.is-thinking { color: var(--accent); }
+    .ct-status.is-waiting { color: var(--on-accent); background: var(--accent); padding: 2px 8px; border-radius: 999px; font-weight: 700; }
+    .ct-blurb { margin: 6px 0 0; font-size: .85rem; color: var(--muted); }
+    .ct-card-body { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+    .ct-card:not(.is-selected) .ct-card-body { display: none; }
+    .ct-label { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+    .ct-textarea { width: 100%; resize: vertical; min-height: 64px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; line-height: 1.35; }
+    .ct-textarea:focus { outline: 2px solid var(--accent); }
+    .ct-row { display: flex; gap: 8px; align-items: center; }
+    .ct-script { display: flex; flex-wrap: wrap; gap: 4px; }
+    .ct-chip { font: 500 .74rem var(--font-mono); background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; color: var(--muted); }
+    .ct-chip.is-now { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+    .ct-script-empty { font-size: .85rem; color: var(--faint); }
+
+    .ct-radio { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+    .ct-feed { height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; margin-top: 8px; font-size: .86rem; line-height: 1.3; }
+    .ct-line b { font-weight: 700; }
+    .ct-line.is-boss { color: var(--accent-hi); }
+    .ct-line.is-sys { color: var(--muted); font-family: var(--font-mono); font-size: .78rem; }
+    .ct-line.is-err { color: #ffb4ae; }
+
+    /* ---------- overlays ---------- */
+    .ct-overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: rgba(8, 9, 11, .78); padding: 20px; }
+    .ct-overlay.is-hidden { display: none; }
+    .ct-card-big { width: min(520px, 100%); background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 26px; text-align: center; box-shadow: 0 20px 60px #000a; }
+    .ct-logo { font: 400 clamp(2.2rem, 7vw, 3.4rem)/1 var(--font-display); color: var(--accent); text-shadow: 0 4px 0 #8f6d0c; transform: rotate(-2deg); margin: 4px 0 18px; }
+    .ct-howto { color: var(--text); line-height: 1.5; margin: 0 0 18px; }
+    .ct-small { font-size: .82rem; color: var(--muted); margin-top: 14px; }
+    .ct-title { font: 400 1.8rem var(--font-display); color: var(--accent); margin: 0 0 10px; }
+    .ct-stars { display: flex; justify-content: center; gap: 18px; margin: 10px 0 16px; }
+    .ct-star { text-align: center; }
+    .ct-star svg { width: 54px; height: 54px; display: block; }
+    .ct-star span { font: 500 .78rem var(--font-mono); color: var(--muted); }
+    .ct-star.is-on svg path { fill: var(--accent); stroke: #8f6d0c; animation: pop .4s cubic-bezier(.3, 1.6, .5, 1) both; }
+    .ct-star svg path { fill: var(--panel-2); stroke: var(--border); stroke-width: 2; }
+    .ct-star:nth-child(2) svg path { animation-delay: .2s; } .ct-star:nth-child(3) svg path { animation-delay: .4s; }
+    @keyframes pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .ct-star svg path { transform-origin: center; transform-box: fill-box; }
+    .ct-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .ct-stat-value { font: 400 1.4rem var(--font-display); }
+    .ct-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <header class="ct-top">
+    <button class="ct-btn ct-round" id="pauseBtn" aria-label="Pause">
+      <svg width="16" height="18" viewBox="0 0 16 18" style="display:block"><rect x="1" y="1" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="10" y="1" width="5" height="16" rx="1.5" fill="currentColor"/></svg>
+    </button>
+    <div class="ct-cash"><span class="ct-cash-label">Cash</span><span class="ct-cash-value" id="cash">$20</span></div>
+    <div class="ct-clock"><span class="ct-clock-label">Shift</span><span class="ct-clock-value" id="clock">4:00</span></div>
+  </header>
+
+  <main class="ct-main">
+    <section>
+      <div class="ct-orders"><span class="ct-orders-label">Orders</span><div id="orders" style="display:contents"></div></div>
+      <div class="ct-floor" id="floor">
+        <div class="ct-nudge" id="nudge">Click a worker and give them orders</div>
+      </div>
+      <form class="ct-yell" id="yellForm">
+        <input class="ct-input" id="yellInput" placeholder="Yell to the whole floor…" autocomplete="off">
+        <button class="ct-btn is-gold" type="submit">Yell</button>
+      </form>
+    </section>
+    <aside class="ct-side">
+      <div id="crew" class="ct-side"></div>
+      <div class="ct-radio">
+        <span class="ct-label">Floor radio</span>
+        <div class="ct-feed" id="feed"></div>
+      </div>
+    </aside>
+  </main>
+
+  <div class="ct-overlay" id="startScreen">
+    <div class="ct-card-big">
+      <div class="ct-logo">Clanker Tycoon</div>
+      <p class="ct-howto">Three robot workers, one tiny factory, a four-minute shift. Write each worker's orders in plain English and watch what they make of them. Ship boxes of three same-colored widgets to fill orders. Payroll comes out every minute.</p>
+      <div class="ct-btns"><button class="ct-btn is-gold" id="startBtn">Start shift</button></div>
+      <div class="ct-small" id="backendNote"></div>
+    </div>
+  </div>
+
+  <div class="ct-overlay is-hidden" id="pauseScreen">
+    <div class="ct-card-big">
+      <div class="ct-title">Paused</div>
+      <div class="ct-btns">
+        <button class="ct-btn is-gold" id="resumeBtn">Resume</button>
+        <button class="ct-btn" id="restartBtn">Restart shift</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="ct-overlay is-hidden" id="endScreen">
+    <div class="ct-card-big">
+      <div class="ct-title">Shift over</div>
+      <div class="ct-stars" id="stars"></div>
+      <div class="ct-stats" id="endStats"></div>
+      <div class="ct-btns"><button class="ct-btn is-gold" id="againBtn">Another shift</button></div>
+      <div class="ct-small">Your crew keeps their orders.</div>
+    </div>
+  </div>
+
+  <mike-footer></mike-footer>
+  <script type="module" src="https://quasarbright.github.io/sketches/shared/cohesion.js"></script>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
