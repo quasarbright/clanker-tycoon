@@ -4,14 +4,14 @@
 
 export const FLOOR = { w: 100, h: 64 };
 export const STATIONS = {
-  BELT_A: { x: 13, y: 17, label: "Belt" },
-  PAINT:  { x: 40, y: 17, label: "Paint" },
-  PACK:   { x: 66, y: 17, label: "Pack" },
+  BELT_A: { x: 20, y: 12, label: "Belt" },
+  PAINT:  { x: 45, y: 12, label: "Paint" },
+  PACK:   { x: 70, y: 12, label: "Pack" },
   DOCK:   { x: 89, y: 37, label: "Dock" },
-  BIN_1:  { x: 24, y: 47, label: "Bin 1" },
-  BIN_2:  { x: 48, y: 47, label: "Bin 2" },
+  BIN_1:  { x: 26, y: 37, label: "Bin 1" },
+  BIN_2:  { x: 50, y: 37, label: "Bin 2" },
 };
-export const DESK = { x: 72, y: 53 };
+export const DESK = { x: 70, y: 58 };
 export const COLORS = ["red", "blue", "green"];
 export const ACTIONS = ["moveTo", "pickUp", "putDown", "paint", "pack", "fix", "wait", "say", "askBoss"];
 const PHYSICAL = new Set(["moveTo", "pickUp", "putDown", "paint", "pack", "fix"]);
@@ -26,7 +26,7 @@ export const RULES = {
   jamChance: 0.12,      // per paint job
   scrapPay: 5,
   beltWait: 6,          // how long pickUp waits at the belt for a widget
-  stuckAfter: 4,        // failed actions in a row before a worker comes to complain
+  stuckAfter: 6,        // failed actions (walking aside) in a row before a worker comes to complain
   reportCooldown: 40,
   deskWait: 30,         // how long a worker waits at your desk before going back
 };
@@ -108,7 +108,9 @@ function walk(s, w, x, y, extra) {
   w.act = { ...extra, from: { x: w.x, y: w.y }, to: { x, y }, start: s.t, until: s.t + Math.max(0.2, dist / RULES.speed) };
 }
 
-const deskSpot = (w) => ({ x: DESK.x + (w.index - 1) * 5, y: DESK.y - 7 });
+// Robots are drawn a little below their position (standing in front of the station), so the
+// desk spot sits above the desk.
+const deskSpot = (w) => ({ x: DESK.x, y: DESK.y - 17 });
 
 function start(s, w, a) {
   switch (a.action) {
@@ -250,7 +252,9 @@ function ship(s, w, box) {
   emit(s, { type: "ship", worker: w.id, pay, matched: idx >= 0, colors: box.colors });
 }
 
-function ok(s, w, a) { if (PHYSICAL.has(a?.action)) w.fails = 0; }
+// Only real work resets the failure count. Walking doesn't, or a worker whose every lap fails
+// would never notice they're stuck.
+function ok(s, w, a) { if (PHYSICAL.has(a?.action) && a.action !== "moveTo") w.fails = 0; }
 
 function fail(s, w, a, why) {
   w.fails++;
@@ -293,8 +297,11 @@ export function setScript(s, w, actions) {
 function describe(items) {
   if (!items.length) return "empty";
   const n = {};
-  for (const it of items) { const k = it.kind === "box" ? (it.colors.every((c) => c === it.colors[0]) ? `${it.colors[0]} box` : "mixed box") : it.color; n[k] = (n[k] || 0) + 1; }
-  return Object.entries(n).map(([k, v]) => `${v} ${k}`).join(", ");
+  for (const it of items) {
+    const k = it.kind === "box" ? `${it.colors.every((c) => c === it.colors[0]) ? it.colors[0] : "mixed"} packed box` : `${it.color} widget`;
+    n[k] = (n[k] || 0) + 1;
+  }
+  return Object.entries(n).map(([k, v]) => `${v} ${k}${v > 1 ? (k.endsWith("box") ? "es" : "s") : ""}`).join(", ");
 }
 const holdingText = (w) => (w.holding ? (w.holding.kind === "box" ? "a box" : `a ${w.holding.color} widget`) : "nothing");
 const whereText = (w) => (w.station ? w.station : atDesk(w) ? "the boss's desk" : "walking");

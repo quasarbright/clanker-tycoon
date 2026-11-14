@@ -73,7 +73,7 @@ const REPORT_SCHEMA = {
 };
 
 const system = (h) => `${h.persona} You work in a tiny factory in a comedy management game. ${h.quirk}
-Stay in character. Anything you say out loud is one or two short sentences of plain speech: no stage directions, no asterisks, no markdown.
+Stay in character. Anything you say out loud is one or two short sentences of plain speech (under 30 words): no stage directions, no asterisks, no markdown. Talk about the work itself, the widgets, boxes, belt and machines. Never mention scripts, loops, JSON or action names like pickUp and putDown out loud.
 
 ${RULEBOOK}`;
 
@@ -135,13 +135,15 @@ Reply as JSON. "reply" is what you say back out loud. ${kind === "orders"
 
 /** The worker kept failing and came to the desk. Resolves to what they say. */
 export async function report(s, w, failures) {
-  const what = failures.map((f) => `${f.action} failed because ${f.why}`).join("; ");
+  // In plain words, so the complaint talks about the work rather than about action names.
+  const VERB = { moveTo: "go somewhere", pickUp: "pick something up", putDown: "put something down", paint: "paint a widget", pack: "pack a box", fix: "fix the paint machine" };
+  const what = failures.map((f) => `you tried to ${VERB[f.action] ?? "do something"}, but ${f.why}`).join("; ");
   const prompt = `What you can see: ${JSON.stringify(viewFor(s, w))}
 Your standing orders: ${w.orders ? `"${w.orders}"` : "none"}
 Recent conversation:
 ${(w.memory ?? []).join("\n") || "(none)"}
 
-Things keep going wrong: ${what}. You've stopped and walked up to the boss's desk. Tell the boss what's going on, in your own words. Reply as JSON: {"reply": "..."}`;
+Things keep going wrong. Lately ${what}. You've stopped and walked up to the boss's desk. In one or two short sentences, tell the boss what's going on, in your own words and in character. Reply as JSON: {"reply": "..."}`;
   const out = await llm({ system: system(w.hire), prompt, schema: REPORT_SCHEMA });
   const reply = clean(out?.reply) || "Uh, boss? We have a problem.";
   remember(w, `You (at the boss's desk): ${reply}`);

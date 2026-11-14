@@ -144,6 +144,11 @@ function setThinking(w, delta) {
 
 async function talk(w, kind, text) {
   const g = game;
+  if (kind === "orders") {
+    $("#nudge").classList.add("is-gone");
+    const ta = $("textarea", ui.cards[w.id]);
+    if (!ta.value.trim()) ta.value = text;
+  }
   if (kind === "orders") feed(`<b>You → ${w.hire.name}</b> (orders): ${escapeHTML(text)}`, "is-boss");
   else if (kind === "chat") feed(`<b>You → ${w.hire.name}:</b> ${escapeHTML(text)}`, "is-boss");
   setThinking(w, +1);
@@ -182,7 +187,8 @@ function bubble(w, text, { thinking = false, problem = false, hold = false } = {
   const b = document.createElement("div");
   b.className = "ct-bubble" + (thinking ? " is-thinking" : "") + (problem ? " is-problem" : "");
   if (w.x > 72) b.classList.add("is-right"); else if (w.x < 26) b.classList.add("is-left");
-  b.textContent = text;
+  // Long lines get cut short in the bubble; the floor radio has the whole thing.
+  b.textContent = text.length > 140 ? `${text.slice(0, 137).replace(/\s+\S*$/, "")}…` : text;
   bot.append(b);
   if (!hold) ui.bubbleTimers[w.id] = setTimeout(() => b.remove(), Math.min(9000, 2500 + text.length * 55));
 }
@@ -243,7 +249,10 @@ function handleEvents() {
       case "jam": feed(`The paint machine jammed.`, "is-sys"); break;
       case "fixed": feed(`${w.hire.name} fixed the paint machine.`, "is-sys"); break;
       case "ship": {
-        const what = ev.matched ? `a ${ev.colors[0]} box` : `a scrap box (${ev.colors.join(", ")})`;
+        const same = ev.colors.every((c) => c === ev.colors[0]);
+        const what = ev.matched ? `a ${ev.colors[0]} box`
+          : same ? `a ${ev.colors[0]} box nobody ordered, for scrap`
+          : `a mixed box (${ev.colors.join(", ")}) for scrap`;
         feed(`${w.hire.name} shipped ${what}: +$${ev.pay}`, "is-sys");
         floater(`+$${ev.pay}`, STATIONS.DOCK.x, STATIONS.DOCK.y - 8, !ev.matched);
         break;
@@ -280,7 +289,9 @@ function render() {
   floor.style.setProperty("--u", `${k}px`);
   for (const w of game.workers) {
     const bot = ui.bots[w.id];
-    const x = (w.x + (w.index - 1) * 3.2) * k, y = w.y * k;
+    // Spread the crew out side by side so three robots at one station don't stack.
+    // Drawn in front of (below) the station tile, so they don't cover what's in it.
+    const x = (w.x + (w.index - 1) * 6.5) * k, y = (w.y + 11) * k;
     bot.style.transform = `translate(${x}px, ${y}px)`;
     const held = w.holding ? itemHTML(w.holding) : "";
     if (bot._held !== held) { bot.querySelector(".ct-bot-held").innerHTML = held; bot._held = held; }
