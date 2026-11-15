@@ -114,6 +114,31 @@
     }
     .ct-bubble.is-left { left: 0; transform: none; }
     .ct-bubble.is-right { left: auto; right: 0; transform: none; }
+    /* tail pointing down at whoever's talking (the robot's center is 3u in from its edge) */
+    .ct-bubble::after {
+      content: ""; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+      border: 7px solid transparent; border-top-color: #f4f1e8; border-bottom: 0;
+    }
+    .ct-bubble.is-left::after { left: calc(var(--u) * 3); }
+    .ct-bubble.is-right::after { left: auto; right: calc(var(--u) * 3); transform: translateX(50%); }
+    .ct-bubble.is-problem::after { border-top-color: var(--accent); }
+
+    /* the truck at the dock */
+    .ct-truckbay { position: absolute; left: 83%; right: 0; height: calc(var(--u) * 7.5); overflow: hidden; pointer-events: none; }
+    .ct-truck { position: absolute; left: calc(var(--u) * 1.5); bottom: 0; width: calc(var(--u) * 13); }
+    .ct-truck svg { display: block; width: 100%; height: auto; }
+    .ct-truck-cargo { position: absolute; left: 9%; top: 18%; width: 52%; display: flex; justify-content: center; opacity: 0; }
+    .ct-truck.is-hauling { animation: haul 2.4s both; }
+    .ct-truck.is-hauling .ct-truck-cargo { animation: cargo 2.4s both; }
+    /* drive off to the right with the load, then the next truck backs in empty */
+    @keyframes haul {
+      0% { transform: translateX(0); animation-timing-function: ease-in; }
+      12% { transform: translateX(0); animation-timing-function: ease-in; }
+      45% { transform: translateX(calc(var(--u) * 20)); }
+      55% { transform: translateX(calc(var(--u) * 20)); animation-timing-function: ease-out; }
+      100% { transform: translateX(0); }
+    }
+    @keyframes cargo { 0%, 45% { opacity: 1; } 46%, 100% { opacity: 0; } }
     .ct-bubble.is-thinking { font-weight: 700; letter-spacing: .15em; }
     .ct-bubble.is-problem { background: var(--accent); }
     .ct-oops { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: calc(var(--u) * 2.4); width: max-content; max-width: calc(var(--u) * 22); text-align: center; font-size: clamp(9px, calc(var(--u) * 1.35), 12px); line-height: 1.2; color: #ffb4ae; text-shadow: 0 1px 2px #000; pointer-events: none; }

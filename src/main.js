@@ -61,7 +61,7 @@ function showMenu() {
 // ---------- building the floor ----------
 
 function buildFloor() {
-  floor.querySelectorAll(".ct-st, .ct-belt, .ct-desk, .ct-bot, .ct-float").forEach((el) => el.remove());
+  floor.querySelectorAll(".ct-st, .ct-belt, .ct-desk, .ct-bot, .ct-float, .ct-truckbay").forEach((el) => el.remove());
   ui.stations = {}; ui.bots = {};
   const belt = document.createElement("div");
   belt.className = "ct-belt";
@@ -97,6 +97,24 @@ function buildFloor() {
   desk.className = "ct-desk";
   desk.style.left = `${DESK.x}%`; desk.style.top = `${(DESK.y / 64) * 100}%`;
   desk.textContent = "Your desk";
+  // Loading bay above the dock. The bay clips the truck so it drives off the edge of the floor.
+  const bay = document.createElement("div");
+  bay.className = "ct-truckbay";
+  bay.style.top = `${((STATIONS.DOCK.y - 15) / 64) * 100}%`;
+  bay.innerHTML = `<div class="ct-truck">
+    <svg viewBox="0 0 48 24" aria-hidden="true">
+      <rect x="1" y="3" width="30" height="14" rx="1.5" fill="#6b7280"/>
+      <rect x="3" y="5" width="26" height="10" rx="1" fill="#4b5260"/>
+      <path d="M32 7h8l6 6v4H32z" fill="#f2c230"/>
+      <path d="M36 9h4l3.5 4H36z" fill="#1b1f24"/>
+      <rect x="0" y="16" width="47" height="2.5" rx="1" fill="#2c323a"/>
+      <circle cx="9" cy="19.5" r="3.2" fill="#121417" stroke="#5b6072" stroke-width="1.4"/>
+      <circle cx="23" cy="19.5" r="3.2" fill="#121417" stroke="#5b6072" stroke-width="1.4"/>
+      <circle cx="40" cy="19.5" r="3.2" fill="#121417" stroke="#5b6072" stroke-width="1.4"/>
+    </svg>
+    <div class="ct-truck-cargo"></div>
+  </div>`;
+  floor.append(bay);
   floor.append(desk);
   for (const w of game.workers) {
     const bot = document.createElement("div");
@@ -337,6 +355,17 @@ function feed(html, cls = "") {
   while (box.children.length > 200) box.firstChild.remove();
   if (stick) box.scrollTop = box.scrollHeight;
 }
+// The truck at the dock: whatever ships goes in the back, it drives off, and the next one backs in.
+// Two quick shipments in a row just restart the trip with the newest load.
+function haul(item) {
+  const truck = $(".ct-truck", floor);
+  if (!truck) return;
+  $(".ct-truck-cargo", truck).innerHTML = itemHTML(item);
+  truck.classList.remove("is-hauling");
+  void truck.offsetWidth; // restart the animation
+  truck.classList.add("is-hauling");
+}
+
 function floater(text, x, y, scrap) {
   const el = document.createElement("div");
   el.className = "ct-float" + (scrap ? " is-scrap" : "");
@@ -379,6 +408,7 @@ function handleEvents() {
         }
         feed(`${w.hire.name} shipped ${what}: +$${ev.pay}`, "is-sys");
         floater(`+$${ev.pay}`, STATIONS.DOCK.x, STATIONS.DOCK.y - 8, !ev.matched);
+        haul(ev.item === "widget" ? { kind: "widget", color: ev.colors[0] } : { kind: "box", colors: ev.colors });
         break;
       }
       case "payroll": feed(`Payroll: −$${ev.amount}`, "is-sys"); break;
