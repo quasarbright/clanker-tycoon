@@ -147,6 +147,8 @@
     /* ---------- crew ---------- */
     .ct-side { display: flex; flex-direction: column; gap: 12px; }
     .ct-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+    .ct-card.is-focused { border-color: var(--accent); }
+    .ct-card-head, .ct-blurb { cursor: pointer; }
     .ct-card.is-waiting { box-shadow: 0 0 0 2px var(--accent); }
     .ct-card-head { display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .ct-face { width: 26px; height: 24px; border-radius: 8px; background: var(--c); position: relative; flex: none; }

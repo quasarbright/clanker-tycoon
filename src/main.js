@@ -144,6 +144,9 @@ function buildCrew() {
       </div>`;
     const ta = $("textarea", card);
     ta.value = w.orders ?? "";
+    for (const el of [$(".ct-card-head", card), $(".ct-blurb", card)]) el.addEventListener("click", () => focusCard(w));
+    // Typing anywhere in a card counts as picking that worker.
+    card.addEventListener("focusin", () => highlight(w));
     $("[data-orders]", card).addEventListener("click", () => {
       const text = ta.value.trim();
       if (!text) { ta.focus(); return; }
@@ -164,8 +167,16 @@ function buildCrew() {
   }
 }
 
+// Clicking a robot or its card's name/description: highlight both, and put the cursor where
+// you'd type to them next (their job while planning, the talk box while working, the desk
+// reply if they're waiting on you).
+function highlight(w) {
+  for (const [id, c] of Object.entries(ui.cards)) c.classList.toggle("is-focused", id === w.id);
+  for (const [id, b] of Object.entries(ui.bots)) b.classList.toggle("is-selected", id === w.id);
+}
 function focusCard(w) {
   const card = ui.cards[w.id];
+  highlight(w);
   card.scrollIntoView({ block: "nearest", behavior: "smooth" });
   const target = atDesk(w) ? ui.desk[w.id]?.querySelector("input") : phase === "run" ? $("[data-talk] input", card) : $("textarea", card);
   target?.focus({ preventScroll: true });
