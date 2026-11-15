@@ -56,6 +56,8 @@ export function newGame(hires, seed = (Math.random() * 2 ** 32) >>> 0) {
     nextBelt: 1, nextPayroll: RULES.payrollEvery, over: false,
   };
   for (let i = 0; i < 3; i++) s.orders.push(newOrder(s));
+  // A few widgets already waiting, so there's something on the floor before the clock starts.
+  for (let i = 0; i < 4; i++) s.stations.BELT_A.push({ kind: "widget", color: randColor(s.rng) });
   hires.forEach((hire, i) => s.workers.push({
     id: hire.id, hire, index: i,
     x: STATIONS.DOCK.x, y: STATIONS.DOCK.y, station: "DOCK", holding: null,
@@ -331,6 +333,8 @@ export function actionLabel(a) {
     case "paint": return `paint ${a.color ?? "?"}`;
     case "wait": return `wait ${a.seconds ?? 1}s`;
     case "say": return `say “${a.text ?? ""}”`;
+    case "pack": return "pack a box";
+    case "fix": return "fix paint";
     case "askBoss": return "ask you";
     default: return a.action;
   }

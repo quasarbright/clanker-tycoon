@@ -121,9 +121,24 @@
     .ct-float.is-scrap { color: var(--muted); }
     @keyframes floatUp { from { opacity: 1; translate: 0 0; } to { opacity: 0; translate: 0 -40px; } }
 
-    .ct-nudge { position: absolute; right: 16px; bottom: 14px; background: var(--accent); color: var(--on-accent); font-weight: 700; padding: 8px 14px; border-radius: 999px; box-shadow: 0 3px 0 #8f6d0c; pointer-events: none; z-index: 6; }
-    .ct-nudge.is-gone { display: none; }
-    @media (max-width: 600px) { .ct-nudge { right: 8px; bottom: 8px; font-size: .75rem; padding: 5px 10px; } }
+    /* the coach: one line telling a new player what to do next */
+    .ct-coach {
+      position: absolute; left: calc(var(--u) * 2); bottom: calc(var(--u) * 2); width: max-content; max-width: 52%;
+      background: var(--accent); color: var(--on-accent); font-weight: 600; line-height: 1.3; padding: 8px 14px; border-radius: 12px;
+      box-shadow: 0 3px 0 #8f6d0c; pointer-events: none; z-index: 1;
+    }
+    .ct-coach b { font-weight: 800; }
+    .ct-coach:empty { display: none; }
+    @media (max-width: 600px) { .ct-coach { font-size: .75rem; padding: 5px 10px; } }
+
+    .ct-line-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    .ct-line-svg line { stroke: #f2c23055; stroke-width: .5; stroke-dasharray: 1.4 1.1; }
+    .ct-st-hint { font-size: clamp(8px, calc(var(--u) * 1.25), 12px); color: var(--muted); margin-top: 2px; line-height: 1.15; }
+
+    .ct-suggest { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .ct-suggest-label { font-size: .78rem; color: var(--muted); }
+    .ct-suggest button { border: 1px dashed var(--border); background: none; border-radius: 999px; padding: 3px 10px; font-size: .8rem; color: var(--text); cursor: pointer; }
+    .ct-suggest button:hover { border-color: var(--accent); color: var(--accent-hi); }
 
     .ct-yell { display: flex; gap: 10px; margin-top: 12px; }
     .ct-input { flex: 1; min-width: 0; background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; }
@@ -194,9 +209,13 @@
 
   <main class="ct-main">
     <section>
-      <div class="ct-orders"><span class="ct-orders-label">Orders</span><div id="orders" style="display:contents"></div></div>
+      <div class="ct-orders"><span class="ct-orders-label">Customers want</span><div id="orders" style="display:contents"></div></div>
       <div class="ct-floor" id="floor">
-        <div class="ct-nudge" id="nudge">Click a worker and give them orders</div>
+        <svg class="ct-line-svg" viewBox="0 0 100 64" preserveAspectRatio="none" aria-hidden="true">
+          <defs><marker id="arrowhead" viewBox="0 0 6 6" refX="0" refY="3" markerWidth="2.4" markerHeight="2.4" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L6 3L0 6z" fill="#f2c23088"/></marker></defs>
+          <g id="lineArrows"></g>
+        </svg>
+        <div class="ct-coach" id="coach"></div>
       </div>
       <form class="ct-yell" id="yellForm">
         <input class="ct-input" id="yellInput" placeholder="Yell to the whole floor…" autocomplete="off">
@@ -215,7 +234,7 @@
   <div class="ct-overlay" id="startScreen">
     <div class="ct-card-big">
       <div class="ct-logo">Clanker Tycoon</div>
-      <p class="ct-howto">Three robot workers, one tiny factory, a four-minute shift. Write each worker's orders in plain English and watch what they make of them. Ship boxes of three same-colored widgets to fill orders. Payroll comes out every minute.</p>
+      <p class="ct-howto">Colored widgets roll in on the belt. Pack three of the same color into a box and ship it from the dock to fill an order. You don't move anything yourself: you tell your three robot workers what to do, in plain English, and they do their best. Make as much money as you can in a four-minute shift. Payroll comes out every minute.</p>
       <div class="ct-btns"><button class="ct-btn is-gold" id="startBtn">Start shift</button></div>
       <div class="ct-small" id="backendNote"></div>
     </div>

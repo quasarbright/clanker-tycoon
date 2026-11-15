@@ -40,7 +40,7 @@ Actions you can put in a script:
 - wait {seconds}
 - say {text}: say something out loud.
 - askBoss {question}: walk to the boss's desk and ask; you wait there for an answer.
-Your script repeats from the top, forever, until the boss gives you new orders.`;
+Your script repeats from the top, forever, until the boss gives you new orders. So write ONE round of the job: don't copy the same steps out several times to do something more than once, the repeating takes care of that.`;
 
 const ACTION_ITEM = {
   type: "object",
@@ -92,7 +92,7 @@ function sanitize(actions) {
   return (actions || [])
     .filter((a) => a && ACTIONS.includes(a.action))
     .filter((a) => a.action !== "moveTo" || a.station in STATIONS)
-    .slice(0, 16)
+    .slice(0, 24)
     .map((a) => (a.action === "say" ? { ...a, text: clean(a.text) } : a));
 }
 
@@ -121,8 +121,8 @@ ${(w.memory ?? []).join("\n") || "(none)"}
 ${KIND_LINE[kind]}: "${heard}"
 
 Reply as JSON. "reply" is what you say back out loud. ${kind === "orders"
-    ? 'These are your new standing orders: set "newScript" to true and put your full new action script (at most 14 actions) in "actions".'
-    : 'If this changes what you should be doing, set "newScript" to true and put your full new action script (at most 14 actions) in "actions". Otherwise set "newScript" to false and "actions" to [].'}`;
+    ? 'These are your new standing orders: set "newScript" to true and put your full new action script (one round, at most 20 actions) in "actions".'
+    : 'If this changes what you should be doing, set "newScript" to true and put your full new action script (one round, at most 20 actions) in "actions". Otherwise set "newScript" to false and "actions" to [].'}`;
   const out = await llm({ system: system(h), prompt, schema: RESPOND_SCHEMA });
   const reply = clean(out?.reply) || "…";
   const actions = sanitize(out?.actions);

@@ -20,6 +20,20 @@ $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
 
 // ---------- building the floor ----------
 
+const STATION_HINTS = {
+  BELT_A: "widgets arrive here",
+  PAINT: "repaints a widget",
+  PACK: "3 widgets → 1 box",
+  DOCK: "ship boxes here",
+  BIN_1: "storage",
+  BIN_2: "storage",
+};
+const EXAMPLE_ORDERS = [
+  "Bring widgets from the belt to Pack.",
+  "Pack boxes at Pack and ship them from the Dock.",
+  "Paint blue widgets red and bring them to Pack.",
+];
+
 function buildFloor() {
   floor.querySelectorAll(".ct-st, .ct-belt, .ct-desk, .ct-bot").forEach((el) => el.remove());
   const belt = document.createElement("div");
@@ -34,11 +48,23 @@ function buildFloor() {
     el.className = "ct-st";
     el.style.left = `${st.x}%`; el.style.top = `${(st.y / 64) * 100}%`;
     const cap = key.startsWith("BIN_") ? RULES.binCap : key === "PACK" ? RULES.packCap : key === "PAINT" ? RULES.paintCap : key === "BELT_A" ? RULES.beltCap : null;
-    el.innerHTML = `<div class="ct-st-label"><span>${st.label}</span><span class="ct-st-cap"></span></div><div class="ct-st-items"></div>`;
+    el.innerHTML = `<div class="ct-st-label"><span>${st.label}</span><span class="ct-st-cap"></span></div><div class="ct-st-hint">${STATION_HINTS[key]}</div><div class="ct-st-items"></div>`;
     el.dataset.cap = cap ?? "";
     floor.append(el);
     ui.stations[key] = el;
   }
+  // The main line, drawn between the tiles: belt → paint → pack → dock.
+  const tileHalf = { x: 7.5, y: 5 };
+  const seg = (a, b) => {
+    const A = STATIONS[a], B = STATIONS[b];
+    const dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy);
+    // leave the tile edges: how far along the line before it exits a tile of half-size tileHalf
+    const out = Math.min(dx ? tileHalf.x / Math.abs(dx / len) : 1e9, dy ? tileHalf.y / Math.abs(dy / len) : 1e9) + 1;
+    const x1 = A.x + (dx / len) * out, y1 = A.y + (dy / len) * out;
+    const x2 = B.x - (dx / len) * (out + 2.4), y2 = B.y - (dy / len) * (out + 2.4);
+    return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#arrowhead)"/>`;
+  };
+  $("#lineArrows").innerHTML = seg("BELT_A", "PAINT") + seg("PAINT", "PACK") + seg("PACK", "DOCK");
   const desk = document.createElement("div");
   desk.className = "ct-desk";
   desk.style.left = `${DESK.x}%`; desk.style.top = `${(DESK.y / 64) * 100}%`;
@@ -76,8 +102,9 @@ function buildCrew() {
       </div>
       <p class="ct-blurb">${h.blurb}</p>
       <div class="ct-card-body">
-        <span class="ct-label">Standing orders</span>
-        <textarea class="ct-textarea" rows="3" placeholder="e.g. Bring red widgets from the belt to the pack station"></textarea>
+        <span class="ct-label">${h.name}'s job</span>
+        <textarea class="ct-textarea" rows="3" placeholder="Tell ${h.name} what to do, in your own words."></textarea>
+        <div class="ct-suggest"><span class="ct-suggest-label">Try:</span>${EXAMPLE_ORDERS.map((t) => `<button type="button">${t}</button>`).join("")}</div>
         <div class="ct-row"><button class="ct-btn is-gold" data-orders>Give orders</button></div>
         <span class="ct-label">What they'll do, on repeat</span>
         <div class="ct-script"></div>
@@ -92,9 +119,9 @@ function buildCrew() {
     $("[data-orders]", card).addEventListener("click", () => {
       const text = ta.value.trim();
       if (!text) { ta.focus(); return; }
-      $("#nudge").classList.add("is-gone");
       talk(w, "orders", text);
     });
+    card.querySelectorAll(".ct-suggest button").forEach((b) => b.addEventListener("click", () => { ta.value = b.textContent; ta.focus(); }));
     ta.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) $("[data-orders]", card).click(); });
     $("[data-talk]", card).addEventListener("submit", (e) => {
       e.preventDefault();
@@ -145,7 +172,6 @@ function setThinking(w, delta) {
 async function talk(w, kind, text) {
   const g = game;
   if (kind === "orders") {
-    $("#nudge").classList.add("is-gone");
     const ta = $("textarea", ui.cards[w.id]);
     if (!ta.value.trim()) ta.value = text;
   }
@@ -333,14 +359,34 @@ function render() {
   const orders = game.orders.map((o) => `${o.id}`).join(",");
   if (orders !== lastOrders) {
     lastOrders = orders;
-    $("#orders").innerHTML = game.orders.map((o) => `<span class="ct-ticket"><span class="ct-ticket-dots">${`<span class="ct-dot c-${o.color}"></span>`.repeat(3)}</span><span class="ct-ticket-pay">$${o.pay}</span></span>`).join("");
+    $("#orders").innerHTML = game.orders.map((o) => `<span class="ct-ticket" title="A box of 3 ${o.color} widgets pays $${o.pay}"><span class="ct-ticket-dots">${`<span class="ct-dot c-${o.color}"></span>`.repeat(3)}</span><span class="ct-ticket-pay">$${o.pay}</span></span>`).join("");
   }
+  renderCoach();
+}
+
+// The shift clock waits until somebody has a job, so you can read and type first.
+const working = () => game.workers.some((w) => w.script.length);
+
+// One line telling a new player what to do next. It goes away after your first filled order.
+let coachDone = false;
+function renderCoach() {
+  let text = "";
+  if (!coachDone) {
+    const thinker = game.workers.find((w) => ui.thinking[w.id]);
+    if (game.filled > 0) coachDone = true;
+    else if (!working() && thinker) text = `${thinker.hire.name} is thinking it over…`;
+    else if (!working()) text = `Give a worker a job: in their card, type what they should do (or tap an example) and press <b>Give orders</b>. The clock starts once someone's working.`;
+    else if (game.shipped === 0) text = `To earn money, 3 widgets have to reach <b>Pack</b>, someone has to <b>pack</b> them into a box, and someone has to carry the box to the <b>Dock</b>.`;
+    else text = `A box only pays well if all 3 widgets match an order up top. Mixed boxes pay $5.`;
+  }
+  const el = $("#coach");
+  if (el._text !== text) { el.innerHTML = text; el._text = text; }
 }
 
 function frame(now) {
   const dt = Math.min(0.1, (now - lastFrame) / 1000);
   lastFrame = now;
-  if (game && !paused && !game.over) { step(game, dt); handleEvents(); }
+  if (game && !paused && !game.over && working()) { step(game, dt); handleEvents(); }
   if (game) render();
   requestAnimationFrame(frame);
 }
@@ -358,8 +404,7 @@ function newShift() {
   buildCrew();
   select(selected ?? game.workers[0].id);
   $("#feed").innerHTML = "";
-  feed("Shift started.", "is-sys");
-  if (game.workers.some((w) => w.script.length)) $("#nudge").classList.add("is-gone");
+  feed("New shift. The clock starts when someone gets to work.", "is-sys");
 }
 
 function endShift() {

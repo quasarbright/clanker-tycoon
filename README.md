@@ -29,6 +29,12 @@ It only listens on 127.0.0.1.
 - `tools/balance.mjs`: plays shifts headless with hand-written scripts to check the economy and the
   star cutoffs (+$20 / +$60 / +$120 profit).
 
+## First shift
+
+The clock waits until someone has a job. A coach line on the floor walks a new player through it:
+give a worker a job, get 3 widgets to Pack, pack and ship a box, then match box colors to the
+orders. It goes away after the first filled order. Each card has example jobs to tap.
+
 ## Known gaps
 
 - Scripts are plain loops. A worker can't react to the floor ("if bin 2 is full…", "whatever color
