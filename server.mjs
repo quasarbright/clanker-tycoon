@@ -50,7 +50,10 @@ async function handleLlm(req, res) {
   if (typeof system !== "string" || typeof prompt !== "string") return send(res, 400, { error: "need system and prompt" });
 
   const started = Date.now();
-  const out = await withSlot(() => ask({ system, turns: [prompt], schema: schema || null, effort: "low", timeoutMs: 90000 }));
+  // A normal call takes 2–7 s. Now and then `claude -p` hangs; give up after 40 s and try once more.
+  const call = () => withSlot(() => ask({ system, turns: [prompt], schema: schema || null, effort: "low", timeoutMs: 40000 }));
+  let out = await call();
+  if (!out.turns[0]) { console.error(`retrying after ${out.timedOut ? "timeout" : `exit ${out.code}`}`); out = await call(); }
   const turn = out.turns[0];
   if (!turn) {
     console.error("claude -p gave no result", out.code, out.stderr.slice(-800));

@@ -109,7 +109,7 @@
 
     .ct-bubble {
       position: absolute; bottom: calc(100% + var(--u) * 1.6); left: 50%; transform: translateX(-50%);
-      width: max-content; max-width: max(calc(var(--u) * 30), 180px); background: #f4f1e8; color: #1d1a12; border-radius: 10px;
+      width: max-content; max-width: max(calc(var(--u) * 22), 150px); background: #f4f1e8; color: #1d1a12; border-radius: 10px;
       padding: 6px 10px; font-size: clamp(.72rem, calc(var(--u) * 1.6), .85rem); line-height: 1.25; font-weight: 500; box-shadow: 0 3px 0 #0005; z-index: 5; pointer-events: none;
     }
     .ct-bubble.is-left { left: 0; transform: none; }
@@ -147,7 +147,6 @@
     /* ---------- crew ---------- */
     .ct-side { display: flex; flex-direction: column; gap: 12px; }
     .ct-card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
-    .ct-card.is-selected { border-color: var(--accent); }
     .ct-card.is-waiting { box-shadow: 0 0 0 2px var(--accent); }
     .ct-card-head { display: flex; align-items: center; gap: 10px; cursor: pointer; }
     .ct-face { width: 26px; height: 24px; border-radius: 8px; background: var(--c); position: relative; flex: none; }
@@ -159,7 +158,7 @@
     .ct-status.is-waiting { color: var(--on-accent); background: var(--accent); padding: 2px 8px; border-radius: 999px; font-weight: 700; }
     .ct-blurb { margin: 6px 0 0; font-size: .85rem; color: var(--muted); }
     .ct-card-body { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
-    .ct-card:not(.is-selected) .ct-card-body { display: none; }
+    .ct-goal { color: var(--text); font-size: .95rem; }
     .ct-label { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
     .ct-textarea { width: 100%; resize: vertical; min-height: 64px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; line-height: 1.35; }
     .ct-textarea:focus { outline: 2px solid var(--accent); }
@@ -196,20 +195,47 @@
     .ct-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
     .ct-stat-value { font: 400 1.4rem var(--font-display); }
     .ct-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+
+    /* ---------- phases: plan (write jobs) → run ---------- */
+    body[data-phase="plan"] .ct-run-only, body[data-phase="loading"] .ct-run-only, body[data-phase="menu"] .ct-run-only { display: none !important; }
+    body[data-phase="run"] .ct-plan-only, body[data-phase="end"] .ct-plan-only, body[data-phase="menu"] .ct-plan-only { display: none !important; }
+    .ct-planbar { display: flex; align-items: center; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+    .ct-big { font-size: 1.15rem; padding: 12px 34px; }
+    .ct-planbar-note { color: var(--muted); font-size: .9rem; flex: 1; min-width: 200px; }
+    body[data-phase="loading"] .ct-planbar .ct-btn { opacity: .5; pointer-events: none; }
+
+    /* level picker */
+    .ct-levels { display: grid; gap: 10px; text-align: left; }
+    .ct-level { display: flex; gap: 14px; align-items: center; background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; cursor: pointer; color: var(--text); text-align: left; box-shadow: 0 3px 0 #0b0c0e; }
+    .ct-level:hover:not(:disabled) { border-color: var(--accent); }
+    .ct-level:disabled { cursor: default; opacity: .5; }
+    .ct-level-num { font: 400 1.6rem var(--font-display); color: var(--accent); width: 1.6em; text-align: center; flex: none; }
+    .ct-level-name { font-weight: 700; font-size: 1.05rem; }
+    .ct-level-blurb { color: var(--muted); font-size: .88rem; }
+    .ct-level-done { margin-left: auto; color: var(--success); font-weight: 700; font-size: .85rem; }
+
+    /* your desk: workers who came to talk, each with a reply box */
+    .ct-deskpanel { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+    .ct-deskpanel:empty { display: none; }
+    .ct-deskmsg { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: start; background: #2a2418; border: 1px solid #4a3f22; border-radius: 12px; padding: 10px 12px; }
+    .ct-deskmsg .ct-face { margin-top: 2px; }
+    .ct-deskmsg-text { line-height: 1.35; }
+    .ct-deskmsg-text b { color: var(--accent-hi); }
+    .ct-deskmsg form { grid-column: 2; display: flex; gap: 8px; }
   </style>
 </head>
-<body>
+<body data-phase="menu">
   <header class="ct-top">
     <button class="ct-btn ct-round" id="pauseBtn" aria-label="Pause">
       <svg width="16" height="18" viewBox="0 0 16 18" style="display:block"><rect x="1" y="1" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="10" y="1" width="5" height="16" rx="1.5" fill="currentColor"/></svg>
     </button>
-    <div class="ct-cash"><span class="ct-cash-label">Cash</span><span class="ct-cash-value" id="cash">$20</span></div>
-    <div class="ct-clock"><span class="ct-clock-label">Shift</span><span class="ct-clock-value" id="clock">4:00</span></div>
+    <div class="ct-cash"><span class="ct-cash-label" id="statLabel">Cash</span><span class="ct-cash-value" id="stat">$20</span></div>
+    <div class="ct-clock"><span class="ct-clock-label" id="levelName">Level</span><span class="ct-clock-value" id="clock">0:00</span></div>
   </header>
 
   <main class="ct-main">
     <section>
-      <div class="ct-orders"><span class="ct-orders-label">Customers want</span><div id="orders" style="display:contents"></div></div>
+      <div class="ct-orders"><span class="ct-orders-label" id="goalLabel">Customers want</span><div id="orders" style="display:contents"></div></div>
       <div class="ct-floor" id="floor">
         <svg class="ct-line-svg" viewBox="0 0 100 64" preserveAspectRatio="none" aria-hidden="true">
           <defs><marker id="arrowhead" viewBox="0 0 6 6" refX="0" refY="3" markerWidth="2.4" markerHeight="2.4" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L6 3L0 6z" fill="#f2c23088"/></marker></defs>
@@ -217,7 +243,12 @@
         </svg>
         <div class="ct-coach" id="coach"></div>
       </div>
-      <form class="ct-yell" id="yellForm">
+      <div class="ct-deskpanel" id="deskPanel"></div>
+      <div class="ct-planbar ct-plan-only">
+        <button class="ct-btn is-gold ct-big" id="goBtn">Start</button>
+        <span class="ct-planbar-note" id="planNote">Write the jobs on the right, then start. The clock starts when you do.</span>
+      </div>
+      <form class="ct-yell ct-run-only" id="yellForm">
         <input class="ct-input" id="yellInput" placeholder="Yell to the whole floor…" autocomplete="off">
         <button class="ct-btn is-gold" type="submit">Yell</button>
       </form>
@@ -234,8 +265,8 @@
   <div class="ct-overlay" id="startScreen">
     <div class="ct-card-big">
       <div class="ct-logo">Clanker Tycoon</div>
-      <p class="ct-howto">Colored widgets roll in on the belt. Pack three of the same color into a box and ship it from the dock to fill an order. You don't move anything yourself: you tell your three robot workers what to do, in plain English, and they do their best. Make as much money as you can in a four-minute shift. Payroll comes out every minute.</p>
-      <div class="ct-btns"><button class="ct-btn is-gold" id="startBtn">Start shift</button></div>
+      <p class="ct-howto">You run a tiny factory staffed by robots. You don't move anything yourself: you write each robot's job in plain English, press start, and watch what they make of it.</p>
+      <div class="ct-levels" id="levels"></div>
       <div class="ct-small" id="backendNote"></div>
     </div>
   </div>
@@ -245,18 +276,18 @@
       <div class="ct-title">Paused</div>
       <div class="ct-btns">
         <button class="ct-btn is-gold" id="resumeBtn">Resume</button>
-        <button class="ct-btn" id="restartBtn">Restart shift</button>
+        <button class="ct-btn" id="restartBtn">Restart level</button>
+        <button class="ct-btn" id="menuBtn">Levels</button>
       </div>
     </div>
   </div>
 
   <div class="ct-overlay is-hidden" id="endScreen">
     <div class="ct-card-big">
-      <div class="ct-title">Shift over</div>
+      <div class="ct-title" id="endTitle">Shift over</div>
       <div class="ct-stars" id="stars"></div>
       <div class="ct-stats" id="endStats"></div>
-      <div class="ct-btns"><button class="ct-btn is-gold" id="againBtn">Another shift</button></div>
-      <div class="ct-small">Your crew keeps their orders.</div>
+      <div class="ct-btns" id="endBtns"></div>
     </div>
   </div>
 

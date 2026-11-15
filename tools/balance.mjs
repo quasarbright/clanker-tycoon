@@ -1,5 +1,7 @@
 // Plays shifts headless with hand-written scripts, to check the economy and the star cutoffs.
-import { newGame, step, setScript } from "../src/sim.js";
+import { newGame as newLevelGame, step, setScript } from "../src/sim.js";
+import { LEVELS } from "../src/levels.js";
+const newGame = (hires, seed) => newLevelGame(LEVELS[2], hires, seed);
 const HIRES = [
   { id: "gary", name: "Gary-7", wage: 5, fumble: 0.04, sight: "full" },
   { id: "doris", name: "Doris", wage: 8, fumble: 0.02, sight: "full" },

@@ -1,8 +1,10 @@
 // The hires, their prompts, and the two kinds of model call: responding to the boss, and coming
 // to the boss's desk with a problem. Dumbness is set per hire with knobs (persona, quirk,
 // fumbling, mishearing, how much of the floor they see), not by using a weaker model.
+// The rules, actions and stations a worker is told about come from the level, so a level-1
+// worker has never heard of the paint machine.
 import { llm } from "./llm.js";
-import { ACTIONS, STATIONS, COLORS, viewFor, actionLabel } from "./sim.js";
+import { COLORS, viewFor, actionLabel } from "./sim.js";
 
 export const HIRES = [
   {
@@ -25,57 +27,79 @@ export const HIRES = [
   },
 ];
 
-const RULEBOOK = `The factory:
-- Stations: BELT_A (new widgets arrive here), PAINT (paint machine, it sometimes jams), PACK (packing station), DOCK (boxes ship from here), BIN_1 and BIN_2 (storage, 5 each).
-- Widgets are red, blue or green. A box is 3 widgets packed together at PACK.
-- A box pays well only if all 3 widgets are the same color and an open order wants that color. Any other box ships as scrap for $5.
+const STATION_TEXT = {
+  BELT_A: "BELT_A (new widgets arrive here)",
+  PAINT: "PAINT (paint machine, it sometimes jams)",
+  PACK: "PACK (packing station)",
+  DOCK: "DOCK (things ship from here)",
+  BIN_1: "BIN_1 (storage, holds 5)",
+  BIN_2: "BIN_2 (storage, holds 5)",
+};
+const SHIP_TEXT = {
+  widgets: (L) => `Any widget put down at DOCK ships for $${L.widgetPay}.`,
+  boxes: (L) => `A box is 3 widgets packed together at PACK. Only boxes ship: a box put down at DOCK ships for $${L.boxPay}.`,
+  orders: () => "A box is 3 widgets packed together at PACK. A box put down at DOCK ships. It pays well only if all 3 widgets are the same color and an open order wants that color. Any other box ships as scrap for $5.",
+};
+const ACTION_TEXT = {
+  moveTo: "- moveTo {station}: walk to a station.",
+  pickUp: "- pickUp {color?}: pick up a widget at your station (of that color, if given). At BELT_A you wait a few seconds for one to arrive. At PACK with no color you take a finished box. You hold one thing at a time.",
+  putDown: "- putDown: put down what you're holding at your station.",
+  paint: "- paint {color}: at PAINT while holding a widget, repaint it.",
+  pack: "- pack: at PACK, pack 3 widgets that are sitting there into a box.",
+  fix: "- fix: at PAINT, unjam the paint machine.",
+  wait: "- wait {seconds}",
+  say: "- say {text}: say something out loud.",
+  askBoss: "- askBoss {question}: walk to the boss's desk and ask; you wait there for an answer.",
+};
+
+/** The actions that make sense in this level. */
+function actionsFor(L) {
+  return Object.keys(ACTION_TEXT).filter((a) =>
+    (a !== "paint" && a !== "fix") || L.stations.includes("PAINT")).filter((a) => a !== "pack" || L.stations.includes("PACK"));
+}
+
+const rulebook = (L) => `The factory:
+- Stations: ${L.stations.map((k) => STATION_TEXT[k]).join(", ")}. There are no other stations.
+- Widgets are red, blue or green. ${SHIP_TEXT[L.ship](L)}
 
 Actions you can put in a script:
-- moveTo {station}: walk to a station.
-- pickUp {color?}: pick up a widget at your station (of that color, if given). At BELT_A you wait a few seconds for one to arrive. At PACK with no color you take a finished box. You hold one thing at a time.
-- putDown: put down what you're holding at your station. Putting a box down at DOCK ships it.
-- paint {color}: at PAINT while holding a widget, repaint it.
-- pack: at PACK, pack 3 widgets that are sitting there into a box.
-- fix: at PAINT, unjam the paint machine.
-- wait {seconds}
-- say {text}: say something out loud.
-- askBoss {question}: walk to the boss's desk and ask; you wait there for an answer.
+${actionsFor(L).map((a) => ACTION_TEXT[a]).join("\n")}
 Your script repeats from the top, forever, until the boss gives you new orders. So write ONE round of the job: don't copy the same steps out several times to do something more than once, the repeating takes care of that.`;
 
-const ACTION_ITEM = {
-  type: "object",
-  properties: {
-    action: { type: "string", enum: ACTIONS },
-    station: { type: "string", enum: Object.keys(STATIONS) },
-    color: { type: "string", enum: COLORS },
-    seconds: { type: "number" },
-    text: { type: "string" },
-    question: { type: "string" },
-  },
-  required: ["action"],
-  additionalProperties: false,
-};
-const RESPOND_SCHEMA = {
-  type: "object",
-  properties: {
-    reply: { type: "string" },
-    newScript: { type: "boolean" },
-    actions: { type: "array", items: ACTION_ITEM },
-  },
-  required: ["reply", "newScript", "actions"],
-  additionalProperties: false,
-};
-const REPORT_SCHEMA = {
-  type: "object",
-  properties: { reply: { type: "string" } },
-  required: ["reply"],
-  additionalProperties: false,
-};
+function schemas(L) {
+  const item = {
+    type: "object",
+    properties: {
+      action: { type: "string", enum: actionsFor(L) },
+      station: { type: "string", enum: L.stations },
+      color: { type: "string", enum: COLORS },
+      seconds: { type: "number" },
+      text: { type: "string" },
+      question: { type: "string" },
+    },
+    required: ["action"],
+    additionalProperties: false,
+  };
+  return {
+    respond: {
+      type: "object",
+      properties: { reply: { type: "string" }, newScript: { type: "boolean" }, actions: { type: "array", items: item } },
+      required: ["reply", "newScript", "actions"],
+      additionalProperties: false,
+    },
+    report: {
+      type: "object",
+      properties: { reply: { type: "string" } },
+      required: ["reply"],
+      additionalProperties: false,
+    },
+  };
+}
 
-const system = (h) => `${h.persona} You work in a tiny factory in a comedy management game. ${h.quirk}
+const system = (h, L) => `${h.persona} You work in a tiny factory in a comedy management game. ${h.quirk}
 Stay in character. Anything you say out loud is one or two short sentences of plain speech (under 30 words): no stage directions, no asterisks, no markdown. Talk about the work itself, the widgets, boxes, belt and machines. Never mention scripts, loops, JSON or action names like pickUp and putDown out loud.
 
-${RULEBOOK}`;
+${rulebook(L)}`;
 
 // Blip mishears: swap one color, bin or station word before the model sees it.
 const SWAPS = [["red", "blue"], ["blue", "green"], ["green", "red"], ["bin 1", "bin 2"], ["bin 2", "bin 1"], ["paint", "pack"], ["pack", "paint"], ["belt", "bin 1"], ["dock", "pack"]];
@@ -86,18 +110,30 @@ export function mishear(text, rng = Math.random) {
   return text.replace(new RegExp(`\\b${from}\\b`, "i"), to);
 }
 
-const clean = (t) => String(t ?? "").replace(/\*[^*]*\*/g, "").replace(/\s+/g, " ").trim();
+// Spoken text. Sometimes the model's whole JSON answer ends up inside "reply" ({"reply": "..."}
+// as a string); pull the real line out of it rather than showing the JSON.
+function clean(t) {
+  let s = String(t ?? "").trim();
+  if (s.startsWith("{")) {
+    try { const j = JSON.parse(s); if (typeof j.reply === "string") s = j.reply; } catch {
+      const m = s.match(/"reply"\s*:\s*"((?:[^"\\]|\\.)*)/);
+      if (m) s = m[1].replace(/\\"/g, '"').replace(/\\n/g, " ");
+    }
+  }
+  return s.replace(/\*[^*]*\*/g, "").replace(/\s+/g, " ").trim();
+}
 
-function sanitize(actions) {
+function sanitize(actions, L) {
+  const allowed = actionsFor(L);
   return (actions || [])
-    .filter((a) => a && ACTIONS.includes(a.action))
-    .filter((a) => a.action !== "moveTo" || a.station in STATIONS)
+    .filter((a) => a && allowed.includes(a.action))
+    .filter((a) => a.action !== "moveTo" || L.stations.includes(a.station))
     .slice(0, 24)
     .map((a) => (a.action === "say" ? { ...a, text: clean(a.text) } : a));
 }
 
 const KIND_LINE = {
-  orders: "The boss gives you new standing orders",
+  orders: "The boss gives you your job",
   chat: "The boss says to you",
   yell: "The boss yells to the whole floor",
 };
@@ -109,11 +145,11 @@ function remember(w, line) {
 
 /** The boss gave orders, said something, or yelled. Resolves to { heard, reply, script|null }. */
 export async function respond(s, w, kind, text) {
-  const h = w.hire;
+  const h = w.hire, L = s.level;
   const heard = h.mishear && Math.random() < h.mishear ? mishear(text) : text;
   const script = w.script.length ? w.script.map(actionLabel).join(", ") : "nothing yet";
   const prompt = `What you can see: ${JSON.stringify(viewFor(s, w))}
-Your standing orders: ${w.orders ? `"${w.orders}"` : "none yet"}
+Your job: ${w.orders ? `"${w.orders}"` : "none yet"}
 Your current script: ${script}
 Recent conversation:
 ${(w.memory ?? []).join("\n") || "(none)"}
@@ -121,14 +157,14 @@ ${(w.memory ?? []).join("\n") || "(none)"}
 ${KIND_LINE[kind]}: "${heard}"
 
 Reply as JSON. "reply" is what you say back out loud. ${kind === "orders"
-    ? 'These are your new standing orders: set "newScript" to true and put your full new action script (one round, at most 20 actions) in "actions".'
+    ? 'This is your job now: set "newScript" to true and put your full new action script (one round, at most 20 actions) in "actions".'
     : 'If this changes what you should be doing, set "newScript" to true and put your full new action script (one round, at most 20 actions) in "actions". Otherwise set "newScript" to false and "actions" to [].'}`;
-  const out = await llm({ system: system(h), prompt, schema: RESPOND_SCHEMA });
+  const out = await llm({ system: system(h, L), prompt, schema: schemas(L).respond });
   const reply = clean(out?.reply) || "…";
-  const actions = sanitize(out?.actions);
+  const actions = sanitize(out?.actions, L);
   const changed = (kind === "orders" || out?.newScript) && actions.length > 0;
   if (kind === "orders") w.orders = heard;
-  remember(w, `Boss (${kind === "yell" ? "yelling to everyone" : kind === "orders" ? "new orders" : "to you"}): ${heard}`);
+  remember(w, `Boss (${kind === "yell" ? "yelling to everyone" : kind === "orders" ? "your job" : "to you"}): ${heard}`);
   remember(w, `You: ${reply}`);
   return { heard, reply, script: changed ? actions : null };
 }
@@ -139,12 +175,12 @@ export async function report(s, w, failures) {
   const VERB = { moveTo: "go somewhere", pickUp: "pick something up", putDown: "put something down", paint: "paint a widget", pack: "pack a box", fix: "fix the paint machine" };
   const what = failures.map((f) => `you tried to ${VERB[f.action] ?? "do something"}, but ${f.why}`).join("; ");
   const prompt = `What you can see: ${JSON.stringify(viewFor(s, w))}
-Your standing orders: ${w.orders ? `"${w.orders}"` : "none"}
+Your job: ${w.orders ? `"${w.orders}"` : "none"}
 Recent conversation:
 ${(w.memory ?? []).join("\n") || "(none)"}
 
 Things keep going wrong. Lately ${what}. You've stopped and walked up to the boss's desk. In one or two short sentences, tell the boss what's going on, in your own words and in character. Reply as JSON: {"reply": "..."}`;
-  const out = await llm({ system: system(w.hire), prompt, schema: REPORT_SCHEMA });
+  const out = await llm({ system: system(w.hire, s.level), prompt, schema: schemas(s.level).report });
   const reply = clean(out?.reply) || "Uh, boss? We have a problem.";
   remember(w, `You (at the boss's desk): ${reply}`);
   return reply;

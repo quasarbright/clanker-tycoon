@@ -29,11 +29,18 @@ It only listens on 127.0.0.1.
 - `tools/balance.mjs`: plays shifts headless with hand-written scripts to check the economy and the
   star cutoffs (+$20 / +$60 / +$120 profit).
 
-## First shift
+## Levels
 
-The clock waits until someone has a job. A coach line on the floor walks a new player through it:
-give a worker a job, get 3 widgets to Pack, pack and ship a box, then match box colors to the
-orders. It goes away after the first filled order. Each card has example jobs to tap.
+Each level starts with planning: you write every worker's job, press Start, and they all read
+their jobs at once before anything moves. While it runs you can change a job, talk to one worker or
+yell to everyone. A worker who keeps failing walks to your desk; their message and a reply box show
+up under the floor.
+
+1. **First day.** Gary-7, a belt and a dock. Any widget that reaches the dock ships. Ship 5.
+2. **Boxes.** Adds Pack and Doris. Only boxes of 3 ship. Ship 3.
+3. **Full shift.** Everything: orders by color, paint, bins, Blip, payroll, a 4-minute clock, stars.
+
+Levels are in `src/levels.js`. Each level unlocks after the one before it (kept in memory only).
 
 ## Known gaps
 

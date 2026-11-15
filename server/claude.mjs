@@ -40,7 +40,9 @@ export function ask({ system, turns, schema = null, effort = null, env = {}, tim
   return new Promise((resolve) => {
     const t0 = performance.now();
     const ms = () => Math.round((performance.now() - t0) * 10) / 10;
-    const child = spawn("claude", args, { cwd: CWD, env: { ...ENV, ...env }, stdio: ["pipe", "pipe", "pipe"] });
+    // Its own process group, so a timeout can kill claude and any helpers it started. Killing only
+    // the main process left a helper holding stdout open, and the request hung for ten minutes.
+    const child = spawn("claude", args, { cwd: CWD, env: { ...ENV, ...env }, stdio: ["pipe", "pipe", "pipe"], detached: true });
     const lines = [];
     let buf = "", stderr = "";
     const results = [];
@@ -82,12 +84,19 @@ export function ask({ system, turns, schema = null, effort = null, env = {}, tim
       while ((nl = buf.indexOf("\n")) >= 0) { onLine(buf.slice(0, nl)); buf = buf.slice(nl + 1); }
     });
     child.stderr.on("data", (d) => { stderr += d.toString(); });
-    const timer = setTimeout(() => child.kill("SIGKILL"), timeoutMs);
-    child.on("close", (code) => {
+    let settled = false;
+    const finish = (code) => {
+      if (settled) return;
+      settled = true;
       clearTimeout(timer);
       if (buf.trim()) onLine(buf);
-      resolve({ code, wall_ms: ms(), init_ms: initAt, turns: results, stderr, lines, args: args.filter((a) => a !== system) });
-    });
+      resolve({ code, timedOut: code === "timeout", wall_ms: ms(), init_ms: initAt, turns: results, stderr, lines, args: args.filter((a) => a !== system) });
+    };
+    const timer = setTimeout(() => {
+      try { process.kill(-child.pid, "SIGKILL"); } catch { child.kill("SIGKILL"); }
+      finish("timeout"); // don't wait for pipes that may never close
+    }, timeoutMs);
+    child.on("close", (code) => finish(code));
 
     // Send one user message per turn, and the next only after the previous turn's result.
     // (Messages queued while a turn is running get merged into a single next turn.)

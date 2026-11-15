@@ -47,15 +47,16 @@ const newOrder = (s) => { const color = randColor(s.rng); return { id: ++s.ids, 
 const label = (st) => STATIONS[st]?.label ?? st;
 const itemName = (it) => (it.kind === "box" ? "box" : `${it.color} widget`);
 
-export function newGame(hires, seed = (Math.random() * 2 ** 32) >>> 0) {
+/** A new game of `level` (see levels.js) with these hires, in level order. */
+export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
   const s = {
-    t: 0, seed, rng: mulberry32(seed), ids: 0, version: 0,
-    cash: RULES.startCash, shipped: 0, filled: 0, scrap: 0, wagesPaid: 0, earned: 0,
-    stations: Object.fromEntries(Object.keys(STATIONS).map((k) => [k, []])),
+    t: 0, seed, rng: mulberry32(seed), ids: 0, version: 0, level,
+    cash: level.payroll ? RULES.startCash : 0, shipped: 0, filled: 0, scrap: 0, wagesPaid: 0, earned: 0,
+    stations: Object.fromEntries(level.stations.map((k) => [k, []])),
     paintJammed: false, orders: [], workers: [], events: [],
-    nextBelt: 1, nextPayroll: RULES.payrollEvery, over: false,
+    nextBelt: 1, nextPayroll: RULES.payrollEvery, over: false, won: false,
   };
-  for (let i = 0; i < 3; i++) s.orders.push(newOrder(s));
+  if (level.orders) for (let i = 0; i < 3; i++) s.orders.push(newOrder(s));
   // A few widgets already waiting, so there's something on the floor before the clock starts.
   for (let i = 0; i < 4; i++) s.stations.BELT_A.push({ kind: "widget", color: randColor(s.rng) });
   hires.forEach((hire, i) => s.workers.push({
@@ -76,14 +77,14 @@ export function step(s, dt) {
     s.nextBelt += RULES.beltEvery;
     if (s.stations.BELT_A.length < RULES.beltCap) { s.stations.BELT_A.push({ kind: "widget", color: randColor(s.rng) }); s.version++; }
   }
-  if (s.t >= s.nextPayroll) {
+  if (s.level.payroll && s.t >= s.nextPayroll) {
     s.nextPayroll += RULES.payrollEvery;
     const wages = s.workers.reduce((a, w) => a + w.hire.wage, 0);
     s.cash -= wages; s.wagesPaid += wages;
     emit(s, { type: "payroll", amount: wages });
   }
   for (const w of s.workers) stepWorker(s, w);
-  if (s.t >= RULES.shift) { s.over = true; emit(s, { type: "end" }); }
+  if (!s.over && s.level.shift && s.t >= s.level.shift) { s.over = true; emit(s, { type: "end" }); }
 }
 
 function stepWorker(s, w) {
@@ -117,8 +118,8 @@ const deskSpot = (w) => ({ x: DESK.x, y: DESK.y - 17 });
 function start(s, w, a) {
   switch (a.action) {
     case "moveTo": {
-      const st = STATIONS[a.station];
-      if (!st) return fail(s, w, a, `there's no station called ${a.station}`);
+      const st = a.station in s.stations && STATIONS[a.station];
+      if (!st) return fail(s, w, a, `there's no ${label(a.station)} in this factory`);
       return walk(s, w, st.x, st.y, { a, kind: "moveTo", arrive: a.station });
     }
     case "askBoss": {
@@ -199,7 +200,7 @@ function putDown(s, w, a) {
   if (!w.holding) return fail(s, w, a, "my hands are empty");
   const st = w.station;
   if (st === "DOCK") {
-    if (w.holding.kind !== "box") return fail(s, w, a, "only boxes can ship from the dock");
+    if (s.level.ship !== "widgets" && w.holding.kind !== "box") return fail(s, w, a, "only boxes can ship from the dock");
     ship(s, w, w.holding);
     w.holding = null; s.version++;
     return ok(s, w, a);
@@ -244,14 +245,22 @@ function fix(s, w, a) {
   fail(s, w, a, "there's nothing to fix here");
 }
 
-function ship(s, w, box) {
-  const same = box.colors.every((c) => c === box.colors[0]);
-  const idx = same ? s.orders.findIndex((o) => o.color === box.colors[0]) : -1;
-  let pay;
-  if (idx >= 0) { pay = s.orders[idx].pay; s.orders[idx] = newOrder(s); s.filled++; }
-  else { pay = RULES.scrapPay; s.scrap++; }
+function ship(s, w, item) {
+  const L = s.level;
+  let pay, matched = true;
+  const colors = item.kind === "box" ? item.colors : [item.color];
+  if (L.ship === "widgets") pay = L.widgetPay;
+  else if (L.ship === "boxes") pay = L.boxPay;
+  else {
+    const same = colors.every((c) => c === colors[0]);
+    const idx = same ? s.orders.findIndex((o) => o.color === colors[0]) : -1;
+    matched = idx >= 0;
+    if (matched) { pay = s.orders[idx].pay; s.orders[idx] = newOrder(s); s.filled++; }
+    else { pay = RULES.scrapPay; s.scrap++; }
+  }
   s.cash += pay; s.earned += pay; s.shipped++;
-  emit(s, { type: "ship", worker: w.id, pay, matched: idx >= 0, colors: box.colors });
+  emit(s, { type: "ship", worker: w.id, pay, matched, item: item.kind, colors });
+  if (L.goal && s.shipped >= L.goal.ship) { s.over = true; s.won = true; emit(s, { type: "end" }); }
 }
 
 // Only real work resets the failure count. Walking doesn't, or a worker whose every lap fails
@@ -314,14 +323,14 @@ export function viewFor(s, w) {
     return { you, here: w.station ? describe(s.stations[w.station]) : "nothing", note: "You can only see your own station." };
   }
   const floor = {};
-  for (const k of Object.keys(STATIONS)) floor[k] = describe(s.stations[k]);
-  return {
-    you,
-    floor,
-    paintMachine: s.paintJammed ? "JAMMED" : "working",
-    openOrders: s.orders.map((o) => `box of 3 ${o.color} pays $${o.pay}`),
-    coworkers: Object.fromEntries(s.workers.filter((o) => o !== w).map((o) => [o.hire.name, `at ${whereText(o)}, holding ${holdingText(o)}`])),
-  };
+  for (const k of Object.keys(s.stations)) floor[k] = describe(s.stations[k]);
+  const view = { you, floor };
+  if ("PAINT" in s.stations) view.paintMachine = s.paintJammed ? "JAMMED" : "working";
+  if (s.level.orders) view.openOrders = s.orders.map((o) => `box of 3 ${o.color} pays $${o.pay}`);
+  if (s.level.goal) view.goal = `ship ${s.level.goal.ship} ${s.level.ship}; ${s.shipped} shipped so far`;
+  const others = s.workers.filter((o) => o !== w);
+  if (others.length) view.coworkers = Object.fromEntries(others.map((o) => [o.hire.name, `at ${whereText(o)}, holding ${holdingText(o)}`]));
+  return view;
 }
 
 /** Short label for one action, for showing scripts. */
