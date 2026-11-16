@@ -1,48 +1,24 @@
-// Plays shifts headless with hand-written scripts, to check the economy and the star cutoffs.
-import { newGame as newLevelGame, step, setScript } from "../src/sim.js";
+// Plays level 3's order headless with hand-written crews (no player), to see how long a crew
+// takes and whether the star times are sane. Run: node tools/balance.mjs
+import { newGame, step, setScript } from "../src/sim.js";
 import { LEVELS } from "../src/levels.js";
-const newGame = (hires, seed) => newLevelGame(LEVELS[2], hires, seed);
-// The old three-robot crew, with today's skills: Gary fast, Doris careful + patient, Blip none.
-// (Same data as brains.js, copied so this runs in plain node without the browser-only llm.js.)
 const robot = (r) => ({ ...r, wage: 3 + 2 * r.skills.length });
-const HIRES = [
-  robot({ id: "gary", name: "Gary-7", skills: ["fast"] }),
-  robot({ id: "doris", name: "Doris", skills: ["careful", "patient"] }),
-  robot({ id: "blip", name: "Blip", skills: [] }),
-];
 const m = (station) => ({ action: "moveTo", station });
-const STRATS = {
-  "nothing": {},
-  "one carrier, any color": { doris: [m("BELT_A"), { action: "pickUp" }, m("PACK"), { action: "putDown" }, { action: "pack" }, { action: "pickUp" }, m("DOCK"), { action: "putDown" }] },
-  "all red, painted": {
-    doris: [m("BELT_A"), { action: "pickUp" }, m("PAINT"), { action: "paint", color: "red" }, { action: "fix" }, m("PACK"), { action: "putDown" }],
-    blip: [m("BELT_A"), { action: "pickUp" }, m("PAINT"), { action: "paint", color: "red" }, { action: "fix" }, m("PACK"), { action: "putDown" }],
-    gary: [m("PACK"), { action: "pack" }, { action: "pickUp" }, m("DOCK"), { action: "putDown" }],
-  },
-  "paint to first order": null, // filled in below: adapts color every loop like a sharp player would
+const L = LEVELS[2];
+const CREWS = {
+  "one robot, any color": [[robot({ id: "a", skills: ["fast"] }), [m("BELT_A"), { action: "pickUp" }, m("PACK"), { action: "putDown" }, { action: "pack" }, { action: "pickUp" }, m("DOCK"), { action: "putDown" }]]],
+  "haulers paint green, packer ships": [
+    [robot({ id: "a", skills: ["fast"] }), [m("BELT_A"), { action: "pickUp" }, m("PAINT"), { action: "paint", color: "green" }, { action: "fix" }, m("PACK"), { action: "putDown" }]],
+    [robot({ id: "b", skills: ["fast"] }), [m("BELT_A"), { action: "pickUp" }, m("PAINT"), { action: "paint", color: "green" }, { action: "fix" }, m("PACK"), { action: "putDown" }]],
+    [robot({ id: "c", skills: ["patient"] }), [m("PACK"), { action: "pack" }, { action: "pickUp" }, m("DOCK"), { action: "putDown" }]],
+  ],
 };
-function run(name, seed) {
-  const g = newGame(HIRES, seed);
-  const strat = STRATS[name] || {};
-  for (const w of g.workers) if (strat[w.id]) setScript(g, w, strat[w.id]);
-  let fails = 0;
-  while (!g.over) {
-    if (name === "paint to first order") {
-      const c = g.orders[0].color;
-      for (const w of g.workers) {
-        const want = w.id === "gary"
-          ? [m("PACK"), { action: "pack" }, { action: "pickUp" }, m("DOCK"), { action: "putDown" }]
-          : [m("BELT_A"), { action: "pickUp" }, m("PAINT"), { action: "paint", color: c }, { action: "fix" }, m("PACK"), { action: "putDown" }];
-        if (JSON.stringify(w.script) !== JSON.stringify(want) && w.pc === 0) setScript(g, w, want);
-      }
-    }
-    step(g, 1 / 30);
-    for (const e of g.events.splice(0)) if (e.type === "fail") fails++;
-  }
-  return { profit: Math.round(g.cash - 20), filled: g.filled, scrap: g.scrap, fails };
-}
-for (const name of Object.keys(STRATS)) {
-  const rs = [1, 2, 3, 4, 5, 6].map((s) => run(name, s));
-  const avg = (k) => (rs.reduce((a, r) => a + r[k], 0) / rs.length).toFixed(1);
-  console.log(name.padEnd(26), "profit", rs.map((r) => r.profit).join(" "), "| avg", avg("profit"), "filled", avg("filled"), "scrap", avg("scrap"), "fails", avg("fails"));
+for (const [name, crew] of Object.entries(CREWS)) {
+  const times = [1, 2, 3, 4].map((seed) => {
+    const g = newGame(L, crew.map(([h]) => h), seed);
+    g.workers.forEach((w, i) => setScript(g, w, crew[i][1]));
+    while (!g.over && g.t < 600) { step(g, 1 / 30); g.events.length = 0; }
+    return g.won ? `${g.t.toFixed(0)}s` : `unfinished (${g.order.map((l) => `${l.color} ${l.done}/${l.count}`).join(", ")})`;
+  });
+  console.log(name.padEnd(36), times.join("  "));
 }

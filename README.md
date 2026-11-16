@@ -29,21 +29,25 @@ It only listens on 127.0.0.1.
 - `tools/balance.mjs`: plays shifts headless with hand-written scripts to check the economy and the
   star cutoffs (+$20 / +$60 / +$120 profit).
 
-## Levels
+## How a level plays
 
-Each level starts with planning: you write every worker's instructions, press Start, and they all read
-them at once before anything moves. While it runs you can change someone's instructions, talk to one worker or
-yell to everyone. A worker who keeps failing walks to your desk; their message and a reply box show
-up under the floor.
+Each level is a fixed order (say, 3 green boxes and 2 red boxes) and you're scored on how fast
+you fill it. You start alone with $0 and do the work yourself: walk with WASD / arrow keys or by
+clicking a station, and use the action bar under the floor (Space for the first action, number
+keys for the rest). Anything that's on the order pays when it ships. Once you can afford a hiring
+fee (2 minutes of wages), hire a robot, write their instructions, and they work alongside you,
+paid by the second. Each new machine shows up first in a level where you use it yourself.
 
-1. **First day.** Gary-7, a belt and a dock. Any widget that reaches the dock ships. Ship 5.
-2. **Boxes.** Adds Pack and Doris. Only boxes of 3 ship. Ship 3.
-3. **Full shift.** Everything: orders by color, paint, bins, Blip, payroll, a 4-minute clock, stars.
+1. **By hand.** Belt and dock. Ship 10 widgets. Gary-7 for hire.
+2. **Boxes.** Adds Pack. 2 red boxes and 2 blue boxes.
+3. **Paint.** Adds the paint machine and bins. 3 green boxes (green is rare) and 2 red.
 
-Levels are in `src/levels.js`. Each level unlocks after the one before it (kept in memory only).
+Robots have skills (Fast, Careful, Patient) and wages to match. Levels are in `src/levels.js`;
+progress is kept in memory only. `tools/player-check.mjs` plays level 1 headless with and without
+a hire; `tools/balance.mjs` runs level 3 with scripted crews.
 
 ## Known gaps
 
-- Scripts are plain loops. A worker can't react to the floor ("if bin 2 is full…", "whatever color
-  the first order wants"), so they fail and come complain instead.
+- Scripts are plain loops. A worker can't react to the floor ("if bin 2 is full…", "switch to red once
+  the greens are done"), so you change their instructions when the order moves on.
 - Calls take 3–7 s, since `claude -p` can't turn thinking off. Over the API, thinking can be off.

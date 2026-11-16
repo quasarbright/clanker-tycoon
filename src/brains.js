@@ -68,10 +68,10 @@ const STATION_TEXT = {
   BIN_1: "BIN_1 (storage, holds 5)",
   BIN_2: "BIN_2 (storage, holds 5)",
 };
+// Today's order is in the worker's view ("order"); these explain what counts toward it.
 const SHIP_TEXT = {
-  widgets: (L) => `Any widget put down at DOCK ships for $${L.widgetPay}.`,
-  boxes: (L) => `A box is 3 widgets packed together at PACK. Only boxes ship: a box put down at DOCK ships for $${L.boxPay}.`,
-  orders: () => "A box is 3 widgets packed together at PACK. A box put down at DOCK ships. It pays well only if all 3 widgets are the same color and an open order wants that color. Any other box ships as scrap for $5.",
+  widgets: () => "Widgets put down at DOCK ship. Each one counts toward today's order if it's a color the order still needs.",
+  boxes: () => "A box is 3 widgets packed together at PACK. Only boxes ship from DOCK. A box counts toward today's order only if all 3 widgets are one color the order still needs; anything else ships for nothing.",
 };
 const ACTION_TEXT = {
   moveTo: "- moveTo {station}: walk to a station.",

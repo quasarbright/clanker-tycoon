@@ -1,8 +1,13 @@
-// The game screen. Phases: menu (pick a level) → plan (write everyone's instructions) → loading (the crew reads
-// their instructions) → run (the clock goes; you can still talk, yell and change instructions) → end.
-import { newGame, step, resume, setScript, atDesk, addWorker, removeWorker, STATIONS, DESK, RULES, actionLabel } from "./sim.js";
+// The game screen. Phases: menu (pick a level) → run → end.
+// You're on the floor yourself: walk with WASD / arrow keys or by clicking, and use the action bar
+// (or Space and number keys) at a station. Shipping pays; with money you hire robots, give them
+// instructions, and they do the work too. A level ends when today's order is filled.
+import {
+  newGame, step, resume, setScript, atDesk, addWorker, removeWorker, playerGo, playerWalkTo, playerSteer, playerDo,
+  orderLineText, STATIONS, DESK, RULES, COLORS, actionLabel,
+} from "./sim.js";
 import { CANDIDATES, SKILLS, respond, report } from "./brains.js";
-import { LEVELS } from "./levels.js";
+import { LEVELS, hireFee } from "./levels.js";
 import { backendLabel } from "./llm.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -11,13 +16,13 @@ let game = null;
 let level = LEVELS[0];
 let phase = "menu";
 let paused = false;
+let started = false; // the clock starts on your first move
 let lastFrame = performance.now();
-let lastVersion = -1, lastStat = null, lastClock = null, lastOrders = "";
+let lastVersion = -1, lastStat = null, lastClock = null, lastOrder = "", lastHands = "", lastHiring = "";
 const ui = { bots: {}, cards: {}, stations: {}, desk: {}, thinking: {}, bubbleTimers: {}, oopsTimers: {} };
-// Progress and instructions live in memory only for now (no localStorage while iterating).
+// Progress lives in memory only for now (no localStorage while iterating).
 let unlocked = 1;
-const done = new Set();
-const jobs = {}; // jobs[levelId][workerId] = { text, script, memory }
+const best = {}; // best[levelId] = { time, stars }
 
 $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
 
@@ -40,10 +45,11 @@ function setPhase(p) {
 function renderLevels() {
   $("#levels").innerHTML = LEVELS.map((L) => {
     const open = L.id <= unlocked;
+    const b = best[L.id];
     return `<button class="ct-level" data-level="${L.id}" ${open ? "" : "disabled"}>
       <span class="ct-level-num">${L.id}</span>
       <span><span class="ct-level-name">${open ? L.name : "???"}</span><br><span class="ct-level-blurb">${open ? L.blurb : "Finish the level before."}</span></span>
-      ${done.has(L.id) ? `<span class="ct-level-done">done</span>` : ""}
+      ${b ? `<span class="ct-level-done">${"★".repeat(b.stars)} ${fmtTime(b.time)}</span>` : ""}
     </button>`;
   }).join("");
   document.querySelectorAll(".ct-level").forEach((b) => b.addEventListener("click", () => openLevel(LEVELS.find((L) => L.id === +b.dataset.level))));
@@ -60,6 +66,18 @@ function showMenu() {
 
 // ---------- building the floor ----------
 
+const PLAYER = { id: "you", name: "You", color: "#f4f1e8" };
+
+function makeBot(id, name, color, isYou) {
+  const bot = document.createElement("div");
+  bot.className = "ct-bot" + (isYou ? " is-you" : "");
+  bot.style.setProperty("--c", color);
+  bot.innerHTML = `<div class="ct-bot-head"><div class="ct-bot-eyes"><i></i><i></i></div><div class="ct-bot-held"></div></div><div class="ct-bot-name">${name}</div>`;
+  floor.append(bot);
+  ui.bots[id] = bot;
+  return bot;
+}
+
 function buildFloor() {
   floor.querySelectorAll(".ct-st, .ct-belt, .ct-desk, .ct-bot, .ct-float, .ct-truckbay").forEach((el) => el.remove());
   ui.stations = {}; ui.bots = {};
@@ -73,6 +91,7 @@ function buildFloor() {
     const st = STATIONS[key];
     const el = document.createElement("div");
     el.className = "ct-st";
+    el.dataset.key = key;
     el.style.left = `${st.x}%`; el.style.top = `${(st.y / 64) * 100}%`;
     const cap = key.startsWith("BIN_") ? RULES.binCap : key === "PACK" ? RULES.packCap : key === "PAINT" ? RULES.paintCap : key === "BELT_A" ? RULES.beltCap : null;
     const hint = key === "DOCK" ? (level.ship === "widgets" ? "ship widgets here" : "ship boxes here") : STATION_HINTS[key];
@@ -116,73 +135,170 @@ function buildFloor() {
   </div>`;
   floor.append(bay);
   floor.append(desk);
-  for (const w of game.workers) {
-    const bot = document.createElement("div");
-    bot.className = "ct-bot";
-    bot.style.setProperty("--c", w.hire.color);
-    bot.innerHTML = `<div class="ct-bot-head"><div class="ct-bot-eyes"><i></i><i></i></div><div class="ct-bot-held"></div></div><div class="ct-bot-name">${w.hire.name}</div>`;
-    bot.addEventListener("click", () => focusCard(w));
-    floor.append(bot);
-    ui.bots[w.id] = bot;
-  }
+  makeBot("you", PLAYER.name, PLAYER.color, true);
+  for (const w of game.workers) makeBot(w.id, w.hire.name, w.hire.color).addEventListener("click", (e) => { e.stopPropagation(); focusCard(w); });
+  lastVersion = -1;
 }
 
-const itemHTML = (it) => it.kind === "box"
-  ? `<span class="ct-box">${it.colors.map((c) => `<i class="c-${c}"></i>`).join("")}</span>`
-  : `<span class="ct-dot c-${it.color}"></span>`;
+const itemHTML = (it, clickable = false) => it.kind === "box"
+  ? `<span class="ct-box"${clickable ? ` data-pick="box"` : ""}>${it.colors.map((c) => `<i class="c-${c}"></i>`).join("")}</span>`
+  : `<span class="ct-dot c-${it.color}"${clickable ? ` data-pick="${it.color}"` : ""}></span>`;
 
-// ---------- crew cards ----------
+// ---------- moving yourself ----------
+
+// Click a station to walk there; click something in it to walk there and pick that up; click the
+// floor to walk to that spot.
+floor.addEventListener("click", (e) => {
+  if (phase !== "run" || paused || !game || game.over) return;
+  const pick = e.target.closest("[data-pick]");
+  const st = e.target.closest(".ct-st");
+  begin();
+  if (st) {
+    const then = pick ? (pick.dataset.pick === "box" ? { action: "pickUp" } : { action: "pickUp", color: pick.dataset.pick }) : null;
+    playerGo(game, st.dataset.key, then);
+    return;
+  }
+  if (e.target.closest(".ct-bot, .ct-desk, .ct-coach")) return;
+  const r = floor.getBoundingClientRect(), k = r.width / 100;
+  // Robots are drawn 11 units below where they stand, so aim the walk by where you clicked their feet.
+  playerWalkTo(game, (e.clientX - r.left) / k, (e.clientY - r.top) / k - 11);
+});
+
+const keysDown = new Set();
+const typing = (e) => e.target.closest?.("input, textarea, select");
+function steerFromKeys() {
+  const has = (...ks) => ks.some((k) => keysDown.has(k));
+  const vx = (has("d", "arrowright") ? 1 : 0) - (has("a", "arrowleft") ? 1 : 0);
+  const vy = (has("s", "arrowdown") ? 1 : 0) - (has("w", "arrowup") ? 1 : 0);
+  if (game) playerSteer(game, vx, vy);
+}
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && phase === "run" && !game.over) { setPaused(!paused); return; }
+  if (phase !== "run" || paused || typing(e) || e.metaKey || e.ctrlKey) return;
+  const key = e.key.toLowerCase();
+  if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
+    e.preventDefault();
+    begin();
+    keysDown.add(key); steerFromKeys();
+  } else if (key === " " || /^[1-9]$/.test(key)) {
+    e.preventDefault();
+    const acts = playerActions();
+    const act = key === " " ? acts[0] : acts[+key - 1];
+    if (act) { begin(); playerDo(game, act.a); }
+  }
+});
+document.addEventListener("keyup", (e) => { keysDown.delete(e.key.toLowerCase()); steerFromKeys(); });
+window.addEventListener("blur", () => { keysDown.clear(); steerFromKeys(); });
+
+/** Start the clock the first time you do anything. */
+function begin() {
+  if (started) return;
+  started = true;
+  feed("Clock's running.", "is-sys");
+}
+
+// What you can do where you're standing, best guess first (Space does the first one).
+function playerActions() {
+  const p = game.player, st = p.station;
+  if (!st || p.act) return []; // not at a station, walking, or busy
+  const items = game.stations[st];
+  const acts = [];
+  if (p.holding) {
+    if (st === "PAINT" && p.holding.kind === "widget") {
+      for (const c of COLORS) if (c !== p.holding.color) acts.push({ label: `Paint ${c}`, a: { action: "paint", color: c } });
+    }
+    const canDrop = st === "DOCK" ? (level.ship === "widgets" || p.holding.kind === "box") : true;
+    // At the paint machine painting comes first (Space); everywhere else putting it down does.
+    const drop = { label: st === "DOCK" ? "Ship it" : "Put down", a: { action: "putDown" } };
+    if (canDrop) st === "PAINT" ? acts.push(drop) : acts.unshift(drop);
+  } else {
+    if (st === "PACK") {
+      if (items.filter((i) => i.kind === "widget").length >= 3) acts.push({ label: "Pack a box", a: { action: "pack" } });
+      if (items.some((i) => i.kind === "box")) acts.push({ label: "Pick up box", a: { action: "pickUp" } });
+    }
+    for (const c of COLORS) if (items.some((i) => i.kind === "widget" && i.color === c)) acts.push({ label: `Pick up ${c}`, a: { action: "pickUp", color: c } });
+  }
+  if (st === "PAINT" && game.paintJammed) acts.push({ label: "Fix the machine", a: { action: "fix" } });
+  return acts;
+}
+
+function renderHands() {
+  const p = game.player;
+  const busy = p.act && p.act.kind !== "moveTo" && p.act.kind !== "walkTo";
+  const acts = playerActions();
+  const where = p.station ? STATIONS[p.station].label : null;
+  const holding = p.holding ? (p.holding.kind === "box" ? "a box" : `a ${p.holding.color} widget`) : "nothing";
+  const sig = `${p.station}|${holding}|${busy}|${acts.map((a) => a.label).join(",")}`;
+  if (sig === lastHands) return;
+  lastHands = sig;
+  const head = `<span class="ct-hands-where"><b>You</b>${where ? ` at ${where}` : ""}, holding ${holding}</span>`;
+  let body;
+  if (busy) body = `<span class="ct-hands-note">Working…</span>`;
+  else if (acts.length) body = acts.map((a, i) => `<button class="ct-btn ${i === 0 ? "is-gold" : ""}" type="button" data-act="${i}">${a.label}<kbd>${i === 0 ? "Space" : i + 1}</kbd></button>`).join("");
+  else if (!where) body = `<span class="ct-hands-note">Walk to a station: click it, or use WASD / arrow keys.</span>`;
+  else body = `<span class="ct-hands-note">Nothing to do here right now.</span>`;
+  $("#hands").innerHTML = head + `<span class="ct-hands-acts">${body}</span>`;
+  $("#hands").querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => {
+    const act = playerActions()[+b.dataset.act];
+    if (act) { begin(); playerDo(game, act.a); }
+  }));
+}
+
+// ---------- hiring ----------
 
 const skillBadges = (h) => `<div class="ct-skills">${h.skills.length
   ? h.skills.map((k) => `<span class="ct-skill" data-tooltip="${SKILLS[k].label}: ${SKILLS[k].tip}">${SKILLS[k].label}</span>`).join("")
   : `<span class="ct-skill is-none" data-tooltip="No skills: drops things now and then, gives up quickly when something isn't there.">No skills</span>`}</div>`;
 
-// ---------- hiring (levels with a candidate pool) ----------
-
 function renderHiring() {
   const box = $("#hiring");
-  if (!level.pool) { box.innerHTML = ""; return; }
   const hired = new Set(game.workers.map((w) => w.id));
   const open = level.pool.map((id) => CANDIDATES.find((c) => c.id === id)).filter((c) => !hired.has(c.id));
   const payroll = game.workers.reduce((a, w) => a + w.hire.wage, 0);
-  box.innerHTML = `<div class="ct-row"><span class="ct-label">Candidates</span><span class="ct-wage" style="margin-left:auto">your payroll: $${payroll}/min</span></div>` + (open.length ? open.map((c) => `
+  const cash = Math.floor(game.cash);
+  const sig = `${open.map((c) => c.id + (cash >= hireFee(c))).join()}|${payroll}`;
+  if (sig === lastHiring) return;
+  lastHiring = sig;
+  box.innerHTML = `<div class="ct-row"><span class="ct-label">Hire</span><span class="ct-wage" style="margin-left:auto">payroll: $${payroll}/min</span></div>` + (open.length ? open.map((c) => `
     <div class="ct-candidate" style="--c:${c.color}">
       <span class="ct-face"></span>
       <div class="ct-candidate-info"><b>${c.name}</b> <span class="ct-wage">$${c.wage}/min</span><br><span class="ct-blurb">${c.blurb}</span>${skillBadges(c)}</div>
-      <button class="ct-btn is-gold" type="button" data-hire="${c.id}">Hire</button>
+      <button class="ct-btn is-gold" type="button" data-hire="${c.id}" ${cash >= hireFee(c) ? "" : "disabled"} data-tooltip="Hiring fee: $${hireFee(c)} (2 minutes' wages), then $${c.wage}/min">Hire · $${hireFee(c)}</button>
     </div>`).join("") : `<p class="ct-blurb">You've hired everyone.</p>`);
   box.querySelectorAll("[data-hire]").forEach((b) => b.addEventListener("click", () => hire(b.dataset.hire)));
 }
 
 // Hiring or letting someone go rebuilds the floor and the cards; keep what's typed in the cards.
 function keepTyped() {
-  for (const w of game.workers) if (ui.cards[w.id]) w.orders = $("textarea", ui.cards[w.id]).value;
+  for (const w of game.workers) if (ui.cards[w.id]) w.draft = $("textarea", ui.cards[w.id]).value;
 }
 function hire(id) {
+  const c = CANDIDATES.find((h) => h.id === id);
+  if (game.cash < hireFee(c)) return;
+  begin();
+  game.cash -= hireFee(c);
   keepTyped();
-  const w = addWorker(game, CANDIDATES.find((c) => c.id === id));
-  const saved = jobs[level.id]?.[id];
-  if (saved) w.orders = saved.text;
+  const w = addWorker(game, c);
+  feed(`You hired ${c.name} for $${hireFee(c)}.`, "is-sys");
   rebuildCrew();
-  $("textarea", ui.cards[id]).focus({ preventScroll: true });
+  focusCard(w);
 }
 function fire(id) {
   keepTyped();
+  const w = worker(id);
   removeWorker(game, id);
+  clearDesk(w);
+  feed(`You let ${w.hire.name} go.`, "is-sys");
   rebuildCrew();
 }
 function rebuildCrew() {
   buildFloor();
   buildCrew();
+  lastHiring = "";
   renderHiring();
-  resetPlanNote();
-  lastVersion = -1;
 }
-function resetPlanNote() {
-  $("#planNote").textContent = level.shift
-    ? "The clock starts when you press Start. You can still change instructions, talk and yell while they work."
-    : "Nothing moves until you press Start. You can still change instructions and talk to them while they work.";
-}
+
+// ---------- crew cards ----------
 
 function buildCrew() {
   const crew = $("#crew");
@@ -195,36 +311,35 @@ function buildCrew() {
     card.style.setProperty("--c", h.color);
     card.innerHTML = `
       <div class="ct-card-head">
-        <span class="ct-face"></span><span class="ct-card-name">${h.name}</span>${level.payroll ? `<span class="ct-wage">$${h.wage}/min</span>` : ""}
+        <span class="ct-face"></span><span class="ct-card-name">${h.name}</span><span class="ct-wage">$${h.wage}/min</span>
         <span class="ct-status"></span>
-        ${level.pool ? `<button class="ct-btn ct-small-btn ct-plan-only" type="button" data-fire>Let go</button>` : ""}
+        <button class="ct-btn ct-small-btn" type="button" data-fire>Let go</button>
       </div>
       <p class="ct-blurb">${h.blurb}</p>
       ${skillBadges(h)}
       <div class="ct-card-body">
         <span class="ct-label">${h.name}'s instructions</span>
         <textarea class="ct-textarea" rows="3" placeholder="Tell ${h.name} what to do, in your own words."></textarea>
-        ${level.examples.length ? `<div class="ct-suggest ct-plan-only"><span class="ct-suggest-label">Try:</span>${level.examples.map((t) => `<button type="button">${t}</button>`).join("")}</div>` : ""}
-        <div class="ct-row ct-run-only"><button class="ct-btn" data-orders>Change instructions</button></div>
-        <span class="ct-label ct-run-only">What they'll do, on repeat</span>
-        <div class="ct-script ct-run-only"></div>
-        <form class="ct-row ct-run-only" data-talk>
+        <div class="ct-row"><button class="ct-btn is-gold" data-orders>Give instructions</button></div>
+        <span class="ct-label">What they'll do, on repeat</span>
+        <div class="ct-script"></div>
+        <form class="ct-row" data-talk>
           <input class="ct-input" placeholder="Say something to ${h.name}…" autocomplete="off">
           <button class="ct-btn" type="submit">Say</button>
         </form>
       </div>`;
     const ta = $("textarea", card);
-    ta.value = w.orders ?? "";
-    $("[data-fire]", card)?.addEventListener("click", (e) => { e.stopPropagation(); fire(w.id); });
+    ta.value = w.draft ?? w.orders ?? "";
+    $("[data-fire]", card).addEventListener("click", (e) => { e.stopPropagation(); fire(w.id); });
     for (const el of [$(".ct-card-head", card), $(".ct-blurb", card)]) el.addEventListener("click", () => focusCard(w));
-    // Typing anywhere in a card counts as picking that worker.
     card.addEventListener("focusin", () => highlight(w));
     $("[data-orders]", card).addEventListener("click", () => {
       const text = ta.value.trim();
       if (!text) { ta.focus(); return; }
+      w.draft = null;
       talk(w, "orders", text);
     });
-    card.querySelectorAll(".ct-suggest button").forEach((b) => b.addEventListener("click", () => { ta.value = b.textContent; ta.focus(); }));
+    ta.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) $("[data-orders]", card).click(); });
     $("[data-talk]", card).addEventListener("submit", (e) => {
       e.preventDefault();
       const input = $("input", e.currentTarget);
@@ -240,8 +355,8 @@ function buildCrew() {
 }
 
 // Clicking a robot or its card's name/description: highlight both, and put the cursor where
-// you'd type to them next (their instructions while planning, the talk box while working, the desk
-// reply if they're waiting on you).
+// you'd type to them next (their instructions if they have none, the desk reply if they're
+// waiting on you, otherwise the talk box).
 function highlight(w) {
   for (const [id, c] of Object.entries(ui.cards)) c.classList.toggle("is-focused", id === w.id);
   for (const [id, b] of Object.entries(ui.bots)) b.classList.toggle("is-selected", id === w.id);
@@ -250,7 +365,7 @@ function focusCard(w) {
   const card = ui.cards[w.id];
   highlight(w);
   card.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  const target = atDesk(w) ? ui.desk[w.id]?.querySelector("input") : phase === "run" ? $("[data-talk] input", card) : $("textarea", card);
+  const target = atDesk(w) ? ui.desk[w.id]?.querySelector("input") : w.script.length ? $("[data-talk] input", card) : $("textarea", card);
   target?.focus({ preventScroll: true });
 }
 
@@ -261,7 +376,8 @@ function renderScript(w) {
   w._shownCur = null;
 }
 
-const worker = (id) => game.workers.find((w) => w.id === id);
+const worker = (id) => (id === "you" ? game.player : game.workers.find((w) => w.id === id));
+const nameOf = (w) => (w.isPlayer ? "You" : w.hire.name);
 const escapeHTML = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
 
 // ---------- talking to the model ----------
@@ -277,12 +393,13 @@ function setThinking(w, delta) {
 /** Send something to a worker. Resolves true if they answered. */
 async function talk(w, kind, text) {
   const g = game;
+  begin();
   if (kind === "orders") feed(`<b>You → ${w.hire.name}</b> (instructions): ${escapeHTML(text)}`, "is-boss");
   else if (kind === "chat") feed(`<b>You → ${w.hire.name}:</b> ${escapeHTML(text)}`, "is-boss");
   setThinking(w, +1);
   try {
     const r = await respond(g, w, kind, text);
-    if (g !== game) return false;
+    if (g !== game || !g.workers.includes(w)) return false;
     setThinking(w, -1);
     bubble(w, r.reply);
     feed(`<b>${w.hire.name}:</b> ${escapeHTML(r.reply)}`);
@@ -302,52 +419,11 @@ $("#yellForm").addEventListener("submit", (e) => {
   e.preventDefault();
   const input = $("#yellInput");
   const text = input.value.trim();
-  if (!text || !game) return;
+  if (!text || !game || !game.workers.length) return;
   input.value = "";
   feed(`<b>You (yelling):</b> ${escapeHTML(text)}`, "is-boss");
   for (const w of game.workers) talk(w, "yell", text);
 });
-
-// ---------- planning: write everyone's instructions, then start ----------
-
-async function startLevel() {
-  if (phase !== "plan") return;
-  const want = game.workers.map((w) => ({ w, text: $("textarea", ui.cards[w.id]).value.trim() }));
-  if (!game.workers.length) {
-    $("#planNote").textContent = "Hire at least one robot first.";
-    return;
-  }
-  if (!want.some((j) => j.text)) {
-    $("#planNote").textContent = "Write instructions for at least one worker first.";
-    return;
-  }
-  setPhase("loading");
-  document.querySelectorAll(".ct-card textarea").forEach((t) => (t.disabled = true));
-  const saved = jobs[level.id] ?? {};
-  // Record everyone's instructions before anyone reads theirs, so each worker can see what their
-  // coworkers were told.
-  for (const { w, text } of want) if (text) w.orders = text;
-  const results = await Promise.all(want.map(({ w, text }) => {
-    if (!text) return true;
-    // Same instructions as last time: reuse the routine they already worked out.
-    const prev = saved[w.id];
-    if (prev && prev.text === text && prev.script?.length) {
-      Object.assign(w, { orders: prev.text, memory: prev.memory });
-      setScript(game, w, prev.script); renderScript(w);
-      return true;
-    }
-    return talk(w, "orders", text);
-  }));
-  document.querySelectorAll(".ct-card textarea").forEach((t) => (t.disabled = false));
-  if (!results.some(Boolean)) {
-    setPhase("plan");
-    $("#planNote").textContent = "Nobody could be reached. Is the server running? Try again.";
-    return;
-  }
-  setPhase("run");
-  feed(level.shift ? "Shift started." : "Go!", "is-sys");
-}
-$("#goBtn").addEventListener("click", startLevel);
 
 // ---------- speech bubbles, the desk, feed, floaters ----------
 
@@ -398,6 +474,7 @@ function clearDesk(w) {
 
 function oops(w, text) {
   const bot = ui.bots[w.id];
+  if (!bot) return;
   bot.querySelector(".ct-oops")?.remove();
   clearTimeout(ui.oopsTimers[w.id]);
   const el = document.createElement("div");
@@ -452,27 +529,21 @@ function handleEvents() {
         deskMessage(w, escapeHTML(ev.text));
         feed(`<b>${w.hire.name} asks:</b> ${escapeHTML(ev.text)}`);
         break;
-      case "fail": oops(w, `can't: ${ev.why}`); break;
+      case "fail": if (w) oops(w, w.isPlayer ? ev.why.replace(/^I'm /, "you're ").replace(/\bmy\b/g, "your") : `can't: ${ev.why}`); break;
       case "fumble":
         bubble(w, FUMBLES[Math.floor(Math.random() * FUMBLES.length)]);
         feed(`${w.hire.name} dropped a ${ev.item}.`, "is-sys");
         break;
       case "jam": feed(`The paint machine jammed.`, "is-sys"); break;
-      case "fixed": feed(`${w.hire.name} fixed the paint machine.`, "is-sys"); break;
+      case "fixed": feed(`${nameOf(w)} fixed the paint machine.`, "is-sys"); break;
       case "ship": {
-        let what;
-        if (ev.item === "widget") what = `a ${ev.colors[0]} widget`;
-        else if (level.ship === "boxes") what = "a box";
-        else {
-          const same = ev.colors.every((c) => c === ev.colors[0]);
-          what = ev.matched ? `a ${ev.colors[0]} box` : same ? `a ${ev.colors[0]} box nobody ordered, for scrap` : `a mixed box (${ev.colors.join(", ")}) for scrap`;
-        }
-        feed(`${w.hire.name} shipped ${what}: +$${ev.pay}`, "is-sys");
-        floater(`+$${ev.pay}`, STATIONS.DOCK.x, STATIONS.DOCK.y - 8, !ev.matched);
+        const what = ev.item === "widget" ? `a ${ev.colors[0]} widget`
+          : ev.colors.every((c) => c === ev.colors[0]) ? `a ${ev.colors[0]} box` : `a mixed box (${ev.colors.join(", ")})`;
+        feed(ev.matched ? `${nameOf(w)} shipped ${what}: +$${ev.pay}` : `${nameOf(w)} shipped ${what} that isn't on the order. Wasted.`, "is-sys");
+        floater(ev.matched ? `+$${ev.pay}` : "not ordered", STATIONS.DOCK.x, STATIONS.DOCK.y - 8, !ev.matched);
         haul(ev.item === "widget" ? { kind: "widget", color: ev.colors[0] } : { kind: "box", colors: ev.colors });
         break;
       }
-      case "payroll": feed(`Payroll: −$${ev.amount}`, "is-sys"); break;
       case "gaveUp": clearBubble(w); clearDesk(w); feed(`${w.hire.name} gave up waiting and went back to work.`, "is-sys"); break;
       case "stuck": comeComplain(w, ev.failures); break;
       case "end": endLevel(); break;
@@ -503,27 +574,30 @@ const money = (n) => (n < 0 ? `−$${-n}` : `$${n}`);
 function render() {
   const k = floor.clientWidth / 100;
   floor.style.setProperty("--u", `${k}px`);
+  const everyone = [game.player, ...game.workers];
+  // Robots standing in the same spot spread out side by side.
   const spots = new Map();
-  for (const w of game.workers) {
+  for (const w of everyone) {
     const key = `${Math.round(w.x / 3)},${Math.round(w.y / 3)}`;
     if (!spots.has(key)) spots.set(key, []);
     spots.get(key).push(w);
   }
   const spreads = new Map();
   for (const group of spots.values()) group.forEach((w, i) => spreads.set(w, (i - (group.length - 1) / 2) * 6.5));
-  for (const w of game.workers) {
+  for (const w of everyone) {
     const bot = ui.bots[w.id];
-    // Drawn in front of (below) the station tile, so they don't cover what's in it, and spread
-    // side by side with anyone standing in the same spot.
+    if (!bot) continue;
+    // Drawn in front of (below) where they stand, so they don't cover the station's contents.
     const x = Math.min(96, Math.max(4, w.x + (spreads.get(w) ?? 0)));
     bot.style.transform = `translate(${x * k}px, ${(w.y + 11) * k}px)`;
     const held = w.holding ? itemHTML(w.holding) : "";
     if (bot._held !== held) { bot.querySelector(".ct-bot-held").innerHTML = held; bot._held = held; }
+    if (w.isPlayer) continue;
     if (!atDesk(w) && ui.desk[w.id]) { clearDesk(w); clearBubble(w); }
     const card = ui.cards[w.id];
     const status = $(".ct-status", card);
     const waiting = atDesk(w);
-    const st = ui.thinking[w.id] ? "thinking…" : waiting ? "at your desk" : phase !== "run" ? "" : w.script.length ? "working" : "idle";
+    const st = ui.thinking[w.id] ? "thinking…" : waiting ? "at your desk" : w.script.length ? "working" : "idle";
     if (status.textContent !== st) {
       status.textContent = st;
       status.className = "ct-status" + (st === "thinking…" ? " is-thinking" : waiting ? " is-waiting" : "");
@@ -539,41 +613,49 @@ function render() {
     lastVersion = game.version;
     for (const [key, el] of Object.entries(ui.stations)) {
       const items = game.stations[key];
-      el.querySelector(".ct-st-items").innerHTML = items.map(itemHTML).join("");
+      el.querySelector(".ct-st-items").innerHTML = items.map((it) => itemHTML(it, true)).join("");
       el.querySelector(".ct-st-cap").textContent = el.dataset.cap ? `${items.length}/${el.dataset.cap}` : "";
       el.classList.toggle("is-jammed", key === "PAINT" && game.paintJammed);
     }
   }
-  // Center stat: progress toward the goal, or cash on a timed shift.
-  const stat = level.goal ? `${game.shipped}/${level.goal.ship}` : money(Math.round(game.cash));
+  for (const [key, el] of Object.entries(ui.stations)) el.classList.toggle("is-here", game.player.station === key && !game.player.act);
+  const stat = money(Math.floor(game.cash));
   if (stat !== lastStat) {
     lastStat = stat;
     $("#stat").textContent = stat;
-    $("#stat").classList.toggle("is-neg", !level.goal && game.cash < 0);
+    $("#stat").classList.toggle("is-neg", game.cash < 0);
   }
-  const clock = level.shift ? fmtTime(Math.max(0, Math.ceil(level.shift - game.t))) : fmtTime(game.t);
+  const clock = fmtTime(game.t);
   if (clock !== lastClock) { lastClock = clock; $("#clock").textContent = clock; }
-  const orders = level.orders ? game.orders.map((o) => o.id).join(",") : "none";
-  if (orders !== lastOrders) {
-    lastOrders = orders;
-    $("#orders").innerHTML = level.orders
-      ? game.orders.map((o) => `<span class="ct-ticket" title="A box of 3 ${o.color} widgets pays $${o.pay}"><span class="ct-ticket-dots">${`<span class="ct-dot c-${o.color}"></span>`.repeat(3)}</span><span class="ct-ticket-pay">$${o.pay}</span></span>`).join("")
-      : `<span class="ct-goal">${level.howto}</span>`;
+  const order = game.order.map((l) => `${l.color}${l.done}`).join();
+  if (order !== lastOrder) {
+    lastOrder = order;
+    $("#orders").innerHTML = game.order.map((l) => {
+      const icon = level.ship === "boxes"
+        ? `<span class="ct-ticket-dots">${(l.color === "any" ? `<span class="ct-dot c-any"></span>` : `<span class="ct-dot c-${l.color}"></span>`).repeat(3)}</span>`
+        : `<span class="ct-dot ${l.color === "any" ? "c-any" : `c-${l.color}`}"></span>`;
+      return `<span class="ct-ticket ${l.done >= l.count ? "is-done" : ""}" title="${orderLineText(level, l)}">${icon}<span class="ct-ticket-pay">${l.done}/${l.count}</span></span>`;
+    }).join("") + `<span class="ct-goal">$${level.pay} each</span>`;
   }
+  renderHands();
+  renderHiring();
   renderCoach();
 }
 
 // One line on the floor telling you what to do next.
 function renderCoach() {
   let text = "";
-  const atDeskNow = game.workers.find((w) => ui.desk[w.id]);
-  if (phase === "plan") text = level.plan;
-  else if (phase === "loading") text = "Your crew is reading their instructions…";
-  else if (phase === "run") {
-    if (atDeskNow) text = `${atDeskNow.hire.name} came to your desk. Answer below the floor.`;
-    else if (game.shipped === 0 && game.t > 25) text = "Nothing's shipped yet. Watch what they do, and change their instructions if they're wrong.";
-    else if (level.orders && game.shipped === 0) text = "Three widgets have to reach <b>Pack</b>, someone packs them into a box, and someone carries the box to the <b>Dock</b>.";
-    else if (level.orders && game.filled === 0) text = "A box only pays well if all 3 widgets match an order up top. Mixed boxes pay $5.";
+  const deskVisitor = game.workers.find((w) => ui.desk[w.id]);
+  const idle = game.workers.find((w) => !w.script.length && !ui.thinking[w.id]);
+  const open = level.pool.map((id) => CANDIDATES.find((c) => c.id === id)).filter((c) => !game.workers.some((w) => w.id === c.id));
+  const cheapest = open.length ? Math.min(...open.map(hireFee)) : null;
+  if (deskVisitor) text = `${deskVisitor.hire.name} came to your desk. Answer below the floor.`;
+  else if (idle) text = `${idle.hire.name} is waiting for instructions. Write them in their card and press <b>Give instructions</b>.`;
+  else if (!game.workers.length && game.counted === 0) text = level.start;
+  else if (!game.workers.length && cheapest != null) {
+    text = game.cash >= cheapest
+      ? `You can afford a robot. Hire one on the right and tell them what to do, or keep going yourself.`
+      : `Each one that's on the order pays $${level.pay}. At $${cheapest} you can hire your first robot.`;
   }
   const el = $("#coach");
   if (el._text !== text) { el.innerHTML = text; el._text = text; }
@@ -582,7 +664,7 @@ function renderCoach() {
 function frame(now) {
   const dt = Math.min(0.1, (now - lastFrame) / 1000);
   lastFrame = now;
-  if (game && phase === "run" && !paused && !game.over) { step(game, dt); handleEvents(); }
+  if (game && phase === "run" && started && !paused && !game.over) { step(game, dt); handleEvents(); }
   if (game) render();
   requestAnimationFrame(frame);
 }
@@ -590,68 +672,43 @@ function frame(now) {
 // ---------- screens ----------
 
 function openLevel(L) {
-  // Remember this level's instructions before leaving it.
-  if (game) saveJobs();
   level = L;
-  // A fixed crew, or on a hiring level whoever you had last time.
-  const crewIds = L.hires ?? jobs[L.id]?.crew ?? [];
-  game = newGame(L, crewIds.map((id) => CANDIDATES.find((h) => h.id === id)));
-  const saved = jobs[L.id] ?? {};
-  for (const w of game.workers) if (saved[w.id]) w.orders = saved[w.id].text;
-  lastVersion = -1; lastStat = null; lastClock = null; lastOrders = "";
+  game = newGame(L, []);
+  started = false;
+  lastVersion = -1; lastStat = null; lastClock = null; lastOrder = ""; lastHands = ""; lastHiring = "";
   ui.thinking = {};
   Object.keys(ui.desk).forEach((id) => clearDesk({ id }));
+  keysDown.clear();
   buildFloor();
   buildCrew();
   renderHiring();
   $("#levelName").textContent = `Level ${L.id}: ${L.name}`;
-  $("#statLabel").textContent = L.goal ? "Shipped" : "Cash";
-  $("#goalLabel").textContent = L.orders ? "Customers want" : "Goal";
-  resetPlanNote();
   $("#feed").innerHTML = "";
+  feed("The clock starts when you make your first move.", "is-sys");
   $("#startScreen").classList.add("is-hidden");
   $("#endScreen").classList.add("is-hidden");
   $("#pauseScreen").classList.add("is-hidden");
   paused = false;
-  setPhase("plan");
-  if (game.workers.length) $("textarea", ui.cards[game.workers[0].id]).focus({ preventScroll: true });
-}
-
-function saveJobs() {
-  const saved = (jobs[level.id] ??= {});
-  saved.crew = game.workers.map((w) => w.id);
-  for (const w of game.workers) {
-    const text = ui.cards[w.id] ? $("textarea", ui.cards[w.id]).value.trim() : w.orders;
-    // Keep the worked-out routine only if the instructions are the one it was made from.
-    saved[w.id] = { text, script: text === w.orders ? w.script : null, memory: w.memory };
-  }
+  setPhase("run");
 }
 
 function endLevel() {
   setPhase("end");
-  saveJobs();
+  const t = game.t;
+  const stars = t <= level.stars[0] ? 3 : t <= level.stars[1] ? 2 : 1;
+  const prev = best[level.id];
+  if (!prev || t < prev.time) best[level.id] = { time: t, stars };
+  unlocked = Math.max(unlocked, level.id + 1);
   const starSVG = `<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>`;
+  const cut = ["finish", `≤ ${fmtTime(level.stars[1])}`, `≤ ${fmtTime(level.stars[0])}`];
+  $("#endTitle").textContent = "Order filled";
+  $("#stars").innerHTML = [0, 1, 2].map((i) => `<div class="ct-star ${i < stars ? "is-on" : ""}">${starSVG}<span>${cut[i]}</span></div>`).join("");
+  $("#endStats").innerHTML = [["Time", fmtTime(t)], ["Money left", money(Math.floor(game.cash))], ["Crew", game.workers.length]]
+    .map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
   const next = LEVELS.find((L) => L.id === level.id + 1);
   const btns = [];
-  if (level.goal) {
-    done.add(level.id);
-    unlocked = Math.max(unlocked, level.id + 1);
-    $("#endTitle").textContent = "Level complete";
-    $("#stars").innerHTML = "";
-    $("#endStats").innerHTML = [["Time", fmtTime(game.t)], ["Shipped", game.shipped], ["Earned", money(game.earned)]]
-      .map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
-    if (next) btns.push(`<button class="ct-btn is-gold" data-go="next">Next: ${next.name}</button>`);
-    btns.push(`<button class="ct-btn" data-go="again">Play again</button>`);
-  } else {
-    const profit = Math.round(game.cash - RULES.startCash);
-    const stars = level.stars.filter((p) => profit >= p).length;
-    if (stars > 0) { done.add(level.id); unlocked = Math.max(unlocked, level.id + 1); }
-    $("#endTitle").textContent = "Shift over";
-    $("#stars").innerHTML = level.stars.map((p, i) => `<div class="ct-star ${i < stars ? "is-on" : ""}">${starSVG}<span>+$${p}</span></div>`).join("");
-    $("#endStats").innerHTML = [["Profit", money(profit)], ["Orders filled", game.filled], ["Scrap boxes", game.scrap]]
-      .map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
-    btns.push(`<button class="ct-btn is-gold" data-go="again">Another shift</button>`);
-  }
+  if (next) btns.push(`<button class="ct-btn is-gold" data-go="next">Next: ${next.name}</button>`);
+  btns.push(`<button class="ct-btn ${next ? "" : "is-gold"}" data-go="again">Try again</button>`);
   btns.push(`<button class="ct-btn" data-go="menu">Levels</button>`);
   $("#endBtns").innerHTML = btns.join("");
   $("#endBtns").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
@@ -664,25 +721,24 @@ function endLevel() {
 
 function setPaused(p) {
   paused = p;
+  keysDown.clear();
+  if (game) playerSteer(game, 0, 0);
   $("#pauseScreen").classList.toggle("is-hidden", !p);
 }
 
-$("#pauseBtn").addEventListener("click", () => { if ((phase === "run" && !game.over) || phase === "plan") setPaused(!paused); });
+$("#pauseBtn").addEventListener("click", () => { if (phase === "run" && !game.over) setPaused(!paused); });
 $("#resumeBtn").addEventListener("click", () => setPaused(false));
 $("#restartBtn").addEventListener("click", () => openLevel(level));
-$("#menuBtn").addEventListener("click", () => { saveJobs(); showMenu(); });
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && phase === "run" && !game.over) setPaused(!paused);
-});
+$("#menuBtn").addEventListener("click", () => showMenu());
 
 renderLevels();
 requestAnimationFrame(frame);
 
 // Test hook: drive the game from Playwright or the console.
 window.ct = {
-  get game() { return game; }, get phase() { return phase; },
-  openLevel: (n) => openLevel(LEVELS[n - 1]), startLevel, unlockAll: () => { unlocked = LEVELS.length; renderLevels(); },
+  get game() { return game; }, get phase() { return phase; }, get started() { return started; },
+  openLevel: (n) => openLevel(LEVELS[n - 1]), unlockAll: () => { unlocked = LEVELS.length; renderLevels(); },
   setScript: (id, actions) => { const w = worker(id); setScript(game, w, actions); renderScript(w); },
-  step: (dt) => { step(game, dt); handleEvents(); render(); },
-  talk: (id, kind, text) => talk(worker(id), kind, text), setPaused,
+  step: (dt) => { if (started) step(game, dt); handleEvents(); render(); },
+  talk: (id, kind, text) => talk(worker(id), kind, text), setPaused, begin, hire, playerActions,
 };

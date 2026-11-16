@@ -259,6 +259,29 @@
     .ct-skill { font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: #f2c23022; color: var(--accent-hi); border: 1px solid #f2c23055; }
     .ct-skill.is-none { background: none; color: var(--faint); border-color: var(--border); }
     .ct-small-btn { padding: 4px 10px; font-size: .78rem; box-shadow: 0 2px 0 var(--lip); }
+
+    /* you, on the floor */
+    .ct-bot.is-you .ct-bot-head { border-radius: 50%; aspect-ratio: 1; }
+    .ct-bot.is-you .ct-bot-head::before { /* hard hat instead of an antenna */
+      width: 86%; height: calc(var(--u) * 1.6); top: calc(var(--u) * -.9); left: 50%; transform: translateX(-50%);
+      background: var(--accent); border-radius: 999px 999px 3px 3px; box-shadow: 0 2px 0 #8f6d0c;
+    }
+    .ct-bot.is-you .ct-bot-name { color: var(--accent-hi); }
+    .ct-st { cursor: pointer; }
+    .ct-st:hover { border-color: #f2c23066; }
+    .ct-st.is-here { border-color: var(--accent); }
+    .ct-st [data-pick] { cursor: pointer; }
+    .ct-dot.c-any { background: repeating-linear-gradient(90deg, var(--red) 0 33%, var(--blue) 33% 66%, var(--green) 66% 100%); }
+    .ct-ticket.is-done { opacity: .5; text-decoration: line-through; }
+    .ct-goal { color: var(--muted); font-size: .9rem; }
+
+    /* the action bar: what you can do where you stand */
+    .ct-hands { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-top: 12px; min-height: 46px; }
+    .ct-hands-where { color: var(--muted); }
+    .ct-hands-where b { color: var(--accent-hi); }
+    .ct-hands-acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .ct-hands-note { color: var(--faint); }
+    .ct-hands kbd { font: 500 .7rem var(--font-mono); margin-left: 8px; padding: 1px 5px; border-radius: 4px; background: #0003; opacity: .75; }
   </style>
 </head>
 <body data-phase="menu">
@@ -272,7 +295,7 @@
 
   <main class="ct-main">
     <section>
-      <div class="ct-orders"><span class="ct-orders-label" id="goalLabel">Customers want</span><div id="orders" style="display:contents"></div></div>
+      <div class="ct-orders"><span class="ct-orders-label" id="goalLabel">Today's order</span><div id="orders" style="display:contents"></div></div>
       <div class="ct-floor" id="floor">
         <svg class="ct-line-svg" viewBox="0 0 100 64" preserveAspectRatio="none" aria-hidden="true">
           <defs><marker id="arrowhead" viewBox="0 0 6 6" refX="0" refY="3" markerWidth="2.4" markerHeight="2.4" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L6 3L0 6z" fill="#f2c23088"/></marker></defs>
@@ -281,17 +304,14 @@
         <div class="ct-coach" id="coach"></div>
       </div>
       <div class="ct-deskpanel" id="deskPanel"></div>
-      <div class="ct-planbar ct-plan-only">
-        <button class="ct-btn is-gold ct-big" id="goBtn">Start</button>
-        <span class="ct-planbar-note" id="planNote">Write the instructions on the right, then start. The clock starts when you do.</span>
-      </div>
+      <div class="ct-hands" id="hands"></div>
       <form class="ct-yell ct-run-only" id="yellForm">
         <input class="ct-input" id="yellInput" placeholder="Yell to the whole floor…" autocomplete="off">
         <button class="ct-btn is-gold" type="submit">Yell</button>
       </form>
     </section>
     <aside class="ct-side">
-      <div id="hiring" class="ct-hiring ct-plan-only"></div>
+      <div id="hiring" class="ct-hiring ct-run-only"></div>
       <div id="crew" class="ct-side"></div>
       <div class="ct-radio">
         <span class="ct-label">Floor radio</span>
@@ -303,7 +323,7 @@
   <div class="ct-overlay" id="startScreen">
     <div class="ct-card-big">
       <div class="ct-logo">Clanker Tycoon</div>
-      <p class="ct-howto">You run a tiny factory staffed by robots. You don't move anything yourself: you write each robot's instructions in plain English, press start, and watch what they make of it.</p>
+      <p class="ct-howto">You run a tiny factory. You start broke and do the work yourself. Ship what's on the order to earn money, then hire robots, tell them in plain English what to do, and let them do it for you.</p>
       <div class="ct-levels" id="levels"></div>
       <div class="ct-small" id="backendNote"></div>
     </div>

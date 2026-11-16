@@ -1,6 +1,7 @@
 // The factory: plain state plus step(). No DOM and no model calls, so it runs headless too.
 // Workers run looping action scripts. The model only writes scripts and lines of dialogue; every
-// fumble, jam and failure happens here, in code.
+// fumble, jam and failure happens here, in code. You (the player) are on the floor too: you walk
+// around and do the same actions by hand, through the same code.
 
 export const FLOOR = { w: 100, h: 64 };
 export const STATIONS = {
@@ -20,11 +21,8 @@ export const RULES = {
   speed: 22,            // floor units per second
   binCap: 5, packCap: 6, paintCap: 3, beltCap: 8,
   beltEvery: 3.2,       // seconds between new widgets
-  shift: 240,           // seconds
-  payrollEvery: 60,
-  startCash: 20,
   jamChance: 0.12,      // per paint job
-  scrapPay: 5,
+  reach: 9,             // how close you have to stand to a station to use it
   beltWait: 6,          // how long anyone waits at the belt for a widget
   patientWait: 8,       // how long a Patient worker waits anywhere else (for a box, for space, for widgets)
   fumble: 0.05,         // chance to drop what you pick up or put down, unless Careful
@@ -34,7 +32,6 @@ export const RULES = {
   deskWait: 30,         // how long a worker waits at your desk before going back
 };
 const DUR = { pickUp: 0.5, putDown: 0.5, paint: 1.5, pack: 2, fix: 3, say: 1 };
-const ORDER_PAY = { red: 30, blue: 30, green: 40 };
 
 export function mulberry32(a) {
   return function () {
@@ -46,7 +43,6 @@ export function mulberry32(a) {
 }
 
 const randColor = (rng) => { const r = rng(); return r < 0.4 ? "red" : r < 0.8 ? "blue" : "green"; };
-const newOrder = (s) => { const color = randColor(s.rng); return { id: ++s.ids, color, pay: ORDER_PAY[color] }; };
 const label = (st) => STATIONS[st]?.label ?? st;
 const itemName = (it) => (it.kind === "box" ? "box" : `${it.color} widget`);
 
@@ -54,12 +50,19 @@ const itemName = (it) => (it.kind === "box" ? "box" : `${it.color} widget`);
 export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
   const s = {
     t: 0, seed, rng: mulberry32(seed), ids: 0, version: 0, level,
-    cash: level.payroll ? RULES.startCash : 0, shipped: 0, filled: 0, scrap: 0, wagesPaid: 0, earned: 0,
+    cash: 0, shipped: 0, counted: 0, wasted: 0, wagesPaid: 0, earned: 0,
     stations: Object.fromEntries(level.stations.map((k) => [k, []])),
-    paintJammed: false, orders: [], workers: [], events: [],
-    nextBelt: 1, nextPayroll: RULES.payrollEvery, over: false, won: false,
+    paintJammed: false, workers: [], events: [],
+    order: level.order.map((l) => ({ ...l, done: 0 })),
+    nextBelt: 1, over: false, won: false,
+    // You. Starts by the desk; same shape as a worker so the same action code runs for both.
+    player: {
+      id: "you", isPlayer: true, index: -1,
+      hire: { id: "you", name: "You", skills: ["careful"], wage: 0 },
+      x: DESK.x, y: DESK.y - 21, station: null, holding: null, act: null, next: null,
+      vx: 0, vy: 0, fails: 0, failLog: [], lastReport: 0, script: [],
+    },
   };
-  if (level.orders) for (let i = 0; i < 3; i++) s.orders.push(newOrder(s));
   // A few widgets already waiting, so there's something on the floor before the clock starts.
   for (let i = 0; i < 4; i++) s.stations.BELT_A.push({ kind: "widget", color: randColor(s.rng) });
   for (const hire of hires) addWorker(s, hire);
@@ -93,16 +96,77 @@ export function step(s, dt) {
   s.t += dt;
   while (s.t >= s.nextBelt) {
     s.nextBelt += RULES.beltEvery;
-    if (s.stations.BELT_A.length < RULES.beltCap) { s.stations.BELT_A.push({ kind: "widget", color: randColor(s.rng) }); s.version++; }
+    // A full belt drops its oldest widget off the end, so new ones keep coming.
+    if (s.stations.BELT_A.length >= RULES.beltCap) s.stations.BELT_A.shift();
+    s.stations.BELT_A.push({ kind: "widget", color: randColor(s.rng) });
+    s.version++;
   }
-  if (s.level.payroll && s.t >= s.nextPayroll) {
-    s.nextPayroll += RULES.payrollEvery;
-    const wages = s.workers.reduce((a, w) => a + w.hire.wage, 0);
-    s.cash -= wages; s.wagesPaid += wages;
-    emit(s, { type: "payroll", amount: wages });
-  }
+  // Wages are paid by the second.
+  const wages = s.workers.reduce((a, w) => a + w.hire.wage, 0) * dt / 60;
+  s.cash -= wages; s.wagesPaid += wages;
+  stepPlayer(s, s.player, dt);
   for (const w of s.workers) stepWorker(s, w);
-  if (!s.over && s.level.shift && s.t >= s.level.shift) { s.over = true; emit(s, { type: "end" }); }
+}
+
+// ---- you ----
+
+/** The station you're close enough to use, if any. */
+function stationNear(s, x, y) {
+  let best = null, bestD = RULES.reach;
+  for (const k of Object.keys(s.stations)) {
+    const d = Math.hypot(STATIONS[k].x - x, STATIONS[k].y - y);
+    if (d < bestD) { best = k; bestD = d; }
+  }
+  return best;
+}
+
+function stepPlayer(s, p, dt) {
+  if (p.act) {
+    advance(s, p);
+    if (!p.act && p.next) { const a = p.next; p.next = null; playerDo(s, a); }
+    return;
+  }
+  if (p.vx || p.vy) {
+    const len = Math.hypot(p.vx, p.vy);
+    p.x = Math.min(97, Math.max(3, p.x + (p.vx / len) * RULES.speed * dt));
+    p.y = Math.min(50, Math.max(2, p.y + (p.vy / len) * RULES.speed * dt));
+    p.station = stationNear(s, p.x, p.y);
+  }
+}
+
+/** Walk to a station (cancels whatever walk you were on), then optionally do `then` there. */
+export function playerGo(s, station, then = null) {
+  const p = s.player;
+  if (p.act && p.act.kind !== "moveTo" && p.act.kind !== "walkTo") return; // busy with your hands
+  const st = STATIONS[station];
+  if (!st || !(station in s.stations)) return;
+  p.next = then;
+  if (p.station === station && !p.act) { p.next = null; if (then) playerDo(s, then); return; }
+  walk(s, p, st.x, st.y, { kind: "moveTo", arrive: station, a: { action: "moveTo", station } });
+}
+
+/** Walk to a spot on the floor. */
+export function playerWalkTo(s, x, y) {
+  const p = s.player;
+  if (p.act && p.act.kind !== "moveTo" && p.act.kind !== "walkTo") return;
+  p.next = null;
+  walk(s, p, Math.min(97, Math.max(3, x)), Math.min(50, Math.max(2, y)), { kind: "walkTo" });
+}
+
+/** Keyboard movement: a direction to walk in, or 0,0 to stop. Cancels a click-walk. */
+export function playerSteer(s, vx, vy) {
+  const p = s.player;
+  p.vx = vx; p.vy = vy;
+  if ((vx || vy) && (p.act?.kind === "moveTo" || p.act?.kind === "walkTo")) { p.act = null; p.next = null; }
+}
+
+/** Do something with your hands where you stand: pickUp, putDown, paint, pack, fix. */
+export function playerDo(s, a) {
+  const p = s.player;
+  if (p.act) return;
+  p.station = stationNear(s, p.x, p.y);
+  if (!p.station) return fail(s, p, a, "you're not at a station");
+  start(s, p, a);
 }
 
 function stepWorker(s, w) {
@@ -173,6 +237,7 @@ function finish(s, w, act) {
   const a = act.a;
   switch (act.kind) {
     case "moveTo": w.station = act.arrive; return ok(s, w, a);
+    case "walkTo": w.station = stationNear(s, w.x, w.y); return;
     case "toDesk": w.waiting = { reason: act.reason, until: s.t + RULES.deskWait }; return;
     case "pickUp": return pickUp(s, w, a, act);
     case "putDown": return putDown(s, w, a, act);
@@ -187,6 +252,7 @@ function finish(s, w, act) {
 // what they need (a box, room in a bin, three widgets to pack) instead of failing right away.
 // Returns true if they're waiting another half second.
 function keepWaiting(s, w, act) {
+  if (w.isPlayer) return false;
   const limit = w.station === "BELT_A" ? RULES.beltWait : hasSkill(w, "patient") ? RULES.patientWait : 0;
   if ((act.waited ?? 0) >= limit) return false;
   w.act = { ...act, waited: (act.waited ?? 0) + 0.5, until: s.t + 0.5 };
@@ -224,7 +290,7 @@ function putDown(s, w, a, act) {
   if (!w.holding) return fail(s, w, a, "my hands are empty");
   const st = w.station;
   if (st === "DOCK") {
-    if (s.level.ship !== "widgets" && w.holding.kind !== "box") return fail(s, w, a, "only boxes can ship from the dock");
+    if (s.level.ship === "boxes" && w.holding.kind !== "box") return fail(s, w, a, "only boxes can ship from the dock");
     ship(s, w, w.holding);
     w.holding = null; s.version++;
     return ok(s, w, a);
@@ -269,22 +335,21 @@ function fix(s, w, a) {
   fail(s, w, a, "there's nothing to fix here");
 }
 
+/** Does this item count toward this line of the order? */
+function fits(line, item) {
+  if (item.kind === "box") return line.color === "any" || item.colors.every((c) => c === line.color);
+  return line.color === "any" || item.color === line.color;
+}
+
 function ship(s, w, item) {
   const L = s.level;
-  let pay, matched = true;
   const colors = item.kind === "box" ? item.colors : [item.color];
-  if (L.ship === "widgets") pay = L.widgetPay;
-  else if (L.ship === "boxes") pay = L.boxPay;
-  else {
-    const same = colors.every((c) => c === colors[0]);
-    const idx = same ? s.orders.findIndex((o) => o.color === colors[0]) : -1;
-    matched = idx >= 0;
-    if (matched) { pay = s.orders[idx].pay; s.orders[idx] = newOrder(s); s.filled++; }
-    else { pay = RULES.scrapPay; s.scrap++; }
-  }
+  const line = s.order.find((l) => l.done < l.count && fits(l, item));
+  const pay = line ? L.pay : 0;
+  if (line) { line.done++; s.counted++; } else s.wasted++;
   s.cash += pay; s.earned += pay; s.shipped++;
-  emit(s, { type: "ship", worker: w.id, pay, matched, item: item.kind, colors });
-  if (L.goal && s.shipped >= L.goal.ship) { s.over = true; s.won = true; emit(s, { type: "end" }); }
+  emit(s, { type: "ship", worker: w.id, pay, matched: !!line, item: item.kind, colors });
+  if (s.order.every((l) => l.done >= l.count)) { s.over = true; s.won = true; emit(s, { type: "end" }); }
 }
 
 // Only real work resets the failure count. Walking doesn't, or a worker whose every lap fails
@@ -296,7 +361,7 @@ function fail(s, w, a, why) {
   w.failLog.push({ t: s.t, action: a?.action, why });
   if (w.failLog.length > 6) w.failLog.shift();
   emit(s, { type: "fail", worker: w.id, action: a?.action, why });
-  if (w.fails >= RULES.stuckAfter && s.t - w.lastReport >= RULES.reportCooldown) {
+  if (!w.isPlayer && w.fails >= RULES.stuckAfter && s.t - w.lastReport >= RULES.reportCooldown) {
     w.lastReport = s.t; w.fails = 0;
     emit(s, { type: "stuck", worker: w.id, failures: w.failLog.slice(-4) });
     goToDesk(s, w, "stuck");
@@ -347,8 +412,8 @@ export function viewFor(s, w) {
   for (const k of Object.keys(s.stations)) floor[k] = describe(s.stations[k]);
   const view = { you, floor };
   if ("PAINT" in s.stations) view.paintMachine = s.paintJammed ? "JAMMED" : "working";
-  if (s.level.orders) view.openOrders = s.orders.map((o) => `box of 3 ${o.color} pays $${o.pay}`);
-  if (s.level.goal) view.goal = `ship ${s.level.goal.ship} ${s.level.ship}; ${s.shipped} shipped so far`;
+  view.order = s.order.map((l) => orderLineText(s.level, l));
+  view.boss = `the boss works on the floor too: at ${whereText(s.player)}, holding ${holdingText(s.player)}`;
   const others = s.workers.filter((o) => o !== w);
   // Coworkers' instructions too, so a worker knows the rest of the line is covered and sticks to
   // their own part.
@@ -371,4 +436,10 @@ export function actionLabel(a) {
     case "askBoss": return "ask you";
     default: return a.action;
   }
+}
+
+/** "2 of 5 green boxes shipped" etc. */
+export function orderLineText(L, l) {
+  const what = L.ship === "boxes" ? (l.color === "any" ? "boxes (any color)" : `${l.color} boxes`) : (l.color === "any" ? "widgets (any color)" : `${l.color} widgets`);
+  return `${l.done} of ${l.count} ${what} shipped`;
 }
