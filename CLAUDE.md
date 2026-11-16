@@ -59,7 +59,17 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - A level is a fixed order, scored by time. You press Start to begin; hiring happens before Start
   and closes once the shift runs. You can still change instructions and talk mid-shift.
 
+**The model backend**
+- The LLM backend must stay swappable. Nothing Claude- or Haiku-specific in the design, the
+  prompts, or the worker language: everything goes through `src/llm.js` (text in, JSON out), and
+  any provider-specific code lives behind it. Keep this in mind for every design decision.
+
 **The worker language (direction, not built yet)**
+- Workers' programs are a small **JavaScript subset**: models of every provider write JS fluently,
+  and an off-the-shelf parser (acorn) gives us the syntax tree, so there's no parser to write. We
+  interpret the tree ourselves as a coroutine that pauses at each action, with a step limit, a
+  per-worker whitelist of tools (from their skills), and no access to anything else. The program
+  comes back as plain text inside the JSON answer, so it works with any backend.
 - Workers compile instructions once into a routine the sim runs without the model. Haiku isn't fast
   enough for a real-time loop, so make what it compiles smarter instead of calling it more.
 - Next for the language: conditionals, events ("when the machine jams…"), and full vision
