@@ -320,7 +320,11 @@ function renderHiring() {
 
 // Hiring or letting someone go rebuilds the floor and the cards; keep what's typed in the cards.
 function keepTyped() {
-  for (const w of game.workers) if (ui.cards[w.id]) w.draft = $("textarea", ui.cards[w.id]).value;
+  for (const w of game.workers) {
+    if (!ui.cards[w.id]) continue;
+    const v = $("textarea", ui.cards[w.id]).value;
+    w.draft = v !== (w.orders ?? "") ? v : null; // only unsent edits count as a draft
+  }
 }
 function hire(id) {
   const c = CANDIDATES.find((h) => h.id === id);
@@ -539,6 +543,8 @@ async function giveInstructions(w, text) {
 /** You said something to a worker ("message"), or yelled to the floor ("yell"). Always answered. */
 function message(w, kind, text) {
   if (kind === "message") feed(`<b>You → ${w.hire.name}:</b> ${escapeHTML(text)}`, "is-boss");
+  // You answered: someone waiting at your desk stays for the rest of the conversation.
+  if (w.waiting) w.waiting.until = Infinity;
   return wake(w, { kind, text }, "!");
 }
 
