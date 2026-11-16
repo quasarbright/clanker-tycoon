@@ -54,8 +54,14 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   (conditions can read every station, the order, and every coworker).
 - A `think` step that calls the model mid-shift. Limited: for unexpected events rather than part
   of the regular loop, and/or a skill not everyone has, with a budget.
+- A direct message or a `think` can inject a **one-time** sequence ("grab that box first"), after
+  which the worker goes back to their routine. Changing the routine for good is a separate, visible
+  thing: it rewrites the worker's instructions on their card. One-off is the default; players
+  shouldn't have to guess which one a message did.
 - Workers coordinating by talking to each other is for managers later, as model calls. Not
   deterministic messaging between scripts.
+- The overall shape: each worker is an agent that mostly runs deterministically and is "woken up"
+  to think now and then (like robots: a fast controller plus an occasional slow planner).
 - Model calls run with thinking off where the backend allows it. No compiling while you type.
 
 **Controls**
