@@ -69,7 +69,9 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   and an off-the-shelf parser (acorn) gives us the syntax tree, so there's no parser to write. We
   interpret the tree ourselves as a coroutine that pauses at each action, with a step limit, a
   per-worker whitelist of tools (from their skills), and no access to anything else. The program
-  comes back as plain text inside the JSON answer, so it works with any backend.
+  comes back as plain text inside the JSON answer, so it works with any backend. Chosen after an
+  experiment against a small Lisp (`tools/lang-experiment/REPORT.md`): equally valid and fast, but
+  correct 24/24 vs 19/24, and it never strayed outside the subset.
 - Workers compile instructions once into a routine the sim runs without the model. Haiku isn't fast
   enough for a real-time loop, so make what it compiles smarter instead of calling it more.
 - Next for the language: conditionals, events ("when the machine jams…"), and full vision

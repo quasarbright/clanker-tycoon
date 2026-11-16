@@ -1,0 +1,1038 @@
+{
+ "tasks": [
+  {
+   "id": "haul",
+   "instructions": "Bring widgets from the belt to Pack.",
+   "order": "4 red boxes",
+   "coworkers": {
+    "Pip": "Pack boxes at Pack and ship them from the dock."
+   },
+   "expect": "Loop: BELT → pick up (red, or any) → PACK → put down. Nothing else."
+  },
+  {
+   "id": "packer",
+   "instructions": "Pack boxes at Pack and ship them from the dock.",
+   "order": "4 red boxes",
+   "coworkers": {
+    "Gary": "Bring widgets from the belt to Pack.",
+    "Rusty": "Bring widgets from the belt to Pack."
+   },
+   "expect": "Only PACK and DOCK: pack (red) when 3 are there, pick up the box, ship at DOCK. Must NOT fetch from the belt."
+  },
+  {
+   "id": "order-color",
+   "instructions": "Pack whatever color the order needs most, ship it, and keep going until the order is done.",
+   "order": "2 red boxes, 3 blue boxes",
+   "coworkers": {
+    "Gary": "Bring widgets from the belt to Pack."
+   },
+   "expect": "Pick the color with the larger needs(); pack that color when 3 are at PACK; ship; stop (or idle) when needsAny() is 0."
+  },
+  {
+   "id": "paint-to-order",
+   "instructions": "Paint red widgets blue and ship them, but only as many as the order still needs.",
+   "order": "2 blue widgets (loose widgets ship)",
+   "floorExtra": {
+    "BELT": "4 red widgets"
+   },
+   "coworkers": {},
+   "expect": "While needs(blue) > 0: BELT → pick up red → PAINT → paint blue → DOCK → put down. Stop after."
+  },
+  {
+   "id": "overflow",
+   "instructions": "Haul widgets from the belt to Pack. If Pack is full, put them in bin 1 instead.",
+   "order": "4 red boxes",
+   "coworkers": {
+    "Pip": "Pack boxes at Pack and ship them from the dock."
+   },
+   "expect": "BELT → pick up → if space(PACK) > 0 go PACK else BIN_1 → put down."
+  },
+  {
+   "id": "jam-keeper",
+   "instructions": "Stay at the paint machine. Whenever it jams, fix it right away. Otherwise grab a widget from the belt, paint it green, and drop it at Pack.",
+   "order": "3 green boxes",
+   "coworkers": {
+    "Pip": "Pack green boxes and ship them."
+   },
+   "expect": "Check jammed() before painting (and fix); BELT → pick up → PAINT → (fix if jammed) → paint green → PACK → put down."
+  },
+  {
+   "id": "switch-colors",
+   "instructions": "Ship red boxes until the red part of the order is done, then switch to blue.",
+   "order": "2 red boxes, 2 blue boxes",
+   "coworkers": {
+    "Gary": "Bring red and blue widgets from the belt to Pack."
+   },
+   "expect": "Color = needs(red) > 0 ? red : blue; pack that color at PACK, pick up box, ship at DOCK; stop when done."
+  },
+  {
+   "id": "sorter",
+   "instructions": "Sort the belt: blue widgets go to bin 2, red widgets go to bin 1. Leave the greens on the belt.",
+   "order": "none (sorting job)",
+   "coworkers": {},
+   "expect": "At BELT pick up red or blue (not green); red → BIN_1, blue → BIN_2. Must not pick up green."
+  }
+ ],
+ "results": [
+  {
+   "lang": "js",
+   "task": "haul",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"BELT\");\n  pickUp();\n  move(\"PACK\");\n  putDown();\n}",
+    "reply": "I'll keep bringing widgets from the belt to Pack all shift.",
+    "ms": 2962,
+    "wall": 4514.7,
+    "out": 520,
+    "thinking": 389
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "haul",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (move BELT)\n  (pick-up)\n  (move PACK)\n  (put-down))",
+    "reply": "I'll keep bringing widgets from the belt to Pack all shift.",
+    "ms": 3434,
+    "wall": 5046.6,
+    "out": 429,
+    "thinking": 300
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "packer",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (move PACK)\n  (when (and (>= (count PACK red) 3) (> (needs red) 0))\n    (pack red))\n  (when (> (boxes PACK) 0)\n    (pick-up-box)\n    (move DOCK)\n    (put-down)\n    (move PACK)))",
+    "reply": "I'll pack red boxes at PACK for today's order of 4 and ship each finished box from the DOCK.",
+    "ms": 4670,
+    "wall": 6197.3,
+    "out": 883,
+    "thinking": 677
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    move(\"PACK\");\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    if (holding() === \"nothing\") {\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n    }\n  }\n  wait(1);\n}",
+    "reply": "I'll pack red widgets into boxes at Pack until the 4 red boxes are done, and ship each finished box from the dock.",
+    "ms": 5014,
+    "wall": 6526.8,
+    "out": 953,
+    "thinking": 710
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let c = \"red\";\n  if (needs(\"blue\") > needs(c)) { c = \"blue\"; }\n  if (needs(\"green\") > needs(c)) { c = \"green\"; }\n  move(\"PACK\");\n  if (count(\"PACK\", c) >= 3) { pack(c); }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(2);\n}",
+    "reply": "Today's order needs 3 blue and 2 red boxes, so I'll pack whichever color is needed most, ship each finished box to DOCK, and keep going until the order is complete.",
+    "ms": 6151,
+    "wall": 7083.1,
+    "out": 1241,
+    "thinking": 948
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "paint-to-order",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (when (> (needs-any) 0)\n    (move BELT)\n    (pick-up red)\n    (when (= (holding) red)\n      (move PAINT)\n      (when (jammed?) (fix))\n      (paint blue)\n      (move DOCK)\n      (put-down))))",
+    "reply": "I'll paint red widgets blue and ship them, stopping once the order's 2 blue widgets are covered.",
+    "ms": 5719,
+    "wall": 6597.9,
+    "out": 1087,
+    "thinking": 885
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"blue\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      move(\"DOCK\");\n      putDown();\n    }\n  }\n  wait(1);\n}",
+    "reply": "I'll paint red widgets blue and ship them to the dock, stopping once the order no longer needs any more blue.",
+    "ms": 6336,
+    "wall": 7184,
+    "out": 1274,
+    "thinking": 1052
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (when (> (needs-any) 0)\n    (let ((c (if (>= (needs blue) (needs red)) blue red)))\n      (while (and (< (count PACK c) 3) (> (count BELT c) 0))\n        (move BELT)\n        (pick-up c)\n        (move PACK)\n        (put-down))\n      (when (>= (count PACK c) 3)\n        (pack c)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)\n        (move PACK)))))",
+    "reply": "I'll pack blue first since the order needs 3 blue boxes, then red, shipping each box to DOCK until the order is done.",
+    "ms": 8008,
+    "wall": 8893.7,
+    "out": 1608,
+    "thinking": 1326
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "overflow",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"BELT\");\n  pickUp();\n  if (holding() !== \"nothing\") {\n    move(\"PACK\");\n    if (space(\"PACK\") > 0) {\n      putDown();\n    } else {\n      move(\"BIN_1\");\n      putDown();\n    }\n  }\n}",
+    "reply": "I'll haul widgets from the belt to Pack, and if Pack is full I'll put them in Bin 1 instead.",
+    "ms": 3450,
+    "wall": 4468.7,
+    "out": 636,
+    "thinking": 432
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "overflow",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (move BELT)\n  (pick-up)\n  (unless (= (holding) nothing)\n    (if (= (space PACK) 0)\n        (begin (move BIN_1) (put-down))\n        (begin (move PACK) (put-down)))))",
+    "reply": "Got it: I'll keep hauling widgets from the belt to Pack, and into Bin 1 whenever Pack is full.",
+    "ms": 3483,
+    "wall": 4488.3,
+    "out": 691,
+    "thinking": 493
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "jam-keeper",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (if (jammed?)\n    (begin\n      (move PAINT)\n      (fix))\n    (begin\n      (move BELT)\n      (pick-up)\n      (move PAINT)\n      (paint green)\n      (move PACK)\n      (put-down))))",
+    "reply": "Understood: I'll fix the paint machine whenever it jams, and otherwise grab a widget from the belt, paint it green, and drop it at Pack.",
+    "ms": 4100,
+    "wall": 4956.3,
+    "out": 750,
+    "thinking": 542
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "jam-keeper",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PAINT\");\n  if (jammed()) {\n    fix();\n  } else {\n    move(\"BELT\");\n    pickUp();\n    if (holding() !== \"nothing\") {\n      move(\"PAINT\");\n      paint(\"green\");\n      move(\"PACK\");\n      putDown();\n    }\n  }\n}",
+    "reply": "I'll keep the paint machine as my base, fix any jam right away, and otherwise grab a belt widget, paint it green, and drop it at Pack.",
+    "ms": 4872,
+    "wall": 5770.6,
+    "out": 881,
+    "thinking": 658
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"red\";\n  if (needs(\"red\") === 0) {\n    color = \"blue\";\n  }\n  if (needs(color) > 0) {\n    move(\"PACK\");\n    if (count(\"PACK\", color) >= 3) {\n      pack(color);\n    }\n    if (boxes(\"PACK\") > 0) {\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n      move(\"PACK\");\n    }\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "Got it: I'll ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 4640,
+    "wall": 5497.5,
+    "out": 866,
+    "thinking": 609
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "sorter",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"BELT\");\n  if (count(\"BELT\", \"blue\") > 0 && space(\"BIN_2\") > 0) {\n    pickUp(\"blue\");\n    move(\"BIN_2\");\n    putDown();\n    move(\"BELT\");\n  }\n  if (count(\"BELT\", \"red\") > 0 && space(\"BIN_1\") > 0) {\n    pickUp(\"red\");\n    move(\"BIN_1\");\n    putDown();\n    move(\"BELT\");\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll move blue widgets to BIN_2 and red widgets to BIN_1, leave the greens on the belt, and keep sorting all shift.",
+    "ms": 3981,
+    "wall": 4877.1,
+    "out": 692,
+    "thinking": 410
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "(define (ship-one)\n  (move PACK)\n  (when (> (boxes PACK) 0)\n    (pick-up-box)\n    (move DOCK)\n    (put-down)\n    (move PACK)))\n\n(loop\n  (cond\n    ((> (needs red) 0) (ship-one))\n    ((> (needs blue) 0) (ship-one))\n    (else (wait 1))))",
+    "reply": "Red boxes first, then blue: I'll ship each finished box from PACK to DOCK until the order is filled.",
+    "ms": 5627,
+    "wall": 6474.2,
+    "out": 1063,
+    "thinking": 828
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "sorter",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (move BELT)\n  (when (> (count BELT blue) 0)\n    (pick-up blue)\n    (move BIN_2)\n    (put-down))\n  (move BELT)\n  (when (> (count BELT red) 0)\n    (pick-up red)\n    (move BIN_1)\n    (put-down)))",
+    "reply": "Got it: I'll move blue widgets to BIN_2 and red widgets to BIN_1, and leave the greens on the belt.",
+    "ms": 4035,
+    "wall": 5116.3,
+    "out": 715,
+    "thinking": 494
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "haul",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"BELT\");\n  pickUp();\n  if (holding() !== \"nothing\") {\n    move(\"PACK\");\n    putDown();\n  }\n}",
+    "reply": "Got it, I'll keep carrying widgets from the belt to Pack all shift.",
+    "ms": 3563,
+    "wall": 4481.4,
+    "out": 555,
+    "thinking": 402
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "haul",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (move BELT)\n  (pick-up)\n  (move PACK)\n  (put-down))",
+    "reply": "Got it, I'll keep bringing widgets from the belt to Pack all shift.",
+    "ms": 2873,
+    "wall": 3842.6,
+    "out": 398,
+    "thinking": 265
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3 && space(\"PACK\") >= 0) {\n    move(\"PACK\");\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  }\n  wait(1);\n}",
+    "reply": "I'll pack red boxes at Pack until the order's 4 are done and ship every finished box from the dock.",
+    "ms": 4719,
+    "wall": 5707,
+    "out": 836,
+    "thinking": 605
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "packer",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (when (> (needs red) 0)\n    (move PACK)\n    (when (>= (count PACK red) 3)\n      (pack red)))\n  (move PACK)\n  (when (> (boxes PACK) 0)\n    (pick-up-box)\n    (move DOCK)\n    (put-down)\n    (move PACK)))",
+    "reply": "Got it: I'll pack red boxes at PACK for today's 4-red order and ship each one from the DOCK.",
+    "ms": 5303,
+    "wall": 6151.3,
+    "out": 1018,
+    "thinking": 799
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let color = \"red\";\n  if (needs(\"blue\") > needs(\"red\")) {\n    color = \"blue\";\n  }\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  } else {\n    wait(2);\n  }\n}\nsay(\"Order complete.\");",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until the order is complete.",
+    "ms": 6470,
+    "wall": 7292.5,
+    "out": 1274,
+    "thinking": 1007
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "paint-to-order",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (when (> (needs-any) 0)\n    (move BELT)\n    (pick-up red)\n    (move PAINT)\n    (when (jammed?) (fix))\n    (paint blue)\n    (move DOCK)\n    (put-down)))",
+    "reply": "I'll paint red widgets blue and ship them, stopping once today's order is covered.",
+    "ms": 4731,
+    "wall": 5570.6,
+    "out": 870,
+    "thinking": 688
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (while (> (needs-any) 0)\n    (let ((color red))\n      (cond ((and (> (needs red) 0) (>= (needs red) (needs blue))) (set! color red))\n            ((> (needs blue) 0) (set! color blue))\n            (else (set! color red)))\n      (while (< (count PACK color) 3)\n        (move BELT)\n        (if (> (count BELT color) 0)\n            (begin (pick-up color) (move PACK) (put-down))\n            (wait 1)))\n      (move PACK)\n      (pack color)\n      (pick-up-box)\n      (move DOCK)\n      (put-down))))",
+    "reply": "I'll pack whichever color the order needs most, ship each box, and keep going until today's 2 red and 3 blue boxes are done.",
+    "ms": 8663,
+    "wall": 9542.6,
+    "out": 1801,
+    "thinking": 1474
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "overflow",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"BELT\");\n  pickUp();\n  if (holding() !== \"nothing\") {\n    move(\"PACK\");\n    if (space(\"PACK\") > 0) {\n      putDown();\n    } else {\n      move(\"BIN_1\");\n      putDown();\n    }\n  }\n}",
+    "reply": "I'll haul every widget from the belt to Pack, and if Pack is full I'll put it in Bin 1 instead.",
+    "ms": 3662,
+    "wall": 4565.2,
+    "out": 692,
+    "thinking": 488
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (holding() === \"nothing\" && needs(\"blue\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n  }\n  if (holding() === \"red\" && needs(\"blue\") > 0) {\n    move(\"PAINT\");\n    if (jammed()) {\n      fix();\n    }\n    paint(\"blue\");\n  }\n  if (holding() === \"blue\") {\n    move(\"DOCK\");\n    putDown();\n  }\n  wait(1);\n}",
+    "reply": "I'll paint red widgets blue and ship them to DOCK, stopping once the order's blue requirement is met.",
+    "ms": 7624,
+    "wall": 8459.7,
+    "out": 1574,
+    "thinking": 1315
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "overflow",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (move BELT)\n  (pick-up)\n  (unless (= (holding) nothing)\n    (move PACK)\n    (if (> (space PACK) 0)\n        (put-down)\n        (begin\n          (move BIN_1)\n          (put-down)))))",
+    "reply": "I'll keep hauling widgets from the belt to Pack, and into Bin 1 whenever Pack is full.",
+    "ms": 3402,
+    "wall": 4442,
+    "out": 621,
+    "thinking": 424
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "jam-keeper",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PAINT\");\n  if (jammed()) {\n    fix();\n  } else {\n    move(\"BELT\");\n    pickUp();\n    if (holding() !== \"nothing\") {\n      move(\"PAINT\");\n      paint(\"green\");\n      move(\"PACK\");\n      putDown();\n    }\n  }\n}",
+    "reply": "I'll stay on the paint station, fix any jam right away, and otherwise paint belt widgets green and drop them at Pack.",
+    "ms": 4947,
+    "wall": 5883.3,
+    "out": 860,
+    "thinking": 645
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "jam-keeper",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (move PAINT)\n  (when (jammed?) (fix))\n  (move BELT)\n  (pick-up)\n  (move PAINT)\n  (when (jammed?) (fix))\n  (paint green)\n  (move PACK)\n  (put-down))",
+    "reply": "I'll keep returning to the paint machine, fixing any jam right away, and otherwise grab a widget from the belt, paint it green, and drop it at Pack.",
+    "ms": 4775,
+    "wall": 5636.6,
+    "out": 904,
+    "thinking": 693
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"blue\";\n  if (needs(\"red\") > 0) {\n    color = \"red\";\n  }\n  if (needs(color) > 0) {\n    if (boxes(\"PACK\") > 0) {\n      move(\"PACK\");\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n    } else if (count(\"PACK\", color) >= 3) {\n      move(\"PACK\");\n      pack(color);\n    }\n  }\n  wait(1);\n}",
+    "reply": "I'll pack and ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 7248,
+    "wall": 8025.7,
+    "out": 1365,
+    "thinking": 1113
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (cond\n    ((> (needs red) 0)\n      (move PACK)\n      (pack red)\n      (when (> (boxes PACK) 0)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)))\n    ((> (needs blue) 0)\n      (move PACK)\n      (pack blue)\n      (when (> (boxes PACK) 0)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)))\n    (else (wait 1))))",
+    "reply": "I'll ship red boxes to DOCK until the red order is filled, then switch to shipping blue.",
+    "ms": 4893,
+    "wall": 5952.2,
+    "out": 878,
+    "thinking": 609
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "sorter",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (count(\"BELT\", \"red\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    move(\"BIN_1\");\n    putDown();\n  } else if (count(\"BELT\", \"blue\") > 0) {\n    move(\"BELT\");\n    pickUp(\"blue\");\n    move(\"BIN_2\");\n    putDown();\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "Sorting the belt now: red widgets to BIN_1, blue widgets to BIN_2, and greens stay on the belt.",
+    "ms": 3440,
+    "wall": 4342,
+    "out": 640,
+    "thinking": 398
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "sorter",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (move BELT)\n  (cond ((> (count BELT red) 0)\n         (pick-up red)\n         (move BIN_1)\n         (put-down))\n        ((> (count BELT blue) 0)\n         (pick-up blue)\n         (move BIN_2)\n         (put-down))\n        (else (wait 1))))",
+    "reply": "Sorting the belt now: red widgets go to BIN_1, blue widgets go to BIN_2, and greens stay on the belt.",
+    "ms": 4395,
+    "wall": 5258.4,
+    "out": 719,
+    "thinking": 494
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "haul",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (move BELT)\n  (when (> (count BELT) 0)\n    (pick-up)\n    (move PACK)\n    (put-down)))",
+    "reply": "Got it, I'll keep bringing widgets from the belt to Pack all shift.",
+    "ms": 2958,
+    "wall": 3892.8,
+    "out": 457,
+    "thinking": 308
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "haul",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"BELT\");\n  pickUp();\n  move(\"PACK\");\n  putDown();\n}",
+    "reply": "Got it. I'll keep bringing widgets from the belt to Pack all shift, leaving the packing and shipping to Pip.",
+    "ms": 3119,
+    "wall": 4088.8,
+    "out": 466,
+    "thinking": 316
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack red boxes at Pack as widgets arrive, then take each finished box to the dock to ship it.",
+    "ms": 4663,
+    "wall": 5464.6,
+    "out": 823,
+    "thinking": 602
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "packer",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (move PACK)\n  (when (and (> (needs red) 0) (>= (count PACK red) 3))\n    (pack red))\n  (when (> (boxes PACK) 0)\n    (pick-up-box)\n    (move DOCK)\n    (put-down)\n    (move PACK)))",
+    "reply": "I'll pack red widgets into boxes at Pack as the order needs them and ship each finished box from the dock.",
+    "ms": 5018,
+    "wall": 5884,
+    "out": 876,
+    "thinking": 670
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "function mostNeeded() {\n  let best = \"\";\n  let bestNeed = 0;\n  for (const c of [\"red\", \"blue\", \"green\"]) {\n    if (needs(c) > bestNeed) {\n      bestNeed = needs(c);\n      best = c;\n    }\n  }\n  return best;\n}\n\nwhile (needsAny() > 0) {\n  const c = mostNeeded();\n  move(\"PACK\");\n  if (c !== \"\" && count(\"PACK\", c) >= 3) {\n    pack(c);\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  } else {\n    wait(2);\n  }\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box, and keep going until today's order is complete.",
+    "ms": 7532,
+    "wall": 8426.2,
+    "out": 1539,
+    "thinking": 1224
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (when (> (needs-any) 0)\n    (let ((c (if (>= (needs blue) (needs red)) blue red)))\n      (while (< (count PACK c) 3)\n        (move BELT)\n        (pick-up c)\n        (move PACK)\n        (put-down))\n      (pack c)\n      (pick-up-box)\n      (move DOCK)\n      (put-down)\n      (move PACK))))",
+    "reply": "I'll pack the color the order needs most, ship each box, and keep going until today's 2 red and 3 blue boxes are done.",
+    "ms": 8373,
+    "wall": 9228.7,
+    "out": 1612,
+    "thinking": 1362
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "paint-to-order",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (when (> (needs blue) 0)\n    (move BELT)\n    (pick-up red)\n    (move PAINT)\n    (when (jammed?)\n      (fix))\n    (paint blue)\n    (move DOCK)\n    (put-down)))",
+    "reply": "I'll take the red widgets from the belt, paint them blue, and ship them to the dock, stopping once today's order of 2 blue widgets is covered.",
+    "ms": 4729,
+    "wall": 5639.4,
+    "out": 819,
+    "thinking": 613
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "let shipped = 0;\nwhile (true) {\n  if (shipped < 2) {\n    if (holding() === \"nothing\") {\n      move(\"BELT\");\n      pickUp(\"red\");\n    }\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n    }\n    if (holding() === \"blue\") {\n      move(\"DOCK\");\n      putDown();\n      shipped = shipped + 1;\n    }\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll paint red widgets blue and ship them, stopping once the 2 blue widgets this order needs have gone out.",
+    "ms": 9089,
+    "wall": 9895.6,
+    "out": 1896,
+    "thinking": 1616
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "overflow",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"BELT\");\n  pickUp();\n  if (holding() !== \"nothing\") {\n    move(\"PACK\");\n    if (space(\"PACK\") > 0) {\n      putDown();\n    } else {\n      move(\"BIN_1\");\n      putDown();\n    }\n  }\n}",
+    "reply": "I'll keep hauling widgets from the belt to Pack, and any I can't fit go into Bin 1.",
+    "ms": 3979,
+    "wall": 4957.6,
+    "out": 704,
+    "thinking": 504
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "overflow",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (move BELT)\n  (pick-up)\n  (when (not (= (holding) nothing))\n    (if (> (space PACK) 0)\n        (begin\n          (move PACK)\n          (put-down))\n        (begin\n          (move BIN_1)\n          (put-down)))))",
+    "reply": "Got it: I'll haul widgets from the belt to Pack, and into Bin 1 whenever Pack is full.",
+    "ms": 3559,
+    "wall": 4521.5,
+    "out": 620,
+    "thinking": 416
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "jam-keeper",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (jammed()) {\n    move(\"PAINT\");\n    fix();\n  } else {\n    move(\"BELT\");\n    pickUp();\n    move(\"PAINT\");\n    paint(\"green\");\n    move(\"PACK\");\n    putDown();\n    move(\"PAINT\");\n  }\n}",
+    "reply": "I'll stay on the paint machine, fix any jam right away, and otherwise grab a widget from the belt, paint it green, and drop it at Pack.",
+    "ms": 4247,
+    "wall": 5121.4,
+    "out": 783,
+    "thinking": 569
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "jam-keeper",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (when (jammed?) (fix))\n  (if (> (count BELT) 0)\n    (begin\n      (move BELT)\n      (pick-up)\n      (move PAINT)\n      (when (jammed?) (fix))\n      (paint green)\n      (move PACK)\n      (put-down)\n      (move PAINT))\n    (wait 1)))",
+    "reply": "I'll stay at the paint machine, fix any jam right away, and otherwise take widgets from the belt, paint them green, and drop them at Pack.",
+    "ms": 5326,
+    "wall": 6196.2,
+    "out": 1052,
+    "thinking": 816
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "sorter",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"BELT\");\n  if (count(\"BELT\", \"red\") > 0) {\n    pickUp(\"red\");\n    move(\"BIN_1\");\n    putDown();\n    move(\"BELT\");\n  }\n  if (count(\"BELT\", \"blue\") > 0) {\n    pickUp(\"blue\");\n    move(\"BIN_2\");\n    putDown();\n    move(\"BELT\");\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll send red widgets to BIN_1 and blue widgets to BIN_2, and leave the greens on the belt.",
+    "ms": 4773,
+    "wall": 5567.4,
+    "out": 918,
+    "thinking": 671
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"red\";\n  if (needs(\"red\") === 0) {\n    color = \"blue\";\n  }\n  move(\"PACK\");\n  if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "Got it: I'll pack and ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 6414,
+    "wall": 7354.7,
+    "out": 1277,
+    "thinking": 1034
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (cond ((> (needs red) 0)\n         (when (> (boxes PACK) 0)\n           (move PACK)\n           (pick-up-box)\n           (move DOCK)\n           (put-down)))\n        ((> (needs blue) 0)\n         (when (> (boxes PACK) 0)\n           (move PACK)\n           (pick-up-box)\n           (move DOCK)\n           (put-down)))\n        (else (wait 1))))",
+    "reply": "Got it: I'll ship boxes from Pack to Dock, working on red until the red order is filled, then switching to blue.",
+    "ms": 6093,
+    "wall": 6913.1,
+    "out": 1099,
+    "thinking": 840
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "sorter",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (move BELT)\n  (pick-up blue)\n  (when (= (holding) blue)\n    (move BIN_2)\n    (put-down))\n  (move BELT)\n  (pick-up red)\n  (when (= (holding) red)\n    (move BIN_1)\n    (put-down)))",
+    "reply": "Got it: I'll move blue widgets to BIN_2 and red widgets to BIN_1, and leave the greens on the belt.",
+    "ms": 4773,
+    "wall": 6300.8,
+    "out": 856,
+    "thinking": 643
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  }
+ ]
+}

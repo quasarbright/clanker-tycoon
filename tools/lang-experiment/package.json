@@ -1,0 +1,8 @@
+{
+  "name": "lang-experiment",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "acorn": "^8.14.0"
+  }
+}
