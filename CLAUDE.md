@@ -30,8 +30,13 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - What you write for a worker is called **instructions**. "Job" is reserved for a long-term role.
 - Each worker gets their own instructions.
 - **Skills** are concrete things a worker knows how to do (pack, paint, repair, ship, sort, future
-  machines); a worker without the skill can't do it. Instructions that need a skill the worker
-  lacks are caught before the shift starts, not mid-shift. (Long term: pay to train a new skill.)
+  machines); a worker without the skill can't do it. Two kinds of action:
+  - **Primary work** (painting, packing, …): a program that uses it without the skill is a compile
+    error, caught before the shift starts.
+  - **Side tasks** (fixing a jam): a program may include them; without the skill they silently do
+    nothing. So "fix it if it jams" is fine in anyone's program, and only a worker with the Repair
+    skill actually fixes anything.
+  (Long term: pay to train a new skill.)
 - **Attributes** are traits that raise the wage: Fast (walks faster), Strong (carries two),
   Nimble (works machines faster), Steady (machines jam less in their hands, every machine), Smart
   (more in-game thinking: a bigger think budget or faster refill). Everyone is patient, careful and
