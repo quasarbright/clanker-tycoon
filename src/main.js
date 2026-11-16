@@ -780,6 +780,26 @@ $("#menuBtn").addEventListener("click", () => showMenu());
 renderLevels();
 requestAnimationFrame(frame);
 
+// While iterating locally: if the game's files change after this tab loaded, say so, so an old tab
+// doesn't quietly keep running old code. (No server on a web build: the fetch fails and nothing shows.)
+(async () => {
+  const version = () => fetch("/api/version", { cache: "no-store" }).then((r) => r.json()).then((j) => j.version);
+  let loaded;
+  try { loaded = await version(); } catch { return; }
+  setInterval(async () => {
+    try {
+      if ((await version()) !== loaded && !$("#staleBanner")) {
+        const b = document.createElement("div");
+        b.id = "staleBanner";
+        b.className = "ct-stale";
+        b.innerHTML = `The game was updated since this tab opened. <button class="ct-btn is-gold" type="button">Reload</button>`;
+        b.querySelector("button").addEventListener("click", () => location.reload());
+        document.body.append(b);
+      }
+    } catch { /* server restarting */ }
+  }, 4000);
+})();
+
 // Test hook: drive the game from Playwright or the console.
 window.ct = {
   get game() { return game; }, get phase() { return phase; }, get started() { return started; },

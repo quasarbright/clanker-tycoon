@@ -56,6 +56,8 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   plan; `src/llm.js` also has an OpenRouter path for a future web build.
 - Every model call is appended to `logs/llm.jsonl` (gitignored). Read it when Mike reports a worker
   doing something odd.
+- A tab left open across an update shows a "game was updated, Reload" banner (`/api/version`).
+  When Mike reports something that doesn't match the current code, suspect a stale tab first.
 - `tools/player-check.mjs` and `tools/balance.mjs` play levels headless for star times.
 - Ideas go in this repo's issues, one topic each; check for an existing issue first.
 - Commit every change; push only when asked.

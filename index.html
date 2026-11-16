@@ -303,6 +303,8 @@
 
     /* the floor stays in view while the crew list scrolls */
     @media (min-width: 901px) { .ct-main > section { position: sticky; top: 8px; } }
+    .ct-stale { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 20; display: flex; gap: 12px; align-items: center;
+      background: var(--panel); border: 1px solid var(--accent); border-radius: 12px; padding: 8px 10px 8px 16px; box-shadow: 0 10px 30px #000a; }
   </style>
 </head>
 <body data-phase="menu">

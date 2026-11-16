@@ -7,7 +7,7 @@
 //
 // It listens on 127.0.0.1 only, since it runs `claude` with your login.
 import http from "node:http";
-import { readFile, appendFile, mkdir } from "node:fs/promises";
+import { readFile, appendFile, mkdir, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ask, summarize } from "./server/claude.mjs";
@@ -35,6 +35,14 @@ async function withSlot(fn) {
 function send(res, status, body, type = "application/json") {
   res.writeHead(status, { "Content-Type": type, "Cache-Control": "no-store" });
   res.end(typeof body === "string" || Buffer.isBuffer(body) ? body : JSON.stringify(body));
+}
+
+// The newest modification time of the game's files. A tab compares it with what it loaded, so a
+// tab left open across an update says so instead of quietly running old code.
+async function gameVersion() {
+  const files = ["index.html", ...(await readdir(path.join(ROOT, "src"))).map((f) => path.join("src", f))];
+  const times = await Promise.all(files.map((f) => stat(path.join(ROOT, f)).then((s) => s.mtimeMs, () => 0)));
+  return Math.max(...times);
 }
 
 function parseLoose(text) {
@@ -77,6 +85,7 @@ http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, "http://localhost");
     if (url.pathname === "/api/llm" && req.method === "POST") return await handleLlm(req, res);
+    if (url.pathname === "/api/version") return send(res, 200, { version: await gameVersion() });
     let p = decodeURIComponent(url.pathname);
     if (p.endsWith("/")) p += "index.html";
     const file = path.normalize(path.join(ROOT, p));
