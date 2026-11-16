@@ -50,6 +50,30 @@ compile with either language.
   paint task (`if (jammed()) fix()`), a reasonable but extra step. Lisp's belt-fetching on
   order-color is the same "helpful" habit that broke Pip, coming back when the logic gets harder.
 
+## Follow-up: was the gap noise?
+
+The first run had only 3 runs per cell, and repeats of the same prompt tend to land on the same
+approach, so I reran the two tasks where Lisp lost, 10 more times per language
+(`results/runs-followup.json`, checked by `followup.mjs`: does it walk to the belt, does it ever pack).
+
+| | JS | Lisp |
+|---|---|---|
+| order-color: walks to the belt although Gary hauls | 1/10 | 3/10 |
+| switch-colors: never packs anything | 0/10 | 5/10 |
+| Both runs combined, clean programs | order-color 12/13, switch-colors 12/13 | order-color 7/13, switch-colors 6/13 |
+
+- **Overreach (fetching from the belt) was mostly noise.** It happens in both languages. The first
+  run's 0/3 for Lisp was the unlucky end. It's a prompt problem, not a language one, and the
+  stray-station check in the game exists for exactly this.
+- **"Never packs" is real.** 7 of 13 Lisp programs for switch-colors ship boxes nobody makes,
+  against 0 of 13 in JS (Fisher exact, p ≈ 0.005). In Lisp, Haiku keeps writing a `cond` with one
+  identical branch per color that only ships; in JS it writes `color = needs("red") > 0 ? "red" :
+  "blue"` and then the full pack-and-ship sequence once. The JS idiom puts the color in a variable
+  and the work in one place; the Lisp one duplicated the work and lost a step along the way.
+
+So the choice stands, for a narrower reason than the first table suggested: JS isn't less prone to
+overreach, but Haiku writes the branching logic correctly in JS much more reliably.
+
 ## Caveats
 
 One model, 3 runs per cell, one prompt per language. Graded by me against a written "correct"

@@ -2,7 +2,8 @@
 //   node analyze.mjs   → prints the table, writes results/programs.md
 import { readFileSync, writeFileSync } from "node:fs";
 
-const { tasks, results } = JSON.parse(readFileSync("results/runs.json", "utf8"));
+const IN = process.argv[2] || "results/runs.json";
+const { tasks, results } = JSON.parse(readFileSync(IN, "utf8"));
 const valid = (c) => c && c.parse && c.subsetOk && c.toolsOk;
 const med = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length / 2)] : null; };
 const p90 = (a) => { const s = [...a].sort((x, y) => x - y); return s.length ? s[Math.floor(s.length * 0.9)] : null; };
@@ -42,5 +43,6 @@ for (const t of tasks) {
     }
   }
 }
-writeFileSync("results/programs.md", md);
-console.log("\nwrote results/programs.md");
+const OUTMD = IN.replace(/runs(.*)\.json$/, "programs$1.md");
+writeFileSync(OUTMD, md);
+console.log(`\nwrote ${OUTMD}`);

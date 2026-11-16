@@ -9,7 +9,10 @@ import { writeFileSync, mkdirSync } from "node:fs";
 import * as acorn from "acorn";
 import { ask, summarize } from "../../server/claude.mjs";
 
-const RUNS = 3;
+// node run.mjs [runs] [task,task,...] [outfile]
+const RUNS = +(process.argv[2] && !process.argv[2].startsWith('--') ? process.argv[2] : 3);
+const ONLY = process.argv[3] ? process.argv[3].split(',') : null;
+const OUT = process.argv[4] || 'results/runs.json';
 const CONCURRENCY = 4;
 
 // ---------- the world, shared ----------
@@ -315,7 +318,7 @@ if (process.argv[2] === "--selftest") {
 }
 
 const jobs = [];
-for (let run = 0; run < RUNS; run++) for (const task of TASKS) for (const lang of Object.keys(LANGS)) jobs.push([lang, task, run]);
+for (let run = 0; run < RUNS; run++) for (const task of TASKS.filter((t) => !ONLY || ONLY.includes(t.id))) for (const lang of Object.keys(LANGS)) jobs.push([lang, task, run]);
 const results = [];
 let next = 0, done = 0;
 await Promise.all(Array.from({ length: CONCURRENCY }, async () => {
@@ -329,5 +332,5 @@ await Promise.all(Array.from({ length: CONCURRENCY }, async () => {
   }
 }));
 mkdirSync("results", { recursive: true });
-writeFileSync("results/runs.json", JSON.stringify({ tasks: TASKS, results }, null, 1));
-console.log("wrote results/runs.json");
+writeFileSync(OUT, JSON.stringify({ tasks: TASKS.filter((t) => !ONLY || ONLY.includes(t.id)), results }, null, 1));
+console.log(`wrote ${OUT}`);

@@ -1,0 +1,824 @@
+{
+ "tasks": [
+  {
+   "id": "order-color",
+   "instructions": "Pack whatever color the order needs most, ship it, and keep going until the order is done.",
+   "order": "2 red boxes, 3 blue boxes",
+   "coworkers": {
+    "Gary": "Bring widgets from the belt to Pack."
+   },
+   "expect": "Pick the color with the larger needs(); pack that color when 3 are at PACK; ship; stop (or idle) when needsAny() is 0."
+  },
+  {
+   "id": "switch-colors",
+   "instructions": "Ship red boxes until the red part of the order is done, then switch to blue.",
+   "order": "2 red boxes, 2 blue boxes",
+   "coworkers": {
+    "Gary": "Bring red and blue widgets from the belt to Pack."
+   },
+   "expect": "Color = needs(red) > 0 ? red : blue; pack that color at PACK, pick up box, ship at DOCK; stop when done."
+  }
+ ],
+ "results": [
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let target = \"red\";\n  let most = needs(\"red\");\n  if (needs(\"blue\") > most) {\n    target = \"blue\";\n    most = needs(\"blue\");\n  }\n  if (needs(\"green\") > most) {\n    target = \"green\";\n    most = needs(\"green\");\n  }\n  move(\"PACK\");\n  if (count(\"PACK\", target) >= 3) {\n    pack(target);\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until today's order of 2 red and 3 blue boxes is complete.",
+    "ms": 6087,
+    "wall": 7673.9,
+    "out": 1229,
+    "thinking": 936
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"none\";\n  if (needs(\"red\") > 0) {\n    color = \"red\";\n  } else if (needs(\"blue\") > 0) {\n    color = \"blue\";\n  }\n  if (color !== \"none\") {\n    move(\"PACK\");\n    if (count(\"PACK\", color) >= 3) {\n      pack(color);\n    }\n  }\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "Understood: I'll pack and ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 5952,
+    "wall": 7720.9,
+    "out": 1086,
+    "thinking": 802
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (cond\n    ((> (needs red) 0)\n     (move PACK)\n     (when (>= (count PACK red) 3) (pack red))\n     (when (> (boxes PACK) 0)\n       (pick-up-box)\n       (move DOCK)\n       (put-down)\n       (move PACK)))\n    ((> (needs blue) 0)\n     (move PACK)\n     (when (>= (count PACK blue) 3) (pack blue))\n     (when (> (boxes PACK) 0)\n       (pick-up-box)\n       (move DOCK)\n       (put-down)\n       (move PACK)))\n    (else (wait 1))))",
+    "reply": "Got it: I'll ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 6176,
+    "wall": 7789.3,
+    "out": 1182,
+    "thinking": 868
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "(while (> (needs-any) 0)\n  (let ((c (if (>= (needs blue) (needs red)) blue red)))\n    (move PACK)\n    (when (>= (count PACK c) 3)\n      (pack c)\n      (pick-up-box)\n      (move DOCK)\n      (put-down)\n      (move PACK))))",
+    "reply": "Order needs 3 blue and 2 red, so I'll pack the color it needs most, ship each box, and keep going until it's done.",
+    "ms": 6457,
+    "wall": 8100.3,
+    "out": 1144,
+    "thinking": 921
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"red\";\n  if (needs(\"red\") === 0) {\n    color = \"blue\";\n  }\n  if (needs(color) > 0) {\n    move(\"PACK\");\n    if (count(\"PACK\", color) >= 3 && space(\"PACK\") >= 0) {\n      pack(color);\n    }\n    if (boxes(\"PACK\") > 0) {\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n      move(\"PACK\");\n    }\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 5514,
+    "wall": 6490.2,
+    "out": 1016,
+    "thinking": 752
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (cond\n    ((> (needs red) 0)\n      (move PACK)\n      (pack red)\n      (when (> (boxes PACK) 0)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)\n        (move PACK)))\n    ((> (needs blue) 0)\n      (move PACK)\n      (pack blue)\n      (when (> (boxes PACK) 0)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)\n        (move PACK)))\n    (else (wait 5))))",
+    "reply": "Got it: I'll pack and ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 5655,
+    "wall": 6569.2,
+    "out": 1100,
+    "thinking": 814
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (when (> (needs-any) 0)\n    (let ((c (if (>= (needs blue) (needs red)) blue red)))\n      (move BELT)\n      (pick-up c)\n      (move PACK)\n      (put-down)\n      (when (>= (count PACK c) 3)\n        (pack c)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)\n        (move PACK)))))",
+    "reply": "Order needs 3 blue and 2 red, so I'll start packing blue, ship each box to DOCK, and keep going until the order is filled.",
+    "ms": 6551,
+    "wall": 7666.3,
+    "out": 1253,
+    "thinking": 996
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "function bestColor() {\n  let best = \"\";\n  let bestNeed = 0;\n  if (needs(\"red\") > bestNeed && count(\"PACK\", \"red\") >= 3) {\n    best = \"red\";\n    bestNeed = needs(\"red\");\n  }\n  if (needs(\"blue\") > bestNeed && count(\"PACK\", \"blue\") >= 3) {\n    best = \"blue\";\n    bestNeed = needs(\"blue\");\n  }\n  if (needs(\"green\") > bestNeed && count(\"PACK\", \"green\") >= 3) {\n    best = \"green\";\n    bestNeed = needs(\"green\");\n  }\n  return best;\n}\n\nwhile (needsAny() > 0) {\n  move(\"PACK\");\n  const c = bestColor();\n  if (c !== \"\") {\n    pack(c);\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  } else {\n    wait(2);\n  }\n}",
+    "reply": "Got it: I'll pack whichever color the order needs most from the widgets Gary brings to Pack, ship each box to Dock, and keep going until today's order is complete.",
+    "ms": 9007,
+    "wall": 10108.8,
+    "out": 1949,
+    "thinking": 1527
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  move(\"PACK\");\n  let c = \"blue\";\n  if (needs(\"red\") > needs(\"blue\") && needs(\"red\") >= needs(\"green\")) {\n    c = \"red\";\n  } else if (needs(\"green\") > needs(\"blue\") && needs(\"green\") > needs(\"red\")) {\n    c = \"green\";\n  }\n  if (needs(c) > 0 && count(\"PACK\", c) >= 3) {\n    pack(c);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}\n",
+    "reply": "Blue is the most-needed color, so I'll pack blue first, ship each finished box to DOCK, and keep going until today's order is complete.",
+    "ms": 5733,
+    "wall": 6690.6,
+    "out": 1141,
+    "thinking": 822
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  const color = needs(\"red\") > 0 ? \"red\" : \"blue\";\n  if (needs(color) > 0) {\n    move(\"BELT\");\n    pickUp(color);\n    if (holding() === color) {\n      move(\"PACK\");\n      putDown();\n    }\n    if (count(\"PACK\", color) >= 3) {\n      move(\"PACK\");\n      pack(color);\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n    }\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "I'll ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 7069,
+    "wall": 8154,
+    "out": 1318,
+    "thinking": 1055
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (while (> (needs-any) 0)\n    (let ((r (needs red)) (b (needs blue)) (g (needs green)))\n      (let ((color (cond ((and (>= r b) (>= r g)) red) ((>= b g) blue) (else green))))\n        (move PACK)\n        (when (>= (count PACK color) 3)\n          (pack color)\n          (when (> (boxes PACK) 0)\n            (pick-up-box)\n            (move DOCK)\n            (put-down)\n            (move PACK))))))\n  )",
+    "reply": "\"Order needs the most red and blue boxes, so I'll pack whichever color is needed most, ship each box to DOCK, and keep going until the order is complete.\"",
+    "ms": 7653,
+    "wall": 8979.7,
+    "out": 1375,
+    "thinking": 1073
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (cond ((> (needs red) 0)\n         (when (> (boxes PACK) 0)\n           (move PACK)\n           (pick-up-box)\n           (move DOCK)\n           (put-down)))\n        ((> (needs blue) 0)\n         (when (> (boxes PACK) 0)\n           (move PACK)\n           (pick-up-box)\n           (move DOCK)\n           (put-down)))\n        (else (wait 1))))",
+    "reply": "Got it: I'll ship boxes from PACK to DOCK, finishing the red boxes first and then switching to blue.",
+    "ms": 5301,
+    "wall": 6508.1,
+    "out": 941,
+    "thinking": 682
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 3,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needsAny() > 0) {\n    let color = \"\";\n    let best = 0;\n    for (const c of [\"red\", \"blue\", \"green\"]) {\n      if (needs(c) > best) {\n        best = needs(c);\n        color = c;\n      }\n    }\n    if (color !== \"\" && count(\"PACK\", color) >= 3) {\n      move(\"PACK\");\n      pack(color);\n    }\n  }\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  }\n  wait(1);\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each finished box to DOCK, and keep going until the order is filled.",
+    "ms": 6813,
+    "wall": 8359.5,
+    "out": 1364,
+    "thinking": 1059
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 3,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"red\";\n  if (needs(\"red\") === 0) {\n    color = \"blue\";\n  }\n  move(\"PACK\");\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  } else if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n}",
+    "reply": "Got it: I'll ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 5271,
+    "wall": 6247.6,
+    "out": 1011,
+    "thinking": 782
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 3,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (let ((color (if (> (needs red) 0) red blue)))\n    (when (> (needs-any) 0)\n      (move PACK)\n      (when (>= (count PACK color) 3)\n        (pack color))\n      (when (> (boxes PACK) 0)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)\n        (move PACK)))))",
+    "reply": "Got it: I'll ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 5231,
+    "wall": 6069.1,
+    "out": 970,
+    "thinking": 741
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 3,
+   "first": {
+    "ok": true,
+    "program": "(while (> (needs-any) 0)\n  (let ((c red))\n    (when (> (needs blue) (needs c)) (set! c blue))\n    (when (> (needs green) (needs c)) (set! c green))\n    (when (> (needs c) 0)\n      (move PACK)\n      (when (>= (count PACK c) 3)\n        (pack c)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)\n        (move PACK))))\n  (wait 1))",
+    "reply": "I'll pack whichever color the order needs most, ship each box, and keep going until the order of 2 red and 3 blue boxes is complete.",
+    "ms": 7669,
+    "wall": 8783.1,
+    "out": 1533,
+    "thinking": 1257
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 4,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let color = \"red\";\n  if (needs(\"blue\") > needs(\"red\")) {\n    color = \"blue\";\n  }\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  } else {\n    wait(1);\n  }\n}\nsay(\"Order complete.\");",
+    "reply": "Blue is the most-needed color right now, so I'll pack blue and ship each box to the dock until the order is complete.",
+    "ms": 6625,
+    "wall": 7823.2,
+    "out": 1175,
+    "thinking": 906
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 4,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"none\";\n  if (needs(\"red\") > 0) {\n    color = \"red\";\n  } else {\n    if (needs(\"blue\") > 0) {\n      color = \"blue\";\n    }\n  }\n  if (color !== \"none\") {\n    move(\"PACK\");\n    const before = boxes(\"PACK\");\n    pack(color);\n    if (boxes(\"PACK\") > before) {\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n      move(\"PACK\");\n    }\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "Got it: I'll pack and ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 5760,
+    "wall": 6822.7,
+    "out": 1144,
+    "thinking": 866
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 4,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (cond\n    ((and (> (needs blue) 0) (>= (needs blue) (needs red)))\n     (move PACK)\n     (when (>= (count PACK blue) 3)\n       (pack blue)\n       (pick-up-box)\n       (move DOCK)\n       (put-down)\n       (move PACK)))\n    ((> (needs red) 0)\n     (move PACK)\n     (when (>= (count PACK red) 3)\n       (pack red)\n       (pick-up-box)\n       (move DOCK)\n       (put-down)\n       (move PACK)))\n    (else (wait 1))))",
+    "reply": "Order needs 3 blue and 2 red, so I'll pack blue first, ship each finished box at DOCK, and keep going until the order is complete.",
+    "ms": 6635,
+    "wall": 7793.4,
+    "out": 1336,
+    "thinking": 1017
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 4,
+   "first": {
+    "ok": true,
+    "program": "(define (ship)\n  (move PACK)\n  (when (> (boxes PACK) 0)\n    (pick-up-box)\n    (move DOCK)\n    (put-down)))\n\n(loop\n  (cond ((> (needs red) 0) (ship))\n        ((> (needs blue) 0) (ship))\n        (else (wait 1))))",
+    "reply": "Got it: I'll ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 5755,
+    "wall": 6949.8,
+    "out": 992,
+    "thinking": 781
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 5,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"blue\";\n  if (needs(\"red\") > 0) {\n    color = \"red\";\n  }\n  move(\"PACK\");\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  wait(1);\n}",
+    "reply": "I'll ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 5037,
+    "wall": 6166.4,
+    "out": 923,
+    "thinking": 680
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 5,
+   "first": {
+    "ok": true,
+    "program": "(define (pick-color) (if (>= (needs red) (needs blue)) red blue)) (loop (when (> (needs-any) 0) (let ((c (pick-color))) (move PACK) (if (>= (count PACK c) 3) (begin (pack c) (pick-up-box) (move DOCK) (put-down) (move PACK)) (wait 1)))))",
+    "reply": "I'll pack whichever color the order needs most, ship each box to DOCK, and keep going until today's order is filled.",
+    "ms": 6784,
+    "wall": 7861.6,
+    "out": 1276,
+    "thinking": 1045
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 5,
+   "first": {
+    "ok": true,
+    "program": "(define (ship color)\n  (move PACK)\n  (when (>= (count PACK color) 3)\n    (pack color))\n  (when (> (boxes PACK) 0)\n    (pick-up-box)\n    (move DOCK)\n    (put-down)))\n\n(loop\n  (cond\n    ((> (needs red) 0) (ship red))\n    ((> (needs blue) 0) (ship blue))\n    (else (wait 1))))",
+    "reply": "Got it: I'll pack and ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 5454,
+    "wall": 6546.9,
+    "out": 982,
+    "thinking": 738
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 5,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let color = \"red\";\n  if (needs(\"blue\") > needs(\"red\")) {\n    color = \"blue\";\n  }\n  for (let i = 0; i < 3; i++) {\n    move(\"BELT\");\n    pickUp(color);\n    move(\"PACK\");\n    putDown();\n  }\n  pack(color);\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  }\n  move(\"BELT\");\n}",
+    "reply": "Blue is needed most, so I'll pack blue boxes first, ship each one to DOCK, and keep going until the order is complete.",
+    "ms": 8533,
+    "wall": 9628.8,
+    "out": 1647,
+    "thinking": 1370
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 6,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let color = \"red\";\n  if (needs(\"blue\") > needs(color)) {\n    color = \"blue\";\n  }\n  if (needs(\"green\") > needs(color)) {\n    color = \"green\";\n  }\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until today's order is complete.",
+    "ms": 6226,
+    "wall": 7310.4,
+    "out": 1184,
+    "thinking": 903
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 6,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (cond ((> (needs red) 0)\n         (move PACK)\n         (pick-up-box)\n         (move DOCK)\n         (put-down))\n        ((> (needs blue) 0)\n         (move PACK)\n         (pick-up-box)\n         (move DOCK)\n         (put-down))\n        (else (wait 1))))",
+    "reply": "Got it: I'll ship red boxes from PACK to DOCK until the red order is filled, then switch to blue.",
+    "ms": 3943,
+    "wall": 4873.5,
+    "out": 710,
+    "thinking": 489
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 6,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (when (> (needs-any) 0)\n    (let ((c (if (>= (needs red) (needs blue)) red blue)))\n      (when (< (count PACK c) 3)\n        (move BELT)\n        (pick-up c)\n        (move PACK)\n        (put-down))\n      (when (>= (count PACK c) 3)\n        (move PACK)\n        (pack c)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)))))",
+    "reply": "I'll pack whichever color the order needs most, ship each box to DOCK, and keep going until today's order is filled.",
+    "ms": 7028,
+    "wall": 8028.6,
+    "out": 1322,
+    "thinking": 1058
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 6,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"blue\";\n  if (needs(\"red\") > 0) {\n    color = \"red\";\n  }\n  move(\"PACK\");\n  if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll pack and ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 6745,
+    "wall": 7619.5,
+    "out": 1304,
+    "thinking": 1054
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 7,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (when (> (needs-any) 0)\n    (move PACK)\n    (cond ((and (> (needs red) 0) (>= (needs red) (needs blue))) (pack red))\n          ((> (needs blue) 0) (pack blue))\n          (else (pack)))\n    (when (> (boxes PACK) 0)\n      (pick-up-box)\n      (move DOCK)\n      (put-down)\n      (move PACK))))",
+    "reply": "I'll pack whichever color the order needs most at PACK, ship each finished box to DOCK, and keep going until the 2 red and 3 blue boxes are done.",
+    "ms": 5563,
+    "wall": 6446,
+    "out": 1058,
+    "thinking": 788
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 7,
+   "first": {
+    "ok": true,
+    "program": "function pickColor() {\n  let best = \"\";\n  let most = 0;\n  if (needs(\"red\") > most) {\n    most = needs(\"red\");\n    best = \"red\";\n  }\n  if (needs(\"blue\") > most) {\n    most = needs(\"blue\");\n    best = \"blue\";\n  }\n  if (needs(\"green\") > most) {\n    most = needs(\"green\");\n    best = \"green\";\n  }\n  return best;\n}\n\nwhile (needsAny() > 0) {\n  const color = pickColor();\n  move(\"PACK\");\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  if (color !== \"\" && count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  wait(1);\n}\n\nmove(\"PACK\");\nif (boxes(\"PACK\") > 0) {\n  pickUpBox();\n  move(\"DOCK\");\n  putDown();\n}",
+    "reply": "Order needs 3 blue and 2 red, so I'll pack blue first, ship each finished box to DOCK, and keep going until the order is complete.",
+    "ms": 7808,
+    "wall": 8792.1,
+    "out": 1647,
+    "thinking": 1224
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 7,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let c = \"\";\n  if (needs(\"red\") > 0) {\n    c = \"red\";\n  } else if (needs(\"blue\") > 0) {\n    c = \"blue\";\n  }\n  if (c !== \"\") {\n    move(\"PACK\");\n    if (count(\"PACK\", c) >= 3) {\n      pack(c);\n    }\n    if (boxes(\"PACK\") > 0) {\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n      move(\"PACK\");\n    }\n  }\n  wait(1);\n}",
+    "reply": "Red boxes first until the red order is filled, then blue, shipping each to DOCK.",
+    "ms": 6599,
+    "wall": 7554,
+    "out": 1199,
+    "thinking": 928
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 7,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (cond\n    ((> (needs red) 0)\n      (move PACK)\n      (when (>= (count PACK red) 3) (pack red))\n      (when (> (boxes PACK) 0)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)\n        (move PACK)))\n    ((> (needs blue) 0)\n      (move PACK)\n      (when (>= (count PACK blue) 3) (pack blue))\n      (when (> (boxes PACK) 0)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)\n        (move PACK)))\n    (else (wait 1))))",
+    "reply": "Got it: I'll ship red boxes to DOCK until the red part of the order is done, then switch to blue.",
+    "ms": 7256,
+    "wall": 8103.2,
+    "out": 1331,
+    "thinking": 1012
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 8,
+   "first": {
+    "ok": true,
+    "program": "function pickColor() {\n  let best = \"\";\n  let bestN = 0;\n  const colors = [\"red\", \"blue\", \"green\"];\n  for (const c of colors) {\n    if (needs(c) > bestN) {\n      bestN = needs(c);\n      best = c;\n    }\n  }\n  return best;\n}\n\nwhile (needsAny() > 0) {\n  const color = pickColor();\n  move(\"PACK\");\n  if (color !== \"\" && count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box from the dock, and keep going until today's order is complete.",
+    "ms": 7194,
+    "wall": 8106.9,
+    "out": 1426,
+    "thinking": 1094
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 8,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (cond ((> (needs red) 0)\n         (move PACK)\n         (when (> (boxes PACK) 0)\n           (pick-up-box)\n           (move DOCK)\n           (put-down)))\n        ((> (needs blue) 0)\n         (move PACK)\n         (when (> (boxes PACK) 0)\n           (pick-up-box)\n           (move DOCK)\n           (put-down)))\n        (else (wait 5))))",
+    "reply": "I'll ship finished boxes from PACK to DOCK, starting with red until the red order is filled, then switching to blue.",
+    "ms": 5162,
+    "wall": 6002.4,
+    "out": 897,
+    "thinking": 638
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 8,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"blue\";\n  if (needs(\"red\") > 0) {\n    color = \"red\";\n  }\n  move(\"PACK\");\n  if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "Got it: I'll pack and ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 6240,
+    "wall": 7123.1,
+    "out": 1135,
+    "thinking": 894
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 8,
+   "first": {
+    "ok": true,
+    "program": "(define (top-color)\n  (cond ((and (>= (needs red) (needs blue)) (>= (needs red) (needs green))) red)\n        ((>= (needs blue) (needs green)) blue)\n        (else green)))\n\n(loop\n  (when (> (needs-any) 0)\n    (let ((c (top-color)))\n      (move PACK)\n      (when (>= (count PACK c) 3)\n        (pack c))\n      (when (> (boxes PACK) 0)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)\n        (move PACK)))))",
+    "reply": "Order needs 3 blue and 2 red, so I'll pack whichever color is needed most, ship each box to DOCK, and keep going until the order is filled.",
+    "ms": 7236,
+    "wall": 8119.7,
+    "out": 1244,
+    "thinking": 930
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 9,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let best = \"red\";\n  if (needs(\"blue\") > needs(best)) {\n    best = \"blue\";\n  }\n  if (needs(\"green\") > needs(best)) {\n    best = \"green\";\n  }\n  move(\"PACK\");\n  if (count(\"PACK\", best) >= 3 && needs(best) > 0) {\n    pack(best);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "Blue is needed most, so I'll pack blue first, ship each box to DOCK, and keep going until today's order is complete.",
+    "ms": 5852,
+    "wall": 6775.1,
+    "out": 1076,
+    "thinking": 781
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "switch-colors",
+   "run": 9,
+   "first": {
+    "ok": true,
+    "program": "(loop\n  (cond\n    ((> (needs red) 0)\n      (when (> (boxes PACK) 0)\n        (move PACK)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)))\n    (else\n      (when (> (boxes PACK) 0)\n        (move PACK)\n        (pick-up-box)\n        (move DOCK)\n        (put-down)))))",
+    "reply": "Got it: I'll ship finished boxes from Pack to Dock, starting with red and switching to blue once the red part of the order is done.",
+    "ms": 4703,
+    "wall": 5632.8,
+    "out": 831,
+    "thinking": 586
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 9,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"red\";\n  if (needs(\"red\") === 0) {\n    color = \"blue\";\n  }\n  if (needs(color) > 0) {\n    move(\"PACK\");\n    if (count(\"PACK\", color) >= 3) {\n      pack(color);\n    }\n    if (boxes(\"PACK\") > 0) {\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n      move(\"PACK\");\n    }\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll pack and ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 5620,
+    "wall": 6506,
+    "out": 1053,
+    "thinking": 798
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "lisp",
+   "task": "order-color",
+   "run": 9,
+   "first": {
+    "ok": true,
+    "program": "(while (> (needs-any) 0)\n  (let ((c (if (> (needs blue) (needs red)) blue red)))\n    (move BELT)\n    (pick-up c)\n    (move PACK)\n    (put-down)\n    (when (>= (count PACK c) 3)\n      (pack c)\n      (pick-up-box)\n      (move DOCK)\n      (put-down)\n      (move PACK))))",
+    "reply": "I'll pack whichever color the order still needs most, ship each box, and keep going until today's 2 red and 3 blue boxes are done.",
+    "ms": 5910,
+    "wall": 6850.8,
+    "out": 1134,
+    "thinking": 886
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  }
+ ]
+}
