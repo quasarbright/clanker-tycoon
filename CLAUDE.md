@@ -21,7 +21,7 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 **Workers**
 - Workers follow instructions. Clear instructions get done, every time. They do what they're told
   and nothing more: no extra steps, no "helpful" side work, no unrequested trips to your desk.
-  (Haiku's habit is to "help": a packer told to pack and ship also fetched widgets and jammed the
+  (Haiku's habit is to "help": a packer told to pack and ship also fetched widgets and blocked the
   line. `brains.js` sends back any routine that visits a station the instructions don't mention.)
 - Talking and yelling don't change a worker's routine unless you actually give new instructions.
   "Great work" is not an order.
@@ -33,12 +33,12 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   machines); a worker without the skill can't do it. Two kinds of action:
   - **Primary work** (painting, packing, …): a program that uses it without the skill is a compile
     error, caught before the shift starts.
-  - **Side tasks** (fixing a jam): a program may include them; without the skill they silently do
-    nothing. So "fix it if it jams" is fine in anyone's program, and only a worker with the Repair
-    skill actually fixes anything.
+  - **Side tasks** (servicing a machine): a program may include them; without the skill they
+    silently do nothing. So "service the paint machine when it's worn" is fine in anyone's program,
+    and only a worker with the Repair skill actually services anything.
   (Long term: pay to train a new skill.)
 - **Attributes** are traits that raise the wage: Fast (walks faster), Strong (carries two),
-  Nimble (works machines faster), Steady (machines jam less in their hands, every machine), Smart
+  Nimble (works machines faster), Steady (machines wear more slowly in their hands, every machine), Smart
   (more in-game thinking: a bigger think budget or faster refill). Everyone is patient, careful and
   has a long memory; those aren't traits. No cheap downside traits: they're annoying, not fun. No
   traits we can't really control (thinking speed) or can't define cleanly ("notices problems").
@@ -51,8 +51,13 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 
 **Feel**
 - Nothing just waits without moving. Anything that takes time shows its progress: packing fills a
-  box in, painting, fixing a jam, a worker waiting for something. A still screen reads as broken.
+  box in, painting, servicing a machine, a worker waiting for something. A still screen reads as broken.
 - Simple actions are instant: picking up and putting down take no time.
+- No random breakdowns. Machines **wear predictably**: a visible wear meter fills with every job,
+  and a full meter means the machine stops until it's serviced (Repair skill, takes a few
+  seconds). Servicing is planned work (who does it, and when), not bad luck. Randomness that hits
+  after you've made your decisions isn't fun; the challenge is planning. (Issue #12; the current
+  code still has random jams.)
 - You can use a station from any side.
 - The factory floor stays in view; scrolling the crew list doesn't scroll the floor away.
 
@@ -84,7 +89,7 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   the runtime to catch, by a dry run or by thinking.
 - Workers compile instructions once into a routine the sim runs without the model. Haiku isn't fast
   enough for a real-time loop, so make what it compiles smarter instead of calling it more.
-- Next for the language: conditionals, events ("when the machine jams…"), and full vision
+- Next for the language: conditionals, events ("when a machine needs service…"), and full vision
   (conditions can read every station, the order, and every coworker).
 - The compiled program is never shown to the player. That keeps us free to make it as complex as
   it needs to be. The card shows instructions and what they're doing, not code.

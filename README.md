@@ -17,7 +17,7 @@ It only listens on 127.0.0.1.
 ## How it's split
 
 - `src/sim.js`: the factory. Plain state plus `step()`, no DOM and no model calls. All fumbles,
-  jams and failures happen here.
+  jams and failures happen here. (Jams are random for now; the plan is predictable machine wear, issue #12.)
 - `src/brains.js`: the hires (persona plus dumbness knobs: quirk, fumble chance, mishearing,
   how much of the floor they see) and the two model calls: responding to you, and complaining at
   your desk.
