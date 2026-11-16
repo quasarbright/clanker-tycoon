@@ -1,5 +1,8 @@
 {
   "name": "clanker-tycoon",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "acorn": "8.14.0"
+  }
 }
