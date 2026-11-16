@@ -47,6 +47,17 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - A level is a fixed order, scored by time. You press Start to begin; hiring happens before Start
   and closes once the shift runs. You can still change instructions and talk mid-shift.
 
+**The worker language (direction, not built yet)**
+- Workers compile instructions once into a routine the sim runs without the model. Haiku isn't fast
+  enough for a real-time loop, so make what it compiles smarter instead of calling it more.
+- Next for the language: conditionals, events ("when the machine jams…"), and full vision
+  (conditions can read every station, the order, and every coworker).
+- A `think` step that calls the model mid-shift. Limited: for unexpected events rather than part
+  of the regular loop, and/or a skill not everyone has, with a budget.
+- Workers coordinating by talking to each other is for managers later, as model calls. Not
+  deterministic messaging between scripts.
+- Model calls run with thinking off where the backend allows it. No compiling while you type.
+
 **Controls**
 - Tools should let you choose what they act on: at Pack you pick which 3 widgets get boxed.
 
