@@ -1,0 +1,1644 @@
+{
+ "tasks": [
+  {
+   "id": "packer",
+   "instructions": "Pack boxes at Pack and ship them from the dock.",
+   "order": "4 red boxes",
+   "coworkers": {
+    "Gary": "Bring widgets from the belt to Pack.",
+    "Rusty": "Bring widgets from the belt to Pack."
+   },
+   "expect": "Only PACK and DOCK: pack (red) when 3 are there, pick up the box, ship at DOCK. Must NOT fetch from the belt."
+  },
+  {
+   "id": "order-color",
+   "instructions": "Pack whatever color the order needs most, ship it, and keep going until the order is done.",
+   "order": "2 red boxes, 3 blue boxes",
+   "coworkers": {
+    "Gary": "Bring widgets from the belt to Pack."
+   },
+   "expect": "Pick the color with the larger needs(); pack that color when 3 are at PACK; ship; stop (or idle) when needsAny() is 0."
+  },
+  {
+   "id": "paint-to-order",
+   "instructions": "Paint red widgets blue and ship them, but only as many as the order still needs.",
+   "order": "2 blue widgets (loose widgets ship)",
+   "floorExtra": {
+    "BELT": "4 red widgets"
+   },
+   "coworkers": {},
+   "expect": "While needs(blue) > 0: BELT → pick up red → PAINT → paint blue → DOCK → put down. Stop after."
+  },
+  {
+   "id": "switch-colors",
+   "instructions": "Ship red boxes until the red part of the order is done, then switch to blue.",
+   "order": "2 red boxes, 2 blue boxes",
+   "coworkers": {
+    "Gary": "Bring red and blue widgets from the belt to Pack."
+   },
+   "expect": "Color = needs(red) > 0 ? red : blue; pack that color at PACK, pick up box, ship at DOCK; stop when done."
+  }
+ ],
+ "results": [
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    move(\"PACK\");\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll pack red boxes at Pack for today's order and ship each finished box from the Dock.",
+    "ms": 4644,
+    "wall": 6269.4,
+    "out": 824,
+    "thinking": 605
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "packer",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "const color = \"red\";\nmove(\"PACK\");\nwhile (true) {\n  if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll pack red boxes at Pack as widgets arrive and ship each finished box from the dock until the order of 4 red boxes is filled.",
+    "ms": 5677,
+    "wall": 7293.4,
+    "out": 1042,
+    "thinking": 802
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "order-color",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let color = \"red\";\n  if (needs(\"blue\") > needs(color)) { color = \"blue\"; }\n  if (needs(\"green\") > needs(color)) { color = \"green\"; }\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) { pack(color); }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each finished box to the dock, and keep going until the order is complete.",
+    "ms": 6941,
+    "wall": 8597.4,
+    "out": 1444,
+    "thinking": 1172
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needsAny() > 0 && count(\"BELT\", \"red\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    move(\"PAINT\");\n    if (jammed()) {\n      fix();\n    }\n    paint(\"blue\");\n    move(\"DOCK\");\n    putDown();\n  }\n  wait(1);\n}",
+    "reply": "I'll paint red widgets blue and ship them at the dock, stopping once the order's 2 blue widgets are covered.",
+    "ms": 5982,
+    "wall": 6933.5,
+    "out": 1118,
+    "thinking": 895
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "function bestColor() {\n  let c = \"red\";\n  if (needs(\"blue\") > needs(c)) {\n    c = \"blue\";\n  }\n  if (needs(\"green\") > needs(c)) {\n    c = \"green\";\n  }\n  return c;\n}\n\nwhile (needsAny() > 0) {\n  const color = bestColor();\n  move(\"BELT\");\n  pickUp(color);\n  move(\"PACK\");\n  if (holding() === color) {\n    putDown();\n  }\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}\n",
+    "reply": "Order needs blue most right now, so I'm packing blue first, shipping each box to DOCK, and continuing until today's order is done.",
+    "ms": 11664,
+    "wall": 13247,
+    "out": 2042,
+    "thinking": 1699
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "paint-to-order",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needsAny() > 0 && count(\"BELT\", \"red\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    move(\"PAINT\");\n    if (jammed()) {\n      fix();\n    }\n    paint(\"blue\");\n    move(\"DOCK\");\n    putDown();\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "Got it: I'll paint red widgets blue and ship them to the dock, stopping once the order's needs are met.",
+    "ms": 7450,
+    "wall": 8402.8,
+    "out": 1452,
+    "thinking": 1227
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"red\";\n  if (needs(\"red\") === 0) {\n    color = \"blue\";\n  }\n  move(\"PACK\");\n  if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "Understood: I'll pack and ship red boxes first, then switch to blue once the red part of the order is done.",
+    "ms": 7484,
+    "wall": 8586.8,
+    "out": 1496,
+    "thinking": 1245
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "switch-colors",
+   "run": 0,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  const color = needs(\"red\") > 0 ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "Got it: I'll pack and ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 5709,
+    "wall": 6671,
+    "out": 1067,
+    "thinking": 845
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  }\n  if (needs(\"red\") > 0) {\n    if (count(\"PACK\", \"red\") >= 3) {\n      move(\"PACK\");\n      pack(\"red\");\n    }\n  }\n  wait(1);\n}",
+    "reply": "I'll pack red boxes at Pack for today's order of 4 and ship each finished box from the dock.",
+    "ms": 5728,
+    "wall": 6772.6,
+    "out": 1068,
+    "thinking": 844
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "packer",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "Got it: I'll pack red boxes at PACK as the belt crew brings red widgets, and ship each finished box from the DOCK.",
+    "ms": 4177,
+    "wall": 5152.4,
+    "out": 812,
+    "thinking": 578
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let color = \"red\";\n  let best = needs(\"red\");\n  if (needs(\"blue\") > best) {\n    color = \"blue\";\n    best = needs(\"blue\");\n  }\n  if (needs(\"green\") > best) {\n    color = \"green\";\n    best = needs(\"green\");\n  }\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  } else {\n    wait(2);\n  }\n}\nsay(\"Order complete.\");",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until today's order is complete.",
+    "ms": 5917,
+    "wall": 6771.6,
+    "out": 1162,
+    "thinking": 846
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "order-color",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  const color = needs(\"red\") >= needs(\"blue\") ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  } else {\n    wait(1);\n  }\n}\nsay(\"Order done.\");",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until the order is complete.",
+    "ms": 5816,
+    "wall": 6900,
+    "out": 1067,
+    "thinking": 810
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "let shipped = 0;\nwhile (true) {\n  if (shipped < 2) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      if (holding() === \"red\") {\n        paint(\"blue\");\n      }\n      move(\"DOCK\");\n      putDown();\n      shipped = shipped + 1;\n    }\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "I'll paint red widgets blue and ship them to the dock, stopping once the order's 2 blue widgets are covered.",
+    "ms": 6523,
+    "wall": 7581.9,
+    "out": 1285,
+    "thinking": 1013
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "paint-to-order",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"blue\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      move(\"DOCK\");\n      putDown();\n    }\n  }\n}",
+    "reply": "Got it: I'll paint red widgets blue and ship them, stopping once the order's 2 blue widgets are covered.",
+    "ms": 6011,
+    "wall": 7472.5,
+    "out": 1158,
+    "thinking": 940
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"red\";\n  if (needs(\"red\") === 0) {\n    color = \"blue\";\n  }\n  if (needs(color) > 0) {\n    move(\"PACK\");\n    if (count(\"PACK\", color) >= 3) {\n      pack(color);\n    }\n    if (boxes(\"PACK\") > 0) {\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n      move(\"PACK\");\n    }\n  }\n  wait(1);\n}",
+    "reply": "I'll pack and ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 5158,
+    "wall": 6014.9,
+    "out": 920,
+    "thinking": 667
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  for (const c of [\"red\", \"blue\", \"green\"]) {\n    if (needs(c) > 0 && count(\"PACK\", c) >= 3) {\n      pack(c);\n    }\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack the boxes the order needs at Pack and ship each finished box from the dock.",
+    "ms": 5534,
+    "wall": 6327.5,
+    "out": 1083,
+    "thinking": 846
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "switch-colors",
+   "run": 1,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  const color = needs(\"red\") > 0 ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "Red boxes first, then blue; I'll pack the boxes at PACK and ship each one to DOCK.",
+    "ms": 6468,
+    "wall": 7252,
+    "out": 1173,
+    "thinking": 940
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "packer",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll pack red boxes at Pack for today's order of 4 and ship each one from the dock.",
+    "ms": 4903,
+    "wall": 5786.3,
+    "out": 862,
+    "thinking": 642
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let red = needs(\"red\");\n  let blue = needs(\"blue\");\n  let color = red >= blue ? \"red\" : \"blue\";\n  if (needs(color) === 0) {\n    color = color === \"red\" ? \"blue\" : \"red\";\n  }\n  if (count(\"PACK\", color) >= 3) {\n    move(\"PACK\");\n    pack(color);\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  } else {\n    wait(2);\n  }\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box from the dock, and keep going until today's order is filled.",
+    "ms": 6213,
+    "wall": 7038.6,
+    "out": 1140,
+    "thinking": 868
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "order-color",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let color = \"red\";\n  if (needs(\"blue\") > needs(color)) {\n    color = \"blue\";\n  }\n  if (needs(\"green\") > needs(color)) {\n    color = \"green\";\n  }\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}\nsay(\"Order complete.\");",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until today's order is complete.",
+    "ms": 5986,
+    "wall": 6831.1,
+    "out": 1114,
+    "thinking": 824
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "let shipped = 0;\nwhile (true) {\n  if (shipped < 2) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      move(\"DOCK\");\n      putDown();\n      shipped = shipped + 1;\n    } else {\n      wait(1);\n    }\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "I'll paint red widgets blue and ship them, stopping once the 2 blue widgets the order needs have gone out.",
+    "ms": 6189,
+    "wall": 7080.2,
+    "out": 1212,
+    "thinking": 952
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "paint-to-order",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"blue\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      move(\"DOCK\");\n      putDown();\n    }\n  }\n}",
+    "reply": "Painting red widgets blue and shipping them, one at a time, until the order's 2 blue widgets are covered.",
+    "ms": 6337,
+    "wall": 7322.1,
+    "out": 1046,
+    "thinking": 831
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"red\";\n  if (needs(\"red\") === 0) {\n    color = \"blue\";\n  }\n  if (needs(color) > 0) {\n    move(\"PACK\");\n    if (count(\"PACK\", color) >= 3) {\n      pack(color);\n    }\n    if (boxes(\"PACK\") > 0) {\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n      move(\"PACK\");\n    }\n  }\n}",
+    "reply": "Got it: I'll pack and ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 4688,
+    "wall": 5591.1,
+    "out": 857,
+    "thinking": 609
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "switch-colors",
+   "run": 2,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  const color = needs(\"red\") > 0 ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  wait(1);\n}",
+    "reply": "I'll ship red boxes until the red order is filled, then switch to blue, packing any three matching widgets at PACK as I go.",
+    "ms": 5201,
+    "wall": 6010.3,
+    "out": 915,
+    "thinking": 676
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 3,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack red boxes at Pack for today's order of 4, and ship each finished box from the dock.",
+    "ms": 4874,
+    "wall": 5755.6,
+    "out": 927,
+    "thinking": 709
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "packer",
+   "run": 3,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"red\") > 0) {\n    move(\"PACK\");\n    if (count(\"PACK\", \"red\") >= 3) {\n      pack(\"red\");\n    }\n    if (boxes(\"PACK\") > 0) {\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n    }\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll pack red boxes at Pack as widgets arrive and ship each one from the dock until the 4 red boxes are done.",
+    "ms": 6450,
+    "wall": 7368.5,
+    "out": 1250,
+    "thinking": 1021
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 3,
+   "first": {
+    "ok": true,
+    "program": "function pickColor() {\n  let best = \"\";\n  let bestNeed = 0;\n  for (const c of [\"red\", \"blue\", \"green\"]) {\n    if (needs(c) > bestNeed) {\n      bestNeed = needs(c);\n      best = c;\n    }\n  }\n  return best;\n}\n\nwhile (needsAny() > 0) {\n  const c = pickColor();\n  if (c !== \"\" && count(\"PACK\", c) >= 3) {\n    move(\"PACK\");\n    pack(c);\n  }\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  }\n  wait(2);\n}",
+    "reply": "I'll pack the color the order needs most, ship each box to the dock, and keep going until today's order is done.",
+    "ms": 6452,
+    "wall": 7242.7,
+    "out": 1291,
+    "thinking": 964
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "order-color",
+   "run": 3,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  const color = needs(\"red\") > needs(\"blue\") ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box to DOCK, and keep going until today's order is filled.",
+    "ms": 6802,
+    "wall": 7713.3,
+    "out": 1293,
+    "thinking": 1048
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 3,
+   "first": {
+    "ok": true,
+    "program": "let shipped = 0;\nwhile (true) {\n  if (shipped < 2) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      if (holding() === \"blue\") {\n        move(\"DOCK\");\n        putDown();\n        shipped = shipped + 1;\n      }\n    }\n  }\n}",
+    "reply": "Understood: I'll paint red widgets blue and ship them, stopping after 2 since that's what today's order needs.",
+    "ms": 7347,
+    "wall": 8214.2,
+    "out": 1336,
+    "thinking": 1085
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "paint-to-order",
+   "run": 3,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"blue\") > 0 && count(\"BELT\", \"red\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      move(\"DOCK\");\n      putDown();\n    }\n  } else {\n    wait(5);\n  }\n}",
+    "reply": "I'll paint red widgets blue and ship them to the dock, stopping once the order's blue widgets are covered.",
+    "ms": 5642,
+    "wall": 6582.1,
+    "out": 1063,
+    "thinking": 822
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 3,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"red\";\n  if (needs(\"red\") === 0) {\n    color = \"blue\";\n  }\n  if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n    move(\"PACK\");\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 5725,
+    "wall": 6584.2,
+    "out": 1013,
+    "thinking": 766
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "packer",
+   "run": 4,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "Got it: I'll pack red boxes at Pack for today's order of 4 and ship each one from the dock.",
+    "ms": 4756,
+    "wall": 5619.9,
+    "out": 844,
+    "thinking": 631
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 4,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll pack red boxes at Pack as widgets arrive and ship each finished box from the dock until today's 4 red boxes are done.",
+    "ms": 5575,
+    "wall": 6552.2,
+    "out": 1075,
+    "thinking": 843
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "switch-colors",
+   "run": 3,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  const color = needs(\"red\") > 0 ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(2);\n}",
+    "reply": "Red boxes first, then blue; I'll pack and ship until the order is complete.",
+    "ms": 7717,
+    "wall": 8652.8,
+    "out": 1495,
+    "thinking": 1261
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 4,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needsAny() > 0) {\n    let color = \"green\";\n    if (needs(\"red\") > needs(\"green\")) {\n      color = \"red\";\n    }\n    if (needs(\"blue\") > needs(color)) {\n      color = \"blue\";\n    }\n    while (count(\"PACK\", color) < 3) {\n      if (count(\"BELT\", color) > 0) {\n        move(\"BELT\");\n        pickUp(color);\n        move(\"PACK\");\n        putDown();\n      } else {\n        wait(1);\n      }\n    }\n    move(\"PACK\");\n    pack(color);\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box to DOCK, and keep going until today's 2 red and 3 blue boxes are done.",
+    "ms": 9166,
+    "wall": 10045.8,
+    "out": 1684,
+    "thinking": 1342
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "order-color",
+   "run": 4,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let color = \"red\";\n  if (needs(\"blue\") > needs(\"red\")) {\n    color = \"blue\";\n  }\n  if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n    move(\"PACK\");\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  }\n  wait(1);\n}\nsay(\"Order done.\");",
+    "reply": "I'll pack whichever color the order needs most, ship each finished box to DOCK, and keep going until the order is complete.",
+    "ms": 5338,
+    "wall": 6175.3,
+    "out": 961,
+    "thinking": 687
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 4,
+   "first": {
+    "ok": true,
+    "program": "let shipped = 0;\nwhile (true) {\n  if (shipped < 2) {\n    move(\"BELT\");\n    if (count(\"BELT\", \"red\") > 0) {\n      pickUp(\"red\");\n      if (holding() === \"red\") {\n        move(\"PAINT\");\n        if (jammed()) {\n          fix();\n        }\n        paint(\"blue\");\n        move(\"DOCK\");\n        putDown();\n        shipped = shipped + 1;\n      }\n    }\n  }\n  wait(1);\n}",
+    "reply": "I'll paint and ship red widgets as blue, stopping once the order's 2 blue widgets are shipped.",
+    "ms": 7194,
+    "wall": 8128.1,
+    "out": 1425,
+    "thinking": 1163
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 4,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = needs(\"red\") > 0 ? \"red\" : \"blue\";\n  if (needsAny() === 0) {\n    wait(1);\n    continue;\n  }\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "Got it: I'll ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 5116,
+    "wall": 5992.9,
+    "out": 983,
+    "thinking": 733
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "paint-to-order",
+   "run": 4,
+   "first": {
+    "ok": true,
+    "program": "let shipped = 0;\nwhile (true) {\n  if (jammed()) {\n    move(\"PAINT\");\n    fix();\n  }\n  if (shipped < 2 && count(\"BELT\", \"red\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      paint(\"blue\");\n      move(\"DOCK\");\n      putDown();\n      shipped = shipped + 1;\n    }\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll paint red widgets blue and ship them to the dock, stopping once the 2-widget blue order is covered.",
+    "ms": 9417,
+    "wall": 10275.8,
+    "out": 1827,
+    "thinking": 1558
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "switch-colors",
+   "run": 4,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  const color = needs(\"red\") > 0 ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "I'll ship red boxes first until the red part of the order is done, then switch to blue.",
+    "ms": 7203,
+    "wall": 8131,
+    "out": 1418,
+    "thinking": 1190
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 5,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"red\") > 0) {\n    if (count(\"PACK\", \"red\") < 3 && count(\"BELT\", \"red\") > 0) {\n      move(\"BELT\");\n      pickUp(\"red\");\n      move(\"PACK\");\n      putDown();\n    }\n    if (count(\"PACK\", \"red\") >= 3) {\n      move(\"PACK\");\n      pack(\"red\");\n    }\n  }\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  }\n  wait(1);\n}",
+    "reply": "I'll pack red widgets into boxes at Pack until the 4 red boxes are filled, and ship each finished box from the Dock.",
+    "ms": 7117,
+    "wall": 7998.2,
+    "out": 1466,
+    "thinking": 1165
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "packer",
+   "run": 5,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    move(\"PACK\");\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack red widgets at PACK into boxes whenever the order needs them, then carry finished boxes to the DOCK and ship them.",
+    "ms": 4632,
+    "wall": 5520.6,
+    "out": 878,
+    "thinking": 640
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 5,
+   "first": {
+    "ok": true,
+    "program": "function pickColor() {\n  if (needs(\"red\") >= needs(\"blue\")) {\n    return \"red\";\n  }\n  return \"blue\";\n}\n\nwhile (needsAny() > 0) {\n  const c = pickColor();\n  if (count(\"PACK\", c) < 3) {\n    move(\"BELT\");\n    pickUp(c);\n    move(\"PACK\");\n    putDown();\n  }\n  if (count(\"PACK\", c) >= 3) {\n    pack(c);\n  }\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until today's 2 red and 3 blue boxes are done.",
+    "ms": 6916,
+    "wall": 7814.8,
+    "out": 1337,
+    "thinking": 1010
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "order-color",
+   "run": 5,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let color = \"red\";\n  if (needs(\"blue\") > needs(\"red\")) {\n    color = \"blue\";\n  }\n  if (needs(\"green\") > needs(color)) {\n    color = \"green\";\n  }\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until today's order is complete.",
+    "ms": 6227,
+    "wall": 7063.4,
+    "out": 1205,
+    "thinking": 919
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "paint-to-order",
+   "run": 5,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needsAny() > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      move(\"DOCK\");\n      putDown();\n    }\n  }\n}",
+    "reply": "Got it: I'll paint red widgets blue and ship them until the order is filled.",
+    "ms": 5639,
+    "wall": 6480.3,
+    "out": 1069,
+    "thinking": 865
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 5,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"blue\") > 0 && count(\"BELT\", \"red\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      move(\"DOCK\");\n      putDown();\n    }\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "Understood: I'll paint red widgets blue and ship them, stopping once the order's 2 blue widgets are covered.",
+    "ms": 6154,
+    "wall": 6944.3,
+    "out": 1002,
+    "thinking": 758
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 5,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"red\") > 0) {\n    move(\"PACK\");\n    pack(\"red\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  } else if (needs(\"blue\") > 0) {\n    move(\"PACK\");\n    pack(\"blue\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  } else {\n    wait(5);\n  }\n}",
+    "reply": "Got it: I'll ship red boxes until the red part of the order is done, then switch to blue.",
+    "ms": 5243,
+    "wall": 6101.9,
+    "out": 979,
+    "thinking": 745
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "switch-colors",
+   "run": 5,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  const color = needs(\"red\") > 0 ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "Got it: I'll pack and ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 5573,
+    "wall": 6433.6,
+    "out": 1052,
+    "thinking": 820
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "packer",
+   "run": 6,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack red boxes at Pack as widgets arrive and ship each finished box from the dock.",
+    "ms": 4938,
+    "wall": 5781.5,
+    "out": 925,
+    "thinking": 708
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 6,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    pack(\"red\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack red boxes at Pack for today's order of 4, and ship each finished box from the dock.",
+    "ms": 5573,
+    "wall": 6388.3,
+    "out": 962,
+    "thinking": 744
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "order-color",
+   "run": 6,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let color = \"red\";\n  if (needs(\"blue\") > needs(color)) {\n    color = \"blue\";\n  }\n  if (needs(\"green\") > needs(color)) {\n    color = \"green\";\n  }\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  } else {\n    wait(2);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  }\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until today's order is done.",
+    "ms": 6643,
+    "wall": 7512.5,
+    "out": 1375,
+    "thinking": 1098
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 6,
+   "first": {
+    "ok": true,
+    "program": "function best() {\n  let pick = null;\n  let most = 0;\n  for (const c of [\"red\", \"blue\", \"green\"]) {\n    if (needs(c) > most) {\n      most = needs(c);\n      pick = c;\n    }\n  }\n  return pick;\n}\n\nwhile (needsAny() > 0) {\n  const color = best();\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  } else {\n    wait(5);\n  }\n}",
+    "reply": "I'll pack the color the order needs most, ship each box to the dock, and keep going until today's order is complete.",
+    "ms": 8154,
+    "wall": 9049.3,
+    "out": 1607,
+    "thinking": 1315
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 6,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"blue\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      move(\"DOCK\");\n      putDown();\n    }\n  }\n  wait(1);\n}",
+    "reply": "Understood: I'll paint red widgets blue and ship them, stopping once the order's blue requirement is met.",
+    "ms": 5860,
+    "wall": 6696.3,
+    "out": 1142,
+    "thinking": 921
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "paint-to-order",
+   "run": 6,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needsAny() > 0 && count(\"BELT\", \"red\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    move(\"PAINT\");\n    if (jammed()) {\n      fix();\n    }\n    paint(\"blue\");\n    move(\"DOCK\");\n    putDown();\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "I'll paint red widgets blue and ship them to the dock until the order's needs are met.",
+    "ms": 5612,
+    "wall": 6444,
+    "out": 1116,
+    "thinking": 899
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 7,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  if (count(\"PACK\", \"red\") >= 3 && needs(\"red\") > 0) {\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack red widgets at Pack into boxes for today's order of 4 red boxes, then carry each finished box to the Dock to ship.",
+    "ms": 4457,
+    "wall": 5345.2,
+    "out": 796,
+    "thinking": 565
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "packer",
+   "run": 7,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll pack red boxes at Pack and ship them from the dock until the order of 4 red boxes is filled.",
+    "ms": 4884,
+    "wall": 5765.3,
+    "out": 894,
+    "thinking": 669
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 6,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"red\";\n  if (needs(\"red\") === 0) {\n    color = \"blue\";\n  }\n  if (needs(color) > 0) {\n    if (boxes(\"PACK\") > 0) {\n      move(\"PACK\");\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n    } else if (count(\"PACK\", color) >= 3) {\n      move(\"PACK\");\n      pack(color);\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n    }\n  }\n  wait(1);\n}",
+    "reply": "I'll ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 6049,
+    "wall": 6856.2,
+    "out": 1101,
+    "thinking": 830
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "switch-colors",
+   "run": 6,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  const color = needs(\"red\") > 0 ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  if (count(\"PACK\", color) >= 3 && needs(color) > 0) {\n    pack(color);\n  }\n  wait(1);\n}",
+    "reply": "I'll ship finished boxes from Pack to Dock, starting with red until the red order is filled, then blue.",
+    "ms": 7793,
+    "wall": 8666.2,
+    "out": 1457,
+    "thinking": 1214
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 7,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let c = \"red\";\n  if (needs(\"blue\") > needs(\"red\")) {\n    c = \"blue\";\n  }\n  if (needs(\"green\") > needs(c)) {\n    c = \"green\";\n  }\n  move(\"PACK\");\n  if (count(\"PACK\", c) >= 3) {\n    pack(c);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until today's order is complete.",
+    "ms": 5704,
+    "wall": 6558.8,
+    "out": 1021,
+    "thinking": 740
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 7,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needsAny() > 0 && count(\"BELT\", \"red\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    move(\"PAINT\");\n    if (jammed()) {\n      fix();\n    }\n    paint(\"blue\");\n    move(\"DOCK\");\n    putDown();\n    move(\"BELT\");\n  }\n  wait(1);\n}",
+    "reply": "I'll paint red widgets blue and ship them, stopping once the order's remaining need is met.",
+    "ms": 5776,
+    "wall": 6662.8,
+    "out": 1112,
+    "thinking": 890
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "order-color",
+   "run": 7,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  const red = needs(\"red\");\n  const blue = needs(\"blue\");\n  const color = red >= blue ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  } else {\n    wait(2);\n  }\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until today's order is filled.",
+    "ms": 5965,
+    "wall": 6838.6,
+    "out": 1274,
+    "thinking": 1010
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "paint-to-order",
+   "run": 7,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"blue\") > 0 && count(\"BELT\", \"red\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    move(\"PAINT\");\n    if (jammed()) {\n      fix();\n    }\n    paint(\"blue\");\n    move(\"DOCK\");\n    putDown();\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "Got it: I'll paint red widgets blue and ship them until the order's blue count is filled.",
+    "ms": 5790,
+    "wall": 6683.2,
+    "out": 1137,
+    "thinking": 917
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 8,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "I'll pack red boxes at PACK for today's 4-box red order, then carry each finished box to DOCK and ship it.",
+    "ms": 4056,
+    "wall": 5051.8,
+    "out": 734,
+    "thinking": 516
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "switch-colors",
+   "run": 7,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  const color = needs(\"red\") > 0 ? \"red\" : \"blue\";\n  if (needs(color) > 0 && boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll ship red boxes from Pack to Dock until the red order is filled, then switch to blue.",
+    "ms": 4712,
+    "wall": 5723.9,
+    "out": 806,
+    "thinking": 598
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 7,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  let color = \"red\";\n  if (needs(\"red\") === 0) {\n    color = \"blue\";\n  }\n  if (needsAny() > 0 && count(\"PACK\", color) >= 3) {\n    move(\"PACK\");\n    pack(color);\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll pack and ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 5903,
+    "wall": 6740.6,
+    "out": 1138,
+    "thinking": 910
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "packer",
+   "run": 8,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  } else if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    move(\"PACK\");\n    pack(\"red\");\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "Got it: I'll pack red boxes at Pack for today's order of 4 and ship each finished box from the dock.",
+    "ms": 4811,
+    "wall": 5615.4,
+    "out": 929,
+    "thinking": 703
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "order-color",
+   "run": 8,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  const color = needs(\"red\") >= needs(\"blue\") ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  } else {\n    wait(2);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until today's 2 red and 3 blue boxes are done.",
+    "ms": 5411,
+    "wall": 6282.9,
+    "out": 1008,
+    "thinking": 747
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 8,
+   "first": {
+    "ok": true,
+    "program": "let shipped = 0;\nwhile (true) {\n  if (shipped < 2) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      move(\"DOCK\");\n      putDown();\n      shipped = shipped + 1;\n    }\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "Got it: I'll paint red widgets blue and ship them to the dock, stopping once the order's 2 blue widgets are covered.",
+    "ms": 6903,
+    "wall": 7736.9,
+    "out": 1256,
+    "thinking": 1003
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 8,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let color = \"red\";\n  if (needs(\"blue\") > needs(color)) { color = \"blue\"; }\n  if (needs(\"green\") > needs(color)) { color = \"green\"; }\n  for (let i = 0; i < 3; i++) {\n    move(\"BELT\");\n    pickUp(color);\n    move(\"PACK\");\n    putDown();\n  }\n  move(\"PACK\");\n  pack(color);\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "Blue is the order's biggest need at 3 boxes, so I'll pack blue first, ship each box to DOCK, and keep going until the order is complete.",
+    "ms": 7908,
+    "wall": 8700.9,
+    "out": 1638,
+    "thinking": 1324
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "paint-to-order",
+   "run": 8,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"blue\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      move(\"DOCK\");\n      putDown();\n    }\n  }\n}",
+    "reply": "I'll paint red widgets blue and ship them, stopping once the order's blue requirement is met.",
+    "ms": 6497,
+    "wall": 7307.3,
+    "out": 1209,
+    "thinking": 999
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 8,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"red\") > 0) {\n    if (boxes(\"PACK\") > 0) {\n      move(\"PACK\");\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n    }\n  } else {\n    if (needs(\"blue\") > 0 && boxes(\"PACK\") > 0) {\n      move(\"PACK\");\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n    }\n  }\n  wait(1);\n}",
+    "reply": "I'll ship red boxes from Pack to Dock until the red order is filled, then switch to blue.",
+    "ms": 5490,
+    "wall": 6292,
+    "out": 1029,
+    "thinking": 774
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "packer",
+   "run": 9,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"red\") > 0 && count(\"PACK\", \"red\") >= 3) {\n    move(\"PACK\");\n    pack(\"red\");\n  }\n  if (boxes(\"PACK\") > 0) {\n    move(\"PACK\");\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n  }\n  wait(1);\n}",
+    "reply": "I'll pack red widgets at Pack into boxes for today's 4 red-box order, and ship each finished box from the dock.",
+    "ms": 4544,
+    "wall": 5345.8,
+    "out": 803,
+    "thinking": 578
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "switch-colors",
+   "run": 8,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  const color = needs(\"red\") > 0 ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "Shipping red boxes until the red order is filled, then switching to blue.",
+    "ms": 5208,
+    "wall": 6033.3,
+    "out": 990,
+    "thinking": 776
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "packer",
+   "run": 9,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  move(\"PACK\");\n  for (const color of [\"red\", \"blue\", \"green\"]) {\n    if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n      pack(color);\n    }\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  } else {\n    wait(2);\n  }\n}",
+    "reply": "I'll pack the red boxes the order needs at Pack and ship each finished box from the dock.",
+    "ms": 5817,
+    "wall": 6687.1,
+    "out": 1180,
+    "thinking": 937
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "order-color",
+   "run": 9,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  const color = needs(\"red\") >= needs(\"blue\") ? \"red\" : \"blue\";\n  move(\"PACK\");\n  pack(color);\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n  wait(1);\n}",
+    "reply": "I'll pack whichever color the order needs most, ship each box to the dock, and keep going until today's order is filled.",
+    "ms": 5186,
+    "wall": 6095.9,
+    "out": 1047,
+    "thinking": 823
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "order-color",
+   "run": 9,
+   "first": {
+    "ok": true,
+    "program": "while (needsAny() > 0) {\n  let color = \"red\";\n  if (needs(\"blue\") > needs(\"red\")) {\n    color = \"blue\";\n  }\n  if (count(\"PACK\", color) >= 3) {\n    move(\"PACK\");\n    pack(color);\n    if (boxes(\"PACK\") > 0) {\n      pickUpBox();\n      move(\"DOCK\");\n      putDown();\n      move(\"PACK\");\n    }\n  } else {\n    wait(1);\n  }\n}",
+    "reply": "Blue needs the most boxes, so I'll pack blue first, ship each finished box to DOCK, and keep going until today's order is complete.",
+    "ms": 6199,
+    "wall": 7067,
+    "out": 1223,
+    "thinking": 955
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "paint-to-order",
+   "run": 9,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needsAny() > 0 && holding() === \"nothing\") {\n    move(\"BELT\");\n    pickUp(\"red\");\n    if (holding() === \"red\") {\n      move(\"PAINT\");\n      if (jammed()) {\n        fix();\n      }\n      paint(\"blue\");\n      move(\"DOCK\");\n      putDown();\n    }\n  }\n  wait(1);\n}",
+    "reply": "Got it: I'll paint red widgets blue and ship them, stopping once the order's 2 blue widgets are covered.",
+    "ms": 6227,
+    "wall": 7055.7,
+    "out": 1246,
+    "thinking": 1012
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "paint-to-order",
+   "run": 9,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needs(\"blue\") > 0 && count(\"BELT\", \"red\") > 0) {\n    move(\"BELT\");\n    pickUp(\"red\");\n    move(\"PAINT\");\n    if (jammed()) {\n      fix();\n    }\n    paint(\"blue\");\n    move(\"DOCK\");\n    putDown();\n  }\n}",
+    "reply": "I'll paint red widgets blue and ship them to the dock until the order's blue count is filled.",
+    "ms": 6063,
+    "wall": 6907,
+    "out": 1198,
+    "thinking": 990
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js",
+   "task": "switch-colors",
+   "run": 9,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  if (needsAny() === 0) {\n    wait(5);\n    continue;\n  }\n  let target = \"blue\";\n  if (needs(\"red\") > 0) {\n    target = \"red\";\n  }\n  move(\"PACK\");\n  if (count(\"PACK\", target) >= 3) {\n    pack(target);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "I'll pack and ship red boxes until the red order is filled, then switch to blue.",
+    "ms": 6053,
+    "wall": 6915.4,
+    "out": 1163,
+    "thinking": 907
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  },
+  {
+   "lang": "js-rules",
+   "task": "switch-colors",
+   "run": 9,
+   "first": {
+    "ok": true,
+    "program": "while (true) {\n  const color = needs(\"red\") > 0 ? \"red\" : \"blue\";\n  move(\"PACK\");\n  if (needs(color) > 0 && count(\"PACK\", color) >= 3) {\n    pack(color);\n  }\n  if (boxes(\"PACK\") > 0) {\n    pickUpBox();\n    move(\"DOCK\");\n    putDown();\n    move(\"PACK\");\n  }\n}",
+    "reply": "I'll pack and ship red boxes first, then switch to blue once the red part of the order is done.",
+    "ms": 7590,
+    "wall": 8479.3,
+    "out": 1573,
+    "thinking": 1342
+   },
+   "check": {
+    "parse": true,
+    "subsetOk": true,
+    "toolsOk": true,
+    "issues": []
+   }
+  }
+ ]
+}

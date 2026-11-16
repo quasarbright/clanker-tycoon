@@ -72,6 +72,11 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   comes back as plain text inside the JSON answer, so it works with any backend. Chosen after an
   experiment against a small Lisp (`tools/lang-experiment/REPORT.md`): equally valid and fast, but
   correct 24/24 vs 19/24, and it never strayed outside the subset.
+- The compile prompt includes the writing rules from that experiment (`RULES` in
+  `tools/lang-experiment/run.mjs`): do your part only, choices in variables and the work once,
+  numbers from the questions, no extra steps, trace one pass. They took clean programs from 29/40
+  to 38/40 at no cost in time. The leftover failure (a program that never makes progress) is for
+  the runtime to catch, by a dry run or by thinking.
 - Workers compile instructions once into a routine the sim runs without the model. Haiku isn't fast
   enough for a real-time loop, so make what it compiles smarter instead of calling it more.
 - Next for the language: conditionals, events ("when the machine jams…"), and full vision

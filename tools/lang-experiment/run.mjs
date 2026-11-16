@@ -274,10 +274,21 @@ function checkLisp(src) {
 
 // ---------- running ----------
 
+// Prompt experiment: the same JS guide plus rules for writing the program well.
+//   VARIANT=rules  → "js-rules" (JS with the rules)    LANGS=js,js-rules → which variants to run
+const RULES = `How to write a good program:
+1. Do your part only. Your instructions say what you do; your coworkers' instructions say what they do. Never do their part, even if it looks like nobody is doing it yet. Only go to the stations your own instructions need.
+2. Put each choice in a variable, then do the work once. For example, \`const color = needs("red") > 0 ? "red" : "blue";\` followed by one sequence that uses \`color\`. Don't copy the same sequence once per case.
+3. Read numbers from the questions (needs, count, space, boxes) instead of writing them in.
+4. Don't add steps the instructions don't ask for.
+5. Before answering, walk through one pass of your loop and check: does every step serve your instructions, and does the thing your instructions are about actually get done? (If you ship boxes and no coworker packs them, you have to pack them.)`;
+
 const LANGS = {
   js: { guide: JS_GUIDE, check: checkJs },
+  "js-rules": { guide: `${JS_GUIDE}\n\n${RULES}`, check: checkJs },
   lisp: { guide: LISP_GUIDE, check: checkLisp },
 };
+const ONLY_LANGS = process.env.LANGS ? process.env.LANGS.split(",") : ["js", "lisp"];
 
 async function compile(lang, task, extra = "") {
   const system = `${WORLD}\n\n${LANGS[lang].guide}`;
@@ -318,7 +329,7 @@ if (process.argv[2] === "--selftest") {
 }
 
 const jobs = [];
-for (let run = 0; run < RUNS; run++) for (const task of TASKS.filter((t) => !ONLY || ONLY.includes(t.id))) for (const lang of Object.keys(LANGS)) jobs.push([lang, task, run]);
+for (let run = 0; run < RUNS; run++) for (const task of TASKS.filter((t) => !ONLY || ONLY.includes(t.id))) for (const lang of ONLY_LANGS) jobs.push([lang, task, run]);
 const results = [];
 let next = 0, done = 0;
 await Promise.all(Array.from({ length: CONCURRENCY }, async () => {

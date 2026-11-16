@@ -74,6 +74,30 @@ approach, so I reran the two tasks where Lisp lost, 10 more times per language
 So the choice stands, for a narrower reason than the first table suggested: JS isn't less prone to
 overreach, but Haiku writes the branching logic correctly in JS much more reliably.
 
+## Prompting: can rules fix the bugs? (JS only)
+
+Same JS guide, plus five rules for writing the program (`RULES` in `run.mjs`): do your part only,
+put choices in variables and do the work once, read numbers from the questions, add no steps,
+and trace one pass before answering ("if you ship boxes and no coworker packs, you pack").
+4 hard tasks × 10 runs × 2 variants (`results/runs-rules.json`, scored by `rules.mjs`).
+
+| Task | JS | JS + rules |
+|---|---|---|
+| packer | 9/10 (1 fetches from the belt) | 10/10 |
+| order-color | 6/10 (4 fetch from the belt) | 10/10 |
+| paint-to-order | 5/10 (5 ignore the order: hard-coded count or never stop) | 9/10 (1 hard-coded `shipped < 2`) |
+| switch-colors | 9/10 (1 never packs) | 9/10 (1 never packs) |
+| **Clean, total** | **29/40** | **38/40** |
+| Wall time, median | 6.9 s | 6.8 s |
+
+- The rules fixed overreach completely (5 → 0) and mostly fixed ignoring the order (5 → 1), at no
+  cost in time.
+- "Never packs" stayed at 1 in 10: the program only ships, so nothing ever happens. A dry run in
+  the sim (no boxes after a minute) or a runtime `think` would catch it; prompting alone didn't.
+- Every program on the paint task, with or without rules, also fixes jams (`if (jammed()) fix()`)
+  though the instructions never mention them. Reasonable, but it's a scope decision for the game.
+- With the rules, 3 of 40 programs end with `say("Order done.")`: harmless flavor.
+
 ## Caveats
 
 One model, 3 runs per cell, one prompt per language. Graded by me against a written "correct"
