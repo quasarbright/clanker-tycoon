@@ -3,10 +3,10 @@
 // (or Space and number keys) at a station. Shipping pays; with money you hire robots, give them
 // instructions, and they do the work too. A level ends when today's order is filled.
 import {
-  newGame, step, resume, setScript, atDesk, addWorker, removeWorker, playerGo, playerWalkTo, playerSteer, playerDo,
-  orderLineText, actProgress, boxProgress, STATIONS, DESK, RULES, COLORS, actionLabel,
+  newGame, step, resume, setProgram, setNow, goToDesk, atDesk, addWorker, removeWorker, playerGo, playerWalkTo,
+  playerSteer, playerDo, orderLineText, actProgress, boxProgress, hasAttr, STATIONS, DESK, RULES, COLORS,
 } from "./sim.js";
-import { CANDIDATES, SKILLS, respond, report } from "./brains.js";
+import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond } from "./brains.js";
 import { LEVELS } from "./levels.js";
 import { backendLabel } from "./llm.js";
 
@@ -20,6 +20,13 @@ let started = false; // the clock starts on your first move
 let lastFrame = performance.now();
 let lastVersion = -1, lastStat = null, lastClock = null, lastOrder = "", lastHands = "", lastHiring = "";
 const ui = { bots: {}, cards: {}, stations: {}, desk: {}, thinking: {}, bubbleTimers: {}, oopsTimers: {} };
+
+// The thinking budget: how many thoughts a worker can spend on their own (something unexpected, or
+// think() in their program). It refills slowly while the shift runs; Smart workers hold more and
+// refill faster. Talking to them is free: they always answer you.
+const BUDGET = { max: 3, every: 20, smartMax: 5, smartEvery: 12 };
+// The same problem coming back this soon after they thought about it sends them to your desk.
+const REPEAT_WINDOW = 45;
 // Progress lives in memory only for now (no localStorage while iterating). Every level is open.
 let unlocked = LEVELS.length;
 const best = {}; // best[levelId] = { time, stars }
@@ -28,7 +35,7 @@ $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
 
 const STATION_HINTS = {
   BELT_A: "widgets arrive here",
-  PAINT: "repaints a widget",
+  PAINT: "repaints a widget, wears with use",
   PACK: "3 widgets → 1 box",
   DOCK: "ship from here",
   BIN_1: "storage",
@@ -95,7 +102,8 @@ function buildFloor() {
     el.style.left = `${st.x}%`; el.style.top = `${(st.y / 64) * 100}%`;
     const cap = key.startsWith("BIN_") ? RULES.binCap : key === "PACK" ? RULES.packCap : key === "PAINT" ? RULES.paintCap : key === "BELT_A" ? RULES.beltCap : null;
     const hint = key === "DOCK" ? (level.ship === "widgets" ? "ship widgets here" : "ship boxes here") : STATION_HINTS[key];
-    el.innerHTML = `<div class="ct-st-label"><span>${st.label}</span><span class="ct-st-cap"></span></div><div class="ct-st-hint">${hint}</div><div class="ct-st-items"></div>`;
+    el.innerHTML = `<div class="ct-st-label"><span>${st.label}</span><span class="ct-st-cap"></span></div><div class="ct-st-hint">${hint}</div><div class="ct-st-items"></div>`
+      + (key === "PAINT" ? `<div class="ct-wear" data-tooltip="Wear. At 100% the machine stops until someone with Repair services it."><i></i></div>` : "");
     el.dataset.cap = cap ?? "";
     floor.append(el);
     ui.stations[key] = el;
@@ -205,6 +213,8 @@ window.addEventListener("blur", () => { keysDown.clear(); steerFromKeys(); });
 /** The Start button: the clock starts, you and your crew start moving, hiring closes. */
 function begin() {
   if (started || phase !== "plan") return;
+  const reading = game.workers.find((w) => w.compiling);
+  if (reading) { nudgeStart(); feed(`${reading.hire.name} is still reading their instructions.`, "is-sys"); return; }
   started = true;
   setPhase("run");
   feed(game.workers.length ? "Shift started. Hiring is closed until the next one." : "Shift started.", "is-sys");
@@ -250,7 +260,11 @@ function playerActions() {
     }
     for (const c of COLORS) if (items.some((i) => i.kind === "widget" && i.color === c)) acts.push({ label: `Pick up ${c}`, a: { action: "pickUp", color: c } });
   }
-  if (st === "PAINT" && game.paintJammed) acts.push({ label: "Fix the machine", a: { action: "fix" } });
+  if (st === "PAINT" && game.wear.PAINT > 0) {
+    const worn = game.wear.PAINT >= 100;
+    const act = { label: worn ? "Service the machine" : `Service (${Math.round(game.wear.PAINT)}% worn)`, a: { action: "service" } };
+    worn ? acts.unshift(act) : acts.push(act);
+  }
   return acts;
 }
 
@@ -281,7 +295,8 @@ function renderHands() {
 
 const skillBadges = (h) => `<div class="ct-skills">${h.skills.length
   ? h.skills.map((k) => `<span class="ct-skill" data-tooltip="${SKILLS[k].label}: ${SKILLS[k].tip}">${SKILLS[k].label}</span>`).join("")
-  : `<span class="ct-skill is-none" data-tooltip="No skills: drops things now and then, gives up quickly when something isn't there.">No skills</span>`}</div>`;
+  : `<span class="ct-skill is-none" data-tooltip="No skills: carries things between stations, but can't pack, paint or repair.">No skills</span>`}${
+  (h.attributes ?? []).map((k) => `<span class="ct-skill is-attr" data-tooltip="${ATTRIBUTES[k].label}: ${ATTRIBUTES[k].tip}">${ATTRIBUTES[k].label}</span>`).join("")}</div>`;
 
 function renderHiring() {
   const box = $("#hiring");
@@ -347,6 +362,7 @@ function buildCrew() {
       <div class="ct-card-head">
         <span class="ct-face"></span><span class="ct-card-name">${h.name}</span><span class="ct-wage">$${h.wage}/min</span>
         <span class="ct-status"></span>
+        <span class="ct-pips"></span>
         ${started ? "" : `<button class="ct-btn ct-small-btn" type="button" data-fire>Let go</button>`}
       </div>
       <p class="ct-blurb">${h.blurb}</p>
@@ -355,8 +371,8 @@ function buildCrew() {
         <span class="ct-label">${h.name}'s instructions</span>
         <textarea class="ct-textarea" rows="3" placeholder="Tell ${h.name} what to do, in your own words."></textarea>
         <div class="ct-row"><button class="ct-btn is-gold" data-orders>Give instructions</button></div>
-        <span class="ct-label">What they'll do, on repeat</span>
-        <div class="ct-script"></div>
+        <div class="ct-compile-err" hidden></div>
+        <div class="ct-now" hidden></div>
         <form class="ct-row" data-talk>
           <input class="ct-input" placeholder="Say something to ${h.name}…" autocomplete="off">
           <button class="ct-btn" type="submit">Say</button>
@@ -371,7 +387,7 @@ function buildCrew() {
       const text = ta.value.trim();
       if (!text) { ta.focus(); return; }
       w.draft = null;
-      talk(w, "orders", text);
+      giveInstructions(w, text);
     });
     ta.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) $("[data-orders]", card).click(); });
     $("[data-talk]", card).addEventListener("submit", (e) => {
@@ -380,11 +396,11 @@ function buildCrew() {
       const text = input.value.trim();
       if (!text) return;
       input.value = "";
-      talk(w, "chat", text);
+      message(w, "message", text);
     });
     crew.append(card);
     ui.cards[w.id] = card;
-    renderScript(w);
+    w._cardSig = null;
   }
 }
 
@@ -399,15 +415,59 @@ function focusCard(w) {
   const card = ui.cards[w.id];
   highlight(w);
   card.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  const target = atDesk(w) ? ui.desk[w.id]?.querySelector("input") : w.script.length ? $("[data-talk] input", card) : $("textarea", card);
+  const target = atDesk(w) ? ui.desk[w.id]?.querySelector("input") : w.orders ? $("[data-talk] input", card) : $("textarea", card);
   target?.focus({ preventScroll: true });
 }
 
-function renderScript(w) {
-  const box = $(".ct-script", ui.cards[w.id]);
-  if (!w.script.length) { box.innerHTML = `<span class="ct-script-empty">Nothing. Standing around.</span>`; return; }
-  box.innerHTML = w.script.map((a, i) => `<span class="ct-chip" data-i="${i}">${escapeHTML(actionLabel(a))}</span>`).join("");
-  w._shownCur = null;
+// What the card says about a worker right now, and the thinking budget as pips.
+function cardState(w) {
+  if (w.compiling) return ["reading instructions…", "is-thinking"];
+  if (ui.thinking[w.id]) return ["thinking…", "is-thinking"];
+  if (atDesk(w)) return ["at your desk", "is-waiting"];
+  if (w.compileError) return ["can't do these instructions", "is-error"];
+  if (w.now) return ["doing a one-off", ""];
+  if (w.gen) return ["working", ""];
+  return [w.orders ? "out of things to do" : "no instructions", ""];
+}
+function renderCard(w) {
+  const card = ui.cards[w.id];
+  if (!card) return;
+  const b = budgetOf(w);
+  const [st, cls] = cardState(w);
+  const sig = `${st}|${b.n}/${b.max}|${w.now?.summary}|${w.compileError}|${w.orders}`;
+  if (sig === w._cardSig) return;
+  w._cardSig = sig;
+  const status = $(".ct-status", card);
+  status.textContent = st;
+  status.className = `ct-status ${cls}`;
+  card.classList.toggle("is-waiting", atDesk(w));
+  const pips = $(".ct-pips", card);
+  pips.innerHTML = Array.from({ length: b.max }, (_, i) => `<i class="${i < b.n ? "is-on" : ""}"></i>`).join("");
+  pips.dataset.tooltip = `Thinking budget: ${b.n} of ${b.max}. ${w.hire.name} spends one to think through something unexpected; it refills by one every ${b.every}s while the shift runs. Talking to them is free.`;
+  const err = $(".ct-compile-err", card);
+  err.hidden = !w.compileError;
+  if (w.compileError) err.innerHTML = `<b>${w.hire.name} can't do these instructions:</b> ${escapeHTML(w.compileError)}`;
+  const now = $(".ct-now", card);
+  now.hidden = !w.now;
+  if (w.now) now.innerHTML = `<span class="ct-label">Doing now, then back to the instructions</span> ${escapeHTML(w.now.summary)}`;
+  // A thought can rewrite the instructions; the card always shows the current ones.
+  const ta = $("textarea", card);
+  if (w.orders && w.draft == null && document.activeElement !== ta && ta.value !== w.orders) ta.value = w.orders;
+}
+
+function budgetOf(w) {
+  if (!w.budget) {
+    const smart = hasAttr(w, "smart");
+    const max = smart ? BUDGET.smartMax : BUDGET.max;
+    w.budget = { n: max, max, every: smart ? BUDGET.smartEvery : BUDGET.every, next: null };
+  }
+  return w.budget;
+}
+function refill(w) {
+  const b = budgetOf(w);
+  if (b.n >= b.max) { b.next = null; return; }
+  b.next ??= game.t + b.every;
+  if (game.t >= b.next) { b.n++; b.next = b.n < b.max ? game.t + b.every : null; }
 }
 
 const worker = (id) => (id === "you" ? game.player : game.workers.find((w) => w.id === id));
@@ -416,42 +476,145 @@ const escapeHTML = (t) => String(t).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "
 
 // ---------- talking to the model ----------
 
-function setThinking(w, delta) {
+// A worker thinking shows "…" in a bubble, plus "?" when something unexpected set it off or "!"
+// when you did (a message or a yell).
+function setThinking(w, delta, mark) {
   ui.thinking[w.id] = Math.max(0, (ui.thinking[w.id] || 0) + delta);
   const on = ui.thinking[w.id] > 0;
-  ui.bots[w.id]?.classList.toggle("is-thinking", on);
-  if (on) bubble(w, "…", { thinking: true, hold: true });
-  else if (ui.bots[w.id]?.querySelector(".ct-bubble.is-thinking")) clearBubble(w);
+  const bot = ui.bots[w.id];
+  bot?.classList.toggle("is-thinking", on);
+  if (on && mark) {
+    bot?.querySelector(".ct-mark")?.remove();
+    const m = document.createElement("div");
+    m.className = `ct-mark${mark === "?" ? " is-q" : ""}`;
+    m.textContent = mark;
+    bot?.append(m);
+  }
+  if (!on) bot?.querySelector(".ct-mark")?.remove();
+  if (on) { if (!atDesk(w)) bubble(w, "…", { thinking: true, hold: true }); }
+  else if (bot?.querySelector(".ct-bubble.is-thinking")) clearBubble(w);
 }
 
-/** Send something to a worker. Resolves true if they answered. */
-async function talk(w, kind, text) {
+const alive = (g, w) => g === game && g.workers.includes(w);
+
+/** New instructions: the worker writes a program for them. Mid-shift, they switch over to it. */
+async function giveInstructions(w, text) {
   const g = game;
-  if (kind === "orders") {
-    // Record the instructions now, before the model answers, so coworkers who get theirs at the same
-    // time see them. (Without this Pip, told to pack and ship, saw nobody hauling and fetched
-    // widgets too.)
-    w.orders = text;
-    feed(`<b>You → ${w.hire.name}</b> (instructions): ${escapeHTML(text)}`, "is-boss");
-  }
-  else if (kind === "chat") feed(`<b>You → ${w.hire.name}:</b> ${escapeHTML(text)}`, "is-boss");
-  setThinking(w, +1);
+  // Record the instructions now, before the model answers, so coworkers who get theirs at the same
+  // time see them. (Without this Pip, told to pack and ship, saw nobody hauling and fetched widgets
+  // too.)
+  w.orders = text;
+  w.compileError = null;
+  w.compiling = (w.compiling || 0) + 1;
+  feed(`<b>You → ${w.hire.name}</b> (instructions): ${escapeHTML(text)}`, "is-boss");
+  bubble(w, "…", { thinking: true, hold: true });
   try {
-    const r = await respond(g, w, kind, text);
-    if (g !== game || !g.workers.includes(w)) return false;
-    setThinking(w, -1);
+    const r = await compile(g, w, text);
+    if (!alive(g, w)) return;
+    w.compiling--;
+    if (w.orders !== text) return; // newer instructions came in meanwhile
+    clearBubble(w);
     bubble(w, r.reply);
     feed(`<b>${w.hire.name}:</b> ${escapeHTML(r.reply)}`);
-    if (r.script) { setScript(g, w, r.script); renderScript(w); }
-    else resume(g, w);
-    return true;
+    w.now = null;
+    if (r.skillError) {
+      w.compileError = r.skillError;
+      w.gen = null;
+      feed(`${w.hire.name} can't do those instructions: ${escapeHTML(r.skillError)}`, "is-err");
+    } else {
+      setProgram(g, w, r.ast);
+      w.lastThought = null;
+    }
   } catch (e) {
-    if (g !== game) return false;
+    if (!alive(g, w)) return;
+    w.compiling--;
+    if (w.orders !== text) return;
+    clearBubble(w);
+    bubble(w, "(static)");
+    w.compileError = "I couldn't make sense of them. Try saying it another way.";
+    feed(`${w.hire.name} couldn't turn those instructions into work: ${escapeHTML(e.message)}`, "is-err");
+  }
+}
+
+/** You said something to a worker ("message"), or yelled to the floor ("yell"). Always answered. */
+function message(w, kind, text) {
+  if (kind === "message") feed(`<b>You → ${w.hire.name}:</b> ${escapeHTML(text)}`, "is-boss");
+  return wake(w, { kind, text }, "!");
+}
+
+/** Something unexpected happened, or their program called think(): spend a thought on it. */
+function think(w, trigger, problem) {
+  budgetOf(w).n--;
+  w.lastThought = { problem, t: game.t };
+  return wake(w, trigger, "?");
+}
+
+const LABELS = { talk: "just talking", once: "one-off", change: "new instructions", boss: "needs you" };
+
+/** Call the model and act on the answer. Resolves true if they answered. */
+async function wake(w, trigger, mark) {
+  const g = game;
+  setThinking(w, +1, mark);
+  let r;
+  try {
+    r = await respond(g, w, trigger);
+  } catch (e) {
+    if (!alive(g, w)) return false;
     setThinking(w, -1);
     bubble(w, "(static)");
     feed(`Couldn't reach the model for ${w.hire.name}: ${escapeHTML(e.message)}`, "is-err");
     return false;
   }
+  if (!alive(g, w)) return false;
+  setThinking(w, -1);
+  const label = r.kind === "once" ? `one-off: ${escapeHTML(r.summary)}` : LABELS[r.kind];
+  feed(`<b>${w.hire.name}:</b> ${escapeHTML(r.reply)} <span class="ct-kind">(${label})</span>`);
+  if (r.kind === "boss") {
+    if (!atDesk(w)) goToDesk(g, w, trigger.text);
+    deskMessage(w, escapeHTML(r.reply));
+    return true;
+  }
+  bubble(w, r.reply);
+  if (r.kind === "once") {
+    w.now = { summary: r.summary };
+    setNow(g, w, r.nowAst);
+  } else if (r.kind === "change") {
+    w.orders = r.instructions;
+    w.draft = null;
+    w.compileError = null;
+    w.now = null;
+    setProgram(g, w, r.ast);
+    ui.cards[w.id]?.classList.remove("is-changed"); void ui.cards[w.id]?.offsetWidth;
+    ui.cards[w.id]?.classList.add("is-changed");
+  }
+  clearDesk(w);
+  resume(g, w);
+  return true;
+}
+
+// What a worker says at your desk when they came over without thinking it through first (they're
+// out of thinking budget, or the same problem came back).
+function deskLine(ev) {
+  if (ev.reason === "ended") return "I've done everything you told me, but the order isn't done yet. What should I do next?";
+  if (ev.reason === "stuck") return `I keep running into trouble: ${ev.detail}. What should I do?`;
+  return "I got tangled up in my instructions. Can you tell me again, another way?";
+}
+
+function onUnexpected(w, ev) {
+  if (atDesk(w) || ui.thinking[w.id] || w.compiling) return; // already on it
+  const problem = `${ev.reason}: ${ev.detail}`;
+  const repeat = w.lastThought?.problem === problem && game.t - w.lastThought.t < REPEAT_WINDOW;
+  if (!repeat && budgetOf(w).n > 0) {
+    const text = ev.reason === "ended" ? `${ev.detail}.` : ev.reason === "stuck" ? `you keep failing: ${ev.detail}.`
+      : `your program broke down (${ev.detail}), so you've stopped working.`;
+    think(w, { kind: "unexpected", text }, problem);
+    return;
+  }
+  // Out of thoughts, or thinking didn't fix it: come and ask.
+  goToDesk(game, w, ev.detail);
+  const line = deskLine(ev);
+  deskMessage(w, escapeHTML(line));
+  feed(`<b>${w.hire.name}</b> (coming to your desk): ${escapeHTML(line)}`);
 }
 
 $("#yellForm").addEventListener("submit", (e) => {
@@ -461,7 +624,7 @@ $("#yellForm").addEventListener("submit", (e) => {
   if (!text || !game || !game.workers.length) return;
   input.value = "";
   feed(`<b>You (yelling):</b> ${escapeHTML(text)}`, "is-boss");
-  for (const w of game.workers) talk(w, "yell", text);
+  for (const w of game.workers) message(w, "yell", text);
 });
 
 // ---------- speech bubbles, the desk, feed, floaters ----------
@@ -498,13 +661,13 @@ function deskMessage(w, html) {
       const text = input.value.trim();
       if (!text) return;
       input.value = "";
-      talk(w, "chat", text);
+      message(w, "message", text);
     });
     $("#deskPanel").append(el);
     ui.desk[w.id] = el;
   }
   $(".ct-deskmsg-text", el).innerHTML = `<b>${w.hire.name}:</b> ${html}`;
-  bubble(w, "!", { problem: true, hold: true });
+  bubble(w, "Boss?", { problem: true, hold: true });
 }
 function clearDesk(w) {
   ui.desk[w.id]?.remove();
@@ -552,7 +715,6 @@ function floater(text, x, y, scrap) {
   setTimeout(() => el.remove(), 1700);
 }
 
-const FUMBLES = ["Whoops!", "Oh no.", "*clang*", "That was on purpose.", "Butterfingers."];
 const lastSaid = {};
 
 function handleEvents() {
@@ -564,17 +726,21 @@ function handleEvents() {
         if (lastSaid[w.id] !== ev.text) feed(`<b>${w.hire.name}:</b> ${escapeHTML(ev.text)}`);
         lastSaid[w.id] = ev.text;
         break;
-      case "ask":
-        deskMessage(w, escapeHTML(ev.text));
-        feed(`<b>${w.hire.name} asks:</b> ${escapeHTML(ev.text)}`);
-        break;
       case "fail": if (w) oops(w, w.isPlayer ? ev.why.replace(/^I'm /, "you're ").replace(/\bmy\b/g, "your") : `can't: ${ev.why}`); break;
-      case "fumble":
-        bubble(w, FUMBLES[Math.floor(Math.random() * FUMBLES.length)]);
-        feed(`${w.hire.name} dropped a ${ev.item}.`, "is-sys");
+      case "unexpected": if (w && !w.isPlayer) onUnexpected(w, ev); break;
+      case "thinkRequest":
+        // think() in a program only goes ahead with budget left; otherwise they carry on.
+        if (w && !ui.thinking[w.id] && budgetOf(w).n > 0) think(w, { kind: "think", text: ev.reason || "(no reason given)" }, `think: ${ev.reason}`);
         break;
-      case "jam": feed(`The paint machine jammed.`, "is-sys"); break;
-      case "fixed": feed(`${nameOf(w)} fixed the paint machine.`, "is-sys"); break;
+      case "nowDone":
+        if (w?.now) feed(`${w.hire.name} finished the one-off (${escapeHTML(w.now.summary)}) and went back to their instructions.`, "is-sys");
+        if (w) w.now = null;
+        break;
+      case "worn":
+        feed(`The paint machine is worn out and stopped. It needs servicing.`, "is-sys");
+        floater("worn out", STATIONS.PAINT.x, STATIONS.PAINT.y - 8, true);
+        break;
+      case "serviced": feed(`${nameOf(w)} serviced the paint machine.`, "is-sys"); break;
       case "ship": {
         const what = ev.item === "widget" ? `a ${ev.colors[0]} widget`
           : ev.colors.every((c) => c === ev.colors[0]) ? `a ${ev.colors[0]} box` : `a mixed box (${ev.colors.join(", ")})`;
@@ -584,24 +750,8 @@ function handleEvents() {
         break;
       }
       case "gaveUp": clearBubble(w); clearDesk(w); feed(`${w.hire.name} gave up waiting and went back to work.`, "is-sys"); break;
-      case "stuck": comeComplain(w, ev.failures); break;
       case "end": endLevel(); break;
     }
-  }
-}
-
-async function comeComplain(w, failures) {
-  const g = game;
-  deskMessage(w, `<i>walking over…</i>`);
-  try {
-    const reply = await report(g, w, failures);
-    if (g !== game) return;
-    if (!atDesk(w)) return; // you already sorted it out
-    deskMessage(w, escapeHTML(reply));
-    feed(`<b>${w.hire.name}</b> (at your desk): ${escapeHTML(reply)}`);
-  } catch (e) {
-    if (g !== game || !atDesk(w)) return;
-    deskMessage(w, "Uh, boss? We have a problem.");
   }
 }
 
@@ -637,20 +787,8 @@ function render() {
     if (pr) bar.firstElementChild.style.transform = `scaleX(${pr.p})`;
     if (w.isPlayer) continue;
     if (!atDesk(w) && ui.desk[w.id]) { clearDesk(w); clearBubble(w); }
-    const card = ui.cards[w.id];
-    const status = $(".ct-status", card);
-    const waiting = atDesk(w);
-    const st = ui.thinking[w.id] ? "thinking…" : waiting ? "at your desk" : w.script.length ? "working" : "idle";
-    if (status.textContent !== st) {
-      status.textContent = st;
-      status.className = "ct-status" + (st === "thinking…" ? " is-thinking" : waiting ? " is-waiting" : "");
-      card.classList.toggle("is-waiting", waiting);
-    }
-    if (w._shownCur !== w.cur) {
-      card.querySelectorAll(".ct-chip.is-now").forEach((c) => c.classList.remove("is-now"));
-      card.querySelector(`.ct-chip[data-i="${w.cur}"]`)?.classList.add("is-now");
-      w._shownCur = w.cur;
-    }
+    if (started && !game.over) refill(w);
+    renderCard(w);
   }
   if (game.version !== lastVersion) {
     lastVersion = game.version;
@@ -658,7 +796,10 @@ function render() {
       const items = game.stations[key];
       el.querySelector(".ct-st-items").innerHTML = items.map((it) => itemHTML(it, true)).join("");
       el.querySelector(".ct-st-cap").textContent = el.dataset.cap ? `${items.length}/${el.dataset.cap}` : "";
-      el.classList.toggle("is-jammed", key === "PAINT" && game.paintJammed);
+      if (key === "PAINT") {
+        el.querySelector(".ct-wear i").style.transform = `scaleX(${game.wear.PAINT / 100})`;
+        el.classList.toggle("is-worn", game.wear.PAINT >= 100);
+      }
     }
   }
   for (const [key, el] of Object.entries(ui.stations)) el.classList.toggle("is-here", game.player.station === key && !game.player.act);
@@ -696,13 +837,15 @@ function render() {
 function renderCoach() {
   let text = "";
   const deskVisitor = game.workers.find((w) => ui.desk[w.id]);
-  const idle = game.workers.find((w) => !w.script.length && !ui.thinking[w.id]);
+  const idle = game.workers.find((w) => !w.orders && !w.compiling);
+  const cantDo = game.workers.find((w) => w.compileError);
   const open = level.pool.map((id) => CANDIDATES.find((c) => c.id === id)).filter((c) => !game.workers.some((w) => w.id === c.id));
-  if (phase === "plan") text = game.workers.some((w) => !w.script.length) && game.workers.length
-    ? `${level.start} ${game.workers.find((w) => !w.script.length).hire.name} still needs instructions.`
+  if (phase === "plan") text = idle ? `${level.start} ${idle.hire.name} still needs instructions.`
+    : cantDo ? `${cantDo.hire.name} can't do their instructions. Change them, or let ${cantDo.hire.name} go.`
     : level.start + (level.pool.length ? "" : " Press <b>Start</b> when you're ready.");
   else if (deskVisitor) text = `${deskVisitor.hire.name} came to your desk. Answer below the floor.`;
   else if (idle) text = `${idle.hire.name} is waiting for instructions. Write them in their card and press <b>Give instructions</b>.`;
+  else if (cantDo) text = `${cantDo.hire.name} can't do their instructions. Give them ones they can do.`;
   const el = $("#coach");
   if (el._text !== text) { el.innerHTML = text; el._text = text; }
 }
@@ -804,7 +947,7 @@ requestAnimationFrame(frame);
 window.ct = {
   get game() { return game; }, get phase() { return phase; }, get started() { return started; },
   openLevel: (n) => openLevel(LEVELS[n - 1]), unlockAll: () => { unlocked = LEVELS.length; renderLevels(); },
-  setScript: (id, actions) => { const w = worker(id); setScript(game, w, actions); renderScript(w); },
   step: (dt) => { if (started) step(game, dt); handleEvents(); render(); },
-  talk: (id, kind, text) => talk(worker(id), kind, text), setPaused, begin, hire, playerActions,
+  give: (id, text) => giveInstructions(worker(id), text), say: (id, text) => message(worker(id), "message", text),
+  setPaused, begin, hire, playerActions,
 };

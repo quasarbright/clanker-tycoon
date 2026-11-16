@@ -9,7 +9,9 @@ function nextMove(g) {
   const p = g.player;
   if (g.level.ship === "widgets") {
     const want = g.order[0].color;
-    if (p.holding && want !== "any" && p.holding.color !== want) return ["PAINT", { action: "paint", color: want }];
+    if (p.holding && want !== "any" && p.holding.color !== want) {
+      return ["PAINT", g.wear.PAINT >= 100 ? { action: "service" } : { action: "paint", color: want }];
+    }
     return p.holding ? ["DOCK", { action: "putDown" }] : ["BELT_A", { action: "pickUp" }];
   }
   const pack = g.stations.PACK;

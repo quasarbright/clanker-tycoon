@@ -8,6 +8,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://quasarbright.github.io/sketches/shared/cohesion.css">
+  <!-- Before any module script: Firefox ignores an import map that comes after one. -->
+  <script type="importmap">{ "imports": { "acorn": "https://cdn.jsdelivr.net/npm/acorn@8.14.0/dist/acorn.mjs" } }</script>
   <style>
     :root {
       --bg: #121417; --panel: #1b1f24; --panel-2: #242a31; --border: #333a43;
@@ -73,9 +75,9 @@
     .ct-st-label { font: 400 clamp(8px, calc(var(--u) * 1.5), 14px) var(--font-display); color: var(--muted); letter-spacing: .02em; display: flex; justify-content: space-between; gap: 4px; }
     .ct-st-cap { font: 500 clamp(7px, calc(var(--u) * 1.3), 12px) var(--font-mono); color: var(--faint); }
     .ct-st-items { display: flex; flex-wrap: wrap; gap: calc(var(--u) * .5); margin-top: calc(var(--u) * .7); }
-    .ct-st.is-jammed { border-color: var(--danger); box-shadow: 0 0 0 2px #e5534b55; }
-    .ct-st.is-jammed .ct-st-label::after { content: "JAMMED"; color: var(--danger); }
-    .ct-st.is-jammed .ct-st-cap { display: none; }
+    .ct-st.is-worn { border-color: var(--danger); box-shadow: 0 0 0 2px #e5534b55; }
+    .ct-st.is-worn .ct-st-label::after { content: "NEEDS SERVICE"; color: var(--danger); }
+    .ct-st.is-worn .ct-st-cap { display: none; }
     .ct-belt { /* the conveyor runs in from the left wall to the belt station */
       position: absolute; left: 0; height: calc(var(--u) * 5); transform: translateY(-50%); overflow: hidden;
       background: #0f1114; border-top: 2px solid #2c323a; border-bottom: 2px solid #2c323a;
@@ -190,10 +192,6 @@
     .ct-textarea { width: 100%; resize: vertical; min-height: 64px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 10px; line-height: 1.35; }
     .ct-textarea:focus { outline: 2px solid var(--accent); }
     .ct-row { display: flex; gap: 8px; align-items: center; }
-    .ct-script { display: flex; flex-wrap: wrap; gap: 4px; }
-    .ct-chip { font: 500 .74rem var(--font-mono); background: var(--panel-2); border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; color: var(--muted); }
-    .ct-chip.is-now { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-    .ct-script-empty { font-size: .85rem; color: var(--faint); }
 
     .ct-radio { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
     .ct-feed { height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; margin-top: 8px; font-size: .86rem; line-height: 1.3; }
@@ -294,8 +292,28 @@
     .ct-box-fill { position: absolute; inset: 0; background: #b88a52; transform-origin: left; transform: scaleX(0); }
     .ct-box i { position: relative; }
     .ct-dot.is-picked { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .ct-st.is-jammed { animation: jamPulse 1s ease-in-out infinite; }
-    @keyframes jamPulse { 50% { box-shadow: 0 0 0 5px #e5534b33; } }
+    /* machine wear: fills with every job, full = stopped until serviced */
+    .ct-wear { position: absolute; left: 8%; right: 8%; bottom: calc(var(--u) * .7); height: calc(var(--u) * .6); border-radius: 99px; background: #0008; overflow: hidden; }
+    .ct-wear i { display: block; height: 100%; background: linear-gradient(90deg, var(--success), var(--accent) 60%, var(--danger)); background-size: 100% 100%; transform-origin: left; transform: scaleX(0); transition: transform .3s; }
+    .ct-st.is-worn .ct-wear i { background: var(--danger); }
+
+    /* thinking: ? for something unexpected, ! for something you said */
+    .ct-mark { position: absolute; top: calc(var(--u) * -1.6); left: calc(100% - var(--u) * .6); font: 400 clamp(12px, calc(var(--u) * 2.4), 24px)/1 var(--font-display); color: var(--accent); text-shadow: 0 2px 0 #000; pointer-events: none; animation: markBob .9s ease-in-out infinite; }
+    .ct-mark.is-q { color: #8fc8ff; }
+    @keyframes markBob { 50% { transform: translateY(-25%); } }
+
+    /* cards */
+    .ct-skill.is-attr { background: #8fc8ff1a; color: #b9dcff; border-color: #8fc8ff44; }
+    .ct-pips { display: inline-flex; gap: 3px; }
+    .ct-pips i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid #8fc8ff88; }
+    .ct-pips i.is-on { background: #8fc8ff; border-color: #8fc8ff; }
+    .ct-status.is-error { color: #ffb4ae; }
+    .ct-compile-err { font-size: .86rem; color: #ffb4ae; background: #e5534b1a; border: 1px solid #e5534b55; border-radius: 8px; padding: 6px 10px; }
+    .ct-now { font-size: .9rem; background: var(--panel-2); border-left: 3px solid var(--accent); border-radius: 6px; padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; }
+    .ct-now[hidden], .ct-compile-err[hidden] { display: none; }
+    .ct-card.is-changed { animation: changed 1.2s ease-out; }
+    @keyframes changed { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: 0 0 0 0 transparent; } }
+    .ct-kind { color: var(--muted); font-size: .8rem; }
 
     /* the Start button, and a little shake when you try to move before pressing it */
     .ct-btn.is-nudged { animation: nudge .35s; }
