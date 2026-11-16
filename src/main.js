@@ -428,7 +428,7 @@ function cardState(w) {
   if (w.compiling) return ["reading instructions…", "is-thinking"];
   if (ui.thinking[w.id]) return ["thinking…", "is-thinking"];
   if (atDesk(w)) return ["at your desk", "is-waiting"];
-  if (w.compileError) return ["can't do these instructions", "is-error"];
+  if (w.compileError) return ["can't do it", "is-error"];
   if (w.now) return ["doing a one-off", ""];
   if (w.gen) return ["working", ""];
   return [w.orders ? "out of things to do" : "no instructions", ""];

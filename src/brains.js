@@ -120,6 +120,11 @@ The work goes on all shift, so a program that's meant to keep working should loo
 
 function systemPrompt(h, L) {
   const tools = toolNamesFor(h, L);
+  // Primary work this floor has that this worker can't do. Listing it (and asking the model to use
+  // it anyway when the instructions want it) is what turns "Blip, pack these" into a compile error
+  // the player sees, instead of a program that quietly skips the packing.
+  const missing = [["pack", "packing", "PACK"], ["paint", "painting", "PAINT"]]
+    .filter(([n, k, st]) => L.stations.includes(st) && !h.skills.includes(k)).map(([n, k]) => [n, k]);
   const skills = h.skills.length ? h.skills.map((k) => SKILLS[k].label).join(", ") : "none (you can carry things, but not pack, paint or repair)";
   const colors = (L.colors ?? COLORS).join(", ").replace(/, ([^,]*)$/, " or $1");
   return `${h.persona} You work in a small factory in a management game. You follow the boss's instructions faithfully.
@@ -138,7 +143,10 @@ ${LANGUAGE}
 
 Actions:
 ${tools.actions.map((n) => "  " + TOOL_TEXT[n]).join("\n")}
-Questions:
+${missing.length ? `Work you don't know how to do (you lack the skill):
+${missing.map(([n, k]) => `  ${TOOL_TEXT[n]} (needs ${SKILLS[k].label})`).join("\n")}
+If your instructions ask for this work, still write it into your program, exactly where they ask for it. The boss will be told you can't do it. Never quietly leave it out.
+` : ""}Questions:
 ${tools.queries.map((n) => "  " + TOOL_TEXT[n]).join("\n")}
 
 ${RULES}
@@ -226,7 +234,11 @@ function checkCode(src, h, L, instructionsText) {
     // It's only the instructions' fault if they actually ask for that work; otherwise the model
     // reached for a tool on its own, and that's worth a repair.
     const asked = { pack: /\bpack|\bbox/i, paint: /\bpaint/i }[skill.message.match(/^(\w+)\(/)?.[1]];
-    if (instructionsText && asked?.test(instructionsText)) return { problem: skill.message, kind: "skill" };
+    const action = skill.message.match(/^(\w+)\(/)?.[1];
+    const need = { pack: "packing", paint: "painting" }[action];
+    if (instructionsText && asked?.test(instructionsText)) {
+      return { problem: need ? `they ask for ${action}ing, and ${h.name} doesn't have the ${SKILLS[need].label} skill` : skill.message, kind: "skill" };
+    }
     return { problem: `${skill.message}; leave that out`, kind: "model" };
   }
   if (instructionsText) {
