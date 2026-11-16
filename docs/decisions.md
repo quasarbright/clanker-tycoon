@@ -216,3 +216,60 @@ wrote pack(), and the skill check had nothing to catch.
 skill, and says to write it in anyway when the instructions ask for it. The checker then turns it
 into a compile error on the card: "they ask for packing, and Blip doesn't have the Packing skill."
 
+
+### 23. The worker card is a conversation (2026-11-16)
+
+**Problem:** Mike's first playtest: "the visual feedback and UX on giving instructions and waiting
+for them to be ready is unclear and awkward ... in general all the communication UX is very
+awkward." Instructions lived in a textarea whose Give button looked the same before and after
+giving them, "reading instructions…" was small gray text, the reply was a floor bubble that faded,
+talk went in a separate box, desk visits in a panel under the floor, and everything else in a
+"floor radio" log.
+**Options (mocked side by side):** A, keep the instructions box and pin the worker's answer under
+it; B, make each card a short chat with that worker, one text box sent either as instructions or
+as plain talk, with the current instructions pinned at the top.
+**Picked:** B, because it gives every kind of exchange one place: instructions, replies, problems,
+one-offs, changed instructions, desk visits and yells all land in that worker's card. A chip in
+the header says where they stand (Needs instructions, Reading, Ready, Can't do this, Working,
+Thinking, At your desk), the pinned instructions' edge has the same color, and Start waits while
+anyone is still reading, with each worker's state listed next to it. The floor radio and the desk
+panel are gone.
+
+### 24. Workers say what's wrong in their own words (2026-11-16)
+
+**Problem:** "Bolt can't do these instructions: I couldn't make sense of them. Try saying it
+another way." didn't say what was wrong.
+**Picked:** the compile answer has a "problem" field: when the instructions ask for work they lack
+the skill for, or are really unclear, the worker says so in their own voice, naming the part and
+asking the question that would clear it up. When no working program comes back after a repair, one
+more small call asks the worker to explain the failure out loud. Replaces the canned error and the
+"they ask for packing…" text from #22 (the prompt no longer tells the model to write the missing
+work in; it says so in "problem" instead, and the checker stays as a backstop).
+
+### 25. Shifts instead of stars; no one robot can do everything early (2026-11-16)
+
+**Problem:** "the best strat is just to have bolt do the whole job." Bolt (and Doris) had every
+skill. And "get rid of stars and stuff. that'll be subsumed by quotas and promotions."
+**Picked:** stars are gone. Crew levels have a shift length instead, and the order must ship before
+it ends: Crew is 45 s, which a hauler and a packer make (35 s with hand-written programs) and one
+packer alone can't (48 s); Full floor is 2 minutes. Doris and Bolt are out of the early hiring
+pools, so every early hire has at most one skill and Full floor needs a painter, a packer and
+someone who can service the machine (or you). By-hand levels have no clock limit. The end card says
+"Order filled" with your time, or "Shift over" with what shipped. Quotas and promotions are the
+long-term version of this.
+
+### 26. Paint wears out after the first job (2026-11-16)
+
+**Problem:** "on the manual paint level, we should have it break down after the first paint to
+teach about repair."
+**Picked:** the Paint level wears 100% per job, so the machine stops after the first widget and the
+coach explains servicing. The separate Upkeep level was the same lesson and is folded in; the game
+is five levels now.
+
+### 27. Try again keeps your crew (2026-11-16)
+
+**Problem:** "try again should basically bring you back to shift start with all your staff and
+instructions ready to edit."
+**Picked:** Try again (and Restart shift in the pause menu) starts a fresh shift with the same
+hires, their current instructions and the routines they already worked out, so you can press Start
+right away or edit first. Opening a level from the level list still starts empty.

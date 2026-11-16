@@ -103,6 +103,6 @@ you're still typing.
 
 ## Open questions
 
-- Does labor cost count toward the stars, or is it only shown?
+- Does labor cost count toward anything (quotas, promotions), or is it only shown? (Stars are gone, decision 25.)
 - How big is the think budget, and how fast does it refill? How fast do machines wear?
 - Add an API-key backend for thinking-off speed (about 2 s per call instead of 4–5 s)?

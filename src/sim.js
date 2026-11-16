@@ -143,6 +143,13 @@ const emit = (s, ev) => s.events.push({ t: s.t, ...ev });
 export function step(s, dt) {
   if (s.over) return;
   s.t += dt;
+  // Levels with a crew have a shift length: the order has to ship before it runs out.
+  if (s.level.shift && s.t >= s.level.shift) {
+    s.t = s.level.shift;
+    s.over = true; s.won = false;
+    emit(s, { type: "end" });
+    return;
+  }
   while (s.t >= s.nextBelt) {
     s.nextBelt += RULES.beltEvery;
     // A full belt drops its oldest widget off the end, so new ones keep coming.
@@ -213,6 +220,7 @@ const capOf = (st) => (st.startsWith("BIN_") ? RULES.binCap : st === "PACK" ? RU
 
 /** Give a worker a (parsed, checked) program. It starts from the top. */
 export function setProgram(s, w, ast) {
+  w.ast = ast; // kept so "Try again" can start the next shift with the same routine
   w.gen = runProgram(ast, makeTools(s, w));
   w.programEnded = false;
   w.fails = 0;

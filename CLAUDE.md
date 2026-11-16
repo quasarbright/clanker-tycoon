@@ -74,8 +74,13 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   the paint level is two red widgets painted blue).
 - Every new machine shows up first in a level where you use it yourself.
 - Introduce one idea at a time: one color until boxes are understood, no paint before that.
-- A level is a fixed order, scored by time. You press Start to begin; hiring happens before Start
-  and closes once the shift runs. You can still change instructions and talk mid-shift.
+- A level is a fixed order. Crew levels have a shift length the order must ship within; no stars
+  (they'll be subsumed by quotas and promotions). You press Start to begin; hiring happens before
+  Start and closes once the shift runs. You can still change instructions and talk mid-shift.
+- Early levels never offer one robot who can do everything: the point is a crew that has to
+  coordinate. Set shift lengths so one robot can't fill the order alone.
+- Try again puts you back at the start of the shift with your crew and their instructions, ready
+  to edit.
 
 **The model backend**
 - The LLM backend must stay swappable. Nothing Claude- or Haiku-specific in the design, the
@@ -121,6 +126,13 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   to think now and then (like robots: a fast controller plus an occasional slow planner).
 - Model calls run with thinking off where the backend allows it. No compiling while you type.
 
+**Talking to workers**
+- Each worker's card is a conversation with them: instructions, replies, problems, desk visits and
+  yells all show up there, never in a separate log. A chip on the card always says where they stand
+  (reading, ready, can't do it, working, thinking, at your desk), and Start says who's still reading.
+- When a worker can't do their instructions, they say what's wrong in their own words: which part
+  and why, and what would help. Never a canned error.
+
 **Controls**
 - Tools should let you choose what they act on: at Pack you pick which 3 widgets get boxed.
 
@@ -132,6 +144,6 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   doing something odd.
 - A tab left open across an update shows a "game was updated, Reload" banner (`/api/version`).
   When Mike reports something that doesn't match the current code, suspect a stale tab first.
-- `tools/player-check.mjs` and `tools/balance.mjs` play levels headless for star times.
+- `tools/player-check.mjs` and `tools/balance.mjs` play levels headless to check timings and shift lengths.
 - Ideas go in this repo's issues, one topic each; check for an existing issue first.
 - Commit every change; push only when asked.

@@ -10,7 +10,7 @@
 // and comes back as a compile error for the player. Nothing here is specific to one model.
 import { llm } from "./llm.js";
 import { COLORS, viewFor, toolNamesFor, programStationName } from "./sim.js";
-import { parseProgram, checkProgram, ProgramError } from "./lang.js";
+import { parseProgram, checkProgram } from "./lang.js";
 
 // ---------- who you can hire ----------
 
@@ -145,7 +145,7 @@ Actions:
 ${tools.actions.map((n) => "  " + TOOL_TEXT[n]).join("\n")}
 ${missing.length ? `Work you don't know how to do (you lack the skill):
 ${missing.map(([n, k]) => `  ${TOOL_TEXT[n]} (needs ${SKILLS[k].label})`).join("\n")}
-If your instructions ask for this work, still write it into your program, exactly where they ask for it. The boss will be told you can't do it. Never quietly leave it out.
+If your instructions ask for this work, don't quietly leave it out: say so in "problem" (see below).
 ` : ""}Questions:
 ${tools.queries.map((n) => "  " + TOOL_TEXT[n]).join("\n")}
 
@@ -170,10 +170,11 @@ Recent problems: ${w.failLog.length ? w.failLog.slice(-4).map((f) => f.why).join
 
 const COMPILE_SCHEMA = {
   type: "object",
-  properties: { reply: { type: "string" }, program: { type: "string" } },
-  required: ["reply", "program"],
+  properties: { reply: { type: "string" }, problem: { type: "string" }, program: { type: "string" } },
+  required: ["reply", "problem", "program"],
   additionalProperties: false,
 };
+const EXPLAIN_SCHEMA = { type: "object", properties: { problem: { type: "string" } }, required: ["problem"], additionalProperties: false };
 const RESPOND_SCHEMA = {
   type: "object",
   properties: {
@@ -257,8 +258,9 @@ function remember(w, line) {
 // ---------- the three calls ----------
 
 /**
- * The boss gave new instructions. Resolves to { reply, ast } or { reply, skillError } (the
- * instructions need a skill this worker doesn't have) or throws if no working program came back.
+ * The boss gave new instructions. Resolves to { reply, ast }, or { reply, problem } when the worker
+ * can't do them: a skill they lack, something unclear, or no working program after a repair. The
+ * problem is always in the worker's own words.
  */
 export async function compile(s, w, text) {
   const h = w.hire, L = s.level;
@@ -267,19 +269,37 @@ export async function compile(s, w, text) {
 
 The boss gives you new instructions: "${text}"
 
-Write your program for these instructions. Reply as JSON: {"reply": what you say back out loud, "program": the program}.`;
+Write your program for these instructions. Reply as JSON with:
+- "reply": what you say back out loud. If you'll do it, say in a few words what you'll do.
+- "problem": "" if you can do it. Otherwise say out loud, in your own voice and plain words (never name actions like pack() or mention code), exactly what's wrong: which part asks for work you lack the skill for, or which part is unclear and the question that would clear it up. Then leave "program" as "". Only use this for real problems; clear instructions just get done.
+- "program": the program.`;
   let out = await llm({ system, prompt: base, schema: COMPILE_SCHEMA });
+  const said = () => clean(out?.reply) || "On it.";
+  if (clean(out?.problem) && !String(out?.program ?? "").trim()) return done(w, text, clean(out.problem), { problem: clean(out.problem) });
   let res = checkCode(out?.program, h, L, text);
   if (res.kind === "model") {
     out = await llm({ system, schema: COMPILE_SCHEMA, prompt: `${base}\n\nYour last program had a problem: ${res.problem}\nYour last program:\n${out?.program ?? ""}\nWrite it again, fixed.` });
+    if (clean(out?.problem) && !String(out?.program ?? "").trim()) return done(w, text, clean(out.problem), { problem: clean(out.problem) });
     res = checkCode(out?.program, h, L, text);
   }
-  const reply = clean(out?.reply) || "On it.";
+  if (res.ast) return done(w, text, said(), { ast: res.ast });
+  // It didn't work out. The worker says why, in their own words, instead of a canned error.
+  let problem = "";
+  try {
+    const why = await llm({ system, schema: EXPLAIN_SCHEMA, prompt: `${context(s, w)}
+
+The boss gave you these instructions: "${text}"
+You couldn't turn them into work. What went wrong: ${res.problem}.
+Tell the boss out loud, in your own voice, in one or two short sentences, what about these instructions you can't do or don't understand, and what would help. Use plain words: don't mention programs, code, or actions like pack(). Reply as JSON: {"problem": what you say}.` });
+    problem = clean(why?.problem);
+  } catch { /* fall back below */ }
+  if (!problem) problem = res.kind === "skill" ? `I can't do that: ${res.problem}.` : "I'm not sure how to do that. Could you break it into steps for me?";
+  return done(w, text, problem, { problem });
+}
+function done(w, text, reply, r) {
   remember(w, `Boss (new instructions): ${text}`);
   remember(w, `You: ${reply}`);
-  if (res.kind === "skill") return { reply, skillError: res.problem };
-  if (!res.ast) throw new ProgramError(`couldn't write a working program (${res.problem})`, "model");
-  return { reply, ast: res.ast };
+  return { reply, ...r };
 }
 
 /**

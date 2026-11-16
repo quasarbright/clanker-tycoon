@@ -9,7 +9,11 @@
 //          3 widgets are that color. Anything else ships but doesn't count.
 //   pool: who you can hire before the shift (empty = just you)
 //   wear: how much each paint job wears the paint machine, in % (default RULES.wear)
-//   stars: finish times (seconds) for 3 and 2 stars; finishing at all is 1 star
+//   shift: seconds until the shift ends; the order has to ship by then (none = take your time).
+//          Set so one robot can't fill it alone: the point of a crew level is a crew.
+// No robot in these pools can do everything: every early level needs two or more people working
+// together (Doris and Bolt, who have every skill, are kept for later).
+const SHIFT_CREW = 45, SHIFT_FLOOR = 120;
 export const LEVELS = [
   {
     id: 1, name: "By hand",
@@ -17,7 +21,6 @@ export const LEVELS = [
     stations: ["BELT_A", "DOCK"],
     ship: "widgets", colors: ["red"], order: [{ color: "any", count: 3 }],
     pool: [],
-    stars: [18, 26],
     start: "This is you. Walk to the <b>Belt</b> (click it, or use WASD / arrow keys), pick up a widget, carry it to the <b>Dock</b> and put it down.",
   },
   {
@@ -26,7 +29,6 @@ export const LEVELS = [
     stations: ["BELT_A", "PACK", "DOCK"],
     ship: "boxes", colors: ["red"], order: [{ color: "red", count: 1 }],
     pool: [],
-    stars: [17, 25],
     start: "The dock only takes boxes now. Bring 3 widgets to <b>Pack</b>, pack them into a box, and ship it from the <b>Dock</b>.",
   },
   {
@@ -34,35 +36,26 @@ export const LEVELS = [
     blurb: "A bigger order. Hire robots to help.",
     stations: ["BELT_A", "PACK", "DOCK"],
     ship: "boxes", colors: ["red"], order: [{ color: "red", count: 4 }],
-    pool: ["blip", "pip", "gary", "doris"],
-    stars: [32, 50],
-    start: "Hire as many robots as you like and write each one's instructions, then press <b>Start</b>. Hiring closes once the shift starts.",
+    pool: ["blip", "pip", "gary"],
+    shift: SHIFT_CREW,
+    start: "One robot can't fill this order before the shift ends. Hire a crew, give each one their part of the work, then press <b>Start</b>.",
   },
   {
     id: 4, name: "Paint",
-    blurb: "Paint red widgets blue.",
+    blurb: "Paint red widgets blue. Paint wears the machine out.",
     stations: ["BELT_A", "PAINT", "DOCK"],
     ship: "widgets", colors: ["red"], order: [{ color: "blue", count: 2 }],
-    pool: [],
-    stars: [18, 26],
+    pool: [], wear: 100,
     start: "The order wants blue, and the belt only brings red. Carry a red widget to the <b>Paint</b> machine, paint it blue, and ship it from the <b>Dock</b>.",
+    worn: "Every job wears the paint machine (the bar along its bottom), and this one is worn out. Stand at <b>Paint</b> and <b>Service</b> it, then paint the next one.",
   },
   {
-    id: 5, name: "Upkeep",
-    blurb: "The paint machine wears out.",
-    stations: ["BELT_A", "PAINT", "DOCK"],
-    ship: "widgets", colors: ["red"], order: [{ color: "blue", count: 3 }],
-    pool: [], wear: 50,
-    stars: [28, 38],
-    start: "Paint 3 widgets blue. Every job wears the paint machine (the bar along its bottom), and at 100% it stops. When it does, <b>Service</b> it.",
-  },
-  {
-    id: 6, name: "Full floor",
+    id: 5, name: "Full floor",
     blurb: "Everything, and anyone you want to hire.",
     stations: ["BELT_A", "PAINT", "PACK", "DOCK", "BIN_1", "BIN_2"],
     ship: "boxes", order: [{ color: "green", count: 3 }, { color: "red", count: 2 }],
-    pool: ["blip", "gary", "rusty", "pip", "doris", "vex", "bolt"],
-    stars: [80, 120],
+    pool: ["blip", "gary", "rusty", "pip", "vex"],
+    shift: SHIFT_FLOOR,
     start: "Three colors now, and green is rare. Hire your crew, write their instructions, then press <b>Start</b>. Bins are spare storage.",
   },
 ];

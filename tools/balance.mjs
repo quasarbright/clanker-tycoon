@@ -1,5 +1,5 @@
 // Plays levels headless with hand-written worker programs (the same JS subset the model writes),
-// to check the sim and the star times. No model calls.
+// to check the sim and the shift lengths. No model calls.
 //   node tools/balance.mjs
 import { newGame, step, setProgram, toolNamesFor } from "../src/sim.js";
 import { parseProgram, checkProgram } from "../src/lang.js";
@@ -27,7 +27,7 @@ function run(L, crew, seed) {
       seen[k] = (seen[k] || 0) + 1;
     }
   }
-  return `${g.won ? g.t.toFixed(0) + "s" : "unfinished"}${Object.keys(seen).length ? " " + JSON.stringify(seen) : ""}`;
+  return `${g.won ? g.t.toFixed(0) + "s" : g.over ? "out of time" : "unfinished"}${Object.keys(seen).length ? " " + JSON.stringify(seen) : ""}`;
 }
 
 const HAUL = `while (true) { move("BELT"); pickUp("red"); move("PACK"); putDown(); }`;
@@ -37,6 +37,7 @@ const COLOR_PACKER = `while (true) { move("PACK"); const c = needs("green") > 0 
 
 const CASES = [
   ["Crew: 2 haulers + 1 packer", level("Crew"), [[robot("a", [], ["fast"]), HAUL], [robot("b", []), HAUL], [robot("c", ["packing"]), PACKER]]],
+  ["Crew: 1 hauler + 1 packer", level("Crew"), [[robot("b", []), HAUL], [robot("c", ["packing"]), PACKER]]],
   ["Crew: 1 packer does it all", level("Crew"), [[robot("c", ["packing"]), `while (needsAny() > 0) { if (count("PACK", "red") >= 3) { move("PACK"); pack("red"); pickUpBox(); move("DOCK"); putDown(); } else { move("BELT"); pickUp("red"); move("PACK"); putDown(); } }`]]],
   ["Crew: packer program ends early", level("Crew"), [[robot("c", ["packing"]), `move("PACK");`]]],
   ["Full floor: painter + packer, no servicing", level("Full floor"), [[robot("p1", ["painting"]), PAINTER], [robot("pk", ["packing"]), COLOR_PACKER]]],

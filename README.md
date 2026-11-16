@@ -44,17 +44,16 @@ painting and servicing show their progress. At Pack, click the widgets you want 
 
 1. **By hand.** Belt and dock, red only. Ship 3 widgets.
 2. **Boxes.** Adds Pack. 1 red box.
-3. **Crew.** Same floor, 4 red boxes. Hire robots first.
-4. **Paint.** Paint 2 red widgets blue and ship them.
-5. **Upkeep.** Paint 3 blue; the paint machine wears out after 2 and you service it.
-6. **Full floor.** Three colors, bins. 3 green boxes and 2 red, hire from everyone.
+3. **Crew.** Same floor, 4 red boxes before a 45 s shift ends, which one robot can't do alone.
+4. **Paint.** Paint 2 red widgets blue and ship them. The machine wears out after the first; service it.
+5. **Full floor.** Three colors, bins. 3 green boxes and 2 red in a 2-minute shift.
 
 Vision and design principles are in `CLAUDE.md`. The design in progress, the decision log and the
 project's history are in `docs/`.
 
 Robots have skills (Packing, Painting, Repair) and attributes (Fast, Nimble, Steady, Smart); wage is
 $3/min plus $2 for each. Levels are in `src/levels.js`; progress is kept in memory only.
-`tools/player-check.mjs` times the by-hand levels headless (for star times).
+`tools/player-check.mjs` times the by-hand levels headless; `tools/balance.mjs` checks crew levels against their shift length.
 
 ## Known gaps
 

@@ -138,3 +138,22 @@ instructions and the card updated.
 The worker-agent design is built: JavaScript programs, thinking with a budget and ? / ! marks,
 one-offs and new instructions, desk visits, skills and attributes, and predictable wear with a
 new Upkeep level. Not built: the Strong attribute and a pre-shift dry run.
+
+## First playtest (2026-11-16)
+
+Mike played it and came back with a list. The biggest one was talking to the robots: "the visual
+feedback and UX on giving instructions and waiting for them to be ready is unclear and awkward ...
+in general all the communication UX is very awkward." Talking was spread over four places (the
+instructions box, a talk box, a desk panel and the floor radio), and nothing said clearly whether a
+robot had finished reading. Each card became a chat with that robot, with a status chip, and the
+other three places went away.
+
+The second was strategy. "The best strat is just to have bolt do the whole job." Bolt could pack,
+paint and repair, so hiring one robot beat managing a crew, which is the opposite of the game.
+Robots with every skill left the early levels, crew levels got a shift clock that one robot can't
+beat, and stars went with them ("that'll be subsumed by quotas and promotions").
+
+Smaller ones: errors now come from the robot in its own words ("I can carry widgets, but I can't
+pack them, so I need a worker with Packing to do it"), the paint machine breaks after the first job
+so the paint level teaches servicing, and Try again puts you back at the start of the shift with
+your crew and their instructions.

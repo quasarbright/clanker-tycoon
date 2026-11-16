@@ -1,4 +1,4 @@
-// Plays the by-hand levels headless as a player with perfect reactions, to set star times.
+// Plays the by-hand levels headless as a player with perfect reactions, to check the levels play.
 //   node tools/player-check.mjs
 import { newGame, step, playerGo } from "../src/sim.js";
 import { LEVELS } from "../src/levels.js";
@@ -32,5 +32,5 @@ for (const L of LEVELS.filter((L) => !L.pool.length)) {
     }
     return g.t.toFixed(1) + "s";
   });
-  console.log(`level ${L.id} by hand: ${times.join("  ")}   stars at ${L.stars.join(" / ")}s`);
+  console.log(`level ${L.id} by hand: ${times.join("  ")}${L.shift ? `   shift ${L.shift}s` : ""}`);
 }

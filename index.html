@@ -182,10 +182,7 @@
     .ct-face::after { content: ""; position: absolute; left: 6px; right: 6px; top: 8px; height: 5px; background: radial-gradient(circle at 2.5px 50%, #17140a 2.5px, transparent 3px), radial-gradient(circle at calc(100% - 2.5px) 50%, #17140a 2.5px, transparent 3px); }
     .ct-card-name { font-weight: 700; font-size: 1.05rem; }
     .ct-wage { font: 500 .8rem var(--font-mono); color: var(--muted); }
-    .ct-status { margin-left: auto; font-size: .78rem; color: var(--muted); white-space: nowrap; }
     .ct-small-btn { white-space: nowrap; }
-    .ct-status.is-thinking { color: var(--accent); }
-    .ct-status.is-waiting { color: var(--on-accent); background: var(--accent); padding: 2px 8px; border-radius: 999px; font-weight: 700; }
     .ct-blurb { margin: 6px 0 0; font-size: .85rem; color: var(--muted); }
     .ct-card-body { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
     .ct-goal { color: var(--text); font-size: .95rem; }
@@ -194,12 +191,6 @@
     .ct-textarea:focus { outline: 2px solid var(--accent); }
     .ct-row { display: flex; gap: 8px; align-items: center; }
 
-    .ct-radio { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
-    .ct-feed { height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; margin-top: 8px; font-size: .86rem; line-height: 1.3; }
-    .ct-line b { font-weight: 700; }
-    .ct-line.is-boss { color: var(--accent-hi); }
-    .ct-line.is-sys { color: var(--muted); font-family: var(--font-mono); font-size: .78rem; }
-    .ct-line.is-err { color: #ffb4ae; }
 
     /* ---------- overlays ---------- */
     .ct-overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: rgba(8, 9, 11, .78); padding: 20px; }
@@ -209,15 +200,8 @@
     .ct-howto { color: var(--text); line-height: 1.5; margin: 0 0 18px; }
     .ct-small { font-size: .82rem; color: var(--muted); margin-top: 14px; }
     .ct-title { font: 400 1.8rem var(--font-display); color: var(--accent); margin: 0 0 10px; }
-    .ct-stars { display: flex; justify-content: center; gap: 18px; margin: 10px 0 16px; }
-    .ct-star { text-align: center; }
-    .ct-star svg { width: 54px; height: 54px; display: block; }
-    .ct-star span { font: 500 .78rem var(--font-mono); color: var(--muted); }
-    .ct-star.is-on svg path { fill: var(--accent); stroke: #8f6d0c; animation: pop .4s cubic-bezier(.3, 1.6, .5, 1) both; }
-    .ct-star svg path { fill: var(--panel-2); stroke: var(--border); stroke-width: 2; }
-    .ct-star:nth-child(2) svg path { animation-delay: .2s; } .ct-star:nth-child(3) svg path { animation-delay: .4s; }
-    @keyframes pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-    .ct-star svg path { transform-origin: center; transform-box: fill-box; }
+    .ct-end-note { color: var(--muted); margin: 0 0 16px; }
+    .ct-end-note:empty { display: none; }
     .ct-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
     .ct-stat-value { font: 400 1.4rem var(--font-display); }
     .ct-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
@@ -240,14 +224,6 @@
     .ct-level-blurb { color: var(--muted); font-size: .88rem; }
     .ct-level-done { margin-left: auto; color: var(--success); font-weight: 700; font-size: .85rem; }
 
-    /* your desk: workers who came to talk, each with a reply box */
-    .ct-deskpanel { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-    .ct-deskpanel:empty { display: none; }
-    .ct-deskmsg { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: start; background: #2a2418; border: 1px solid #4a3f22; border-radius: 12px; padding: 10px 12px; }
-    .ct-deskmsg .ct-face { margin-top: 2px; }
-    .ct-deskmsg-text { line-height: 1.35; }
-    .ct-deskmsg-text b { color: var(--accent-hi); }
-    .ct-deskmsg form { grid-column: 2; display: flex; gap: 8px; }
 
     /* hiring: candidates while planning, skill badges everywhere */
     .ct-hiring { display: flex; flex-direction: column; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
@@ -305,16 +281,66 @@
 
     /* cards */
     .ct-skill.is-attr { background: #8fc8ff1a; color: #b9dcff; border-color: #8fc8ff44; }
-    .ct-pips { display: inline-flex; gap: 3px; }
+    .ct-pips { display: inline-flex; gap: 3px; margin-left: auto; align-self: flex-end; padding-bottom: 4px; }
+    .ct-skillrow { align-items: flex-start; }
     .ct-pips i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid #8fc8ff88; }
     .ct-pips i.is-on { background: #8fc8ff; border-color: #8fc8ff; }
-    .ct-status.is-error { color: #ffb4ae; }
-    .ct-compile-err { font-size: .86rem; color: #ffb4ae; background: #e5534b1a; border: 1px solid #e5534b55; border-radius: 8px; padding: 6px 10px; }
     .ct-now { font-size: .9rem; background: var(--panel-2); border-left: 3px solid var(--accent); border-radius: 6px; padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; }
-    .ct-now[hidden], .ct-compile-err[hidden] { display: none; }
+    .ct-now[hidden] { display: none; }
     .ct-card.is-changed { animation: changed 1.2s ease-out; }
     @keyframes changed { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: 0 0 0 0 transparent; } }
-    .ct-kind { color: var(--muted); font-size: .8rem; }
+    .ct-kind { color: #6b6455; font-size: .78rem; font-weight: 500; }
+
+    /* a worker's card is a short conversation with them */
+    .ct-chip { margin-left: auto; font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
+    .ct-chip svg { width: 13px; height: 13px; display: block; }
+    .ct-chip.is-need { color: var(--muted); border: 1px dashed var(--border); padding: 2px 9px; }
+    .ct-chip.is-busy { color: var(--on-accent); background: var(--accent); }
+    .ct-chip.is-desk { color: var(--on-accent); background: var(--accent); }
+    .ct-chip.is-ok { color: #0d2416; background: var(--success); }
+    .ct-chip.is-bad { color: #2a0d0b; background: #ff8a80; }
+    .ct-dots { display: inline-flex; gap: 2px; }
+    .ct-dots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: dot 1s infinite; }
+    .ct-dots i:nth-child(2) { animation-delay: .15s; } .ct-dots i:nth-child(3) { animation-delay: .3s; }
+    @keyframes dot { 50% { opacity: .2; } }
+    .ct-pin { font-size: .9rem; background: var(--panel-2); border-left: 3px solid var(--success); border-radius: 6px; padding: 6px 10px; line-height: 1.35; }
+    .ct-pin[hidden] { display: none; }
+    .ct-pin.is-busy { border-left-color: var(--accent); }
+    .ct-pin.is-bad { border-left-color: var(--danger); }
+    .ct-pin .ct-row { justify-content: space-between; }
+    .ct-pin .ct-label { font-size: .62rem; }
+    .ct-link { border: 0; background: none; padding: 0; color: var(--accent-hi); font-size: .78rem; font-weight: 700; cursor: pointer; }
+    .ct-link:hover { text-decoration: underline; }
+    .ct-link[hidden] { display: none; }
+    .ct-log { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; padding-right: 2px; }
+    .ct-log[hidden] { display: none; }
+    .ct-msg { max-width: 88%; padding: 6px 10px; font-size: .9rem; line-height: 1.3; overflow-wrap: anywhere; }
+    .ct-msg .ct-label { display: block; font-size: .6rem; }
+    .ct-msg.is-you { align-self: flex-end; background: #f2c2301f; border: 1px solid #f2c23055; color: var(--accent-hi); border-radius: 12px 12px 4px 12px; }
+    .ct-msg.is-you.is-ins { background: var(--panel-2); border-color: var(--accent); color: var(--text); }
+    .ct-msg.is-you .ct-label { color: var(--accent); }
+    .ct-msg.is-them { align-self: flex-start; background: #f4f1e8; color: #1d1a12; border-radius: 12px 12px 12px 4px; font-weight: 500; }
+    .ct-msg.is-them.is-bad { background: #ffd9d5; }
+    .ct-msg.is-them.is-desk { background: var(--accent); color: var(--on-accent); }
+    .ct-msg.is-them.is-desk .ct-label { color: var(--on-accent); opacity: .75; }
+    .ct-msg.is-typing { padding: 9px 12px; }
+    .ct-msg.is-sys { align-self: center; max-width: 100%; font: 500 .74rem var(--font-mono); color: var(--muted); padding: 0; text-align: center; }
+    .ct-compose { display: flex; flex-direction: column; gap: 8px; }
+    .ct-compose .ct-textarea { min-height: 0; }
+    .ct-split { display: flex; gap: 8px; }
+    .ct-split .ct-btn { flex: 1; padding-inline: 8px; }
+
+    /* next to Start: how each worker stands */
+    .ct-crew-ready { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; flex: 1; min-width: 200px; font-size: .88rem; color: var(--muted); }
+    .ct-ready { display: inline-flex; align-items: center; gap: 6px; }
+    .ct-ready .ct-face { width: 20px; height: 18px; border-radius: 6px; }
+    .ct-ready .ct-face::after { left: 4px; right: 4px; top: 6px; height: 4px; }
+    .ct-ready.is-ok b { color: var(--success); }
+    .ct-ready.is-busy b, .ct-ready.is-desk b { color: var(--accent); }
+    .ct-ready.is-bad b { color: #ff8a80; }
+    .ct-ready.is-need b { color: var(--text); }
+    .ct-planbar .ct-btn:disabled { opacity: 1; background: var(--panel-2); color: var(--faint); cursor: not-allowed; }
+    .ct-clock-value.is-low { color: var(--danger); }
 
     /* the Start button, and a little shake when you try to move before pressing it */
     .ct-btn.is-nudged { animation: nudge .35s; }
@@ -345,10 +371,9 @@
         </svg>
         <div class="ct-coach" id="coach"></div>
       </div>
-      <div class="ct-deskpanel" id="deskPanel"></div>
       <div class="ct-planbar ct-plan-only">
         <button class="ct-btn is-gold ct-big" id="goBtn">Start</button>
-        <span class="ct-planbar-note">Hire and write instructions first. Start begins the clock; hiring closes then.</span>
+        <div class="ct-crew-ready" id="crewReady"></div>
       </div>
       <div class="ct-hands ct-run-only" id="hands"></div>
       <form class="ct-yell ct-run-only" id="yellForm">
@@ -359,10 +384,6 @@
     <aside class="ct-side">
       <div id="hiring" class="ct-hiring"></div>
       <div id="crew" class="ct-side"></div>
-      <div class="ct-radio">
-        <span class="ct-label">Floor radio</span>
-        <div class="ct-feed" id="feed"></div>
-      </div>
     </aside>
   </main>
 
@@ -380,7 +401,7 @@
       <div class="ct-title">Paused</div>
       <div class="ct-btns">
         <button class="ct-btn is-gold" id="resumeBtn">Resume</button>
-        <button class="ct-btn" id="restartBtn">Restart level</button>
+        <button class="ct-btn" id="restartBtn">Restart shift</button>
         <button class="ct-btn" id="menuBtn">Levels</button>
       </div>
     </div>
@@ -389,7 +410,7 @@
   <div class="ct-overlay is-hidden" id="endScreen">
     <div class="ct-card-big">
       <div class="ct-title" id="endTitle">Shift over</div>
-      <div class="ct-stars" id="stars"></div>
+      <p class="ct-end-note" id="endNote"></p>
       <div class="ct-stats" id="endStats"></div>
       <div class="ct-btns" id="endBtns"></div>
     </div>
