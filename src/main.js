@@ -567,6 +567,7 @@ async function wake(w, trigger, mark) {
   } catch (e) {
     if (!alive(g, w)) return false;
     setThinking(w, -1);
+    if (w.waiting) w.waiting.until = g.t + RULES.deskWait;
     bubble(w, "(static)");
     feed(`Couldn't reach the model for ${w.hire.name}: ${escapeHTML(e.message)}`, "is-err");
     return false;
