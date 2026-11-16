@@ -64,7 +64,7 @@ const rulebook = (L) => `The factory:
 
 Actions you can put in a script:
 ${actionsFor(L).map((a) => ACTION_TEXT[a]).join("\n")}
-Your script repeats from the top, forever, until the boss gives you new orders. So write ONE round of the job: don't copy the same steps out several times to do something more than once, the repeating takes care of that.`;
+Your script repeats from the top, forever, until the boss gives you new orders. So write ONE round of the work: don't copy the same steps out several times to do something more than once, the repeating takes care of that.`;
 
 function schemas(L) {
   const item = {
@@ -133,7 +133,7 @@ function sanitize(actions, L) {
 }
 
 const KIND_LINE = {
-  orders: "The boss gives you your job",
+  orders: "The boss gives you new instructions",
   chat: "The boss says to you",
   yell: "The boss yells to the whole floor",
 };
@@ -149,7 +149,7 @@ export async function respond(s, w, kind, text) {
   const heard = h.mishear && Math.random() < h.mishear ? mishear(text) : text;
   const script = w.script.length ? w.script.map(actionLabel).join(", ") : "nothing yet";
   const prompt = `What you can see: ${JSON.stringify(viewFor(s, w))}
-Your job: ${w.orders ? `"${w.orders}"` : "none yet"}
+Your instructions: ${w.orders ? `"${w.orders}"` : "none yet"}
 Your current script: ${script}
 Recent conversation:
 ${(w.memory ?? []).join("\n") || "(none)"}
@@ -157,14 +157,14 @@ ${(w.memory ?? []).join("\n") || "(none)"}
 ${KIND_LINE[kind]}: "${heard}"
 
 Reply as JSON. "reply" is what you say back out loud. ${kind === "orders"
-    ? 'This is your job now: set "newScript" to true and put your full new action script (one round, at most 20 actions) in "actions".'
+    ? 'These are your instructions now: set "newScript" to true and put your full new action script (one round, at most 20 actions) in "actions".'
     : 'If this changes what you should be doing, set "newScript" to true and put your full new action script (one round, at most 20 actions) in "actions". Otherwise set "newScript" to false and "actions" to [].'}`;
   const out = await llm({ system: system(h, L), prompt, schema: schemas(L).respond });
   const reply = clean(out?.reply) || "…";
   const actions = sanitize(out?.actions, L);
   const changed = (kind === "orders" || out?.newScript) && actions.length > 0;
   if (kind === "orders") w.orders = heard;
-  remember(w, `Boss (${kind === "yell" ? "yelling to everyone" : kind === "orders" ? "your job" : "to you"}): ${heard}`);
+  remember(w, `Boss (${kind === "yell" ? "yelling to everyone" : kind === "orders" ? "new instructions" : "to you"}): ${heard}`);
   remember(w, `You: ${reply}`);
   return { heard, reply, script: changed ? actions : null };
 }
@@ -175,7 +175,7 @@ export async function report(s, w, failures) {
   const VERB = { moveTo: "go somewhere", pickUp: "pick something up", putDown: "put something down", paint: "paint a widget", pack: "pack a box", fix: "fix the paint machine" };
   const what = failures.map((f) => `you tried to ${VERB[f.action] ?? "do something"}, but ${f.why}`).join("; ");
   const prompt = `What you can see: ${JSON.stringify(viewFor(s, w))}
-Your job: ${w.orders ? `"${w.orders}"` : "none"}
+Your instructions: ${w.orders ? `"${w.orders}"` : "none"}
 Recent conversation:
 ${(w.memory ?? []).join("\n") || "(none)"}
 

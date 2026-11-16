@@ -223,7 +223,7 @@
     .ct-stat-value { font: 400 1.4rem var(--font-display); }
     .ct-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
-    /* ---------- phases: plan (write jobs) → run ---------- */
+    /* ---------- phases: plan (write instructions) → run ---------- */
     body[data-phase="plan"] .ct-run-only, body[data-phase="loading"] .ct-run-only, body[data-phase="menu"] .ct-run-only { display: none !important; }
     body[data-phase="run"] .ct-plan-only, body[data-phase="end"] .ct-plan-only, body[data-phase="menu"] .ct-plan-only { display: none !important; }
     .ct-planbar { display: flex; align-items: center; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
@@ -273,7 +273,7 @@
       <div class="ct-deskpanel" id="deskPanel"></div>
       <div class="ct-planbar ct-plan-only">
         <button class="ct-btn is-gold ct-big" id="goBtn">Start</button>
-        <span class="ct-planbar-note" id="planNote">Write the jobs on the right, then start. The clock starts when you do.</span>
+        <span class="ct-planbar-note" id="planNote">Write the instructions on the right, then start. The clock starts when you do.</span>
       </div>
       <form class="ct-yell ct-run-only" id="yellForm">
         <input class="ct-input" id="yellInput" placeholder="Yell to the whole floor…" autocomplete="off">
@@ -292,7 +292,7 @@
   <div class="ct-overlay" id="startScreen">
     <div class="ct-card-big">
       <div class="ct-logo">Clanker Tycoon</div>
-      <p class="ct-howto">You run a tiny factory staffed by robots. You don't move anything yourself: you write each robot's job in plain English, press start, and watch what they make of it.</p>
+      <p class="ct-howto">You run a tiny factory staffed by robots. You don't move anything yourself: you write each robot's instructions in plain English, press start, and watch what they make of it.</p>
       <div class="ct-levels" id="levels"></div>
       <div class="ct-small" id="backendNote"></div>
     </div>

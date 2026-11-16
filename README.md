@@ -31,8 +31,8 @@ It only listens on 127.0.0.1.
 
 ## Levels
 
-Each level starts with planning: you write every worker's job, press Start, and they all read
-their jobs at once before anything moves. While it runs you can change a job, talk to one worker or
+Each level starts with planning: you write every worker's instructions, press Start, and they all read
+them at once before anything moves. While it runs you can change someone's instructions, talk to one worker or
 yell to everyone. A worker who keeps failing walks to your desk; their message and a reply box show
 up under the floor.
 
