@@ -20,8 +20,10 @@ JEV can't read or write language, and the game is all language.
 
 **Decision:** Haiku. Apple's model is good at dialogue but can't plan; JEV can't talk.
 
-**Evidence:** `clanker-tycoon-fm-experiment/REPORT.md`, `clanker-tycoon-haiku-experiment/REPORT.md`
-(sibling folders in `~/GitHub`).
+**Evidence:** [the Apple experiment](experiments/2026-11-14-apple-on-device-model.md),
+[the Haiku experiment](experiments/2026-11-14-haiku.md), and
+[the shared test suite](experiments/2026-11-14-intelligence-suite.md). (Copied from their own
+folders, `~/GitHub/clanker-tycoon-fm-experiment` and `…-haiku-experiment`, which hold the code.)
 
 ### 2. A local prototype on the Claude plan, built to port to the web (2026-11-14)
 
