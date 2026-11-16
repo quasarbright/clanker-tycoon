@@ -44,7 +44,8 @@ painting and fixing show their progress. At Pack, click the widgets you want box
 4. **Paint.** Paint 2 red widgets blue and ship them.
 5. **Full floor.** Three colors, bins. 3 green boxes and 2 red, hire from everyone.
 
-Vision and design principles are in `CLAUDE.md`.
+Vision and design principles are in `CLAUDE.md`. The design in progress, the decision log and the
+project's history are in `docs/`.
 
 Robots have skills (Fast, Careful, Patient). Levels are in `src/levels.js`;
 progress is kept in memory only. `tools/player-check.mjs` times levels 1–2 by hand headless (for star times);

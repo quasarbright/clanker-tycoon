@@ -1,0 +1,126 @@
+# How Clanker Tycoon got here
+
+A dated record of the project's turns, for looking back (and maybe a "coding adventure" video).
+Decisions with their reasons are in [decisions.md](decisions.md); commits carry the details.
+Quotes are Mike's.
+
+## 2026-11-14: the idea, and which model
+
+The idea had sat in an issue since June (quasarbright.github.io#212): "a game where you manage a
+team of (deliberately dumb) AIs and have them try to accomplish tasks together." It imagined
+factory workers you write instructions for, a worker walking up to say "uh boss, we have a
+problem", and scaling up to AI managers, investors, an IPO. The worry was cost: lots of model calls.
+
+The first question was what would run the workers. Three options came up: Claude Haiku, Apple's
+on-device model (free), or JEV, a fast decision model. Two experiments ran in parallel on the same
+toy-factory test suite. Apple's model was quick but scored 26/60, ran only one request at a time
+for the whole machine, and blocked half the workplace-comedy prompts. Haiku scored 59/60 but took
+about 5 seconds a call. JEV was ruled out because it can't read or write language. Haiku won.
+
+A side quest found that there's no way for a web game to let players "sign in with Claude" and use
+their own subscription, so a public version would use OpenRouter keys.
+
+Then the first prototype, built in an afternoon: a static page and a tiny local server that sends
+each model call through headless Claude Code on Mike's plan. Three robots with personalities and
+deliberate handicaps: Gary-7 (eager, literal), Doris (veteran, grumbly), and Blip (cheap, nervous,
+mishears things). You typed orders and they compiled them into looping routines. In the first run
+Blip misheard "pack station" as "paint station" and piled widgets at the paint machine, and Gary
+answered a pep talk by rewriting his loop to chase a raise.
+
+## 2026-11-15, afternoon: making it playable
+
+"i have no idea what's supposed to happen as a player." So: a plain how-to, labeled stations, a
+coach line, a clock that waits for you. Then levels, starting with one worker carrying widgets from
+belt to dock, and a planning step where you write everyone's instructions before Start. Complaints
+moved to a panel under the floor because three speech bubbles at the desk covered each other.
+A truck now drives off with each shipment.
+
+## The pivot: from "they're so dumb" to managing workers who listen
+
+"blip is just completely useless. way too dumb. i want the workers to actually follow
+instructions. maybe this game is better as an actual factory management game." The handicaps came
+out. Comedy would live in the voices; the challenge would be managing.
+
+The long-term vision got written down as GitHub issues, one topic each, on a new repo: visible
+skills, promotions or they leave, long-term memory and morale, a continuous career where you
+delegate to managers, hiring and interviewing, investors and stock.
+
+Then a run of restructures in about an hour:
+- **Hire your own crew** from candidates with skills and wages.
+- **The first "helpful" bug.** A worker told to pack and ship also fetched widgets, Pack filled up,
+  and the line froze. Fixed by showing workers their coworkers' instructions and telling them to do
+  only their own part.
+- **You're on the floor.** Set orders scored by time; you walk around and do the work yourself.
+  "the first thing that should happen is the player should be able to walk around and like do the
+  factory themselves." Every machine is used by hand first.
+- **Start broke, earn, hire,** with money and crew carrying over between levels. Then pulled back
+  out: "that whole 'grind for money' thing is for when we do long term." The levels became a
+  minimal tutorial. One color only until boxes are understood.
+
+## 2026-11-15, evening: feel, and two embarrassing bugs
+
+"i don't want anything to just be waiting without moving." Picking up became instant; packing,
+painting and fixing show progress; at Pack you choose which 3 widgets to box. A Start button came
+back. The repo got a CLAUDE.md with the vision and principles, kept current as Mike states them.
+
+The helpful-worker bug came back even with coworkers' instructions in view, so a check now sends a
+routine back if it visits a station its instructions never mention. Every model call started
+being logged to a file.
+
+Two bugs from screenshots: Mike was playing a tab opened hours earlier and still running old code
+(now the page offers a reload when the game changes). And the hiring panel was hidden during
+planning, exactly when you need it; my tests had clicked Hire from a script, which works on a hidden
+button.
+
+## The worker language
+
+"how do workers operate? do they compile their prose instructions into 'code'?" They did: a flat
+list of actions on repeat. "that seems very limited. we are never going to get workers that can
+actually think like this."
+
+That started the biggest design conversation. Haiku is too slow for a real-time loop, so the answer
+had to be smarter programs, not more model calls. The idea that stuck came from Mike: "employees
+should basically be AI agents that mostly act deterministically and sometimes the model is 'woken
+up' to think. This is kind of like robotics." It is: current robots split a fast controller from a
+slow planner (Figure's Helix, NVIDIA's GR00T, Physical Intelligence's Hi Robot), have the model
+write a program instead of picking every action (Code as Policies), and re-plan when something
+fails (Inner Monologue). Mike also noticed it "is sort of starting to feel like multi agent
+orchestration when doing software development."
+
+Along the way: the Claude Agent SDK was checked and set aside; the program will never be shown to
+the player; a message to a worker should usually be a one-off, not a permanent change; workers
+think on surprises with a **?** and on messages with a **!**; skills became actions a worker can
+do, and traits like Fast became attributes.
+
+My first proposal for the language was a set of event-triggered rules. Mike: "why do you think we
+should do this event-based rule thing rather than a more general purpose language with limited
+tools? I feel like your design is restrictive." Fair: the rules were built for checks that mattered
+less once programs were hidden and thinking could recover from mistakes.
+
+## Experiments: JavaScript or Lisp, and can prompting fix bugs?
+
+Mike worried Haiku would wander outside a JavaScript subset, so we measured instead of guessing:
+the same eight worker tasks in a JS subset and in a small Lisp, through the game's real path. Both
+were always valid and equally fast, but JS did what was asked 24/24 against 19/24.
+
+"that's weird that lisp vs js changed how much it overreached. suspicious." Right to be suspicious:
+40 more runs showed the overreach gap was mostly noise, but one Lisp bug was real. Haiku kept
+writing a branch per color that only shipped boxes nobody packed, 7 of 13 times, against 0 of 13 in
+JS, where it put the color in a variable and wrote the work once.
+
+"so the ai is just writing bugs? can this be overcome with some system prompting?" Five writing
+rules took clean programs from 29/40 to 38/40 at no cost in speed. The one bug they couldn't fix (a
+program that never makes progress) is for the runtime to catch.
+
+## Jams become wear
+
+Every program on the paint task fixed jams unasked, which raised a better question. "this kind of
+makes me feel like jamming is just bad game design though." Random breakdowns can only be reacted
+to, and the game is about planning. So machines will wear predictably instead: a meter that fills
+with use, serviced by someone with the Repair skill, planned like any other work.
+
+## Where it stands
+
+The new worker design is agreed and written up in
+[worker-agent-design.md](worker-agent-design.md), with a build order. None of it is built yet; the
+game still runs the old action-list workers.

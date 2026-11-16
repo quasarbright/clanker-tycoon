@@ -1,7 +1,16 @@
 # Clanker Tycoon: vision and principles
 
 Keep this file current. When Mike states a principle or a direction ("nothing should wait without
-moving", "tutorials stay minimal"), add it here in the same turn, without being asked. The
+moving", "tutorials stay minimal"), add it here in the same turn, without being asked.
+
+Keep the historical record too (Mike may make a "coding adventure" video about this project):
+- `docs/decisions.md`: add a numbered entry for every real decision (the question, the options,
+  what we picked and why, the evidence), in the same turn. Don't rewrite old entries; a new one
+  says what it replaces.
+- `docs/history.md`: add to the dated story when the project turns (a pivot, a notable bug, an
+  experiment), with Mike's own words where they mattered.
+- `docs/worker-agent-design.md` (and any future design docs): keep the current design and its
+  status (agreed / built) accurate. The
 workspace `~/GitHub/CLAUDE.md` and `DESIGN.md` still apply on top of this.
 
 ## Vision
