@@ -62,7 +62,7 @@ export const LEVELS = [
     stations: ["BELT_A", "PAINT", "PACK", "DOCK", "BIN_1", "BIN_2"],
     ship: "boxes", order: [{ color: "green", count: 3 }, { color: "red", count: 2 }],
     pool: ["blip", "gary", "rusty", "pip", "doris", "vex", "bolt"],
-    stars: [110, 160],
+    stars: [80, 120],
     start: "Three colors now, and green is rare. Hire your crew, write their instructions, then press <b>Start</b>. Bins are spare storage.",
   },
 ];
