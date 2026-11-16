@@ -508,6 +508,9 @@ async function giveInstructions(w, text) {
   // time see them. (Without this Pip, told to pack and ship, saw nobody hauling and fetched widgets
   // too.)
   w.orders = text;
+  w.draft = null;
+  const ta = ui.cards[w.id] && $("textarea", ui.cards[w.id]);
+  if (ta) ta.value = text;
   w.compileError = null;
   w.compiling = (w.compiling || 0) + 1;
   feed(`<b>You → ${w.hire.name}</b> (instructions): ${escapeHTML(text)}`, "is-boss");
