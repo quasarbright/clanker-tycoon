@@ -60,7 +60,10 @@ async function handleLlm(req, res) {
     return send(res, 502, { error: `claude -p exited (${out.code}) without a result. ${out.stderr.slice(-300)}` });
   }
   const s = summarize(turn);
-  if (s.is_error) return send(res, 502, { error: String(s.error || "model error") });
+  if (s.is_error) {
+    console.error("model error:", String(s.error).slice(0, 300));
+    return send(res, 502, { error: String(s.error || "model error") });
+  }
   const data = s.structured ?? parseLoose(s.text) ?? { reply: s.text };
   console.log(`llm ${Date.now() - started}ms in=${s.input_tokens} out=${s.output_tokens} (thinking ${s.thinking_tokens})`);
   send(res, 200, { data, ms: Date.now() - started, tokens: { input: s.input_tokens, output: s.output_tokens } });

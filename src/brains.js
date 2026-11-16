@@ -1,31 +1,64 @@
 // The hires, their prompts, and the two kinds of model call: responding to the boss, and coming
-// to the boss's desk with a problem. Dumbness is set per hire with knobs (persona, quirk,
-// fumbling, mishearing, how much of the floor they see), not by using a weaker model.
+// to the boss's desk with a problem. Every worker follows clear instructions; what sets them apart
+// is their skills (mechanical, in sim.js) and their personality (flavor, in the prompt).
 // The rules, actions and stations a worker is told about come from the level, so a level-1
 // worker has never heard of the paint machine.
 import { llm } from "./llm.js";
 import { COLORS, viewFor, actionLabel } from "./sim.js";
 
-export const HIRES = [
-  {
-    id: "gary", name: "Gary-7", color: "#f08a3c", wage: 5, fumble: 0.04, mishear: 0, sight: "full",
-    blurb: "Eager. Proud of every job, right or wrong.",
-    persona: "You are Gary-7, an eager, upbeat factory robot. You're proud of every job you do, including the ones you did wrong.",
-    quirk: "You take the boss's words exactly as written, even when that's obviously not what they meant. When an order is vague, you guess boldly instead of asking.",
-  },
-  {
-    id: "doris", name: "Doris", color: "#4fb7a8", wage: 8, fumble: 0.02, mishear: 0, sight: "full",
-    blurb: "Veteran. Competent, grumbly, counting down to her pension.",
-    persona: "You are Doris, a veteran factory robot who has seen it all. You're competent and dry, you grumble, and your pension is never far from your mind.",
-    quirk: "You do the job properly and sensibly, though you'll say what you think of the orders.",
-  },
-  {
-    id: "blip", name: "Blip", color: "#d97bd1", wage: 3, fumble: 0.15, mishear: 0.35, sight: "near",
-    blurb: "Brand new. Cheap, nervous, sorry about everything. Mishears things.",
-    persona: "You are Blip, a brand-new, nervous factory robot. You apologize constantly and second-guess yourself.",
-    quirk: "You're new and easily flustered, and you can only see what's at your own station.",
-  },
+// Everyone you can hire. Skills are mechanical (see sim.js); personality is flavor only, and every
+// one of them follows clear instructions. Wage = $3/min + $2 per skill.
+export const SKILLS = {
+  fast: { label: "Fast", tip: "Walks 1.5× faster." },
+  careful: { label: "Careful", tip: "Never drops anything. Everyone else fumbles now and then." },
+  patient: { label: "Patient", tip: "Waits at a station for what they need (a box, room in a bin, 3 widgets to pack) instead of giving up right away." },
+};
+const robot = (r) => ({ ...r, wage: 3 + 2 * r.skills.length });
+export const CANDIDATES = [
+  robot({
+    id: "gary", name: "Gary-7", color: "#f08a3c", skills: ["fast"],
+    blurb: "Eager and upbeat. Proud of every job.",
+    persona: "You are Gary-7, an eager, upbeat factory robot, proud of everything you do.",
+    quirk: "When an order is vague, you guess boldly instead of asking.",
+  }),
+  robot({
+    id: "doris", name: "Doris", color: "#4fb7a8", skills: ["careful", "patient"],
+    blurb: "Veteran. Dry, grumbly, counting down to her pension.",
+    persona: "You are Doris, a veteran factory robot who has seen it all. You're dry, you grumble, and your pension is never far from your mind.",
+    quirk: "You'll say what you think of the orders.",
+  }),
+  robot({
+    id: "blip", name: "Blip", color: "#d97bd1", skills: [],
+    blurb: "Brand new and nervous. Apologizes a lot.",
+    persona: "You are Blip, a brand-new, nervous factory robot. You apologize a lot, but you're keen to do a good job.",
+    quirk: "",
+  }),
+  robot({
+    id: "rusty", name: "Rusty", color: "#c77a4a", skills: ["careful"],
+    blurb: "Laid-back. Takes it easy, never drops a thing.",
+    persona: "You are Rusty, a laid-back old factory robot. Nothing rattles you and you talk slow and friendly.",
+    quirk: "",
+  }),
+  robot({
+    id: "pip", name: "Pip", color: "#8fd16a", skills: ["patient"],
+    blurb: "Small, cheerful, will wait all day.",
+    persona: "You are Pip, a small, relentlessly cheerful factory robot who loves waiting for things.",
+    quirk: "",
+  }),
+  robot({
+    id: "vex", name: "Vex", color: "#7c8cf8", skills: ["fast", "patient"],
+    blurb: "Ambitious. Talks like a startup founder.",
+    persona: "You are Vex, an ambitious factory robot who talks like a startup founder and wants a promotion.",
+    quirk: "",
+  }),
+  robot({
+    id: "bolt", name: "Bolt", color: "#e5534b", skills: ["fast", "careful", "patient"],
+    blurb: "The best on the floor, and knows it.",
+    persona: "You are Bolt, the best robot on any factory floor, and you know it. Confident, a little smug.",
+    quirk: "",
+  }),
 ];
+export const HIRES = CANDIDATES;
 
 const STATION_TEXT = {
   BELT_A: "BELT_A (new widgets arrive here)",
@@ -96,19 +129,11 @@ function schemas(L) {
   };
 }
 
-const system = (h, L) => `${h.persona} You work in a tiny factory in a comedy management game. ${h.quirk}
+const system = (h, L) => `${h.persona} You work in a tiny factory in a comedy management game. You follow the boss's instructions faithfully: do what they say, and only that. Don't add other work the instructions don't ask for (like fetching widgets when you were told to pack); your coworkers have their own instructions and are handling the rest.${h.quirk ? " " + h.quirk : ""}
 Stay in character. Anything you say out loud is one or two short sentences of plain speech (under 30 words): no stage directions, no asterisks, no markdown. Talk about the work itself, the widgets, boxes, belt and machines. Never mention scripts, loops, JSON or action names like pickUp and putDown out loud.
 
 ${rulebook(L)}`;
 
-// Blip mishears: swap one color, bin or station word before the model sees it.
-const SWAPS = [["red", "blue"], ["blue", "green"], ["green", "red"], ["bin 1", "bin 2"], ["bin 2", "bin 1"], ["paint", "pack"], ["pack", "paint"], ["belt", "bin 1"], ["dock", "pack"]];
-export function mishear(text, rng = Math.random) {
-  const hits = SWAPS.filter(([from]) => new RegExp(`\\b${from}\\b`, "i").test(text));
-  if (!hits.length) return text;
-  const [from, to] = hits[Math.floor(rng() * hits.length)];
-  return text.replace(new RegExp(`\\b${from}\\b`, "i"), to);
-}
 
 // Spoken text. Sometimes the model's whole JSON answer ends up inside "reply" ({"reply": "..."}
 // as a string); pull the real line out of it rather than showing the JSON.
@@ -146,7 +171,7 @@ function remember(w, line) {
 /** The boss gave orders, said something, or yelled. Resolves to { heard, reply, script|null }. */
 export async function respond(s, w, kind, text) {
   const h = w.hire, L = s.level;
-  const heard = h.mishear && Math.random() < h.mishear ? mishear(text) : text;
+  const heard = text;
   const script = w.script.length ? w.script.map(actionLabel).join(", ") : "nothing yet";
   const prompt = `What you can see: ${JSON.stringify(viewFor(s, w))}
 Your instructions: ${w.orders ? `"${w.orders}"` : "none yet"}

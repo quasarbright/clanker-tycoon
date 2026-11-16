@@ -1,7 +1,7 @@
 // The game screen. Phases: menu (pick a level) → plan (write everyone's instructions) → loading (the crew reads
 // their instructions) → run (the clock goes; you can still talk, yell and change instructions) → end.
-import { newGame, step, resume, setScript, atDesk, STATIONS, DESK, RULES, actionLabel } from "./sim.js";
-import { HIRES, respond, report } from "./brains.js";
+import { newGame, step, resume, setScript, atDesk, addWorker, removeWorker, STATIONS, DESK, RULES, actionLabel } from "./sim.js";
+import { CANDIDATES, SKILLS, respond, report } from "./brains.js";
 import { LEVELS } from "./levels.js";
 import { backendLabel } from "./llm.js";
 
@@ -133,6 +133,57 @@ const itemHTML = (it) => it.kind === "box"
 
 // ---------- crew cards ----------
 
+const skillBadges = (h) => `<div class="ct-skills">${h.skills.length
+  ? h.skills.map((k) => `<span class="ct-skill" data-tooltip="${SKILLS[k].label}: ${SKILLS[k].tip}">${SKILLS[k].label}</span>`).join("")
+  : `<span class="ct-skill is-none" data-tooltip="No skills: drops things now and then, gives up quickly when something isn't there.">No skills</span>`}</div>`;
+
+// ---------- hiring (levels with a candidate pool) ----------
+
+function renderHiring() {
+  const box = $("#hiring");
+  if (!level.pool) { box.innerHTML = ""; return; }
+  const hired = new Set(game.workers.map((w) => w.id));
+  const open = level.pool.map((id) => CANDIDATES.find((c) => c.id === id)).filter((c) => !hired.has(c.id));
+  const payroll = game.workers.reduce((a, w) => a + w.hire.wage, 0);
+  box.innerHTML = `<div class="ct-row"><span class="ct-label">Candidates</span><span class="ct-wage" style="margin-left:auto">your payroll: $${payroll}/min</span></div>` + (open.length ? open.map((c) => `
+    <div class="ct-candidate" style="--c:${c.color}">
+      <span class="ct-face"></span>
+      <div class="ct-candidate-info"><b>${c.name}</b> <span class="ct-wage">$${c.wage}/min</span><br><span class="ct-blurb">${c.blurb}</span>${skillBadges(c)}</div>
+      <button class="ct-btn is-gold" type="button" data-hire="${c.id}">Hire</button>
+    </div>`).join("") : `<p class="ct-blurb">You've hired everyone.</p>`);
+  box.querySelectorAll("[data-hire]").forEach((b) => b.addEventListener("click", () => hire(b.dataset.hire)));
+}
+
+// Hiring or letting someone go rebuilds the floor and the cards; keep what's typed in the cards.
+function keepTyped() {
+  for (const w of game.workers) if (ui.cards[w.id]) w.orders = $("textarea", ui.cards[w.id]).value;
+}
+function hire(id) {
+  keepTyped();
+  const w = addWorker(game, CANDIDATES.find((c) => c.id === id));
+  const saved = jobs[level.id]?.[id];
+  if (saved) w.orders = saved.text;
+  rebuildCrew();
+  $("textarea", ui.cards[id]).focus({ preventScroll: true });
+}
+function fire(id) {
+  keepTyped();
+  removeWorker(game, id);
+  rebuildCrew();
+}
+function rebuildCrew() {
+  buildFloor();
+  buildCrew();
+  renderHiring();
+  resetPlanNote();
+  lastVersion = -1;
+}
+function resetPlanNote() {
+  $("#planNote").textContent = level.shift
+    ? "The clock starts when you press Start. You can still change instructions, talk and yell while they work."
+    : "Nothing moves until you press Start. You can still change instructions and talk to them while they work.";
+}
+
 function buildCrew() {
   const crew = $("#crew");
   crew.innerHTML = "";
@@ -146,8 +197,10 @@ function buildCrew() {
       <div class="ct-card-head">
         <span class="ct-face"></span><span class="ct-card-name">${h.name}</span>${level.payroll ? `<span class="ct-wage">$${h.wage}/min</span>` : ""}
         <span class="ct-status"></span>
+        ${level.pool ? `<button class="ct-btn ct-small-btn ct-plan-only" type="button" data-fire>Let go</button>` : ""}
       </div>
       <p class="ct-blurb">${h.blurb}</p>
+      ${skillBadges(h)}
       <div class="ct-card-body">
         <span class="ct-label">${h.name}'s instructions</span>
         <textarea class="ct-textarea" rows="3" placeholder="Tell ${h.name} what to do, in your own words."></textarea>
@@ -162,6 +215,7 @@ function buildCrew() {
       </div>`;
     const ta = $("textarea", card);
     ta.value = w.orders ?? "";
+    $("[data-fire]", card)?.addEventListener("click", (e) => { e.stopPropagation(); fire(w.id); });
     for (const el of [$(".ct-card-head", card), $(".ct-blurb", card)]) el.addEventListener("click", () => focusCard(w));
     // Typing anywhere in a card counts as picking that worker.
     card.addEventListener("focusin", () => highlight(w));
@@ -259,6 +313,10 @@ $("#yellForm").addEventListener("submit", (e) => {
 async function startLevel() {
   if (phase !== "plan") return;
   const want = game.workers.map((w) => ({ w, text: $("textarea", ui.cards[w.id]).value.trim() }));
+  if (!game.workers.length) {
+    $("#planNote").textContent = "Hire at least one robot first.";
+    return;
+  }
   if (!want.some((j) => j.text)) {
     $("#planNote").textContent = "Write instructions for at least one worker first.";
     return;
@@ -266,6 +324,9 @@ async function startLevel() {
   setPhase("loading");
   document.querySelectorAll(".ct-card textarea").forEach((t) => (t.disabled = true));
   const saved = jobs[level.id] ?? {};
+  // Record everyone's instructions before anyone reads theirs, so each worker can see what their
+  // coworkers were told.
+  for (const { w, text } of want) if (text) w.orders = text;
   const results = await Promise.all(want.map(({ w, text }) => {
     if (!text) return true;
     // Same instructions as last time: reuse the routine they already worked out.
@@ -442,12 +503,20 @@ const money = (n) => (n < 0 ? `−$${-n}` : `$${n}`);
 function render() {
   const k = floor.clientWidth / 100;
   floor.style.setProperty("--u", `${k}px`);
+  const spots = new Map();
+  for (const w of game.workers) {
+    const key = `${Math.round(w.x / 3)},${Math.round(w.y / 3)}`;
+    if (!spots.has(key)) spots.set(key, []);
+    spots.get(key).push(w);
+  }
+  const spreads = new Map();
+  for (const group of spots.values()) group.forEach((w, i) => spreads.set(w, (i - (group.length - 1) / 2) * 6.5));
   for (const w of game.workers) {
     const bot = ui.bots[w.id];
-    // Spread the crew out side by side so robots at one station don't stack.
-    // Drawn in front of (below) the station tile, so they don't cover what's in it.
-    const spread = (w.index - (game.workers.length - 1) / 2) * 6.5;
-    bot.style.transform = `translate(${(w.x + spread) * k}px, ${(w.y + 11) * k}px)`;
+    // Drawn in front of (below) the station tile, so they don't cover what's in it, and spread
+    // side by side with anyone standing in the same spot.
+    const x = Math.min(96, Math.max(4, w.x + (spreads.get(w) ?? 0)));
+    bot.style.transform = `translate(${x * k}px, ${(w.y + 11) * k}px)`;
     const held = w.holding ? itemHTML(w.holding) : "";
     if (bot._held !== held) { bot.querySelector(".ct-bot-held").innerHTML = held; bot._held = held; }
     if (!atDesk(w) && ui.desk[w.id]) { clearDesk(w); clearBubble(w); }
@@ -524,7 +593,9 @@ function openLevel(L) {
   // Remember this level's instructions before leaving it.
   if (game) saveJobs();
   level = L;
-  game = newGame(L, L.hires.map((id) => HIRES.find((h) => h.id === id)));
+  // A fixed crew, or on a hiring level whoever you had last time.
+  const crewIds = L.hires ?? jobs[L.id]?.crew ?? [];
+  game = newGame(L, crewIds.map((id) => CANDIDATES.find((h) => h.id === id)));
   const saved = jobs[L.id] ?? {};
   for (const w of game.workers) if (saved[w.id]) w.orders = saved[w.id].text;
   lastVersion = -1; lastStat = null; lastClock = null; lastOrders = "";
@@ -532,23 +603,23 @@ function openLevel(L) {
   Object.keys(ui.desk).forEach((id) => clearDesk({ id }));
   buildFloor();
   buildCrew();
+  renderHiring();
   $("#levelName").textContent = `Level ${L.id}: ${L.name}`;
   $("#statLabel").textContent = L.goal ? "Shipped" : "Cash";
   $("#goalLabel").textContent = L.orders ? "Customers want" : "Goal";
-  $("#planNote").textContent = L.shift
-    ? "The clock starts when you press Start. You can still change instructions, talk and yell while they work."
-    : "Nothing moves until you press Start. You can still change instructions and talk to them while they work.";
+  resetPlanNote();
   $("#feed").innerHTML = "";
   $("#startScreen").classList.add("is-hidden");
   $("#endScreen").classList.add("is-hidden");
   $("#pauseScreen").classList.add("is-hidden");
   paused = false;
   setPhase("plan");
-  $("textarea", ui.cards[game.workers[0].id]).focus({ preventScroll: true });
+  if (game.workers.length) $("textarea", ui.cards[game.workers[0].id]).focus({ preventScroll: true });
 }
 
 function saveJobs() {
   const saved = (jobs[level.id] ??= {});
+  saved.crew = game.workers.map((w) => w.id);
   for (const w of game.workers) {
     const text = ui.cards[w.id] ? $("textarea", ui.cards[w.id]).value.trim() : w.orders;
     // Keep the worked-out routine only if the instructions are the one it was made from.

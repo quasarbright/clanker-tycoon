@@ -249,6 +249,16 @@
     .ct-deskmsg-text { line-height: 1.35; }
     .ct-deskmsg-text b { color: var(--accent-hi); }
     .ct-deskmsg form { grid-column: 2; display: flex; gap: 8px; }
+
+    /* hiring: candidates while planning, skill badges everywhere */
+    .ct-hiring { display: flex; flex-direction: column; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
+    .ct-hiring:empty { display: none; }
+    .ct-candidate { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; background: var(--panel-2); border-radius: 10px; padding: 8px 10px; }
+    .ct-candidate .ct-blurb { margin: 0; }
+    .ct-skills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+    .ct-skill { font-size: .72rem; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; background: #f2c23022; color: var(--accent-hi); border: 1px solid #f2c23055; }
+    .ct-skill.is-none { background: none; color: var(--faint); border-color: var(--border); }
+    .ct-small-btn { padding: 4px 10px; font-size: .78rem; box-shadow: 0 2px 0 var(--lip); }
   </style>
 </head>
 <body data-phase="menu">
@@ -281,6 +291,7 @@
       </form>
     </section>
     <aside class="ct-side">
+      <div id="hiring" class="ct-hiring ct-plan-only"></div>
       <div id="crew" class="ct-side"></div>
       <div class="ct-radio">
         <span class="ct-label">Floor radio</span>

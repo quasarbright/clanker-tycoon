@@ -2,10 +2,13 @@
 import { newGame as newLevelGame, step, setScript } from "../src/sim.js";
 import { LEVELS } from "../src/levels.js";
 const newGame = (hires, seed) => newLevelGame(LEVELS[2], hires, seed);
+// The old three-robot crew, with today's skills: Gary fast, Doris careful + patient, Blip none.
+// (Same data as brains.js, copied so this runs in plain node without the browser-only llm.js.)
+const robot = (r) => ({ ...r, wage: 3 + 2 * r.skills.length });
 const HIRES = [
-  { id: "gary", name: "Gary-7", wage: 5, fumble: 0.04, sight: "full" },
-  { id: "doris", name: "Doris", wage: 8, fumble: 0.02, sight: "full" },
-  { id: "blip", name: "Blip", wage: 3, fumble: 0.15, sight: "near" },
+  robot({ id: "gary", name: "Gary-7", skills: ["fast"] }),
+  robot({ id: "doris", name: "Doris", skills: ["careful", "patient"] }),
+  robot({ id: "blip", name: "Blip", skills: [] }),
 ];
 const m = (station) => ({ action: "moveTo", station });
 const STRATS = {

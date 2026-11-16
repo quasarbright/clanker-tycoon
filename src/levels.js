@@ -5,6 +5,7 @@
 //     "orders"   a box of 3 matching an open order pays the order; anything else is $5 scrap
 //   goal: { ship: n } ends the level as soon as n things have shipped (no clock)
 //   shift: seconds, for a timed level scored by profit (stars)
+//   hires: a fixed crew (by id), or pool: who you can hire from while planning
 export const LEVELS = [
   {
     id: 1, name: "First day",
@@ -26,11 +27,11 @@ export const LEVELS = [
   },
   {
     id: 3, name: "Full shift",
-    blurb: "Orders, colors, a paint machine and payroll.",
-    hires: ["gary", "doris", "blip"], stations: ["BELT_A", "PAINT", "PACK", "DOCK", "BIN_1", "BIN_2"],
+    blurb: "Hire your own crew. Orders, colors, paint and payroll.",
+    pool: ["blip", "gary", "rusty", "pip", "doris", "vex", "bolt"], stations: ["BELT_A", "PAINT", "PACK", "DOCK", "BIN_1", "BIN_2"],
     ship: "orders", goal: null, shift: 240, payroll: true, orders: true, stars: [20, 60, 120],
     howto: "Customers want boxes of 3 widgets of one color ($30–40). Mixed or unwanted boxes pay $5. Payroll comes out every minute. Make as much as you can in four minutes.",
-    plan: "Three workers, four minutes. Write everyone's instructions, then press <b>Start</b>. Blip is cheap but mishears things.",
+    plan: "Hire a crew from the candidates on the right, as many as you like. Skilled robots cost more, and wages come out every minute. Write everyone's instructions, then press <b>Start</b>.",
     examples: ["Bring widgets from the belt to Pack.", "Pack boxes at Pack and ship them from the Dock.", "Paint blue widgets red and bring them to Pack."],
   },
 ];

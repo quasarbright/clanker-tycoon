@@ -25,7 +25,10 @@ export const RULES = {
   startCash: 20,
   jamChance: 0.12,      // per paint job
   scrapPay: 5,
-  beltWait: 6,          // how long pickUp waits at the belt for a widget
+  beltWait: 6,          // how long anyone waits at the belt for a widget
+  patientWait: 8,       // how long a Patient worker waits anywhere else (for a box, for space, for widgets)
+  fumble: 0.05,         // chance to drop what you pick up or put down, unless Careful
+  fastSpeed: 1.5,       // walking speed multiplier for Fast workers
   stuckAfter: 6,        // failed actions (walking aside) in a row before a worker comes to complain
   reportCooldown: 40,
   deskWait: 30,         // how long a worker waits at your desk before going back
@@ -59,14 +62,29 @@ export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
   if (level.orders) for (let i = 0; i < 3; i++) s.orders.push(newOrder(s));
   // A few widgets already waiting, so there's something on the floor before the clock starts.
   for (let i = 0; i < 4; i++) s.stations.BELT_A.push({ kind: "widget", color: randColor(s.rng) });
-  hires.forEach((hire, i) => s.workers.push({
-    id: hire.id, hire, index: i,
+  for (const hire of hires) addWorker(s, hire);
+  return s;
+}
+
+/** Hire someone onto the floor. They start at the dock with no instructions. */
+export function addWorker(s, hire) {
+  const w = {
+    id: hire.id, hire, index: s.workers.length,
     x: STATIONS.DOCK.x, y: STATIONS.DOCK.y, station: "DOCK", holding: null,
     script: [], pc: 0, cur: -1, act: null, waiting: null, returnTo: null,
     fails: 0, failLog: [], lastReport: -1e9,
-  }));
-  return s;
+  };
+  s.workers.push(w);
+  return w;
 }
+
+export function removeWorker(s, id) {
+  s.workers = s.workers.filter((w) => w.id !== id);
+  s.workers.forEach((w, i) => (w.index = i));
+}
+
+/** Skills: "fast", "careful", "patient". */
+export const hasSkill = (w, skill) => !!w.hire.skills?.includes(skill);
 
 const emit = (s, ev) => s.events.push({ t: s.t, ...ev });
 
@@ -108,7 +126,7 @@ function stepWorker(s, w) {
 function walk(s, w, x, y, extra) {
   const dist = Math.hypot(x - w.x, y - w.y);
   w.station = null;
-  w.act = { ...extra, from: { x: w.x, y: w.y }, to: { x, y }, start: s.t, until: s.t + Math.max(0.2, dist / RULES.speed) };
+  w.act = { ...extra, from: { x: w.x, y: w.y }, to: { x, y }, start: s.t, until: s.t + Math.max(0.2, dist / (RULES.speed * (hasSkill(w, "fast") ? RULES.fastSpeed : 1))) };
 }
 
 // Robots are drawn a little below their position (standing in front of the station), so the
@@ -157,16 +175,26 @@ function finish(s, w, act) {
     case "moveTo": w.station = act.arrive; return ok(s, w, a);
     case "toDesk": w.waiting = { reason: act.reason, until: s.t + RULES.deskWait }; return;
     case "pickUp": return pickUp(s, w, a, act);
-    case "putDown": return putDown(s, w, a);
+    case "putDown": return putDown(s, w, a, act);
     case "paint": return paint(s, w, a);
-    case "pack": return pack(s, w, a);
+    case "pack": return pack(s, w, a, act);
     case "fix": return fix(s, w, a);
     default: return; // wait, say
   }
 }
 
+// Everyone waits at the belt for the next widget. A Patient worker also waits anywhere else for
+// what they need (a box, room in a bin, three widgets to pack) instead of failing right away.
+// Returns true if they're waiting another half second.
+function keepWaiting(s, w, act) {
+  const limit = w.station === "BELT_A" ? RULES.beltWait : hasSkill(w, "patient") ? RULES.patientWait : 0;
+  if ((act.waited ?? 0) >= limit) return false;
+  w.act = { ...act, waited: (act.waited ?? 0) + 0.5, until: s.t + 0.5 };
+  return true;
+}
+
 function fumbled(s, w, it) {
-  if (s.rng() >= w.hire.fumble) return false;
+  if (hasSkill(w, "careful") || s.rng() >= RULES.fumble) return false;
   emit(s, { type: "fumble", worker: w.id, item: itemName(it) });
   return true;
 }
@@ -181,11 +209,7 @@ function pickUp(s, w, a, act) {
   else if (w.station === "PACK") idx = items.findIndex((i) => i.kind === "box"); // no color at Pack = a finished box
   else idx = items.length ? 0 : -1;
   if (idx < 0) {
-    // At the belt, wait a bit for the next widget to come along.
-    if (w.station === "BELT_A" && (act.waited ?? 0) < RULES.beltWait) {
-      w.act = { ...act, waited: (act.waited ?? 0) + 0.5, until: s.t + 0.5 };
-      return;
-    }
+    if (keepWaiting(s, w, act)) return;
     const what = color ? `${color} widget` : w.station === "PACK" ? "finished box" : "anything";
     return fail(s, w, a, `there's no ${what} at ${label(w.station)}`);
   }
@@ -195,7 +219,7 @@ function pickUp(s, w, a, act) {
   ok(s, w, a);
 }
 
-function putDown(s, w, a) {
+function putDown(s, w, a, act) {
   if (!w.station) return fail(s, w, a, "I'm not at a station");
   if (!w.holding) return fail(s, w, a, "my hands are empty");
   const st = w.station;
@@ -206,7 +230,7 @@ function putDown(s, w, a) {
     return ok(s, w, a);
   }
   const cap = st.startsWith("BIN_") ? RULES.binCap : st === "PACK" ? RULES.packCap : st === "PAINT" ? RULES.paintCap : RULES.beltCap;
-  if (s.stations[st].length >= cap) return fail(s, w, a, `${label(st)} is full`);
+  if (s.stations[st].length >= cap) return keepWaiting(s, w, act) || fail(s, w, a, `${label(st)} is full`);
   const it = w.holding;
   w.holding = null; s.version++;
   if (!fumbled(s, w, it)) s.stations[st].push(it);
@@ -223,11 +247,11 @@ function paint(s, w, a) {
   ok(s, w, a);
 }
 
-function pack(s, w, a) {
+function pack(s, w, a, act) {
   if (w.station !== "PACK") return fail(s, w, a, "I'm not at the pack station");
   const items = s.stations.PACK;
   const widgets = items.filter((i) => i.kind === "widget");
-  if (widgets.length < 3) return fail(s, w, a, `there are only ${widgets.length} widgets at Pack, a box needs 3`);
+  if (widgets.length < 3) return keepWaiting(s, w, act) || fail(s, w, a, `there are only ${widgets.length} widgets at Pack, a box needs 3`);
   const colors = [];
   for (let j = 0; j < items.length && colors.length < 3; ) {
     if (items[j].kind === "widget") colors.push(items.splice(j, 1)[0].color); else j++;
@@ -319,9 +343,6 @@ const whereText = (w) => (w.station ? w.station : atDesk(w) ? "the boss's desk" 
 
 export function viewFor(s, w) {
   const you = { at: whereText(w), holding: holdingText(w) };
-  if (w.hire.sight === "near") {
-    return { you, here: w.station ? describe(s.stations[w.station]) : "nothing", note: "You can only see your own station." };
-  }
   const floor = {};
   for (const k of Object.keys(s.stations)) floor[k] = describe(s.stations[k]);
   const view = { you, floor };
@@ -329,7 +350,10 @@ export function viewFor(s, w) {
   if (s.level.orders) view.openOrders = s.orders.map((o) => `box of 3 ${o.color} pays $${o.pay}`);
   if (s.level.goal) view.goal = `ship ${s.level.goal.ship} ${s.level.ship}; ${s.shipped} shipped so far`;
   const others = s.workers.filter((o) => o !== w);
-  if (others.length) view.coworkers = Object.fromEntries(others.map((o) => [o.hire.name, `at ${whereText(o)}, holding ${holdingText(o)}`]));
+  // Coworkers' instructions too, so a worker knows the rest of the line is covered and sticks to
+  // their own part.
+  if (others.length) view.coworkers = Object.fromEntries(others.map((o) => [o.hire.name,
+    `at ${whereText(o)}, holding ${holdingText(o)}${o.orders ? `, instructions: "${o.orders}"` : ""}`]));
   return view;
 }
 
