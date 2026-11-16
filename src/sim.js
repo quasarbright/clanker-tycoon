@@ -65,6 +65,7 @@ export const RULES = {
   wear: 10,             // wear per paint job, out of 100, unless the level says otherwise
   stuckAfter: 6,        // failed actions (walking aside) in a row that count as "stuck"
   stuckCooldown: 20,    // seconds before the same worker can be "stuck" again
+  stallAfter: 15,       // nothing on the floor moved for this long: everyone gets an unexpected "stalled"
   deskWait: 30,         // how long a worker waits at your desk before going back
 };
 // Picking up and putting down are instant. Everything that takes time shows its progress
@@ -100,7 +101,7 @@ export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
     wear: level.stations.includes("PAINT") ? { PAINT: 0 } : {},
     workers: [], events: [],
     order: level.order.map((l) => ({ ...l, done: 0 })),
-    nextBelt: 1, over: false, won: false,
+    nextBelt: 1, over: false, won: false, lastProgress: 0,
     // You. Starts by the desk; same shape as a worker so the same action code runs for both.
     // You know every skill.
     player: {
@@ -153,6 +154,13 @@ export function step(s, dt) {
   s.laborCost += s.workers.reduce((a, w) => a + w.hire.wage, 0) * dt / 60;
   stepPlayer(s, s.player, dt);
   for (const w of s.workers) stepWorker(s, w);
+  // A line can jam with nobody failing: a packer waiting for a condition that never comes true, a
+  // hauler waiting for room. If nothing has been picked up, put down, packed, painted or serviced
+  // for a while, that's unexpected for everyone on the floor.
+  if (s.workers.length && s.t - s.lastProgress >= RULES.stallAfter) {
+    s.lastProgress = s.t;
+    for (const w of s.workers) emit(s, { type: "unexpected", worker: w.id, reason: "stalled", detail: `nothing on the floor has moved for ${RULES.stallAfter} seconds` });
+  }
 }
 
 // ---------- the tools a program gets ----------
@@ -481,7 +489,7 @@ function pack(s, w, a, act) {
 
 function service(s, w, a) {
   if (w.station !== "PAINT") return fail(s, w, a, "I'm not at the paint machine");
-  if (s.wear.PAINT > 0) { s.wear.PAINT = 0; s.version++; emit(s, { type: "serviced", worker: w.id }); }
+  if (s.wear.PAINT > 0) { s.wear.PAINT = 0; s.version++; s.lastProgress = s.t; emit(s, { type: "serviced", worker: w.id }); }
   ok(s, w, a);
 }
 
@@ -505,6 +513,7 @@ function ship(s, w, item) {
 function ok(s, w, a) {
   w.lastOk = true;
   if (a?.action && a.action !== "moveTo") w.fails = 0;
+  if (["pickUp", "putDown", "pack", "paint"].includes(a?.action)) s.lastProgress = s.t;
 }
 
 function fail(s, w, a, why) {
