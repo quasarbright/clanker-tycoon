@@ -1,7 +1,13 @@
 // The factory: plain state plus step(). No DOM and no model calls, so it runs headless too.
-// Workers run looping action scripts. The model only writes scripts and lines of dialogue; every
-// fumble, jam and failure happens here, in code. You (the player) are on the floor too: you walk
-// around and do the same actions by hand, through the same code.
+//
+// Workers run programs written in the worker language (lang.js), compiled from their instructions.
+// The interpreter hands the sim one action at a time; the sim carries it out over however long it
+// takes and passes back whether it worked. A worker can also have a queue of one-time steps (from
+// a message or a thought) that runs before their program continues. When something unexpected
+// happens (they keep failing, their program loops without acting or errors, or it ends before the
+// order is done) the sim raises an "unexpected" event; the screen decides whether they think about
+// it or come to your desk. You (the player) are on the floor too and use the same action code.
+import { runProgram } from "./lang.js";
 
 export const FLOOR = { w: 100, h: 64 };
 export const STATIONS = {
@@ -12,6 +18,9 @@ export const STATIONS = {
   BIN_1:  { x: 26, y: 37, label: "Bin 1" },
   BIN_2:  { x: 50, y: 37, label: "Bin 2" },
 };
+// Programs say "BELT"; inside the sim the belt is BELT_A.
+const stationKey = (name) => (name === "BELT" ? "BELT_A" : name);
+export const programStationName = (key) => (key === "BELT_A" ? "BELT" : key);
 export const DESK = { x: 70, y: 58 };
 // Half-size of a station's tile in floor units, and how far from its edge a robot stands.
 const TILE = { hw: 8, hh: 5.5 }, STAND = 4;
@@ -37,26 +46,30 @@ function distToTile(key, x, y) {
   return Math.hypot(dx, dy);
 }
 export const COLORS = ["red", "blue", "green"];
-export const ACTIONS = ["moveTo", "pickUp", "putDown", "paint", "pack", "fix", "wait", "say", "askBoss"];
-const PHYSICAL = new Set(["moveTo", "pickUp", "putDown", "paint", "pack", "fix"]);
+
+// Skills are things a worker knows how to do; attributes are traits (docs/worker-agent-design.md).
+export const SKILL_ACTIONS = { packing: "pack", painting: "paint", repair: "service" };
+const PRIMARY = { pack: "packing", paint: "painting" }; // without the skill: a compile error
+const SIDE = { service: "repair" };                      // without the skill: silently nothing
 
 export const RULES = {
   speed: 22,            // floor units per second
   binCap: 5, packCap: 6, paintCap: 3, beltCap: 8,
   beltEvery: 3.2,       // seconds between new widgets
-  jamChance: 0.12,      // per paint job
   reach: 6,             // how close to a station's tile you have to stand to use it (corners are 4√2 ≈ 5.7 away)
-  beltWait: 6,          // how long anyone waits at the belt for a widget
-  patientWait: 8,       // how long a Patient worker waits anywhere else (for a box, for space, for widgets)
-  fumble: 0.05,         // chance to drop what you pick up or put down, unless Careful
+  beltWait: 6,          // how long a worker waits at the belt for a widget
+  stationWait: 8,       // how long a worker waits anywhere else (for a box, for room, for 3 widgets)
   fastSpeed: 1.5,       // walking speed multiplier for Fast workers
-  stuckAfter: 6,        // failed actions (walking aside) in a row before a worker comes to complain
-  reportCooldown: 40,
+  nimble: 0.6,          // machine work takes this much as long for Nimble workers
+  steady: 0.5,          // machines wear this much as fast in a Steady worker's hands
+  wear: 10,             // wear per paint job, out of 100, unless the level says otherwise
+  stuckAfter: 6,        // failed actions (walking aside) in a row that count as "stuck"
+  stuckCooldown: 20,    // seconds before the same worker can be "stuck" again
   deskWait: 30,         // how long a worker waits at your desk before going back
 };
 // Picking up and putting down are instant. Everything that takes time shows its progress
 // (actProgress below), so nothing on the floor just sits there.
-const DUR = { pickUp: 0, putDown: 0, paint: 1.5, pack: 2, fix: 3, say: 1 };
+const DUR = { pickUp: 0, putDown: 0, paint: 1.5, pack: 2, service: 3, say: 1 };
 
 export function mulberry32(a) {
   return function () {
@@ -84,15 +97,17 @@ export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
     t: 0, seed, rng: mulberry32(seed), ids: 0, version: 0, level,
     shipped: 0, counted: 0, wasted: 0, laborCost: 0,
     stations: Object.fromEntries(level.stations.map((k) => [k, []])),
-    paintJammed: false, workers: [], events: [],
+    wear: level.stations.includes("PAINT") ? { PAINT: 0 } : {},
+    workers: [], events: [],
     order: level.order.map((l) => ({ ...l, done: 0 })),
     nextBelt: 1, over: false, won: false,
     // You. Starts by the desk; same shape as a worker so the same action code runs for both.
+    // You know every skill.
     player: {
       id: "you", isPlayer: true, index: -1,
-      hire: { id: "you", name: "You", skills: ["careful"], wage: 0 },
+      hire: { id: "you", name: "You", skills: Object.keys(SKILL_ACTIONS), attributes: [], wage: 0 },
       x: DESK.x, y: DESK.y - 8, station: null, holding: null, act: null, next: null,
-      vx: 0, vy: 0, fails: 0, failLog: [], lastReport: 0, script: [],
+      vx: 0, vy: 0, fails: 0, failLog: [],
     },
   };
   // A few widgets already waiting, so there's something on the floor before the clock starts.
@@ -101,13 +116,14 @@ export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
   return s;
 }
 
-/** Hire someone onto the floor. They start at the dock with no instructions. */
+/** Hire someone onto the floor. They start at the dock with no program. */
 export function addWorker(s, hire) {
   const w = {
     id: hire.id, hire, index: s.workers.length,
     ...standPoint("DOCK", { x: DESK.x + 8, y: DESK.y }), station: "DOCK", holding: null,
-    script: [], pc: 0, cur: -1, act: null, waiting: null, returnTo: null,
-    fails: 0, failLog: [], lastReport: -1e9,
+    gen: null, nowGen: null, lastOk: undefined, programEnded: false,
+    act: null, waiting: null, returnTo: null,
+    fails: 0, failLog: [], lastStuck: -1e9,
   };
   s.workers.push(w);
   return w;
@@ -118,8 +134,8 @@ export function removeWorker(s, id) {
   s.workers.forEach((w, i) => (w.index = i));
 }
 
-/** Skills: "fast", "careful", "patient". */
 export const hasSkill = (w, skill) => !!w.hire.skills?.includes(skill);
+export const hasAttr = (w, attr) => !!w.hire.attributes?.includes(attr);
 
 const emit = (s, ev) => s.events.push({ t: s.t, ...ev });
 
@@ -139,7 +155,71 @@ export function step(s, dt) {
   for (const w of s.workers) stepWorker(s, w);
 }
 
-// ---- you ----
+// ---------- the tools a program gets ----------
+
+/** Names of the actions and questions this worker's programs may use in this level. */
+export function toolNamesFor(hire, level) {
+  const has = (k) => level.stations.includes(k);
+  const actions = ["move", "pickUp", "putDown", "wait", "say", "think"];
+  if (has("PACK")) actions.push("pickUpBox");
+  if (has("PACK") && hire.skills.includes("packing")) actions.push("pack");
+  if (has("PAINT") && hire.skills.includes("painting")) actions.push("paint");
+  if (has("PAINT")) actions.push("service"); // a side task: anyone may include it
+  const queries = ["holding", "count", "boxes", "space", "needs", "needsAny", "where", "holds"];
+  if (has("PAINT")) queries.push("wear");
+  return { actions, queries, known: ["move", "pickUp", "pickUpBox", "putDown", "pack", "paint", "service", "wait", "say", "think"] };
+}
+
+function makeTools(s, w) {
+  const color = (c) => (COLORS.includes(c) ? c : null);
+  const actions = {
+    move: (st) => ({ action: "moveTo", station: stationKey(st) }),
+    pickUp: (c) => ({ action: "pickUp", color: color(c) }),
+    pickUpBox: () => ({ action: "pickUp", box: true }),
+    putDown: () => ({ action: "putDown" }),
+    pack: (c) => ({ action: "pack", color: color(c) }),
+    paint: (c) => ({ action: "paint", color: c }),
+    service: () => ({ action: "service" }),
+    wait: (sec) => ({ action: "wait", seconds: sec }),
+    say: (text) => ({ action: "say", text }),
+    think: (reason) => ({ action: "think", reason }),
+  };
+  const at = (st) => s.stations[stationKey(st)] ?? [];
+  const holdingOf = (x) => (!x.holding ? "nothing" : x.holding.kind === "box" ? "box" : x.holding.color);
+  const findPerson = (name) => [s.player, ...s.workers].find((x) => x.hire.name.toLowerCase() === String(name).toLowerCase() || (name === "boss" && x.isPlayer));
+  const queries = {
+    holding: () => holdingOf(w),
+    count: (st, c) => at(st).filter((i) => i.kind === "widget" && (!c || i.color === c)).length,
+    boxes: (st) => at(st).filter((i) => i.kind === "box" && !i.building).length,
+    space: (st) => Math.max(0, capOf(stationKey(st)) - at(st).length),
+    needs: (c) => s.order.filter((l) => l.color === c || l.color === "any").reduce((a, l) => a + l.count - l.done, 0),
+    needsAny: () => s.order.reduce((a, l) => a + l.count - l.done, 0),
+    wear: (st) => Math.round(s.wear[stationKey(st)] ?? 0),
+    where: (name) => { const x = findPerson(name); return x ? programStationName(x.station ?? "walking") : "nobody"; },
+    holds: (name) => { const x = findPerson(name); return x ? holdingOf(x) : "nothing"; },
+  };
+  return { actions, queries };
+}
+
+const capOf = (st) => (st.startsWith("BIN_") ? RULES.binCap : st === "PACK" ? RULES.packCap : st === "PAINT" ? RULES.paintCap : st === "DOCK" ? Infinity : RULES.beltCap);
+
+/** Give a worker a (parsed, checked) program. It starts from the top. */
+export function setProgram(s, w, ast) {
+  w.gen = runProgram(ast, makeTools(s, w));
+  w.programEnded = false;
+  w.fails = 0;
+  w.lastOk = undefined;
+  resume(s, w, { walkBack: false });
+}
+
+/** Queue one-time steps (a parsed program) to run before the worker's program continues. */
+export function setNow(s, w, ast) {
+  w.nowGen = runProgram(ast, makeTools(s, w));
+  w.lastOk = undefined;
+  resume(s, w, { walkBack: false });
+}
+
+// ---------- you ----------
 
 /** The station you're close enough to use, if any. */
 function stationNear(s, x, y) {
@@ -192,7 +272,7 @@ export function playerSteer(s, vx, vy) {
   if ((vx || vy) && (p.act?.kind === "moveTo" || p.act?.kind === "walkTo")) { p.act = null; p.next = null; }
 }
 
-/** Do something with your hands where you stand: pickUp, putDown, paint, pack, fix. */
+/** Do something with your hands where you stand: pickUp, putDown, paint, pack, service. */
 export function playerDo(s, a) {
   const p = s.player;
   if (p.act) return;
@@ -200,6 +280,8 @@ export function playerDo(s, a) {
   if (!p.station) return fail(s, p, a, "you're not at a station");
   start(s, p, a);
 }
+
+// ---------- workers ----------
 
 function stepWorker(s, w) {
   if (w.act) return advance(s, w);
@@ -209,48 +291,77 @@ function stepWorker(s, w) {
     resume(s, w);
     return;
   }
-  if (!w.script.length) return;
-  if (w.pc >= w.script.length) {
-    w.pc = 0;
-    // A script with nothing physical in it would just chatter forever: run it once, then stop.
-    if (!w.script.some((a) => PHYSICAL.has(a.action))) { w.script = []; w.cur = -1; return; }
+  const gen = w.nowGen ?? w.gen;
+  if (!gen) return;
+  let r;
+  try {
+    r = gen.next(w.lastOk);
+  } catch (e) {
+    // The program looped without acting, or hit an error: drop it and raise it as unexpected.
+    if (gen === w.nowGen) w.nowGen = null; else w.gen = null;
+    emit(s, { type: "unexpected", worker: w.id, reason: e.kind === "loop" ? "loop" : "error", detail: e.message });
+    return;
   }
-  w.cur = w.pc;
-  start(s, w, w.script[w.pc++]);
+  w.lastOk = undefined;
+  if (r.done) {
+    if (gen === w.nowGen) { w.nowGen = null; emit(s, { type: "nowDone", worker: w.id }); return; }
+    w.gen = null;
+    w.programEnded = true;
+    if (s.order.some((l) => l.done < l.count)) {
+      emit(s, { type: "unexpected", worker: w.id, reason: "ended", detail: "my program finished, but the order isn't done" });
+    }
+    return;
+  }
+  start(s, w, r.value);
 }
 
 function walk(s, w, x, y, extra) {
   const dist = Math.hypot(x - w.x, y - w.y);
   w.station = null;
-  w.act = { ...extra, from: { x: w.x, y: w.y }, to: { x, y }, start: s.t, until: s.t + Math.max(0.2, dist / (RULES.speed * (hasSkill(w, "fast") ? RULES.fastSpeed : 1))) };
+  w.act = { ...extra, from: { x: w.x, y: w.y }, to: { x, y }, start: s.t, until: s.t + Math.max(0.2, dist / (RULES.speed * (hasAttr(w, "fast") ? RULES.fastSpeed : 1))) };
 }
 
 // Workers who come to talk stand just above your desk.
 const deskSpot = (w) => ({ x: DESK.x, y: DESK.y - 8 });
+
+const machineTime = (w, kind) => DUR[kind] * (hasAttr(w, "nimble") ? RULES.nimble : 1);
 
 function start(s, w, a) {
   switch (a.action) {
     case "moveTo": {
       const st = a.station in s.stations && STATIONS[a.station];
       if (!st) return fail(s, w, a, `there's no ${label(a.station)} in this factory`);
+      if (w.station === a.station) return ok(s, w, a);
       const to = standPoint(a.station, w);
       return walk(s, w, to.x, to.y, { a, kind: "moveTo", arrive: a.station });
-    }
-    case "askBoss": {
-      emit(s, { type: "ask", worker: w.id, text: String(a.question || a.text || "Boss?") });
-      return goToDesk(s, w, "ask");
     }
     case "wait":
       w.act = { a, kind: "wait", start: s.t, until: s.t + Math.min(20, Math.max(0.5, +a.seconds || 1)) };
       return;
     case "say":
-      emit(s, { type: "say", worker: w.id, text: String(a.text || "") });
+      emit(s, { type: "say", worker: w.id, text: String(a.text ?? "") });
       w.act = { a, kind: "say", start: s.t, until: s.t + DUR.say };
       return;
+    case "think":
+      // Thinking doesn't stop the worker: ask for a thought and carry on.
+      // (A short pause, so a program that calls think() in a tight loop can't fire it every frame.)
+      emit(s, { type: "thinkRequest", worker: w.id, reason: String(a.reason ?? "") });
+      w.act = { a, kind: "wait", start: s.t, until: s.t + 0.5 };
+      return;
+    case "pack": case "paint":
+      if (!w.isPlayer && !hasSkill(w, PRIMARY[a.action])) return fail(s, w, a, `I don't know how to ${a.action}`);
+      w.act = { a, kind: a.action, start: s.t, until: s.t + (a.action === "pack" ? 0 : machineTime(w, a.action)) };
+      return;
+    case "service":
+      // A side task: without the Repair skill it quietly does nothing.
+      if (!w.isPlayer && !hasSkill(w, SIDE.service)) return ok(s, w, a);
+      w.act = { a, kind: "service", start: s.t, until: s.t + (w.station === "PAINT" && s.wear.PAINT > 0 ? machineTime(w, "service") : 0) };
+      return;
+    case "pickUp": case "putDown":
+      w.act = { a, kind: a.action, start: s.t, until: s.t };
+      return;
     default:
-      if (!(a.action in DUR)) return fail(s, w, a, `I don't know how to "${a.action}"`);
-      // Packing checks for widgets first and starts building the box right away (see pack).
-      w.act = { a, kind: a.action, start: s.t, until: s.t + (a.action === "pack" ? 0 : DUR[a.action]) };
+      return fail(s, w, a, `I don't know how to "${a.action}"`);
   }
 }
 
@@ -276,25 +387,19 @@ function finish(s, w, act) {
     case "putDown": return putDown(s, w, a, act);
     case "paint": return paint(s, w, a);
     case "pack": return pack(s, w, a, act);
-    case "fix": return fix(s, w, a);
-    default: return; // wait, say
+    case "service": return service(s, w, a);
+    default: w.lastOk = true; return; // wait, say
   }
 }
 
-// Everyone waits at the belt for the next widget. A Patient worker also waits anywhere else for
-// what they need (a box, room in a bin, three widgets to pack) instead of failing right away.
+// Workers wait a little for what they need (a widget at the belt, a box, room in a bin, three
+// widgets to pack) instead of failing right away. You don't: you just try again.
 // Returns true if they're waiting another half second.
 function keepWaiting(s, w, act) {
   if (w.isPlayer) return false;
-  const limit = w.station === "BELT_A" ? RULES.beltWait : hasSkill(w, "patient") ? RULES.patientWait : 0;
+  const limit = w.station === "BELT_A" ? RULES.beltWait : RULES.stationWait;
   if ((act.waited ?? 0) >= limit) return false;
   w.act = { ...act, waited: (act.waited ?? 0) + 0.5, limit, until: s.t + 0.5 };
-  return true;
-}
-
-function fumbled(s, w, it) {
-  if (hasSkill(w, "careful") || s.rng() >= RULES.fumble) return false;
-  emit(s, { type: "fumble", worker: w.id, item: itemName(it) });
   return true;
 }
 
@@ -304,17 +409,16 @@ function pickUp(s, w, a, act) {
   const items = s.stations[w.station];
   const color = COLORS.includes(a.color) ? a.color : null;
   let idx;
-  if (color) idx = items.findIndex((i) => i.kind === "widget" && i.color === color);
-  else if (w.station === "PACK") idx = items.findIndex((i) => i.kind === "box" && !i.building); // no color at Pack = a finished box
-  else idx = items.findIndex((i) => !i.building);
+  if (a.box || (!color && w.station === "PACK")) idx = items.findIndex((i) => i.kind === "box" && !i.building);
+  else if (color) idx = items.findIndex((i) => i.kind === "widget" && i.color === color);
+  else idx = items.findIndex((i) => i.kind === "widget");
   if (idx < 0) {
     if (keepWaiting(s, w, act)) return;
-    const what = color ? `${color} widget` : w.station === "PACK" ? "finished box" : "anything";
+    const what = a.box || (!color && w.station === "PACK") ? "finished box" : color ? `${color} widget` : "widget";
     return fail(s, w, a, `there's no ${what} at ${label(w.station)}`);
   }
-  const it = items.splice(idx, 1)[0];
+  w.holding = items.splice(idx, 1)[0];
   s.version++;
-  if (!fumbled(s, w, it)) w.holding = it;
   ok(s, w, a);
 }
 
@@ -328,11 +432,9 @@ function putDown(s, w, a, act) {
     w.holding = null; s.version++;
     return ok(s, w, a);
   }
-  const cap = st.startsWith("BIN_") ? RULES.binCap : st === "PACK" ? RULES.packCap : st === "PAINT" ? RULES.paintCap : RULES.beltCap;
-  if (s.stations[st].length >= cap) return keepWaiting(s, w, act) || fail(s, w, a, `${label(st)} is full`);
-  const it = w.holding;
+  if (s.stations[st].length >= capOf(st)) return keepWaiting(s, w, act) || fail(s, w, a, `${label(st)} is full`);
+  s.stations[st].push(w.holding);
   w.holding = null; s.version++;
-  if (!fumbled(s, w, it)) s.stations[st].push(it);
   ok(s, w, a);
 }
 
@@ -340,9 +442,11 @@ function paint(s, w, a) {
   if (w.station !== "PAINT") return fail(s, w, a, "I'm not at the paint machine");
   if (!w.holding || w.holding.kind !== "widget") return fail(s, w, a, "I'm not holding a widget to paint");
   if (!COLORS.includes(a.color)) return fail(s, w, a, `there's no ${a.color || "such"} paint`);
-  if (s.paintJammed) return fail(s, w, a, "the paint machine is jammed");
+  if (s.wear.PAINT >= 100) return fail(s, w, a, "the paint machine needs servicing");
   w.holding.color = a.color; s.version++;
-  if (s.rng() < RULES.jamChance) { s.paintJammed = true; emit(s, { type: "jam", worker: w.id }); }
+  // Machines wear predictably: every job adds a bit, less in a Steady worker's hands.
+  s.wear.PAINT = Math.min(100, s.wear.PAINT + (s.level.wear ?? RULES.wear) * (hasAttr(w, "steady") ? RULES.steady : 1));
+  if (s.wear.PAINT >= 100) emit(s, { type: "worn", worker: w.id });
   ok(s, w, a);
 }
 
@@ -369,18 +473,16 @@ function pack(s, w, a, act) {
     chosen = pool.slice(0, 3);
   }
   for (const it of chosen) items.splice(items.indexOf(it), 1);
-  const box = { id: ++s.ids, kind: "box", colors: chosen.map((i) => i.color), building: { start: s.t, until: s.t + DUR.pack } };
+  const time = machineTime(w, "pack");
+  const box = { id: ++s.ids, kind: "box", colors: chosen.map((i) => i.color), building: { start: s.t, until: s.t + time } };
   items.push(box); s.version++;
-  w.act = { a, kind: "pack", box, start: s.t, until: s.t + DUR.pack };
+  w.act = { a, kind: "pack", box, start: s.t, until: s.t + time };
 }
 
-function fix(s, w, a) {
-  if (w.station === "PAINT" && s.paintJammed) {
-    s.paintJammed = false; s.version++;
-    emit(s, { type: "fixed", worker: w.id });
-    return ok(s, w, a);
-  }
-  fail(s, w, a, "there's nothing to fix here");
+function service(s, w, a) {
+  if (w.station !== "PAINT") return fail(s, w, a, "I'm not at the paint machine");
+  if (s.wear.PAINT > 0) { s.wear.PAINT = 0; s.version++; emit(s, { type: "serviced", worker: w.id }); }
+  ok(s, w, a);
 }
 
 /** Does this item count toward this line of the order? */
@@ -400,21 +502,25 @@ function ship(s, w, item) {
 
 // Only real work resets the failure count. Walking doesn't, or a worker whose every lap fails
 // would never notice they're stuck.
-function ok(s, w, a) { if (PHYSICAL.has(a?.action) && a.action !== "moveTo") w.fails = 0; }
+function ok(s, w, a) {
+  w.lastOk = true;
+  if (a?.action && a.action !== "moveTo") w.fails = 0;
+}
 
 function fail(s, w, a, why) {
+  w.lastOk = false;
   w.fails++;
   w.failLog.push({ t: s.t, action: a?.action, why });
   if (w.failLog.length > 6) w.failLog.shift();
   emit(s, { type: "fail", worker: w.id, action: a?.action, why });
-  if (!w.isPlayer && w.fails >= RULES.stuckAfter && s.t - w.lastReport >= RULES.reportCooldown) {
-    w.lastReport = s.t; w.fails = 0;
-    emit(s, { type: "stuck", worker: w.id, failures: w.failLog.slice(-4) });
-    goToDesk(s, w, "stuck");
+  if (!w.isPlayer && w.fails >= RULES.stuckAfter && s.t - w.lastStuck >= RULES.stuckCooldown) {
+    w.lastStuck = s.t; w.fails = 0;
+    emit(s, { type: "unexpected", worker: w.id, reason: "stuck", detail: w.failLog.slice(-4).map((f) => f.why).join("; ") });
   }
 }
 
-function goToDesk(s, w, reason) {
+/** Send a worker to your desk to wait for you. */
+export function goToDesk(s, w, reason) {
   w.returnTo = w.station ?? w.returnTo;
   const p = deskSpot(w);
   walk(s, w, p.x, p.y, { kind: "toDesk", reason });
@@ -435,13 +541,7 @@ export function resume(s, w, { walkBack = true } = {}) {
   }
 }
 
-/** Give a worker a new script. It starts from the top once their current action finishes. */
-export function setScript(s, w, actions) {
-  w.script = actions; w.pc = 0; w.cur = -1; w.fails = 0;
-  resume(s, w, { walkBack: actions[0]?.action !== "moveTo" });
-}
-
-// ---- what a worker can see, for prompts ----
+// ---------- what a worker can see, for prompts ----------
 
 function describe(items) {
   if (!items.length) return "empty";
@@ -453,38 +553,22 @@ function describe(items) {
   return Object.entries(n).map(([k, v]) => `${v} ${k}${v > 1 ? (k.endsWith("box") ? "es" : "s") : ""}`).join(", ");
 }
 const holdingText = (w) => (w.holding ? (w.holding.kind === "box" ? "a box" : `a ${w.holding.color} widget`) : "nothing");
-const whereText = (w) => (w.station ? w.station : atDesk(w) ? "the boss's desk" : "walking");
+const whereText = (w) => (w.station ? programStationName(w.station) : atDesk(w) ? "the boss's desk" : "walking");
 
 export function viewFor(s, w) {
   const you = { at: whereText(w), holding: holdingText(w) };
   const floor = {};
-  for (const k of Object.keys(s.stations)) floor[k] = describe(s.stations[k]);
+  for (const k of Object.keys(s.stations)) floor[programStationName(k)] = describe(s.stations[k]);
   const view = { you, floor };
-  if ("PAINT" in s.stations) view.paintMachine = s.paintJammed ? "JAMMED" : "working";
+  if ("PAINT" in s.stations) view.paintMachineWear = `${Math.round(s.wear.PAINT)}% (it stops at 100% until serviced)`;
   view.order = s.order.map((l) => orderLineText(s.level, l));
-  view.boss = `the boss works on the floor too: at ${whereText(s.player)}, holding ${holdingText(s.player)}`;
+  view.boss = `works on the floor too: at ${whereText(s.player)}, holding ${holdingText(s.player)}`;
   const others = s.workers.filter((o) => o !== w);
   // Coworkers' instructions too, so a worker knows the rest of the line is covered and sticks to
   // their own part.
   if (others.length) view.coworkers = Object.fromEntries(others.map((o) => [o.hire.name,
-    `at ${whereText(o)}, holding ${holdingText(o)}${o.orders ? `, instructions: "${o.orders}"` : ""}`]));
+    `at ${whereText(o)}, holding ${holdingText(o)}${o.orders ? `, instructions: "${o.orders}"` : ", no instructions yet"}`]));
   return view;
-}
-
-/** Short label for one action, for showing scripts. */
-export function actionLabel(a) {
-  switch (a.action) {
-    case "moveTo": return `→ ${label(a.station)}`;
-    case "pickUp": return a.color ? `pick up ${a.color}` : "pick up";
-    case "putDown": return "put down";
-    case "paint": return `paint ${a.color ?? "?"}`;
-    case "wait": return `wait ${a.seconds ?? 1}s`;
-    case "say": return `say “${a.text ?? ""}”`;
-    case "pack": return "pack a box";
-    case "fix": return "fix paint";
-    case "askBoss": return "ask you";
-    default: return a.action;
-  }
 }
 
 /** "2 of 5 green boxes shipped" etc. */
