@@ -1,10 +1,10 @@
-// Plays level 3's order headless with hand-written crews (no player), to see how long a crew
+// Plays the full-floor order headless with hand-written crews (no player), to see how long a crew
 // takes and whether the star times are sane. Run: node tools/balance.mjs
 import { newGame, step, setScript } from "../src/sim.js";
 import { LEVELS } from "../src/levels.js";
 const robot = (r) => ({ ...r, wage: 3 + 2 * r.skills.length });
 const m = (station) => ({ action: "moveTo", station });
-const L = LEVELS[2];
+const L = LEVELS.find((l) => l.name === "Full floor");
 const CREWS = {
   "one robot, any color": [[robot({ id: "a", skills: ["fast"] }), [m("BELT_A"), { action: "pickUp" }, m("PACK"), { action: "putDown" }, { action: "pack" }, { action: "pickUp" }, m("DOCK"), { action: "putDown" }]]],
   "haulers paint green, packer ships": [

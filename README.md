@@ -31,23 +31,25 @@ It only listens on 127.0.0.1.
 
 ## How a level plays
 
-Each level is a fixed order, and you're scored on how fast you fill it. Your money and your crew
-carry over from shift to shift. You start broke and do the work yourself: walk with WASD / arrow
-keys or by clicking a station, and use the action bar under the floor (Space for the first action,
-number keys for the rest). Anything that's on the order pays when it ships.
+For now the levels are a tutorial. Each one is a fixed order, and you're scored on how fast you
+fill it. You're on the floor yourself: walk with WASD / arrow keys or by clicking a station, and use
+the action bar under the floor (Space for the first action, number keys for the rest). You and the
+robots can use a station from any side; everyone walks to the nearest side.
 
-Hiring happens **between shifts only**: before your first move you can hire (a fee of 2 minutes'
-wages) or let people go, and give your crew instructions. Your first move starts the clock and
-closes hiring; you can still change instructions and talk while the shift runs. Wages are paid by
-the second during a shift. Every level is unlocked for now.
+On levels with robots for hire, hiring is free but only happens **before your first move**. Your
+first move starts the clock and closes hiring; you can still change instructions and talk while the
+shift runs. Each new machine shows up first in a level where you use it yourself. All levels are
+unlocked for now. (Earning money and spending it on your crew is parked in issue #9.)
 
-1. **By hand.** Belt and dock, red widgets only. Ship 3. Earns the $12 for a first hire.
-2. **Boxes.** Adds Pack, still only red. 3 red boxes. Robots for hire.
-3. **Paint.** Three colors (green is rare), the paint machine, bins. 3 green boxes and 2 red.
+1. **By hand.** Belt and dock, red only. Ship 3 widgets.
+2. **Boxes.** Adds Pack. 2 red boxes, just you.
+3. **Crew.** Same floor, 6 red boxes. Hire robots first.
+4. **Paint.** Three colors (green is rare) and the paint machine. 1 green box, just you.
+5. **Full floor.** Adds bins. 3 green boxes and 2 red, hire from everyone.
 
-Robots have skills (Fast, Careful, Patient) and wages to match. Levels are in `src/levels.js`;
-progress is kept in memory only. `tools/player-check.mjs` plays level 1 headless with and without
-a hire; `tools/balance.mjs` runs level 3 with scripted crews.
+Robots have skills (Fast, Careful, Patient). Levels are in `src/levels.js`;
+progress is kept in memory only. `tools/player-check.mjs` times levels 1–2 by hand headless (for star times);
+`tools/balance.mjs` runs the full floor with scripted crews.
 
 ## Known gaps
 

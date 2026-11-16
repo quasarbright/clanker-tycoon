@@ -1,26 +1,29 @@
-// Plays level 1 headless as a player who never stops (belt → dock forever). (The hiring branch
-// is from when you could hire mid-shift; hiring now happens between shifts.) Prints the finish time.
-import { newGame, step, playerGo, addWorker, setScript } from "../src/sim.js";
-import { LEVELS, hireFee } from "../src/levels.js";
-const gary = { id: "gary", name: "Gary-7", wage: 5, skills: ["fast"] };
-function play(withHire, seed) {
-  const g = newGame(LEVELS[0], [], seed);
-  let hired = false;
-  while (!g.over && g.t < 400) {
-    const p = g.player;
-    if (!p.act) playerGo(g, p.holding ? "DOCK" : "BELT_A", p.holding ? { action: "putDown" } : { action: "pickUp" });
-    if (withHire && !hired && g.cash >= hireFee(gary)) {
-      g.cash -= hireFee(gary); hired = true;
-      const w = addWorker(g, gary);
-      // about 4 s for the model to answer
-      setTimeout0(g, 4, () => setScript(g, w, [{ action: "moveTo", station: "BELT_A" }, { action: "pickUp" }, { action: "moveTo", station: "DOCK" }, { action: "putDown" }]));
-    }
-    for (const t of timers) if (!t.done && g.t >= t.at) { t.done = true; t.fn(); }
-    step(g, 1 / 30);
-    g.events.length = 0;
-  }
-  return { t: +g.t.toFixed(1), cash: +g.cash.toFixed(1) };
+// Plays the by-hand levels headless as a player with perfect reactions, to set star times.
+//   node tools/player-check.mjs
+import { newGame, step, playerGo } from "../src/sim.js";
+import { LEVELS } from "../src/levels.js";
+
+// Level 1: belt → dock forever. Level 2: three widgets to Pack, pack, carry the box to the dock.
+function nextMove(g) {
+  const p = g.player;
+  if (g.level.ship === "widgets") return p.holding ? ["DOCK", { action: "putDown" }] : ["BELT_A", { action: "pickUp" }];
+  const pack = g.stations.PACK;
+  if (p.holding?.kind === "box") return ["DOCK", { action: "putDown" }];
+  if (p.holding) return ["PACK", { action: "putDown" }];
+  if (pack.some((i) => i.kind === "box")) return ["PACK", { action: "pickUp" }];
+  if (pack.filter((i) => i.kind === "widget").length >= 3) return ["PACK", { action: "pack" }];
+  return ["BELT_A", { action: "pickUp" }];
 }
-const timers = [];
-const setTimeout0 = (g, secs, fn) => timers.push({ at: g.t + secs, fn });
-for (const hire of [false]) console.log(hire ? "you + Gary:" : "you alone: ", [1, 2, 3, 4].map((s) => { timers.length = 0; return JSON.stringify(play(hire, s)); }).join(" "));
+
+for (const L of LEVELS.filter((L) => L.id <= 2)) {
+  const times = [1, 2, 3].map((seed) => {
+    const g = newGame(L, [], seed);
+    while (!g.over && g.t < 400) {
+      if (!g.player.act) playerGo(g, ...nextMove(g));
+      step(g, 1 / 30);
+      g.events.length = 0;
+    }
+    return g.t.toFixed(1) + "s";
+  });
+  console.log(`level ${L.id} by hand: ${times.join("  ")}   stars at ${L.stars.join(" / ")}s`);
+}

@@ -13,6 +13,29 @@ export const STATIONS = {
   BIN_2:  { x: 50, y: 37, label: "Bin 2" },
 };
 export const DESK = { x: 70, y: 58 };
+// Half-size of a station's tile in floor units, and how far from its edge a robot stands.
+const TILE = { hw: 8, hh: 5.5 }, STAND = 4;
+
+/** Where to stand to use a station, on whichever side is nearest to `from`. */
+export function standPoint(key, from) {
+  const st = STATIONS[key];
+  const x0 = st.x - TILE.hw - STAND, x1 = st.x + TILE.hw + STAND;
+  const y0 = st.y - TILE.hh - STAND, y1 = st.y + TILE.hh + STAND;
+  let x = Math.min(x1, Math.max(x0, from.x)), y = Math.min(y1, Math.max(y0, from.y));
+  if (x > x0 && x < x1 && y > y0 && y < y1) {
+    // Already inside the ring: step out to the nearest edge.
+    const d = [x - x0, x1 - x, y - y0, y1 - y], m = Math.min(...d);
+    if (m === d[0]) x = x0; else if (m === d[1]) x = x1; else if (m === d[2]) y = y0; else y = y1;
+  }
+  return { x: Math.min(97, Math.max(3, x)), y: Math.min(61, Math.max(4, y)) };
+}
+
+/** How far a point is from a station's tile (0 if on it). */
+function distToTile(key, x, y) {
+  const st = STATIONS[key];
+  const dx = Math.max(0, Math.abs(x - st.x) - TILE.hw), dy = Math.max(0, Math.abs(y - st.y) - TILE.hh);
+  return Math.hypot(dx, dy);
+}
 export const COLORS = ["red", "blue", "green"];
 export const ACTIONS = ["moveTo", "pickUp", "putDown", "paint", "pack", "fix", "wait", "say", "askBoss"];
 const PHYSICAL = new Set(["moveTo", "pickUp", "putDown", "paint", "pack", "fix"]);
@@ -22,7 +45,7 @@ export const RULES = {
   binCap: 5, packCap: 6, paintCap: 3, beltCap: 8,
   beltEvery: 3.2,       // seconds between new widgets
   jamChance: 0.12,      // per paint job
-  reach: 9,             // how close you have to stand to a station to use it
+  reach: 6,             // how close to a station's tile you have to stand to use it (corners are 4√2 ≈ 5.7 away)
   beltWait: 6,          // how long anyone waits at the belt for a widget
   patientWait: 8,       // how long a Patient worker waits anywhere else (for a box, for space, for widgets)
   fumble: 0.05,         // chance to drop what you pick up or put down, unless Careful
@@ -56,7 +79,7 @@ const itemName = (it) => (it.kind === "box" ? "box" : `${it.color} widget`);
 export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
   const s = {
     t: 0, seed, rng: mulberry32(seed), ids: 0, version: 0, level,
-    cash: 0, shipped: 0, counted: 0, wasted: 0, wagesPaid: 0, earned: 0,
+    shipped: 0, counted: 0, wasted: 0,
     stations: Object.fromEntries(level.stations.map((k) => [k, []])),
     paintJammed: false, workers: [], events: [],
     order: level.order.map((l) => ({ ...l, done: 0 })),
@@ -65,7 +88,7 @@ export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
     player: {
       id: "you", isPlayer: true, index: -1,
       hire: { id: "you", name: "You", skills: ["careful"], wage: 0 },
-      x: DESK.x, y: DESK.y - 21, station: null, holding: null, act: null, next: null,
+      x: DESK.x, y: DESK.y - 8, station: null, holding: null, act: null, next: null,
       vx: 0, vy: 0, fails: 0, failLog: [], lastReport: 0, script: [],
     },
   };
@@ -79,7 +102,7 @@ export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
 export function addWorker(s, hire) {
   const w = {
     id: hire.id, hire, index: s.workers.length,
-    x: STATIONS.DOCK.x, y: STATIONS.DOCK.y, station: "DOCK", holding: null,
+    ...standPoint("DOCK", { x: DESK.x + 8, y: DESK.y }), station: "DOCK", holding: null,
     script: [], pc: 0, cur: -1, act: null, waiting: null, returnTo: null,
     fails: 0, failLog: [], lastReport: -1e9,
   };
@@ -107,9 +130,6 @@ export function step(s, dt) {
     s.stations.BELT_A.push({ kind: "widget", color: randColor(s) });
     s.version++;
   }
-  // Wages are paid by the second.
-  const wages = s.workers.reduce((a, w) => a + w.hire.wage, 0) * dt / 60;
-  s.cash -= wages; s.wagesPaid += wages;
   stepPlayer(s, s.player, dt);
   for (const w of s.workers) stepWorker(s, w);
 }
@@ -120,8 +140,8 @@ export function step(s, dt) {
 function stationNear(s, x, y) {
   let best = null, bestD = RULES.reach;
   for (const k of Object.keys(s.stations)) {
-    const d = Math.hypot(STATIONS[k].x - x, STATIONS[k].y - y);
-    if (d < bestD) { best = k; bestD = d; }
+    const d = distToTile(k, x, y);
+    if (d <= bestD) { best = k; bestD = d; }
   }
   return best;
 }
@@ -135,7 +155,7 @@ function stepPlayer(s, p, dt) {
   if (p.vx || p.vy) {
     const len = Math.hypot(p.vx, p.vy);
     p.x = Math.min(97, Math.max(3, p.x + (p.vx / len) * RULES.speed * dt));
-    p.y = Math.min(50, Math.max(2, p.y + (p.vy / len) * RULES.speed * dt));
+    p.y = Math.min(61, Math.max(4, p.y + (p.vy / len) * RULES.speed * dt));
     p.station = stationNear(s, p.x, p.y);
   }
 }
@@ -148,7 +168,8 @@ export function playerGo(s, station, then = null) {
   if (!st || !(station in s.stations)) return;
   p.next = then;
   if (p.station === station && !p.act) { p.next = null; if (then) playerDo(s, then); return; }
-  walk(s, p, st.x, st.y, { kind: "moveTo", arrive: station, a: { action: "moveTo", station } });
+  const to = standPoint(station, p);
+  walk(s, p, to.x, to.y, { kind: "moveTo", arrive: station, a: { action: "moveTo", station } });
 }
 
 /** Walk to a spot on the floor. */
@@ -156,7 +177,7 @@ export function playerWalkTo(s, x, y) {
   const p = s.player;
   if (p.act && p.act.kind !== "moveTo" && p.act.kind !== "walkTo") return;
   p.next = null;
-  walk(s, p, Math.min(97, Math.max(3, x)), Math.min(50, Math.max(2, y)), { kind: "walkTo" });
+  walk(s, p, Math.min(97, Math.max(3, x)), Math.min(61, Math.max(4, y)), { kind: "walkTo" });
 }
 
 /** Keyboard movement: a direction to walk in, or 0,0 to stop. Cancels a click-walk. */
@@ -199,16 +220,16 @@ function walk(s, w, x, y, extra) {
   w.act = { ...extra, from: { x: w.x, y: w.y }, to: { x, y }, start: s.t, until: s.t + Math.max(0.2, dist / (RULES.speed * (hasSkill(w, "fast") ? RULES.fastSpeed : 1))) };
 }
 
-// Robots are drawn a little below their position (standing in front of the station), so the
-// desk spot sits above the desk.
-const deskSpot = (w) => ({ x: DESK.x, y: DESK.y - 17 });
+// Workers who come to talk stand just above your desk.
+const deskSpot = (w) => ({ x: DESK.x, y: DESK.y - 8 });
 
 function start(s, w, a) {
   switch (a.action) {
     case "moveTo": {
       const st = a.station in s.stations && STATIONS[a.station];
       if (!st) return fail(s, w, a, `there's no ${label(a.station)} in this factory`);
-      return walk(s, w, st.x, st.y, { a, kind: "moveTo", arrive: a.station });
+      const to = standPoint(a.station, w);
+      return walk(s, w, to.x, to.y, { a, kind: "moveTo", arrive: a.station });
     }
     case "askBoss": {
       emit(s, { type: "ask", worker: w.id, text: String(a.question || a.text || "Boss?") });
@@ -348,13 +369,11 @@ function fits(line, item) {
 }
 
 function ship(s, w, item) {
-  const L = s.level;
   const colors = item.kind === "box" ? item.colors : [item.color];
   const line = s.order.find((l) => l.done < l.count && fits(l, item));
-  const pay = line ? L.pay : 0;
   if (line) { line.done++; s.counted++; } else s.wasted++;
-  s.cash += pay; s.earned += pay; s.shipped++;
-  emit(s, { type: "ship", worker: w.id, pay, matched: !!line, item: item.kind, colors });
+  s.shipped++;
+  emit(s, { type: "ship", worker: w.id, matched: !!line, item: item.kind, colors });
   if (s.order.every((l) => l.done >= l.count)) { s.over = true; s.won = true; emit(s, { type: "end" }); }
 }
 
@@ -389,7 +408,10 @@ export function resume(s, w, { walkBack = true } = {}) {
   w.waiting = null;
   if (w.act?.kind === "toDesk") w.act = null;
   const back = w.returnTo && STATIONS[w.returnTo];
-  if (walkBack && back) walk(s, w, back.x, back.y, { kind: "moveTo", arrive: w.returnTo, a: { action: "moveTo", station: w.returnTo } });
+  if (walkBack && back) {
+    const to = standPoint(w.returnTo, w);
+    walk(s, w, to.x, to.y, { kind: "moveTo", arrive: w.returnTo, a: { action: "moveTo", station: w.returnTo } });
+  }
 }
 
 /** Give a worker a new script. It starts from the top once their current action finishes. */
