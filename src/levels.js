@@ -1,7 +1,8 @@
 // The levels, for now a tutorial. Each one is a fixed order to fill as fast as you can, and each
 // new machine shows up first in a level where you use it yourself, before anyone else does.
-// Hiring is free here (money is a long-term idea, clanker-tycoon#9), but only before the shift
-// starts: your first move starts the clock and closes hiring.
+// Tutorials stay minimal: just enough to get one idea across. Hiring is free (the money system is
+// parked in clanker-tycoon#9) but robots cost wages while the shift runs. You hire and write
+// instructions before pressing Start; Start closes hiring.
 //   ship: "widgets" (loose widgets ship) or "boxes" (only boxes of 3 ship)
 //   colors: widget colors the belt brings (default: red, blue and green, green rarest)
 //   order: what to ship. color "any" accepts anything of the right kind. A box counts only if all
@@ -15,35 +16,35 @@ export const LEVELS = [
     stations: ["BELT_A", "DOCK"],
     ship: "widgets", colors: ["red"], order: [{ color: "any", count: 3 }],
     pool: [],
-    stars: [22, 32],
+    stars: [18, 26],
     start: "This is you. Walk to the <b>Belt</b> (click it, or use WASD / arrow keys), pick up a widget, carry it to the <b>Dock</b> and put it down.",
   },
   {
     id: 2, name: "Boxes",
-    blurb: "Pack widgets into boxes of three.",
+    blurb: "Pack three widgets into a box.",
     stations: ["BELT_A", "PACK", "DOCK"],
-    ship: "boxes", colors: ["red"], order: [{ color: "red", count: 2 }],
+    ship: "boxes", colors: ["red"], order: [{ color: "red", count: 1 }],
     pool: [],
-    stars: [38, 55],
+    stars: [17, 25],
     start: "The dock only takes boxes now. Bring 3 widgets to <b>Pack</b>, pack them into a box, and ship it from the <b>Dock</b>.",
   },
   {
     id: 3, name: "Crew",
     blurb: "A bigger order. Hire robots to help.",
     stations: ["BELT_A", "PACK", "DOCK"],
-    ship: "boxes", colors: ["red"], order: [{ color: "red", count: 6 }],
+    ship: "boxes", colors: ["red"], order: [{ color: "red", count: 4 }],
     pool: ["gary", "rusty", "pip", "blip"],
-    stars: [70, 100],
-    start: "Hire as many robots as you like and write each one's instructions. Your first move starts the clock, and hiring closes once it's running.",
+    stars: [32, 50],
+    start: "Hire as many robots as you like and write each one's instructions, then press <b>Start</b>. Hiring closes once the shift starts.",
   },
   {
     id: 4, name: "Paint",
-    blurb: "Three colors now, and green is rare.",
-    stations: ["BELT_A", "PAINT", "PACK", "DOCK"],
-    ship: "boxes", order: [{ color: "green", count: 1 }],
+    blurb: "Paint red widgets blue.",
+    stations: ["BELT_A", "PAINT", "DOCK"],
+    ship: "widgets", colors: ["red"], order: [{ color: "blue", count: 2 }],
     pool: [],
-    stars: [45, 70],
-    start: "Widgets come in three colors now, and green is rare. Carry one to the <b>Paint</b> machine and paint it green. Pack 3 greens into a box and ship it.",
+    stars: [18, 26],
+    start: "The order wants blue, and the belt only brings red. Carry a red widget to the <b>Paint</b> machine, paint it blue, and ship it from the <b>Dock</b>.",
   },
   {
     id: 5, name: "Full floor",
@@ -52,6 +53,6 @@ export const LEVELS = [
     ship: "boxes", order: [{ color: "green", count: 3 }, { color: "red", count: 2 }],
     pool: ["blip", "gary", "rusty", "pip", "doris", "vex", "bolt"],
     stars: [110, 160],
-    start: "Hire your crew and write their instructions. Bins are spare storage. Your first move starts the clock.",
+    start: "Three colors now, and green is rare. Hire your crew, write their instructions, then press <b>Start</b>. Bins are spare storage.",
   },
 ];

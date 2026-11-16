@@ -4,9 +4,14 @@ import { newGame, step, playerGo } from "../src/sim.js";
 import { LEVELS } from "../src/levels.js";
 
 // Level 1: belt → dock forever. Level 2: three widgets to Pack, pack, carry the box to the dock.
+// Paint level: belt → paint it the ordered color → dock.
 function nextMove(g) {
   const p = g.player;
-  if (g.level.ship === "widgets") return p.holding ? ["DOCK", { action: "putDown" }] : ["BELT_A", { action: "pickUp" }];
+  if (g.level.ship === "widgets") {
+    const want = g.order[0].color;
+    if (p.holding && want !== "any" && p.holding.color !== want) return ["PAINT", { action: "paint", color: want }];
+    return p.holding ? ["DOCK", { action: "putDown" }] : ["BELT_A", { action: "pickUp" }];
+  }
   const pack = g.stations.PACK;
   if (p.holding?.kind === "box") return ["DOCK", { action: "putDown" }];
   if (p.holding) return ["PACK", { action: "putDown" }];
@@ -15,7 +20,7 @@ function nextMove(g) {
   return ["BELT_A", { action: "pickUp" }];
 }
 
-for (const L of LEVELS.filter((L) => L.id <= 2)) {
+for (const L of LEVELS.filter((L) => !L.pool.length)) {
   const times = [1, 2, 3].map((seed) => {
     const g = newGame(L, [], seed);
     while (!g.over && g.t < 400) {

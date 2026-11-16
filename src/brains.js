@@ -78,14 +78,14 @@ const ACTION_TEXT = {
   pickUp: "- pickUp {color?}: pick up a widget at your station (of that color, if given). At BELT_A you wait a few seconds for one to arrive. At PACK with no color you take a finished box. You hold one thing at a time.",
   putDown: "- putDown: put down what you're holding at your station.",
   paint: "- paint {color}: at PAINT while holding a widget, repaint it.",
-  pack: "- pack: at PACK, pack 3 widgets that are sitting there into a box.",
+  pack: "- pack {color?}: at PACK, pack 3 widgets that are sitting there into a box (3 of that color, if given).",
   fix: "- fix: at PAINT, unjam the paint machine.",
   wait: "- wait {seconds}",
   say: "- say {text}: say something out loud.",
-  askBoss: "- askBoss {question}: walk to the boss's desk and ask; you wait there for an answer.",
 };
 
-/** The actions that make sense in this level. */
+/** The actions that make sense in this level. (No askBoss: workers come to the desk only when
+ * they're stuck, never as a step in their routine.) */
 function actionsFor(L) {
   return Object.keys(ACTION_TEXT).filter((a) =>
     (a !== "paint" && a !== "fix") || L.stations.includes("PAINT")).filter((a) => a !== "pack" || L.stations.includes("PACK"));
@@ -93,11 +93,12 @@ function actionsFor(L) {
 
 const rulebook = (L) => `The factory:
 - Stations: ${L.stations.map((k) => STATION_TEXT[k]).join(", ")}. There are no other stations.
-- Widgets are ${(L.colors ?? COLORS).join(", ").replace(/, ([^,]*)$/, " or $1")}. ${SHIP_TEXT[L.ship](L)}
+- Widgets come off the belt ${(L.colors ?? COLORS).join(", ").replace(/, ([^,]*)$/, " or $1")}.${L.stations.includes("PAINT") ? " The paint machine can make any of red, blue or green." : ""} ${SHIP_TEXT[L.ship](L)}
 
 Actions you can put in a script:
 ${actionsFor(L).map((a) => ACTION_TEXT[a]).join("\n")}
-Your script repeats from the top, forever, until the boss gives you new orders. So write ONE round of the work: don't copy the same steps out several times to do something more than once, the repeating takes care of that.`;
+Your script repeats from the top, forever, until the boss gives you new orders. So write ONE round of the work: don't copy the same steps out several times to do something more than once, the repeating takes care of that.
+Your script does exactly what your instructions say and nothing else. Don't add steps the instructions don't ask for: no extra trips, no say or wait steps unless the instructions ask for them. For example, told "pack boxes at Pack and ship them", your script only goes to PACK and DOCK; bringing widgets is someone else's work, even if nobody seems to be doing it yet.`;
 
 function schemas(L) {
   const item = {
@@ -105,7 +106,8 @@ function schemas(L) {
     properties: {
       action: { type: "string", enum: actionsFor(L) },
       station: { type: "string", enum: L.stations },
-      color: { type: "string", enum: L.colors ?? COLORS },
+      // Any color once there's paint; otherwise just the colors on the belt.
+      color: { type: "string", enum: L.stations.includes("PAINT") ? COLORS : L.colors ?? COLORS },
       seconds: { type: "number" },
       text: { type: "string" },
       question: { type: "string" },
@@ -157,6 +159,26 @@ function sanitize(actions, L) {
     .map((a) => (a.action === "say" ? { ...a, text: clean(a.text) } : a));
 }
 
+// Which stations a piece of instructions mentions, by the words people use for them.
+const STATION_WORDS = {
+  BELT_A: /\bbelt\b/i,
+  PACK: /\bpack/i,
+  DOCK: /\bdock|\bship/i,
+  PAINT: /\bpaint/i,
+  BIN_1: /\bbins?\b(?!\s*2)/i,
+  BIN_2: /\bbins?\b(?!\s*1)/i,
+};
+/** Stations a script visits that the instructions never mention (none if they mention none). */
+function strayStations(text, actions) {
+  const named = Object.keys(STATION_WORDS).filter((k) => STATION_WORDS[k].test(text));
+  if (!named.length) return [];
+  // Widgets come from the belt, so "paint reds blue and ship them" implies a belt trip even though
+  // it never says "belt". Packing and shipping alone don't.
+  if (/\b(paint|bring|carry|take|grab|fetch|get|move|haul)\b/i.test(text)) named.push("BELT_A");
+  const visited = [...new Set(actions.filter((a) => a.action === "moveTo").map((a) => a.station))];
+  return visited.filter((k) => !named.includes(k));
+}
+
 const KIND_LINE = {
   orders: "The boss gives you new instructions",
   chat: "The boss says to you",
@@ -183,10 +205,21 @@ ${KIND_LINE[kind]}: "${heard}"
 
 Reply as JSON. "reply" is what you say back out loud. ${kind === "orders"
     ? 'These are your instructions now: set "newScript" to true and put your full new action script (one round, at most 20 actions) in "actions".'
-    : 'If this changes what you should be doing, set "newScript" to true and put your full new action script (one round, at most 20 actions) in "actions". Otherwise set "newScript" to false and "actions" to [].'}`;
-  const out = await llm({ system: system(h, L), prompt, schema: schemas(L).respond });
+    : 'Only if the boss is clearly giving you new or changed instructions for your work, set "newScript" to true and put your full new action script (one round, at most 20 actions) in "actions". Praise, questions, small talk, encouragement and general yelling are not new instructions: then set "newScript" to false and "actions" to [], and keep doing what you were doing.'}`;
+  let out = await llm({ system: system(h, L), prompt, schema: schemas(L).respond });
+  let actions = sanitize(out?.actions, L);
+  // Workers do what they're told and nothing more. If the instructions name stations and the
+  // routine goes somewhere they don't mention, send it back once with that correction.
+  const extra = kind === "orders" || out?.newScript ? strayStations(heard, actions) : [];
+  if (extra.length) {
+    const retry = await llm({
+      system: system(h, L), schema: schemas(L).respond,
+      prompt: `${prompt}\n\nYou answered with a script that goes to ${extra.join(" and ")}, but your instructions don't mention ${extra.length > 1 ? "them" : "it"}. That part is someone else's work. Write the script again using only what your instructions ask for.`,
+    });
+    const fixed = sanitize(retry?.actions, L);
+    if (fixed.length && !strayStations(heard, fixed).length) { out = retry; actions = fixed; }
+  }
   const reply = clean(out?.reply) || "…";
-  const actions = sanitize(out?.actions, L);
   const changed = (kind === "orders" || out?.newScript) && actions.length > 0;
   if (kind === "orders") w.orders = heard;
   remember(w, `Boss (${kind === "yell" ? "yelling to everyone" : kind === "orders" ? "new instructions" : "to you"}): ${heard}`);

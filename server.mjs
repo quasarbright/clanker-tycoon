@@ -7,7 +7,7 @@
 //
 // It listens on 127.0.0.1 only, since it runs `claude` with your login.
 import http from "node:http";
-import { readFile } from "node:fs/promises";
+import { readFile, appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ask, summarize } from "./server/claude.mjs";
@@ -15,6 +15,8 @@ import { ask, summarize } from "./server/claude.mjs";
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = +process.argv[2] || 8473;
 const MAX_CLAUDE = 4; // concurrent `claude -p` processes
+const LOG = path.join(ROOT, "logs", "llm.jsonl");
+await mkdir(path.dirname(LOG), { recursive: true });
 
 const MIME = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
@@ -66,6 +68,8 @@ async function handleLlm(req, res) {
   }
   const data = s.structured ?? parseLoose(s.text) ?? { reply: s.text };
   console.log(`llm ${Date.now() - started}ms in=${s.input_tokens} out=${s.output_tokens} (thinking ${s.thinking_tokens})`);
+  // Every call, so a worker doing something odd can be traced back to what it was told and decided.
+  appendFile(LOG, JSON.stringify({ at: new Date().toISOString(), ms: Date.now() - started, system, prompt, data }) + "\n").catch(() => {});
   send(res, 200, { data, ms: Date.now() - started, tokens: { input: s.input_tokens, output: s.output_tokens } });
 }
 
@@ -76,7 +80,8 @@ http.createServer(async (req, res) => {
     let p = decodeURIComponent(url.pathname);
     if (p.endsWith("/")) p += "index.html";
     const file = path.normalize(path.join(ROOT, p));
-    if (!file.startsWith(ROOT + path.sep) || file.includes(`${path.sep}server${path.sep}`)) return send(res, 404, "not found", "text/plain");
+    const hidden = ["server", "logs", ".git"].some((d) => file.startsWith(path.join(ROOT, d) + path.sep));
+    if (!file.startsWith(ROOT + path.sep) || hidden) return send(res, 404, "not found", "text/plain");
     const data = await readFile(file).catch(() => null);
     if (!data) return send(res, 404, "not found", "text/plain");
     send(res, 200, data, MIME[path.extname(file)] || "application/octet-stream");

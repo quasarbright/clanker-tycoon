@@ -1,10 +1,10 @@
-// The game screen. Phases: menu (pick a level) → run → end.
+// The game screen. Phases: menu (pick a level) → plan (hire, write instructions) → run → end.
 // You're on the floor yourself: walk with WASD / arrow keys or by clicking, and use the action bar
 // (or Space and number keys) at a station. Shipping pays; with money you hire robots, give them
 // instructions, and they do the work too. A level ends when today's order is filled.
 import {
   newGame, step, resume, setScript, atDesk, addWorker, removeWorker, playerGo, playerWalkTo, playerSteer, playerDo,
-  orderLineText, STATIONS, DESK, RULES, COLORS, actionLabel,
+  orderLineText, actProgress, boxProgress, STATIONS, DESK, RULES, COLORS, actionLabel,
 } from "./sim.js";
 import { CANDIDATES, SKILLS, respond, report } from "./brains.js";
 import { LEVELS } from "./levels.js";
@@ -72,7 +72,7 @@ function makeBot(id, name, color, isYou) {
   const bot = document.createElement("div");
   bot.className = "ct-bot" + (isYou ? " is-you" : "");
   bot.style.setProperty("--c", color);
-  bot.innerHTML = `<div class="ct-bot-head"><div class="ct-bot-eyes"><i></i><i></i></div><div class="ct-bot-held"></div></div><div class="ct-bot-name">${name}</div>`;
+  bot.innerHTML = `<div class="ct-bot-head"><div class="ct-bot-eyes"><i></i><i></i></div><div class="ct-bot-held"></div></div><div class="ct-bot-bar"><i></i></div><div class="ct-bot-name">${name}</div>`;
   floor.append(bot);
   ui.bots[id] = bot;
   return bot;
@@ -141,18 +141,30 @@ function buildFloor() {
 }
 
 const itemHTML = (it, clickable = false) => it.kind === "box"
-  ? `<span class="ct-box"${clickable ? ` data-pick="box"` : ""}>${it.colors.map((c) => `<i class="c-${c}"></i>`).join("")}</span>`
-  : `<span class="ct-dot c-${it.color}"${clickable ? ` data-pick="${it.color}"` : ""}></span>`;
+  ? `<span class="ct-box${it.building ? " is-building" : ""}" data-id="${it.id ?? ""}"${clickable && !it.building ? ` data-pick="box"` : ""}>${it.building ? `<span class="ct-box-fill"></span>` : ""}${it.colors.map((c) => `<i class="c-${c}"></i>`).join("")}</span>`
+  : `<span class="ct-dot c-${it.color}${packPick.has(it.id) ? " is-picked" : ""}" data-id="${it.id ?? ""}"${clickable ? ` data-pick="${it.color}"` : ""}></span>`;
+
+// Widgets you've picked at Pack to box up (ids). Cleared when you pack or walk away.
+const packPick = new Set();
 
 // ---------- moving yourself ----------
 
 // Click a station to walk there; click something in it to walk there and pick that up; click the
 // floor to walk to that spot.
 floor.addEventListener("click", (e) => {
+  if (phase === "plan") { nudgeStart(); return; }
   if (phase !== "run" || paused || !game || game.over) return;
   const pick = e.target.closest("[data-pick]");
   const st = e.target.closest(".ct-st");
-  begin();
+  const p = game.player;
+  // Standing at Pack: clicking a widget there picks it (or un-picks it) for the next box.
+  if (st && pick && st.dataset.key === "PACK" && p.station === "PACK" && !p.act && pick.dataset.pick !== "box") {
+    const id = +pick.closest("[data-id]").dataset.id;
+    if (packPick.has(id)) packPick.delete(id);
+    else if (packPick.size < 3) packPick.add(id);
+    lastVersion = -1; lastHands = "";
+    return;
+  }
   if (st) {
     const then = pick ? (pick.dataset.pick === "box" ? { action: "pickUp" } : { action: "pickUp", color: pick.dataset.pick }) : null;
     playerGo(game, st.dataset.key, then);
@@ -173,29 +185,43 @@ function steerFromKeys() {
 }
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && phase === "run" && !game.over) { setPaused(!paused); return; }
+  if (phase === "plan" && !typing(e) && /^(w|a|s|d|arrow.*| )$/.test(e.key.toLowerCase())) { e.preventDefault(); nudgeStart(); return; }
   if (phase !== "run" || paused || typing(e) || e.metaKey || e.ctrlKey) return;
   const key = e.key.toLowerCase();
   if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
     e.preventDefault();
-    begin();
     keysDown.add(key); steerFromKeys();
   } else if (key === " " || /^[1-9]$/.test(key)) {
     e.preventDefault();
     const acts = playerActions();
-    const act = key === " " ? acts[0] : acts[+key - 1];
-    if (act) { begin(); playerDo(game, act.a); }
+    const act = (key === " " ? acts[0] : acts[+key - 1]);
+    if (act?.disabled) return;
+    if (act) doAct(act);
   }
 });
 document.addEventListener("keyup", (e) => { keysDown.delete(e.key.toLowerCase()); steerFromKeys(); });
 window.addEventListener("blur", () => { keysDown.clear(); steerFromKeys(); });
 
-/** Start the clock the first time you do anything. */
+/** The Start button: the clock starts, you and your crew start moving, hiring closes. */
 function begin() {
-  if (started) return;
+  if (started || phase !== "plan") return;
   started = true;
-  feed("Clock's running. Hiring is closed until the next shift.", "is-sys");
+  setPhase("run");
+  feed(game.workers.length ? "Shift started. Hiring is closed until the next one." : "Shift started.", "is-sys");
   keepTyped();
   buildCrew(); // drop the Let go buttons
+  lastHiring = "";
+}
+$("#goBtn").addEventListener("click", begin);
+function nudgeStart() {
+  const b = $("#goBtn");
+  b.classList.remove("is-nudged"); void b.offsetWidth; b.classList.add("is-nudged");
+}
+
+function doAct(act) {
+  playerDo(game, act.a);
+  if (act.a.action === "pack") packPick.clear();
+  lastVersion = -1;
 }
 
 // What you can do where you're standing, best guess first (Space does the first one).
@@ -214,8 +240,13 @@ function playerActions() {
     if (canDrop) st === "PAINT" ? acts.push(drop) : acts.unshift(drop);
   } else {
     if (st === "PACK") {
-      if (items.filter((i) => i.kind === "widget").length >= 3) acts.push({ label: "Pack a box", a: { action: "pack" } });
-      if (items.some((i) => i.kind === "box")) acts.push({ label: "Pick up box", a: { action: "pickUp" } });
+      // Click widgets at Pack to choose which 3 go in the box; with nothing picked, the first 3.
+      const widgets = items.filter((i) => i.kind === "widget");
+      for (const id of [...packPick]) if (!widgets.some((i) => i.id === id)) packPick.delete(id);
+      if (packPick.size === 3) acts.push({ label: "Pack these 3", a: { action: "pack", ids: [...packPick] } });
+      else if (packPick.size) acts.push({ label: `Pick ${3 - packPick.size} more to pack`, disabled: true });
+      else if (widgets.length >= 3) acts.push({ label: "Pack 3", a: { action: "pack" } });
+      if (items.some((i) => i.kind === "box" && !i.building)) acts.push({ label: "Pick up box", a: { action: "pickUp" } });
     }
     for (const c of COLORS) if (items.some((i) => i.kind === "widget" && i.color === c)) acts.push({ label: `Pick up ${c}`, a: { action: "pickUp", color: c } });
   }
@@ -235,13 +266,14 @@ function renderHands() {
   const head = `<span class="ct-hands-where"><b>You</b>${where ? ` at ${where}` : ""}, holding ${holding}</span>`;
   let body;
   if (busy) body = `<span class="ct-hands-note">Working…</span>`;
-  else if (acts.length) body = acts.map((a, i) => `<button class="ct-btn ${i === 0 ? "is-gold" : ""}" type="button" data-act="${i}">${a.label}<kbd>${i === 0 ? "Space" : i + 1}</kbd></button>`).join("");
+  else if (acts.length) body = acts.map((a, i) => `<button class="ct-btn ${i === 0 && !a.disabled ? "is-gold" : ""}" type="button" data-act="${i}" ${a.disabled ? "disabled" : ""}>${a.label}${a.disabled ? "" : `<kbd>${i === 0 ? "Space" : i + 1}</kbd>`}</button>`).join("");
   else if (!where) body = `<span class="ct-hands-note">Walk to a station: click it, or use WASD / arrow keys.</span>`;
   else body = `<span class="ct-hands-note">Nothing to do here right now.</span>`;
+  if (p.station === "PACK" && !busy && !p.holding) body += `<span class="ct-hands-note">Click widgets at Pack to choose which go in the box.</span>`;
   $("#hands").innerHTML = head + `<span class="ct-hands-acts">${body}</span>`;
   $("#hands").querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => {
     const act = playerActions()[+b.dataset.act];
-    if (act) { begin(); playerDo(game, act.a); }
+    if (act && !act.disabled) doAct(act);
   }));
 }
 
@@ -259,12 +291,13 @@ function renderHiring() {
   if (sig === lastHiring) return;
   lastHiring = sig;
   if (!level.pool.length && !game.workers.length) { box.innerHTML = ""; return; }
-  const head = `<div class="ct-row"><span class="ct-label">Hire</span><span class="ct-wage" style="margin-left:auto">${game.workers.length} hired</span></div>`;
+  const payroll = game.workers.reduce((a, w) => a + w.hire.wage, 0);
+  const head = `<div class="ct-row"><span class="ct-label">Hire</span><span class="ct-wage" style="margin-left:auto">payroll $${payroll}/min</span></div>`;
   if (started) { box.innerHTML = head + `<p class="ct-blurb">Hiring's closed while the shift runs. You can hire before the next one.</p>`; return; }
   box.innerHTML = head + (open.length ? open.map((c) => `
     <div class="ct-candidate" style="--c:${c.color}">
       <span class="ct-face"></span>
-      <div class="ct-candidate-info"><b>${c.name}</b><br><span class="ct-blurb">${c.blurb}</span>${skillBadges(c)}</div>
+      <div class="ct-candidate-info"><b>${c.name}</b> <span class="ct-wage">$${c.wage}/min</span><br><span class="ct-blurb">${c.blurb}</span>${skillBadges(c)}</div>
       <button class="ct-btn is-gold" type="button" data-hire="${c.id}">Hire</button>
     </div>`).join("") : `<p class="ct-blurb">${level.pool.length ? "You've hired everyone available." : "Nobody's looking for work here."}</p>`);
   box.querySelectorAll("[data-hire]").forEach((b) => b.addEventListener("click", () => hire(b.dataset.hire)));
@@ -312,7 +345,7 @@ function buildCrew() {
     card.style.setProperty("--c", h.color);
     card.innerHTML = `
       <div class="ct-card-head">
-        <span class="ct-face"></span><span class="ct-card-name">${h.name}</span>
+        <span class="ct-face"></span><span class="ct-card-name">${h.name}</span><span class="ct-wage">$${h.wage}/min</span>
         <span class="ct-status"></span>
         ${started ? "" : `<button class="ct-btn ct-small-btn" type="button" data-fire>Let go</button>`}
       </div>
@@ -394,7 +427,13 @@ function setThinking(w, delta) {
 /** Send something to a worker. Resolves true if they answered. */
 async function talk(w, kind, text) {
   const g = game;
-  if (kind === "orders") feed(`<b>You → ${w.hire.name}</b> (instructions): ${escapeHTML(text)}`, "is-boss");
+  if (kind === "orders") {
+    // Record the instructions now, before the model answers, so coworkers who get theirs at the same
+    // time see them. (Without this Pip, told to pack and ship, saw nobody hauling and fetched
+    // widgets too.)
+    w.orders = text;
+    feed(`<b>You → ${w.hire.name}</b> (instructions): ${escapeHTML(text)}`, "is-boss");
+  }
   else if (kind === "chat") feed(`<b>You → ${w.hire.name}:</b> ${escapeHTML(text)}`, "is-boss");
   setThinking(w, +1);
   try {
@@ -590,6 +629,12 @@ function render() {
     bot.style.transform = `translate(${x * k}px, ${w.y * k}px)`;
     const held = w.holding ? itemHTML(w.holding) : "";
     if (bot._held !== held) { bot.querySelector(".ct-bot-held").innerHTML = held; bot._held = held; }
+    // Anything that takes time shows how far along it is (waiting fills toward giving up).
+    const pr = actProgress(game, w);
+    const bar = bot.querySelector(".ct-bot-bar");
+    bar.classList.toggle("is-on", !!pr);
+    bar.classList.toggle("is-waiting", !!pr?.waiting);
+    if (pr) bar.firstElementChild.style.transform = `scaleX(${pr.p})`;
     if (w.isPlayer) continue;
     if (!atDesk(w) && ui.desk[w.id]) { clearDesk(w); clearBubble(w); }
     const card = ui.cards[w.id];
@@ -617,6 +662,15 @@ function render() {
     }
   }
   for (const [key, el] of Object.entries(ui.stations)) el.classList.toggle("is-here", game.player.station === key && !game.player.act);
+  // Boxes being packed fill in.
+  for (const fill of floor.querySelectorAll(".ct-box.is-building .ct-box-fill")) {
+    const id = +fill.parentElement.dataset.id;
+    const box = game.stations.PACK?.find((i) => i.id === id);
+    if (box) fill.style.transform = `scaleX(${boxProgress(game, box)})`;
+  }
+  const labor = `$${Math.floor(game.laborCost)}`;
+  if ($("#labor").textContent !== labor) $("#labor").textContent = labor;
+  if (game.player.station !== "PACK" && packPick.size) { packPick.clear(); lastVersion = -1; }
   // Center stat: how much of today's order has shipped.
   const total = game.order.reduce((a, l) => a + l.count, 0), done = game.order.reduce((a, l) => a + l.done, 0);
   const stat = `${done}/${total}`;
@@ -644,10 +698,11 @@ function renderCoach() {
   const deskVisitor = game.workers.find((w) => ui.desk[w.id]);
   const idle = game.workers.find((w) => !w.script.length && !ui.thinking[w.id]);
   const open = level.pool.map((id) => CANDIDATES.find((c) => c.id === id)).filter((c) => !game.workers.some((w) => w.id === c.id));
-  if (deskVisitor) text = `${deskVisitor.hire.name} came to your desk. Answer below the floor.`;
+  if (phase === "plan") text = game.workers.some((w) => !w.script.length) && game.workers.length
+    ? `${level.start} ${game.workers.find((w) => !w.script.length).hire.name} still needs instructions.`
+    : level.start + (level.pool.length ? "" : " Press <b>Start</b> when you're ready.");
+  else if (deskVisitor) text = `${deskVisitor.hire.name} came to your desk. Answer below the floor.`;
   else if (idle) text = `${idle.hire.name} is waiting for instructions. Write them in their card and press <b>Give instructions</b>.`;
-  else if (!started && game.workers.length) text = "Give your crew their instructions, then make your first move to start the clock. Hiring closes once it's running.";
-  else if (!game.workers.length && game.counted === 0) text = level.start;
   const el = $("#coach");
   if (el._text !== text) { el.innerHTML = text; el._text = text; }
 }
@@ -675,12 +730,13 @@ function openLevel(L) {
   renderHiring();
   $("#levelName").textContent = `Level ${L.id}: ${L.name}`;
   $("#feed").innerHTML = "";
-  feed(game.workers.length ? "Give your crew instructions. The clock starts when you make your first move." : "The clock starts when you make your first move.", "is-sys");
+  feed(level.pool.length ? "Hire your crew and write their instructions, then press Start." : "Press Start when you're ready.", "is-sys");
+  packPick.clear();
   $("#startScreen").classList.add("is-hidden");
   $("#endScreen").classList.add("is-hidden");
   $("#pauseScreen").classList.add("is-hidden");
   paused = false;
-  setPhase("run");
+  setPhase("plan");
 }
 
 function endLevel() {
@@ -693,7 +749,7 @@ function endLevel() {
   const cut = ["finish", `≤ ${fmtTime(level.stars[1])}`, `≤ ${fmtTime(level.stars[0])}`];
   $("#endTitle").textContent = "Order filled";
   $("#stars").innerHTML = [0, 1, 2].map((i) => `<div class="ct-star ${i < stars ? "is-on" : ""}">${starSVG}<span>${cut[i]}</span></div>`).join("");
-  $("#endStats").innerHTML = [["Time", fmtTime(t)], ["Shipped", game.shipped], ["Crew", game.workers.length]]
+  $("#endStats").innerHTML = [["Time", fmtTime(t)], ["Labor cost", `$${Math.round(game.laborCost)}`], ["Crew", game.workers.length]]
     .map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
   const next = LEVELS.find((L) => L.id === level.id + 1);
   const btns = [];
@@ -716,7 +772,7 @@ function setPaused(p) {
   $("#pauseScreen").classList.toggle("is-hidden", !p);
 }
 
-$("#pauseBtn").addEventListener("click", () => { if (phase === "run" && !game.over) setPaused(!paused); });
+$("#pauseBtn").addEventListener("click", () => { if ((phase === "run" && !game.over) || phase === "plan") setPaused(!paused); });
 $("#resumeBtn").addEventListener("click", () => setPaused(false));
 $("#restartBtn").addEventListener("click", () => openLevel(level));
 $("#menuBtn").addEventListener("click", () => showMenu());

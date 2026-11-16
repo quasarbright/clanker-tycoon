@@ -282,6 +282,27 @@
     .ct-hands-acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .ct-hands-note { color: var(--faint); }
     .ct-hands kbd { font: 500 .7rem var(--font-mono); margin-left: 8px; padding: 1px 5px; border-radius: 4px; background: #0003; opacity: .75; }
+
+    /* progress: nothing that takes time just sits there */
+    .ct-bot-bar { height: calc(var(--u) * .55); margin: calc(var(--u) * .4) auto 0; width: 80%; border-radius: 99px; background: #0008; overflow: hidden; visibility: hidden; }
+    .ct-bot-bar.is-on { visibility: visible; }
+    .ct-bot-bar i { display: block; height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0); }
+    .ct-bot-bar.is-waiting i { background: var(--muted); }
+    .ct-box { position: relative; overflow: hidden; }
+    .ct-box.is-building { background: #b88a5240; }
+    .ct-box.is-building i { opacity: .5; }
+    .ct-box-fill { position: absolute; inset: 0; background: #b88a52; transform-origin: left; transform: scaleX(0); }
+    .ct-box i { position: relative; }
+    .ct-dot.is-picked { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .ct-st.is-jammed { animation: jamPulse 1s ease-in-out infinite; }
+    @keyframes jamPulse { 50% { box-shadow: 0 0 0 5px #e5534b33; } }
+
+    /* the Start button, and a little shake when you try to move before pressing it */
+    .ct-btn.is-nudged { animation: nudge .35s; }
+    @keyframes nudge { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+    /* the floor stays in view while the crew list scrolls */
+    @media (min-width: 901px) { .ct-main > section { position: sticky; top: 8px; } }
   </style>
 </head>
 <body data-phase="menu">
@@ -290,7 +311,7 @@
       <svg width="16" height="18" viewBox="0 0 16 18" style="display:block"><rect x="1" y="1" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="10" y="1" width="5" height="16" rx="1.5" fill="currentColor"/></svg>
     </button>
     <div class="ct-cash"><span class="ct-cash-label" id="statLabel">Shipped</span><span class="ct-cash-value" id="stat">0/0</span></div>
-    <div class="ct-clock"><span class="ct-clock-label" id="levelName">Level</span><span class="ct-clock-value" id="clock">0:00</span></div>
+    <div class="ct-clock"><span class="ct-clock-label" id="levelName">Level</span><span class="ct-clock-value" id="clock">0:00</span><span class="ct-clock-label">labor <span id="labor">$0</span></span></div>
   </header>
 
   <main class="ct-main">
@@ -304,7 +325,11 @@
         <div class="ct-coach" id="coach"></div>
       </div>
       <div class="ct-deskpanel" id="deskPanel"></div>
-      <div class="ct-hands" id="hands"></div>
+      <div class="ct-planbar ct-plan-only">
+        <button class="ct-btn is-gold ct-big" id="goBtn">Start</button>
+        <span class="ct-planbar-note">Hire and write instructions first. Start begins the clock; hiring closes then.</span>
+      </div>
+      <div class="ct-hands ct-run-only" id="hands"></div>
       <form class="ct-yell ct-run-only" id="yellForm">
         <input class="ct-input" id="yellInput" placeholder="Yell to the whole floor…" autocomplete="off">
         <button class="ct-btn is-gold" type="submit">Yell</button>

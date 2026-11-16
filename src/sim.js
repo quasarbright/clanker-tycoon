@@ -54,7 +54,9 @@ export const RULES = {
   reportCooldown: 40,
   deskWait: 30,         // how long a worker waits at your desk before going back
 };
-const DUR = { pickUp: 0.5, putDown: 0.5, paint: 1.5, pack: 2, fix: 3, say: 1 };
+// Picking up and putting down are instant. Everything that takes time shows its progress
+// (actProgress below), so nothing on the floor just sits there.
+const DUR = { pickUp: 0, putDown: 0, paint: 1.5, pack: 2, fix: 3, say: 1 };
 
 export function mulberry32(a) {
   return function () {
@@ -73,13 +75,14 @@ const randColor = (s) => {
   return r < 0.4 ? "red" : r < 0.8 ? "blue" : "green";
 };
 const label = (st) => STATIONS[st]?.label ?? st;
+const widget = (s) => ({ id: ++s.ids, kind: "widget", color: randColor(s) });
 const itemName = (it) => (it.kind === "box" ? "box" : `${it.color} widget`);
 
 /** A new game of `level` (see levels.js) with these hires, in level order. */
 export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
   const s = {
     t: 0, seed, rng: mulberry32(seed), ids: 0, version: 0, level,
-    shipped: 0, counted: 0, wasted: 0,
+    shipped: 0, counted: 0, wasted: 0, laborCost: 0,
     stations: Object.fromEntries(level.stations.map((k) => [k, []])),
     paintJammed: false, workers: [], events: [],
     order: level.order.map((l) => ({ ...l, done: 0 })),
@@ -93,7 +96,7 @@ export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
     },
   };
   // A few widgets already waiting, so there's something on the floor before the clock starts.
-  for (let i = 0; i < 4; i++) s.stations.BELT_A.push({ kind: "widget", color: randColor(s) });
+  for (let i = 0; i < 4; i++) s.stations.BELT_A.push(widget(s));
   for (const hire of hires) addWorker(s, hire);
   return s;
 }
@@ -127,9 +130,11 @@ export function step(s, dt) {
     s.nextBelt += RULES.beltEvery;
     // A full belt drops its oldest widget off the end, so new ones keep coming.
     if (s.stations.BELT_A.length >= RULES.beltCap) s.stations.BELT_A.shift();
-    s.stations.BELT_A.push({ kind: "widget", color: randColor(s) });
+    s.stations.BELT_A.push(widget(s));
     s.version++;
   }
+  // Wages, by the second, while the shift runs.
+  s.laborCost += s.workers.reduce((a, w) => a + w.hire.wage, 0) * dt / 60;
   stepPlayer(s, s.player, dt);
   for (const w of s.workers) stepWorker(s, w);
 }
@@ -236,15 +241,16 @@ function start(s, w, a) {
       return goToDesk(s, w, "ask");
     }
     case "wait":
-      w.act = { a, kind: "wait", until: s.t + Math.min(20, Math.max(0.5, +a.seconds || 1)) };
+      w.act = { a, kind: "wait", start: s.t, until: s.t + Math.min(20, Math.max(0.5, +a.seconds || 1)) };
       return;
     case "say":
       emit(s, { type: "say", worker: w.id, text: String(a.text || "") });
-      w.act = { a, kind: "say", until: s.t + DUR.say };
+      w.act = { a, kind: "say", start: s.t, until: s.t + DUR.say };
       return;
     default:
       if (!(a.action in DUR)) return fail(s, w, a, `I don't know how to "${a.action}"`);
-      w.act = { a, kind: a.action, until: s.t + DUR[a.action] };
+      // Packing checks for widgets first and starts building the box right away (see pack).
+      w.act = { a, kind: a.action, start: s.t, until: s.t + (a.action === "pack" ? 0 : DUR[a.action]) };
   }
 }
 
@@ -282,7 +288,7 @@ function keepWaiting(s, w, act) {
   if (w.isPlayer) return false;
   const limit = w.station === "BELT_A" ? RULES.beltWait : hasSkill(w, "patient") ? RULES.patientWait : 0;
   if ((act.waited ?? 0) >= limit) return false;
-  w.act = { ...act, waited: (act.waited ?? 0) + 0.5, until: s.t + 0.5 };
+  w.act = { ...act, waited: (act.waited ?? 0) + 0.5, limit, until: s.t + 0.5 };
   return true;
 }
 
@@ -299,8 +305,8 @@ function pickUp(s, w, a, act) {
   const color = COLORS.includes(a.color) ? a.color : null;
   let idx;
   if (color) idx = items.findIndex((i) => i.kind === "widget" && i.color === color);
-  else if (w.station === "PACK") idx = items.findIndex((i) => i.kind === "box"); // no color at Pack = a finished box
-  else idx = items.length ? 0 : -1;
+  else if (w.station === "PACK") idx = items.findIndex((i) => i.kind === "box" && !i.building); // no color at Pack = a finished box
+  else idx = items.findIndex((i) => !i.building);
   if (idx < 0) {
     if (keepWaiting(s, w, act)) return;
     const what = color ? `${color} widget` : w.station === "PACK" ? "finished box" : "anything";
@@ -340,17 +346,32 @@ function paint(s, w, a) {
   ok(s, w, a);
 }
 
+// Packing happens in place: the 3 widgets turn into a box that fills in over DUR.pack seconds, then
+// it's a finished box someone can pick up. You choose which 3 (a.ids); a worker can name a color
+// (a.color); otherwise it's the first 3 widgets there.
 function pack(s, w, a, act) {
   if (w.station !== "PACK") return fail(s, w, a, "I'm not at the pack station");
   const items = s.stations.PACK;
-  const widgets = items.filter((i) => i.kind === "widget");
-  if (widgets.length < 3) return keepWaiting(s, w, act) || fail(s, w, a, `there are only ${widgets.length} widgets at Pack, a box needs 3`);
-  const colors = [];
-  for (let j = 0; j < items.length && colors.length < 3; ) {
-    if (items[j].kind === "widget") colors.push(items.splice(j, 1)[0].color); else j++;
+  if (act.box) { // done building
+    delete act.box.building; s.version++;
+    return ok(s, w, a);
   }
-  items.push({ kind: "box", colors }); s.version++;
-  ok(s, w, a);
+  let chosen;
+  if (a.ids?.length) {
+    chosen = a.ids.map((id) => items.find((i) => i.id === id && i.kind === "widget"));
+    if (chosen.length !== 3 || chosen.some((i) => !i)) return fail(s, w, a, "pick 3 widgets at Pack to box up");
+  } else {
+    const pool = items.filter((i) => i.kind === "widget" && (!a.color || i.color === a.color));
+    if (pool.length < 3) {
+      const what = a.color ? `${a.color} widgets` : "widgets";
+      return keepWaiting(s, w, act) || fail(s, w, a, `there are only ${pool.length} ${what} at Pack, a box needs 3`);
+    }
+    chosen = pool.slice(0, 3);
+  }
+  for (const it of chosen) items.splice(items.indexOf(it), 1);
+  const box = { id: ++s.ids, kind: "box", colors: chosen.map((i) => i.color), building: { start: s.t, until: s.t + DUR.pack } };
+  items.push(box); s.version++;
+  w.act = { a, kind: "pack", box, start: s.t, until: s.t + DUR.pack };
 }
 
 function fix(s, w, a) {
@@ -471,3 +492,18 @@ export function orderLineText(L, l) {
   const what = L.ship === "boxes" ? (l.color === "any" ? "boxes (any color)" : `${l.color} boxes`) : (l.color === "any" ? "widgets (any color)" : `${l.color} widgets`);
   return `${l.done} of ${l.count} ${what} shipped`;
 }
+
+/**
+ * How far along someone is with what they're doing, 0..1, or null if nothing timed is going on.
+ * Waiting for something counts too (it runs toward when they'd give up).
+ */
+export function actProgress(s, w) {
+  const act = w.act;
+  if (!act || act.to) return null; // walking shows itself
+  if (act.limit) return { p: Math.min(1, (act.waited ?? 0) / act.limit), waiting: true };
+  if (act.until > act.start) return { p: Math.min(1, (s.t - act.start) / (act.until - act.start)), waiting: false };
+  return null;
+}
+
+/** 0..1 for a box being packed. */
+export const boxProgress = (s, box) => (box.building ? Math.min(1, (s.t - box.building.start) / (box.building.until - box.building.start)) : 1);

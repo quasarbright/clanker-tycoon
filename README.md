@@ -31,21 +31,20 @@ It only listens on 127.0.0.1.
 
 ## How a level plays
 
-For now the levels are a tutorial. Each one is a fixed order, and you're scored on how fast you
-fill it. You're on the floor yourself: walk with WASD / arrow keys or by clicking a station, and use
-the action bar under the floor (Space for the first action, number keys for the rest). You and the
-robots can use a station from any side; everyone walks to the nearest side.
-
-On levels with robots for hire, hiring is free but only happens **before your first move**. Your
-first move starts the clock and closes hiring; you can still change instructions and talk while the
-shift runs. Each new machine shows up first in a level where you use it yourself. All levels are
-unlocked for now. (Earning money and spending it on your crew is parked in issue #9.)
+For now the levels are a tutorial, kept minimal. Each one is a fixed order, scored by time. Before
+you press **Start** you hire (on levels with robots) and write instructions; Start begins the clock,
+you and the crew start moving, and hiring closes. Robots cost wages while the shift runs (shown as
+labor cost). Walk with WASD / arrow keys or by clicking; use the action bar under the floor (Space
+for the first action, number keys for the rest). Picking up and putting down are instant; packing,
+painting and fixing show their progress. At Pack, click the widgets you want boxed.
 
 1. **By hand.** Belt and dock, red only. Ship 3 widgets.
-2. **Boxes.** Adds Pack. 2 red boxes, just you.
-3. **Crew.** Same floor, 6 red boxes. Hire robots first.
-4. **Paint.** Three colors (green is rare) and the paint machine. 1 green box, just you.
-5. **Full floor.** Adds bins. 3 green boxes and 2 red, hire from everyone.
+2. **Boxes.** Adds Pack. 1 red box.
+3. **Crew.** Same floor, 4 red boxes. Hire robots first.
+4. **Paint.** Paint 2 red widgets blue and ship them.
+5. **Full floor.** Three colors, bins. 3 green boxes and 2 red, hire from everyone.
+
+Vision and design principles are in `CLAUDE.md`.
 
 Robots have skills (Fast, Careful, Patient). Levels are in `src/levels.js`;
 progress is kept in memory only. `tools/player-check.mjs` times levels 1–2 by hand headless (for star times);
