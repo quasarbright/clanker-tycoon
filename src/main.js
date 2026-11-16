@@ -20,8 +20,11 @@ let started = false; // the clock starts on your first move
 let lastFrame = performance.now();
 let lastVersion = -1, lastStat = null, lastClock = null, lastOrder = "", lastHands = "", lastHiring = "";
 const ui = { bots: {}, cards: {}, stations: {}, desk: {}, thinking: {}, bubbleTimers: {}, oopsTimers: {} };
-// Progress lives in memory only for now (no localStorage while iterating).
-let unlocked = 1;
+// Progress lives in memory only for now (no localStorage while iterating). Every level is open.
+let unlocked = LEVELS.length;
+// Your money and your crew carry over from shift to shift. Hiring happens between shifts.
+let wallet = 0;
+let roster = []; // candidate ids
 const best = {}; // best[levelId] = { time, stars }
 
 $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
@@ -43,6 +46,8 @@ function setPhase(p) {
 // ---------- level picker ----------
 
 function renderLevels() {
+  const crew = roster.map((id) => CANDIDATES.find((c) => c.id === id).name);
+  $("#purse").innerHTML = `You have <b>${money(wallet)}</b>${crew.length ? ` and a crew of ${crew.length} (${crew.join(", ")})` : ""}.`;
   $("#levels").innerHTML = LEVELS.map((L) => {
     const open = L.id <= unlocked;
     const b = best[L.id];
@@ -194,7 +199,9 @@ window.addEventListener("blur", () => { keysDown.clear(); steerFromKeys(); });
 function begin() {
   if (started) return;
   started = true;
-  feed("Clock's running.", "is-sys");
+  feed("Clock's running. Hiring is closed until the next shift.", "is-sys");
+  keepTyped();
+  buildCrew(); // drop the Let go buttons
 }
 
 // What you can do where you're standing, best guess first (Space does the first one).
@@ -256,15 +263,18 @@ function renderHiring() {
   const open = level.pool.map((id) => CANDIDATES.find((c) => c.id === id)).filter((c) => !hired.has(c.id));
   const payroll = game.workers.reduce((a, w) => a + w.hire.wage, 0);
   const cash = Math.floor(game.cash);
-  const sig = `${open.map((c) => c.id + (cash >= hireFee(c))).join()}|${payroll}`;
+  const sig = `${started}|${open.map((c) => c.id + (cash >= hireFee(c))).join()}|${payroll}`;
   if (sig === lastHiring) return;
   lastHiring = sig;
-  box.innerHTML = `<div class="ct-row"><span class="ct-label">Hire</span><span class="ct-wage" style="margin-left:auto">payroll: $${payroll}/min</span></div>` + (open.length ? open.map((c) => `
+  if (!level.pool.length && !game.workers.length) { box.innerHTML = ""; return; }
+  const head = `<div class="ct-row"><span class="ct-label">Hire</span><span class="ct-wage" style="margin-left:auto">payroll: $${payroll}/min</span></div>`;
+  if (started) { box.innerHTML = head + `<p class="ct-blurb">Hiring's closed while the shift runs. You can hire before the next one.</p>`; return; }
+  box.innerHTML = head + (open.length ? open.map((c) => `
     <div class="ct-candidate" style="--c:${c.color}">
       <span class="ct-face"></span>
       <div class="ct-candidate-info"><b>${c.name}</b> <span class="ct-wage">$${c.wage}/min</span><br><span class="ct-blurb">${c.blurb}</span>${skillBadges(c)}</div>
-      <button class="ct-btn is-gold" type="button" data-hire="${c.id}" ${cash >= hireFee(c) ? "" : "disabled"} data-tooltip="Hiring fee: $${hireFee(c)} (2 minutes' wages), then $${c.wage}/min">Hire · $${hireFee(c)}</button>
-    </div>`).join("") : `<p class="ct-blurb">You've hired everyone.</p>`);
+      <button class="ct-btn is-gold" type="button" data-hire="${c.id}" ${cash >= hireFee(c) ? "" : "disabled"} data-tooltip="Hiring fee: $${hireFee(c)} (2 minutes' wages), then $${c.wage}/min while a shift runs">Hire · $${hireFee(c)}</button>
+    </div>`).join("") : `<p class="ct-blurb">${level.pool.length ? "You've hired everyone available." : "Nobody's looking for work here."}</p>`);
   box.querySelectorAll("[data-hire]").forEach((b) => b.addEventListener("click", () => hire(b.dataset.hire)));
 }
 
@@ -274,9 +284,10 @@ function keepTyped() {
 }
 function hire(id) {
   const c = CANDIDATES.find((h) => h.id === id);
-  if (game.cash < hireFee(c)) return;
-  begin();
+  if (started || game.cash < hireFee(c)) return;
   game.cash -= hireFee(c);
+  wallet -= hireFee(c);
+  roster.push(id);
   keepTyped();
   const w = addWorker(game, c);
   feed(`You hired ${c.name} for $${hireFee(c)}.`, "is-sys");
@@ -284,6 +295,8 @@ function hire(id) {
   focusCard(w);
 }
 function fire(id) {
+  if (started) return;
+  roster = roster.filter((r) => r !== id);
   keepTyped();
   const w = worker(id);
   removeWorker(game, id);
@@ -313,7 +326,7 @@ function buildCrew() {
       <div class="ct-card-head">
         <span class="ct-face"></span><span class="ct-card-name">${h.name}</span><span class="ct-wage">$${h.wage}/min</span>
         <span class="ct-status"></span>
-        <button class="ct-btn ct-small-btn" type="button" data-fire>Let go</button>
+        ${started ? "" : `<button class="ct-btn ct-small-btn" type="button" data-fire>Let go</button>`}
       </div>
       <p class="ct-blurb">${h.blurb}</p>
       ${skillBadges(h)}
@@ -330,7 +343,7 @@ function buildCrew() {
       </div>`;
     const ta = $("textarea", card);
     ta.value = w.draft ?? w.orders ?? "";
-    $("[data-fire]", card).addEventListener("click", (e) => { e.stopPropagation(); fire(w.id); });
+    $("[data-fire]", card)?.addEventListener("click", (e) => { e.stopPropagation(); fire(w.id); });
     for (const el of [$(".ct-card-head", card), $(".ct-blurb", card)]) el.addEventListener("click", () => focusCard(w));
     card.addEventListener("focusin", () => highlight(w));
     $("[data-orders]", card).addEventListener("click", () => {
@@ -393,7 +406,6 @@ function setThinking(w, delta) {
 /** Send something to a worker. Resolves true if they answered. */
 async function talk(w, kind, text) {
   const g = game;
-  begin();
   if (kind === "orders") feed(`<b>You → ${w.hire.name}</b> (instructions): ${escapeHTML(text)}`, "is-boss");
   else if (kind === "chat") feed(`<b>You → ${w.hire.name}:</b> ${escapeHTML(text)}`, "is-boss");
   setThinking(w, +1);
@@ -651,12 +663,10 @@ function renderCoach() {
   const cheapest = open.length ? Math.min(...open.map(hireFee)) : null;
   if (deskVisitor) text = `${deskVisitor.hire.name} came to your desk. Answer below the floor.`;
   else if (idle) text = `${idle.hire.name} is waiting for instructions. Write them in their card and press <b>Give instructions</b>.`;
+  else if (!started && game.workers.length) text = "Give your crew their instructions, then make your first move to start the clock. Hiring closes once it's running.";
+  else if (!started && cheapest != null && game.cash >= cheapest) text = "You can afford to hire before this shift starts. Once you make your first move, hiring closes.";
   else if (!game.workers.length && game.counted === 0) text = level.start;
-  else if (!game.workers.length && cheapest != null) {
-    text = game.cash >= cheapest
-      ? `You can afford a robot. Hire one on the right and tell them what to do, or keep going yourself.`
-      : `Each one that's on the order pays $${level.pay}. At $${cheapest} you can hire your first robot.`;
-  }
+  else if (!game.workers.length) text = `Each one that's on the order pays $${level.pay}. Your money carries over, so you can hire before the next shift.`;
   const el = $("#coach");
   if (el._text !== text) { el.innerHTML = text; el._text = text; }
 }
@@ -673,7 +683,8 @@ function frame(now) {
 
 function openLevel(L) {
   level = L;
-  game = newGame(L, []);
+  game = newGame(L, roster.map((id) => CANDIDATES.find((c) => c.id === id)));
+  game.cash = wallet;
   started = false;
   lastVersion = -1; lastStat = null; lastClock = null; lastOrder = ""; lastHands = ""; lastHiring = "";
   ui.thinking = {};
@@ -684,7 +695,7 @@ function openLevel(L) {
   renderHiring();
   $("#levelName").textContent = `Level ${L.id}: ${L.name}`;
   $("#feed").innerHTML = "";
-  feed("The clock starts when you make your first move.", "is-sys");
+  feed(game.workers.length ? "Give your crew instructions. The clock starts when you make your first move." : "The clock starts when you make your first move.", "is-sys");
   $("#startScreen").classList.add("is-hidden");
   $("#endScreen").classList.add("is-hidden");
   $("#pauseScreen").classList.add("is-hidden");
@@ -698,12 +709,12 @@ function endLevel() {
   const stars = t <= level.stars[0] ? 3 : t <= level.stars[1] ? 2 : 1;
   const prev = best[level.id];
   if (!prev || t < prev.time) best[level.id] = { time: t, stars };
-  unlocked = Math.max(unlocked, level.id + 1);
+  wallet = Math.floor(game.cash);
   const starSVG = `<svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z"/></svg>`;
   const cut = ["finish", `≤ ${fmtTime(level.stars[1])}`, `≤ ${fmtTime(level.stars[0])}`];
   $("#endTitle").textContent = "Order filled";
   $("#stars").innerHTML = [0, 1, 2].map((i) => `<div class="ct-star ${i < stars ? "is-on" : ""}">${starSVG}<span>${cut[i]}</span></div>`).join("");
-  $("#endStats").innerHTML = [["Time", fmtTime(t)], ["Money left", money(Math.floor(game.cash))], ["Crew", game.workers.length]]
+  $("#endStats").innerHTML = [["Time", fmtTime(t)], ["Earned", money(Math.floor(game.earned))], ["You have", money(Math.floor(game.cash))]]
     .map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
   const next = LEVELS.find((L) => L.id === level.id + 1);
   const btns = [];
@@ -738,6 +749,7 @@ requestAnimationFrame(frame);
 window.ct = {
   get game() { return game; }, get phase() { return phase; }, get started() { return started; },
   openLevel: (n) => openLevel(LEVELS[n - 1]), unlockAll: () => { unlocked = LEVELS.length; renderLevels(); },
+  setWallet: (n) => { wallet = n; if (game) game.cash = n; lastHiring = ""; },
   setScript: (id, actions) => { const w = worker(id); setScript(game, w, actions); renderScript(w); },
   step: (dt) => { if (started) step(game, dt); handleEvents(); render(); },
   talk: (id, kind, text) => talk(worker(id), kind, text), setPaused, begin, hire, playerActions,

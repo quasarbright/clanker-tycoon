@@ -42,7 +42,13 @@ export function mulberry32(a) {
   };
 }
 
-const randColor = (rng) => { const r = rng(); return r < 0.4 ? "red" : r < 0.8 ? "blue" : "green"; };
+// New widgets: the level's colors (levels.js), or all three with green rarest.
+const randColor = (s) => {
+  const cs = s.level.colors ?? COLORS;
+  if (cs.length === 1) return cs[0];
+  const r = s.rng();
+  return r < 0.4 ? "red" : r < 0.8 ? "blue" : "green";
+};
 const label = (st) => STATIONS[st]?.label ?? st;
 const itemName = (it) => (it.kind === "box" ? "box" : `${it.color} widget`);
 
@@ -64,7 +70,7 @@ export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
     },
   };
   // A few widgets already waiting, so there's something on the floor before the clock starts.
-  for (let i = 0; i < 4; i++) s.stations.BELT_A.push({ kind: "widget", color: randColor(s.rng) });
+  for (let i = 0; i < 4; i++) s.stations.BELT_A.push({ kind: "widget", color: randColor(s) });
   for (const hire of hires) addWorker(s, hire);
   return s;
 }
@@ -98,7 +104,7 @@ export function step(s, dt) {
     s.nextBelt += RULES.beltEvery;
     // A full belt drops its oldest widget off the end, so new ones keep coming.
     if (s.stations.BELT_A.length >= RULES.beltCap) s.stations.BELT_A.shift();
-    s.stations.BELT_A.push({ kind: "widget", color: randColor(s.rng) });
+    s.stations.BELT_A.push({ kind: "widget", color: randColor(s) });
     s.version++;
   }
   // Wages are paid by the second.

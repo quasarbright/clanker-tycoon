@@ -282,6 +282,8 @@
     .ct-hands-acts { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
     .ct-hands-note { color: var(--faint); }
     .ct-hands kbd { font: 500 .7rem var(--font-mono); margin-left: 8px; padding: 1px 5px; border-radius: 4px; background: #0003; opacity: .75; }
+    .ct-purse { color: var(--muted); margin: 0 0 12px; }
+    .ct-purse b { color: var(--accent); }
   </style>
 </head>
 <body data-phase="menu">
@@ -289,7 +291,7 @@
     <button class="ct-btn ct-round" id="pauseBtn" aria-label="Pause">
       <svg width="16" height="18" viewBox="0 0 16 18" style="display:block"><rect x="1" y="1" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="10" y="1" width="5" height="16" rx="1.5" fill="currentColor"/></svg>
     </button>
-    <div class="ct-cash"><span class="ct-cash-label" id="statLabel">Cash</span><span class="ct-cash-value" id="stat">$20</span></div>
+    <div class="ct-cash"><span class="ct-cash-label" id="statLabel">Cash</span><span class="ct-cash-value" id="stat">$0</span></div>
     <div class="ct-clock"><span class="ct-clock-label" id="levelName">Level</span><span class="ct-clock-value" id="clock">0:00</span></div>
   </header>
 
@@ -324,6 +326,7 @@
     <div class="ct-card-big">
       <div class="ct-logo">Clanker Tycoon</div>
       <p class="ct-howto">You run a tiny factory. You start broke and do the work yourself. Ship what's on the order to earn money, then hire robots, tell them in plain English what to do, and let them do it for you.</p>
+      <p class="ct-purse" id="purse"></p>
       <div class="ct-levels" id="levels"></div>
       <div class="ct-small" id="backendNote"></div>
     </div>

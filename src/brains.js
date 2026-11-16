@@ -93,7 +93,7 @@ function actionsFor(L) {
 
 const rulebook = (L) => `The factory:
 - Stations: ${L.stations.map((k) => STATION_TEXT[k]).join(", ")}. There are no other stations.
-- Widgets are red, blue or green. ${SHIP_TEXT[L.ship](L)}
+- Widgets are ${(L.colors ?? COLORS).join(", ").replace(/, ([^,]*)$/, " or $1")}. ${SHIP_TEXT[L.ship](L)}
 
 Actions you can put in a script:
 ${actionsFor(L).map((a) => ACTION_TEXT[a]).join("\n")}
@@ -105,7 +105,7 @@ function schemas(L) {
     properties: {
       action: { type: "string", enum: actionsFor(L) },
       station: { type: "string", enum: L.stations },
-      color: { type: "string", enum: COLORS },
+      color: { type: "string", enum: L.colors ?? COLORS },
       seconds: { type: "number" },
       text: { type: "string" },
       question: { type: "string" },

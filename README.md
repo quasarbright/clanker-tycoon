@@ -31,16 +31,19 @@ It only listens on 127.0.0.1.
 
 ## How a level plays
 
-Each level is a fixed order (say, 3 green boxes and 2 red boxes) and you're scored on how fast
-you fill it. You start alone with $0 and do the work yourself: walk with WASD / arrow keys or by
-clicking a station, and use the action bar under the floor (Space for the first action, number
-keys for the rest). Anything that's on the order pays when it ships. Once you can afford a hiring
-fee (2 minutes of wages), hire a robot, write their instructions, and they work alongside you,
-paid by the second. Each new machine shows up first in a level where you use it yourself.
+Each level is a fixed order, and you're scored on how fast you fill it. Your money and your crew
+carry over from shift to shift. You start broke and do the work yourself: walk with WASD / arrow
+keys or by clicking a station, and use the action bar under the floor (Space for the first action,
+number keys for the rest). Anything that's on the order pays when it ships.
 
-1. **By hand.** Belt and dock. Ship 10 widgets. Gary-7 for hire.
-2. **Boxes.** Adds Pack. 2 red boxes and 2 blue boxes.
-3. **Paint.** Adds the paint machine and bins. 3 green boxes (green is rare) and 2 red.
+Hiring happens **between shifts only**: before your first move you can hire (a fee of 2 minutes'
+wages) or let people go, and give your crew instructions. Your first move starts the clock and
+closes hiring; you can still change instructions and talk while the shift runs. Wages are paid by
+the second during a shift. Every level is unlocked for now.
+
+1. **By hand.** Belt and dock, red widgets only. Ship 3. Earns the $12 for a first hire.
+2. **Boxes.** Adds Pack, still only red. 3 red boxes. Robots for hire.
+3. **Paint.** Three colors (green is rare), the paint machine, bins. 3 green boxes and 2 red.
 
 Robots have skills (Fast, Careful, Patient) and wages to match. Levels are in `src/levels.js`;
 progress is kept in memory only. `tools/player-check.mjs` plays level 1 headless with and without
