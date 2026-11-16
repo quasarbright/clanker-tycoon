@@ -29,7 +29,10 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   workers being unable to do basic things. (Stacked handicaps made Blip "completely useless".)
 - What you write for a worker is called **instructions**. "Job" is reserved for a long-term role.
 - Each worker gets their own instructions.
-- Skills are mechanical (Fast, Careful, Patient) and visible on the worker. Personality is flavor.
+- **Skills** are concrete things a worker knows how to do (pack, paint, …); a worker without the
+  skill can't do it. **Attributes** are traits like Fast. More skills and better attributes cost
+  more. Everyone is patient and careful by default; those aren't traits. Personality is flavor.
+  (Being redesigned: the current code still has Fast/Careful/Patient as "skills".)
 - Workers cost money (wages), even while the bigger money system is parked.
 
 **Feel**
@@ -52,8 +55,11 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   enough for a real-time loop, so make what it compiles smarter instead of calling it more.
 - Next for the language: conditionals, events ("when the machine jams…"), and full vision
   (conditions can read every station, the order, and every coworker).
-- A `think` step that calls the model mid-shift. Limited: for unexpected events rather than part
-  of the regular loop, and/or a skill not everyone has, with a budget.
+- The compiled program is never shown to the player. That keeps us free to make it as complex as
+  it needs to be. The card shows instructions and what they're doing, not code.
+- Workers think (call the model) whenever something unexpected happens, with no limit. Show it:
+  a "?" pops up over a worker thinking about something unexpected, a "!" when a yell or a direct
+  message got them thinking, alongside the thinking bubble.
 - A direct message or a `think` can inject a **one-time** sequence ("grab that box first"), after
   which the worker goes back to their routine. Changing the routine for good is a separate, visible
   thing: it rewrites the worker's instructions on their card. One-off is the default; players
