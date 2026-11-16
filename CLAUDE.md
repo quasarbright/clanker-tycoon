@@ -57,9 +57,12 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   (conditions can read every station, the order, and every coworker).
 - The compiled program is never shown to the player. That keeps us free to make it as complex as
   it needs to be. The card shows instructions and what they're doing, not code.
-- Workers think (call the model) whenever something unexpected happens, with no limit. Show it:
-  a "?" pops up over a worker thinking about something unexpected, a "!" when a yell or a direct
-  message got them thinking, alongside the thinking bubble.
+- Workers think (call the model) when something unexpected happens. Thinking draws on a budget
+  that refills slowly. Show it: a "?" pops up over a worker thinking about something unexpected, a
+  "!" when a yell or a direct message got them thinking, alongside the thinking bubble.
+- Workers keep working while they think. A thought can change their instructions; that's fine and
+  auto-approved for now (the card shows the new instructions). Later, temperaments like
+  independence and confidence could decide whether they check with you first (issue #1).
 - A direct message or a `think` can inject a **one-time** sequence ("grab that box first"), after
   which the worker goes back to their routine. Changing the routine for good is a separate, visible
   thing: it rewrites the worker's instructions on their card. One-off is the default; players
