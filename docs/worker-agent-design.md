@@ -1,7 +1,11 @@
 # Worker agents: the design
 
-Status: **agreed, not built** (2026-11-15). The game today still runs the older design: workers
-compile their instructions into a flat list of actions that loops, and machines jam at random.
+Status: **built** (2026-11-16), except the Strong attribute (carrying two) and the dry run (step 6
+below), which aren't. Choices made while building: talking to a worker is free (only their own
+thinking spends the budget, 3 thoughts refilling one per 20 s, Smart 5 per 12 s); a problem that
+comes back within 45 s of thinking about it sends them to your desk; and a floor where nothing has
+moved for 15 s counts as unexpected for everyone, which is how the runtime catches a program that
+never makes progress.
 How we got here is in [history.md](history.md); each decision with its reasons is in
 [decisions.md](decisions.md).
 

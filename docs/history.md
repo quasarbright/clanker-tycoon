@@ -119,8 +119,22 @@ makes me feel like jamming is just bad game design though." Random breakdowns ca
 to, and the game is about planning. So machines will wear predictably instead: a meter that fills
 with use, serviced by someone with the Repair skill, planned like any other work.
 
+## Building it (2026-11-16)
+
+"Alright, go build." The interpreter, the sim and the prompts went in first, then the screen. The
+first real shifts turned up two things the experiments hadn't. Doris, told to box up whatever color
+the order needs, wrote a program that only packed while 3 or more boxes were still wanted, and the
+line jammed silently after one box: no one failed, so no one noticed. That's what the "never makes
+progress" bug looks like in play, and the fix was to treat a still floor as unexpected for everyone.
+And Blip, told to pack without the skill, didn't refuse; the model just left the packing out,
+because it had never been told packing existed. Now workers are told what they can't do.
+
+The good surprise: thinking works the way the design hoped. Doris, told to paint on a floor with
+no paint machine, thought it over and walked to the desk to ask. Answered, she rewrote her own
+instructions and the card updated.
+
 ## Where it stands
 
-The new worker design is agreed and written up in
-[worker-agent-design.md](worker-agent-design.md), with a build order. None of it is built yet; the
-game still runs the old action-list workers.
+The worker-agent design is built: JavaScript programs, thinking with a budget and ? / ! marks,
+one-offs and new instructions, desk visits, skills and attributes, and predictable wear with a
+new Upkeep level. Not built: the Strong attribute and a pre-shift dry run.

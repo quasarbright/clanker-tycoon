@@ -51,7 +51,7 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   (more in-game thinking: a bigger think budget or faster refill). Everyone is patient, careful and
   has a long memory; those aren't traits. No cheap downside traits: they're annoying, not fun. No
   traits we can't really control (thinking speed) or can't define cleanly ("notices problems").
-  (Being redesigned: the current code still has Fast/Careful/Patient as "skills".)
+  (Strong isn't built yet.)
 - Workers come to your desk when thinking can't solve it: when a thought decides it needs you
   (missing info, conflicting instructions, something only you can do), or when they've thought
   about the same problem twice and it came back. Whether they check with you before changing their
@@ -65,8 +65,7 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - No random breakdowns. Machines **wear predictably**: a visible wear meter fills with every job,
   and a full meter means the machine stops until it's serviced (Repair skill, takes a few
   seconds). Servicing is planned work (who does it, and when), not bad luck. Randomness that hits
-  after you've made your decisions isn't fun; the challenge is planning. (Issue #12; the current
-  code still has random jams.)
+  after you've made your decisions isn't fun; the challenge is planning. (Issue #12.)
 - You can use a station from any side.
 - The factory floor stays in view; scrolling the crew list doesn't scroll the floor away.
 
@@ -83,7 +82,7 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   prompts, or the worker language: everything goes through `src/llm.js` (text in, JSON out), and
   any provider-specific code lives behind it. Keep this in mind for every design decision.
 
-**The worker language (direction, not built yet)**
+**The worker language**
 - Workers' programs are a small **JavaScript subset**: models of every provider write JS fluently,
   and an off-the-shelf parser (acorn) gives us the syntax tree, so there's no parser to write. We
   interpret the tree ourselves as a coroutine that pauses at each action, with a step limit, a
@@ -98,12 +97,16 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   the runtime to catch, by a dry run or by thinking.
 - Workers compile instructions once into a routine the sim runs without the model. Haiku isn't fast
   enough for a real-time loop, so make what it compiles smarter instead of calling it more.
-- Next for the language: conditionals, events ("when a machine needs service…"), and full vision
-  (conditions can read every station, the order, and every coworker).
+- Programs have conditionals and full vision (questions read every station, the order, wear, and
+  where coworkers are and what they hold).
+- Tell the model about work the worker can't do, so asking for it becomes a visible compile error
+  instead of a program that quietly leaves it out.
+- A floor where nothing has moved for a while is unexpected for everyone. That's how the runtime
+  catches programs that never make progress, including jams between two workers.
 - The compiled program is never shown to the player. That keeps us free to make it as complex as
   it needs to be. The card shows instructions and what they're doing, not code.
 - Workers think (call the model) when something unexpected happens. Thinking draws on a budget
-  that refills slowly. Show it: a "?" pops up over a worker thinking about something unexpected, a
+  that refills slowly; talking to them is free (they always answer you). Show it: a "?" pops up over a worker thinking about something unexpected, a
   "!" when a yell or a direct message got them thinking, alongside the thinking bubble.
 - Workers keep working while they think. A thought can change their instructions; that's fine and
   auto-approved for now (the card shows the new instructions). Later, temperaments like

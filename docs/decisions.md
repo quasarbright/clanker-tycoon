@@ -187,3 +187,32 @@ means slower wear. Introduced in a manual level where you service the machine yo
 A message from one worker to another would wake the recipient to think, so it's for decisions, not
 routine coordination. The repair case is covered without it (full vision plus wear meters). It
 belongs with bots managing bots (issue #6).
+
+### 20. Talking is free; only a worker's own thinking spends the budget (2026-11-16)
+
+**Question:** should your messages and yells draw on a worker's thinking budget?
+**Picked:** no. You should always get an answer when you talk to someone. The budget (3 thoughts,
+one back every 20 s; Smart holds 5, one back every 12 s) only limits thinking a worker starts on
+their own: something unexpected, or think() in their program. Out of budget, they come to your desk
+instead. A problem that returns within 45 s of thinking about it also sends them to your desk.
+
+### 21. A stalled floor is "unexpected" for everyone (2026-11-16)
+
+**Problem:** in the first real full-floor shift, Doris's program packed only while the order needed
+3 or more green boxes (`needs("green") >= 3`), so after one box she waited forever, Pack filled up
+and Vex could never put anything down. Nobody failed an action, so the "stuck" rule never fired.
+This was the leftover bug from the writing-rules experiment.
+**Picked:** if nothing on the floor is picked up, put down, packed, painted or serviced for 15 s, every
+worker gets an unexpected "stalled" to think about. Cheaper than a dry run and catches jams between
+workers that no single program can see. The prompt also now says needs() counts boxes on a boxes
+order. After both changes the same instructions finished the order in 64 s.
+
+### 22. Workers are told about skills they don't have (2026-11-16)
+
+**Problem:** Blip (no skills), told "pack the red widgets into boxes and ship them", came back with a
+program that quietly skipped packing. The prompt only listed the tools Blip had, so the model never
+wrote pack(), and the skill check had nothing to catch.
+**Picked:** the prompt lists the floor's primary work the worker can't do, marked with the missing
+skill, and says to write it in anyway when the instructions ask for it. The checker then turns it
+into a compile error on the card: "they ask for packing, and Blip doesn't have the Packing skill."
+
