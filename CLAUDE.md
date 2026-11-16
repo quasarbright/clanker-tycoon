@@ -29,10 +29,19 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   workers being unable to do basic things. (Stacked handicaps made Blip "completely useless".)
 - What you write for a worker is called **instructions**. "Job" is reserved for a long-term role.
 - Each worker gets their own instructions.
-- **Skills** are concrete things a worker knows how to do (pack, paint, …); a worker without the
-  skill can't do it. **Attributes** are traits like Fast. More skills and better attributes cost
-  more. Everyone is patient and careful by default; those aren't traits. Personality is flavor.
+- **Skills** are concrete things a worker knows how to do (pack, paint, repair, ship, sort, future
+  machines); a worker without the skill can't do it. Instructions that need a skill the worker
+  lacks are caught before the shift starts, not mid-shift. (Long term: pay to train a new skill.)
+- **Attributes** are traits that raise the wage: Fast (walks faster), Strong (carries two),
+  Nimble (works machines faster), Steady (machines jam less in their hands, every machine), Smart
+  (more in-game thinking: a bigger think budget or faster refill). Everyone is patient, careful and
+  has a long memory; those aren't traits. No cheap downside traits: they're annoying, not fun. No
+  traits we can't really control (thinking speed) or can't define cleanly ("notices problems").
   (Being redesigned: the current code still has Fast/Careful/Patient as "skills".)
+- Workers come to your desk when thinking can't solve it: when a thought decides it needs you
+  (missing info, conflicting instructions, something only you can do), or when they've thought
+  about the same problem twice and it came back. Whether they check with you before changing their
+  own instructions is a later temperament thing.
 - Workers cost money (wages), even while the bigger money system is parked.
 
 **Feel**
