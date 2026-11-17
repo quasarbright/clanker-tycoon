@@ -112,7 +112,7 @@
 
     .ct-bubble {
       position: absolute; bottom: calc(100% + var(--u) * 1.6); left: 50%; transform: translateX(-50%);
-      width: max-content; max-width: max(calc(var(--u) * 22), 150px); background: #f4f1e8; color: #1d1a12; border-radius: 10px;
+      width: max-content; min-width: calc(var(--u) * 6); text-align: center; max-width: max(calc(var(--u) * 22), 150px); background: #f4f1e8; color: #1d1a12; border-radius: 10px;
       padding: 6px 10px; font-size: clamp(.72rem, calc(var(--u) * 1.6), .85rem); line-height: 1.25; font-weight: 500; box-shadow: 0 3px 0 #0005; z-index: 5; pointer-events: none;
     }
     .ct-bubble.is-left { left: 0; transform: none; }
@@ -307,8 +307,16 @@
     .ct-dots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: dot 1s infinite; }
     .ct-dots i:nth-child(2) { animation-delay: .15s; } .ct-dots i:nth-child(3) { animation-delay: .3s; }
     @keyframes dot { 50% { opacity: .2; } }
-    .ct-pin { font-size: .9rem; background: var(--panel-2); border-left: 3px solid var(--success); border-radius: 6px; padding: 6px 10px; line-height: 1.35; }
+    .ct-pin { font-size: .9rem; background: var(--panel-2); border-radius: 8px; padding: 6px 10px; line-height: 1.35; }
     .ct-pin[hidden] { display: none; }
+    .ct-pin summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .ct-pin summary::-webkit-details-marker { display: none; }
+    .ct-pin summary svg { width: 14px; height: 14px; flex: none; color: var(--muted); transition: transform .15s; }
+    .ct-pin[open] summary svg { transform: rotate(90deg); }
+    .ct-pin-peek { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--muted); }
+    .ct-pin[open] .ct-pin-peek { display: none; }
+    .ct-pin-text { margin-top: 4px; }
+    .ct-pin summary:hover .ct-label, .ct-pin summary:hover svg { color: var(--text); }
     .ct-pin.is-busy { border-left-color: var(--accent); }
     .ct-pin.is-bad { border-left-color: var(--danger); }
     .ct-pin .ct-label { font-size: .62rem; }

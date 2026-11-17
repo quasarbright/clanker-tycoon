@@ -386,8 +386,8 @@ function buildCrew() {
       <div class="ct-row ct-skillrow">${skillBadges(h)}<span class="ct-pips"></span></div>
       <div class="ct-card-body">
         <div class="ct-now" hidden></div>
+        <details class="ct-pin" hidden><summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="ct-label">Instructions</span><span class="ct-pin-peek"></span></summary><div class="ct-pin-text"></div></details>
         <div class="ct-log"></div>
-        <div class="ct-pin" hidden><span class="ct-label">Instructions</span><div class="ct-pin-text"></div></div>
         <form class="ct-compose">
           <textarea class="ct-textarea" rows="2"></textarea>
           <button class="ct-btn is-gold" type="submit">Send</button>
@@ -501,8 +501,8 @@ function renderCard(w) {
   const pin = $(".ct-pin", card);
   // Their working instructions, as they wrote them down. Hidden until they have some.
   pin.hidden = !w.ast || !w.orders;
-  pin.className = "ct-pin";
   $(".ct-pin-text", card).textContent = w.orders ?? "";
+  $(".ct-pin-peek", card).textContent = w.orders ?? "";
   const now = $(".ct-now", card);
   now.hidden = !w.now;
   if (w.now) now.innerHTML = `<span class="ct-label">Doing now, then back to the instructions</span> ${escapeHTML(w.now.summary)}`;
