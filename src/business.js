@@ -39,6 +39,23 @@ export const RECRUITS = { dot: 10, nib: 10, cog: 10, tock: 10, gary: 40, rusty: 
 // expensive worker and then maybe something in between"): a blank robot to train up yourself, one
 // with a skill or two, and one who can do everything. A tier with nobody left is skipped.
 const TIERS_OF_RECRUITS = [["dot", "nib", "cog", "tock"], ["gary", "rusty", "vex"], ["doris", "bolt"]];
+const CHEAP = TIERS_OF_RECRUITS[0];
+
+// A cheap recruit comes with a little something, by chance (Mike: "a random chance of either being
+// zero skills or ... one skill and maybe an attribute ... but not two skills and not two
+// attributes"): no skill or one, and no trait or one. Fixed for the visit, and kept once recruited.
+function cheapKit(biz, id) {
+  let a = ((biz.quarters + 1) * 7919 + [...id].reduce((h, ch) => h * 31 + ch.charCodeAt(0), 7)) >>> 0;
+  const rnd = () => ((a = (a * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const kit = [];
+  if (rnd() < 0.6) kit.push(TRAINABLE[Math.floor(rnd() * TRAINABLE.length)]);
+  if (rnd() < 0.5) kit.push(TRAINABLE_ATTRS[Math.floor(rnd() * TRAINABLE_ATTRS.length)]);
+  return kit;
+}
+/** What a cheap robot came with: kept from when you recruited them, or this visit's roll. */
+const kitOf = (biz, id) => biz.kit?.[id] ?? (CHEAP.includes(id) && !biz.crew.includes(id) ? cheapKit(biz, id) : []);
+/** A recruit's fee. A cheap one costs $5 more for each thing it came with. */
+export const recruitPrice = (biz, id) => RECRUITS[id] + (CHEAP.includes(id) ? 5 * kitOf(biz, id).length : 0);
 export const TRAIN_PRICE = 20;
 export const TRAINABLE = ["packing", "painting", "repair"];
 // Attributes can be trained too, at the same price, and count the same way toward the wage.
@@ -47,7 +64,7 @@ export const TRAINABLE_ATTRS = ["fast", "nimble", "steady", "smart"];
 /** A robot (`c`, from brains.js CANDIDATES) as your business has them: their own skills plus what
  *  you've trained. */
 export function robotOf(biz, c) {
-  const t = biz.trained[c.id] ?? [];
+  const t = [...kitOf(biz, c.id), ...(biz.trained[c.id] ?? [])];
   const skills = [...c.skills, ...t.filter((k) => TRAINABLE.includes(k))];
   const attributes = [...c.attributes, ...t.filter((k) => TRAINABLE_ATTRS.includes(k))];
   return { ...c, skills, attributes, wage: wageOf(skills, attributes) };
@@ -82,8 +99,10 @@ export function machineOffers(biz) {
 
 /** Recruit a robot onto your crew for its fee. */
 export function recruit(biz, id) {
-  const price = RECRUITS[id];
-  if (price == null || biz.crew.includes(id) || biz.money < price) return false;
+  if (RECRUITS[id] == null || biz.crew.includes(id)) return false;
+  const price = recruitPrice(biz, id);
+  if (biz.money < price) return false;
+  (biz.kit ??= {})[id] = kitOf(biz, id);
   biz.money -= price;
   biz.crew.push(id);
   biz.recruitedNow.push(id);

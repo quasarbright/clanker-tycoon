@@ -13,7 +13,7 @@ import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money } from "./quarter.js";
 import { INVESTOR, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, cutOf, buy, owns, quarterLevel, payouts, settle,
-  RECRUITS, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers } from "./business.js";
+  RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers } from "./business.js";
 import { SKILL_TIER, wageOf } from "./wages.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -1198,7 +1198,7 @@ function renderBoard() {
 
   // ----- recruit: three robots this visit
   $("#recruits").innerHTML = recruitOffers(biz).map((id) => {
-    const r = robotOf(biz, CANDIDATES.find((c) => c.id === id)), done = biz.crew.includes(id), price = RECRUITS[id];
+    const r = robotOf(biz, CANDIDATES.find((c) => c.id === id)), done = biz.crew.includes(id), price = recruitPrice(biz, id);
     return `<div class="ct-biz-bot ${done ? "is-done" : ""}" style="--c:${r.color}">
       ${faceHTML(r)}<div><div><b>${r.name}</b> <span class="ct-wage">$${r.wage}/shift</span></div>${skillBadges(r)}<div class="ct-biz-blurb">${r.blurb}</div></div>
       <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} Recruited</span>` : `<button class="ct-btn is-gold" data-recruit="${id}" ${short(price)}>Recruit $${price}</button>`}</div>

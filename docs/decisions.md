@@ -778,3 +778,12 @@ shift). A tier with nobody left is skipped. A robot you recruit joins the Traini
 so you can recruit Cog and teach painting and repair in the same visit ($10 + $40, then $15 a
 shift). Replaces the random three from #58.
 
+### 60. A cheap recruit may come with one skill and one trait (2026-11-17)
+
+**Feedback:** Mike: "The cheap employee should have a random chance of either being zero skills or
+... one skill and maybe an attribute ... but not two skills and not two attributes."
+**Picked:** each visit, each cheap robot on offer rolls its kit: a 60% chance of one skill and a
+50% chance of one trait, so sometimes nothing, never two of either. The roll is fixed for the visit
+(seeded by the quarter and the robot) and kept for good once you recruit them. The fee is $10 plus
+$5 for each thing they come with, and their wage counts the kit like any skill or trait. Amends #59.
+
