@@ -99,6 +99,14 @@ Ideas worth keeping that aren't planned yet.
 - **Hiring by interview.** Talk to candidates; what they say hints at what they're like (issue #7).
 - **Morale and quitting.** Underpaid or passed over robots complain, then give notice (issue #5).
 - **Long-term memory.** Robots remember past shifts and how you treated them (issue #2).
+- **Veterans know how you work; onboarding and policies.** A robot keeps its chat history, so a
+  veteran knows roughly how you like things done and a new recruit needs it explained. Onboarding
+  could be a late skill, or a foreman ability: the robot reviews its own chat history and passes on
+  what's particular to how you run things. Policies are standing rules for the whole factory or a
+  line, which every worker gets. They'd die at the end of a run, so keep a **policy bank** that
+  persists between runs and lets you pick policies instead of typing them again. Mike: "Maybe we
+  could allow people to have like a bank of policies so they could easily just select from them
+  rather than having to type their own every time."
 - **Temperaments.** Independence and confidence decide whether a robot asks before changing its own
   instructions (issue #1).
 - **The Strong attribute.** Carries two at once. Agreed, not built.
