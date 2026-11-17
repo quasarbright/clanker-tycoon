@@ -21,7 +21,10 @@ as context arrives.
 - **You choose your difficulty** by which contracts you take.
 - **Delegation from scale, not rules.** You can only talk to one robot at a time.
 - **Your words are the job.** A shift's result traces back to what you told the crew.
-- Roguelike, not a career mode. No buy-out ending.
+- Roguelike, not a career mode. No buy-out ending. **Runs are endless:** contracts get crazier
+  until you go under (decision 69).
+- **Few first-class concepts.** Foremen are one; growth can't add a new concept per tier.
+- Story and writing wait for the polish phase.
 
 ## Where the design is (2026-11-17)
 
@@ -33,10 +36,8 @@ pay. Source: `src/business.js`, decisions 53 to 67.
 
 ## Mark's current take
 
-1. **A run needs an ending before anything else gets tuned.** Without a way to lose, money has no
-   stakes and balance can't be judged. Proposal: a run is a fixed number of quarters (say 8) scored
-   by money at the end, and you go bankrupt when you can't pay a single shift and the lender won't
-   lend (three loans out). That gives the lender teeth without new rules.
+1. **Runs are endless (decided, #69).** Still open: what exactly ends one. Mark's pick: bankrupt
+   when you can't pay a single shift and the lender won't lend (three loans out).
 2. **The economy is bimodal.** Early, one bad buy strands you (the careful playtester sat at $40
    for the rest of the run). Late, past board 4, nothing new happens, just 15% bigger numbers.
    The early stranding becomes a real loss once (1) exists; the late flatness needs new things to
@@ -59,6 +60,9 @@ pay. Source: `src/business.js`, decisions 53 to 67.
   4, painted Large about half).
 
 ## Log
+
+- 2026-11-17: Mike chose endless runs over Mark's fixed 8 quarters; foremen are a first-class
+  concept and there's room for few; story waits for polish (decision 69).
 
 - 2026-11-17: Mike's idea of veterans' chat memory, onboarding, policies and a policy bank went
   into Maybe. Mark's take: the bank is the run-to-run meta-progression (the player's knowledge

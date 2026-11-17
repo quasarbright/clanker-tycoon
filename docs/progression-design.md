@@ -17,7 +17,11 @@ with detail and open questions, is an entry in [ideas.md](ideas.md). Reasons and
   enough factory makes foremen the obvious move.
 - **It's a roguelike (probably).** Mike: "This is going to be a roguelike anyway, probably. I don't
   think I'm gonna wanna do game design for a whole career mode." A run is a string of quarters with
-  contracts that keep getting harder; between them you get a few choices, not everything.
+  contracts that keep getting harder; between them you get a few choices, not everything. Runs
+  are endless: the contracts get crazier until you go under. Mike: "do the typical roguelike thing
+  where you keep going and the contracts get crazier and eventually they'll die."
+- **Mechanics first, story later.** Story and writing come in the polish phase, once the mechanics
+  are settled.
 
 ## The game
 
@@ -51,10 +55,13 @@ correct the foreman. Same game, one more robot between your words and the work.
 
 ## Biggest open questions
 
-1. **How a run ends.** A roguelike run needs a way to lose (a missed contract? running out of
-   money with a debt you can't pay?) and maybe a goal or a final quarter.
-2. What happens to a contract that's late? (Now: it pays nothing.)
-3. What the lender does when you can't pay him back.
+1. **What ends a run.** A run is endless: contracts keep getting crazier until you go under
+   (decision 69). What "going under" is exactly is open (running out of money with a debt you
+   can't pay?).
+2. **How to scale bigger.** Foremen will be a first-class concept, and there's only room for a few
+   of those. Something more flexible may come later; not yet (decision 69).
+3. What happens to a contract that's late? (Now: it pays nothing.)
+4. What the lender does when you can't pay him back.
 
 The rest are with each idea in [ideas.md](ideas.md).
 

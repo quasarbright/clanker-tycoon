@@ -61,8 +61,10 @@ Agreed direction, not built yet. Roughly in roadmap order.
   takes 10% of every contract you finish until it's paid, so two loans take 20%. Built (decisions
   61, 64). Open: what happens when you can't pay him
   back, and whether loans get pricier the more you owe.
-- **How a run ends.** It's a roguelike (decision 62): a run needs a way to lose (a missed contract,
-  money running out with a debt you can't pay) and maybe a final quarter or a goal.
+- **How a run ends.** Endless (decision 69): you keep going, the contracts get crazier, and
+  eventually you go under. Open: exactly what going under is (money running out with a debt you
+  can't pay?), and how the game scales bigger without piling up new concepts. Foremen will be one
+  first-class concept; something more flexible may come later.
 - **Buying equipment.** Machines are things you buy, one at a time, each tried by hand first.
 - **Equipment attributes.** Wear (a pricier machine that wears half as fast saves repair labor;
   built as the Sturdy paint machine, decision 53), speed, capacity. A trade-off between up-front cost and labor every shift.
@@ -122,6 +124,8 @@ Ideas worth keeping that aren't planned yet.
   instructions (issue #1).
 - **The Strong attribute.** Carries two at once. Agreed, not built.
 - **Worker personalities.** Late polish only; mechanics first.
+- **Story and writing.** Not yet. Mike: "Story comes during the polish phase once mechanics are
+  ironed out."
 - **Looks that hint at personality.** Instead of a bio, a robot's appearance shows its quirks. A
   library of parts and accessories (little articles of clothing and the like); the model generates
   a personality and picks parts to match. Mike: "Ooh, I like the idea of hats": personality on

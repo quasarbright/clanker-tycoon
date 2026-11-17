@@ -184,6 +184,9 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   output belts already connected); anything flexible about routing is told to a foreman in words.
   The only thing the player builds is instructions.
 - Delegation comes from scale, not rules: you can only talk to one robot at a time.
+- Runs are endless (Mike: "the contracts get crazier and eventually they'll die"). Growing bigger
+  can't mean a new first-class concept per tier: foremen are one, and there's only room for a few.
+- Story and writing wait for the polish phase, once the mechanics are settled.
 
 **Controls**
 - Tools should let you choose what they act on: at Pack you choose the color ("Pack red"), and a

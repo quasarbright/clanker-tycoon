@@ -944,3 +944,18 @@ asked for them fixed without waiting on Mike.
   shows the same total as the card (it showed the budget before the clients paid). The card's
   numbers now stay in one row with values lined up, however many there are (one `setEndStats`
   renderer for all three cards).
+
+### 69. Endless runs; foremen as one of few first-class concepts; story waits (2026-11-17)
+
+**Question:** how a roguelike run ends (open since #62). Mark proposed a fixed run of 8 quarters
+scored by money, with bankruptcy as the way to lose.
+**Picked:** Mike: "well do the typical roguelike thing where you keep going and the contracts get
+crazier and eventually they'll die." A run is endless; contracts escalate until you go under.
+Replaces the fixed-length proposal. What exactly ends a run (likely: out of money, with a debt you
+can't pay) is still open.
+**Scaling:** Mike: "We need to think about how we'll scale higher though. Right now a foreman is
+going to be a first class concept. We can only have so many first class concepts to get bigger.
+We may want to do something more flexible later somehow but we don't need to think about it yet."
+So escalation has to come mostly from combining what exists, not from a new concept per tier.
+**Story:** "not yet, maybe later. Story comes during the polish phase once mechanics are ironed
+out."
