@@ -12,7 +12,7 @@ import { backendLabel } from "./llm.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money } from "./quarter.js";
-import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast,
+import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
   RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers } from "./business.js";
 import { SKILL_TIER, wageOf } from "./wages.js";
 
@@ -1151,19 +1151,23 @@ function openBoard() {
 }
 
 // Under a contract's pay: what you keep of it, if part goes to the lender.
-const keepLine = (c) => (biz.debt ? `<span class="ct-offer-keep">you keep $${c.pay - repayOf(biz.debt, c.pay)}</span>` : "");
+const keepLine = (c) => (biz.loans.length ? `<span class="ct-offer-keep">you keep $${c.pay - repayOf(biz, c.pay)}</span>` : "");
 
 function renderBoard() {
-  const pct = `${Math.round(LENDER.share * 100)}%`;
+  const pct = `${Math.round(LENDER.share * 100)}%`, now = `${Math.round(shareOf(biz) * 100)}%`;
   const short = (n) => (biz.money < n ? `disabled data-tooltip="You have ${money(biz.money)}."` : "");
   $("#bizMoney").textContent = money(biz.money);
   $("#boardTitle").textContent = `Quarter ${biz.quarters + 1}`;
   $("#boardShifts").textContent = `${QUARTER_SHIFTS} shifts. Every contract is due at the end of the last one.`;
-  // The lender: borrow now, and ${pct} of every contract you finish goes to him until it's paid back.
-  $("#investorLine").innerHTML = biz.debt
-    ? `"You owe me <b class="is-debt">$${biz.debt}</b>. I take ${pct} of every contract you finish until it's paid."`
-    : `"Short on cash? Borrow from me, and I take ${pct} of every contract you finish until you've paid it back, with interest."`;
-  $("#loans").innerHTML = LENDER.loans.map((l, i) => `<button class="ct-btn" data-loan="${i}" data-tooltip="You'd owe $${l.owe}: $${l.amount} plus $${l.owe - l.amount} interest.">Borrow $${l.amount}</button>`).join("");
+  // The lender: no interest; each loan takes 10% of every contract you finish until it's paid back.
+  const n = biz.loans.length;
+  $("#investorLine").innerHTML = n >= LENDER.max
+    ? `"I'm not lending you any more money until you pay up. You owe me <b class="is-debt">$${debtOf(biz)}</b>, so I take <b class="is-debt">${now}</b> of every contract you finish."`
+    : n
+    ? `"You owe me <b class="is-debt">$${debtOf(biz)}</b> on ${n === 1 ? "one loan" : `${n} loans`}, so I take <b class="is-debt">${now}</b> of every contract you finish. Each loan takes ${pct} until it's paid off."`
+    : `"Short on cash? Borrow from me, no interest. Each loan takes ${pct} of every contract you finish until it's paid off; two loans take ${Math.round(LENDER.share * 200)}%."`;
+  $("#loans").innerHTML = LENDER.amounts.map((a, i) => `<button class="ct-btn" data-loan="${i}" ${n >= LENDER.max ? "disabled" : ""} data-tooltip="${n >= LENDER.max ? `You have ${LENDER.max} loans, the most he'll give. Pay one off first.`
+    : `You'd owe $${a}, paid back by ${pct} of every contract you finish${n ? `, on top of the ${now} you already pay` : ""}.`}">Borrow $${a}</button>`).join("");
   $("#loans").querySelectorAll("[data-loan]").forEach((b) => b.addEventListener("click", () => { if (borrow(biz, +b.dataset.loan)) renderBoard(); }));
 
   // ----- contracts: one card with a small and a large size (take one or neither), and a side one
@@ -1203,15 +1207,14 @@ function renderBoard() {
   $("#boardGo").textContent = "Start the quarter";
   $("#boardNote").textContent = !picked.length ? "Pick at least one contract."
     : `${total} boxes in ${QUARTER_SHIFTS} shifts. A contract only pays if all its boxes ship.`;
-  // What happens this quarter if every picked contract ships, with the whole crew on every shift.
-  const crewWage = biz.crew.reduce((a, id) => a + robotOf(biz, CANDIDATES.find((c) => c.id === id)).wage, 0);
-  const f = forecast(biz, picked, crewWage * QUARTER_SHIFTS);
+  // The quarter at a glance: your money is the budget wages come out of (you don't know them until
+  // the shifts run), and what the picked contracts bring in at the end if they all ship.
+  const f = forecast(biz, picked);
   const row = (label, v, cls = "", tip = "") => `<span class="${cls}" ${tip ? `data-tooltip="${tip}"` : ""}>${label}</span><b class="${cls}">${v}</b>`;
-  $("#forecast").innerHTML = row("Your money now", money(f.start))
-    + row("Contracts pay, if they all ship", `+$${f.pay}`, "is-in")
-    + (biz.debt ? row("To the lender", `−$${f.repay}`, "is-out", `${pct} of each contract until your $${biz.debt} debt is paid. After this quarter you'd owe $${f.debtAfter}.`) : "")
-    + row(`Wages, whole crew, ${QUARTER_SHIFTS} shifts`, `−$${f.wages}`, "is-out", `$${crewWage} a shift if you schedule everyone. Fewer robots on a shift cost less.`)
-    + row("At the end of the quarter", money(f.end), "is-total");
+  $("#forecast").innerHTML = row("Contracts pay, if they all ship", `+$${f.pay}`, "is-in")
+    + (n ? row(`To the lender (${now})`, `−$${f.repay}`, "is-out", `After this quarter you'd owe $${f.debtAfter}.`) : "")
+    + row("You get at the end of the quarter", `+$${f.gain}`, "is-total")
+    + `<span class="ct-forecast-note">Wages come out of your ${money(f.budget)} budget as the shifts run, so they're not counted here.</span>`;
 
   // ----- recruit: three robots this visit
   $("#recruits").innerHTML = recruitOffers(biz).map((id) => {
@@ -1271,7 +1274,7 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
   const cs = level.contracts, n = quarter.shift;
   logEvent(game.t, "end", { won, contracts: cs.map((c) => c.id), quarter: { shift: n, of: QUARTER_SHIFTS }, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), money: Math.floor(quarter.money), crew: crewSummary() });
   const over = won || last;
-  const pays = payouts(cs, quarter.done, biz.debt);
+  const pays = payouts(cs, quarter.done, [...biz.loans]);
   const paid = pays.reduce((a, p) => a + p.pay, 0), cut = pays.reduce((a, p) => a + p.cut, 0);
   const shipped = pays.filter((p) => p.won).length;
   $("#endTitle").textContent = won ? "Every contract shipped" : over ? "Quarter over" : `Shift ${n} done`;
@@ -1283,7 +1286,7 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
   const rows = `<div class="ct-end-contracts">${pays.map((p, i) => `<div class="ct-end-contract ${p.won ? "is-done" : over ? "is-missed" : ""}">
       ${ticketHTML(p.c.color, p.c.count)}<span>${Math.min(quarter.done[i], p.c.count)} of ${p.c.count} shipped</span>
       <b>${p.won ? `$${p.c.pay}` : over ? "$0" : `pays $${p.c.pay}`}</b></div>`).join("")}</div>`;
-  const stats = over ? [["Paid", `$${paid}`], ...(biz.debt ? [["To the lender", `$${cut}`]] : [["Crew pay", `$${Math.round(game.laborCost)}`]]), ["Your money", money(quarter.money + paid - cut)]]
+  const stats = over ? [["Paid", `$${paid}`], ...(cut ? [["To the lender", `$${cut}`]] : [["Crew pay", `$${Math.round(game.laborCost)}`]]), ["Your money", money(quarter.money + paid - cut)]]
     : [["Shipped", `${done - shippedBefore}`], ["Crew pay", `$${Math.round(game.laborCost)}`], ["Your money", money(quarter.money)]];
   $("#endStats").innerHTML = rows + stats.map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
   const btns = won ? [["board", "Next quarter", true]]

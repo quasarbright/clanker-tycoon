@@ -235,6 +235,7 @@
     .ct-forecast .is-out { color: #ffb4ae; }
     .ct-forecast .is-total { border-top: 1px solid var(--border); padding-top: 4px; margin-top: 2px; color: var(--text); font-weight: 700; }
     .ct-forecast b.is-total { color: var(--accent); font-size: 1.05rem; }
+    .ct-forecast-note { grid-column: 1 / -1; font-size: .82rem; margin-top: 4px; }
     .ct-board-money { text-align: right; }
     .ct-board-sec { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
     .ct-board-top { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: stretch; }
@@ -635,7 +636,7 @@
       <div class="ct-board-head">
         <div><div class="ct-title" id="boardTitle">Quarter 1</div><div class="ct-board-shifts" id="boardShifts"></div></div>
         <div class="ct-investor"><img src="favicon.svg" alt=""><p><span class="ct-label">The lender</span><br><span id="investorLine"></span></p><div class="ct-loans" id="loans"></div></div>
-        <div class="ct-board-money"><span class="ct-cash-label">Your money</span><span class="ct-cash-value" id="bizMoney"></span></div>
+        <div class="ct-board-money"><span class="ct-cash-label">Budget</span><span class="ct-cash-value" id="bizMoney"></span></div>
         <button class="ct-btn" id="boardMenuBtn">Levels</button>
       </div>
       <div class="ct-board-top">

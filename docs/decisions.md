@@ -836,3 +836,22 @@ worker think, so Dot and Vex froze at a full Pack for about 70 seconds before Do
 **Evidence:** `tools/dryrun-test.mjs` has the jamming routine (caught) and a pack-first one (passes);
 all other cases still pass.
 
+### 64. Loans without interest, stacking shares, and a budget instead of a wage guess (2026-11-17)
+
+**Feedback:** Mike: "Don't include wages, whole crew, three shifts in the money calculation ...
+you're not going to know how much you're going to spend on workers until you actually run all of
+the shifts. Maybe we call the remaining amount a budget? ... Also, let's get rid of interest on the
+loan for now. And if you take two loans at once, it should take 20%. And then the lender's thing
+should say that."
+**Picked:**
+- No interest: borrow $100 or $250 and you owe exactly that.
+- Each loan takes 10% of every contract you finish until that loan is paid off, so two loans take
+  20%. The lender says what you owe, on how many loans, and the share he's taking now.
+- The forecast drops wages. It shows what the picked contracts pay if they all ship, the lender's
+  share, and what you get at the end of the quarter, with a note that wages come out of your
+  budget as the shifts run. The money in the board's corner is labeled **Budget**.
+- At most three loans at once (Mike: "you can only have three outstanding loans at once"). With
+  three, the Borrow buttons grey out and the lender says "I'm not lending you any more money until
+  you pay up."
+Amends #61. The "Numbers must go up" line is gone too ("getting a little cheesy").
+
