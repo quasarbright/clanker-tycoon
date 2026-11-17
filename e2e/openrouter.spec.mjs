@@ -38,6 +38,8 @@ test("sign in with OpenRouter: PKCE round trip, key saved, address bar cleaned",
   await expect(page.locator("#access")).toContainText("Connected to OpenRouter");
   await expect(page.locator("#access")).toContainText("key ending 9876");
   await expect(page.locator("#access")).toContainText("You're signed in");
+  const icon = await page.locator("#access .ct-key-ok svg").boundingBox();
+  expect(icon.width).toBeLessThan(30); // a check mark, not a giant one
   expect(await stored(page)).toBe("sk-or-v1-signedin9876");
   expect(auth.searchParams.get("code_challenge_method")).toBe("S256");
   expect(auth.searchParams.get("code_challenge")).toMatch(/^[A-Za-z0-9_-]{43}$/);
