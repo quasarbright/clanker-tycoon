@@ -79,7 +79,7 @@ export const LEVELS = [
     // Your business (src/business.js): the contract loop on level 6's floor. Opens on the
     // contract board; the contracts you pick for a quarter play as one quarter, all due at its end.
     id: 7, name: "Your business",
-    blurb: "Take contracts, buy equipment, pay the investor.",
+    blurb: "Take contracts, recruit, train and buy machines.",
     stations: ["SUPPLY", "PAINT", "PACK", "DOCK", "BIN_1", "BIN_2"],
     ship: "boxes", colors: ["red"],
     order: [{ color: "red", count: 1 }],

@@ -225,11 +225,21 @@
     .ct-investor img { width: 40px; height: 40px; flex: none; }
     .ct-investor p { margin: 0; line-height: 1.4; }
     .ct-investor b { color: var(--success); }
+    .ct-investor b.is-debt { color: #ffb4ae; }
+    .ct-loans { margin-left: auto; display: flex; gap: 8px; flex: none; }
+    .ct-loans .ct-btn { padding: 6px 12px; font-size: .88rem; white-space: nowrap; }
+    /* the quarter's forecast, if every picked contract ships */
+    .ct-forecast { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; font-size: .9rem; color: var(--muted); }
+    .ct-forecast b { font-family: var(--font-mono); color: var(--text); text-align: right; }
+    .ct-forecast .is-in { color: var(--success); }
+    .ct-forecast .is-out { color: #ffb4ae; }
+    .ct-forecast .is-total { border-top: 1px solid var(--border); padding-top: 4px; margin-top: 2px; color: var(--text); font-weight: 700; }
+    .ct-forecast b.is-total { color: var(--accent); font-size: 1.05rem; }
     .ct-board-money { text-align: right; }
     .ct-board-sec { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
     .ct-board-top { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: stretch; }
     .ct-offers { display: grid; grid-template-columns: 2fr 1.15fr; gap: 12px; }
-    .ct-board-go { display: flex; flex-direction: column; justify-content: center; gap: 10px; width: 260px; }
+    .ct-board-go { display: flex; flex-direction: column; justify-content: center; gap: 10px; width: 300px; }
     .ct-board-go .ct-btn:disabled { opacity: 1; background: var(--panel-2); color: var(--faint); cursor: not-allowed; }
     .ct-offer { display: flex; flex-direction: column; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
     .ct-offer.is-picked { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
@@ -624,13 +634,14 @@
     <div class="ct-card-big ct-board">
       <div class="ct-board-head">
         <div><div class="ct-title" id="boardTitle">Quarter 1</div><div class="ct-board-shifts" id="boardShifts"></div></div>
-        <div class="ct-investor"><img src="favicon.svg" alt=""><p><span class="ct-label">Your investor</span><br><span id="investorLine"></span></p></div>
+        <div class="ct-investor"><img src="favicon.svg" alt=""><p><span class="ct-label">The lender</span><br><span id="investorLine"></span></p><div class="ct-loans" id="loans"></div></div>
         <div class="ct-board-money"><span class="ct-cash-label">Your money</span><span class="ct-cash-value" id="bizMoney"></span></div>
         <button class="ct-btn" id="boardMenuBtn">Levels</button>
       </div>
       <div class="ct-board-top">
         <div><div class="ct-board-sec">Contracts this quarter</div><div class="ct-offers" id="offers"></div></div>
         <div class="ct-board-go">
+          <div class="ct-forecast" id="forecast"></div>
           <button class="ct-btn is-gold ct-big" id="boardGo" disabled>Start the quarter</button>
           <div class="ct-planbar-note" id="boardNote"></div>
         </div>

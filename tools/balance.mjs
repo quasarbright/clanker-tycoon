@@ -105,7 +105,7 @@ for (const [name, plan] of PLANS) console.log(name.padEnd(38), [1, 2].map((seed)
 // ---------- your business (src/business.js) ----------
 // A quarter's pick of contracts (one per color, all due at the quarter's end), played by a few
 // crews, with each paint machine. Prints what shipped after each shift, the wages, what the
-// contracts paid after the investor's cut, and the profit.
+// contracts paid (no loan), and the profit.
 const B_HAUL = `while (needs("red") > 0) { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); }`;
 const B_PACK = `while (needsAny() > 0) { move("PACK"); let c = "none"; for (const k of ["blue", "green", "red"]) { if (c == "none" && needs(k) > 0 && count("PACK", k) >= 3) c = k; } if (c != "none") pack(c); if (boxes("PACK") > 0) { pickUpBox(); move("DOCK"); putDown(); } else wait(1); }`;
 const B_PAINT = `while (needs("blue") + needs("green") > 0) { const c = needs("blue") > 0 ? "blue" : "green"; if (wear("PAINT") >= 100) { wait(1); } else { move("SUPPLY"); pickUp("red"); move("PAINT"); paint(c); move("PACK"); putDown(); } }`;

@@ -787,3 +787,32 @@ shift). Replaces the random three from #58.
 (seeded by the quarter and the robot) and kept for good once you recruit them. The fee is $10 plus
 $5 for each thing they come with, and their wage counts the kit like any skill or trait. Amends #59.
 
+### 61. A lender instead of an investor, and a forecast before every quarter (2026-11-17)
+
+**Question:** Mike: "I think the investor would make more sense as you can take a loan at the shop.
+And then when you take a loan, you have to pay back 10% of every contract you finish until the loan
+is paid back plus some interest ... And we should have a clear indication what is actually going to
+happen that quarter before it starts ... And we would just start out with like some amount of money
+for free or whatever, no investor. But the robot with dollar signs could be the person you talk to
+for a loan."
+**Picked:**
+- You start with $100 of your own. No investor, no cut on everything. Replaces the investor in #49
+  and #53.
+- The dollar-eyed robot is **the lender**, in the board's header. Borrow $100 (you owe $120) or $250
+  (you owe $310), as often as you like; debts add up. Until it's paid, 10% of every contract you
+  finish goes to him (never more than you owe). Contract cards say what you keep while you owe.
+- **The forecast**, above Start: your money now, what the picked contracts pay if they all ship,
+  what goes to the lender, wages if your whole crew works every shift, and where that leaves you at
+  the end of the quarter. Wages are the whole crew because you choose who to schedule later, on the
+  floor; the tooltip says fewer robots cost less.
+- The end-of-quarter card shows what went to the lender instead of the investor's cut.
+
+### 62. A roguelike, without the buy-out ending (2026-11-17)
+
+**Question:** career mode or roguelike runs (open question 4 in the progression doc), and the
+buy-out-the-investor ending (#45).
+**Picked:** Mike: "We could just drop the buyout the investor ending. This is going to be a
+roguelike anyway, probably. I don't think I'm gonna wanna do game design for a whole career mode."
+The ending and the post-game move to Dropped. How a run ends (a way to lose, maybe a goal) is now
+the first open question. Replaces #45. Issue #14 (the ending) stays open; I haven't commented on it.
+

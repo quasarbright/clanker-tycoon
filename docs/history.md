@@ -229,3 +229,10 @@ He settled it the simple way: a quarter's contracts all share its deadline and n
 same thing. "The fewer decisions that workers have to make and the fewer options they have, I think
 the better right now." Still open: whether the whole thing is a long career or roguelike runs.
 
+Then a run of changes as Mike played with the board. The investor became a lender you choose to
+borrow from ("the robot with dollar signs could be the person you talk to for a loan"), which took
+the buy-out ending with it: "This is going to be a roguelike anyway, probably." The board turned
+into a roguelike shop, three choices of everything: contracts in a Small and Large size plus a side
+contract, recruits in three tiers (a blank robot to train up, a skilled one, an expert), training for
+skills and traits, and machines. The belt went too, replaced by a supply that never runs out.
+

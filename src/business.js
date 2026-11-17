@@ -4,8 +4,8 @@
 // quarter, and no two ask for the same color, so a shipped box only ever counts for one contract
 // (Mike: "The fewer decisions that workers have to make ... the better right now"). The quarter
 // plays as in quarter.js, with the contracts' orders together as the quota and all your money as
-// the budget. At the end, each contract that shipped in full pays, and the investor takes his cut;
-// money carries over.
+// the budget. At the end, each contract that shipped in full pays (part of it goes to the lender if
+// you've borrowed); money carries over.
 //
 // Like a roguelike, each visit offers a few choices rather than everything: three contracts (a
 // small and a large one of the same color, and a side contract of another color), three robots to
@@ -13,8 +13,26 @@
 
 import { wageOf } from "./wages.js";
 
-/** The dollar-eyed robot fronted your starting money and takes a cut of every contract. */
-export const INVESTOR = { fronted: 100, cut: 0.1 };
+/** What you start with, free (decision #61: no investor). */
+export const START_MONEY = 100;
+
+/**
+ * The dollar-eyed robot is a lender (decision #61). Borrow at the board; until you've paid back
+ * what you owe (the loan plus interest), 10% of every contract you finish goes to him.
+ */
+export const LENDER = { share: 0.1, loans: [{ amount: 100, owe: 120 }, { amount: 250, owe: 310 }] };
+
+/** Take a loan: the money now, the debt (with interest) on top of any you have. */
+export function borrow(biz, i) {
+  const l = LENDER.loans[i];
+  if (!l) return false;
+  biz.money += l.amount;
+  biz.debt += l.owe;
+  return true;
+}
+
+/** What goes to the lender out of a contract's pay, given what's still owed. */
+export const repayOf = (debt, pay) => Math.min(debt, Math.round(pay * LENDER.share));
 
 /** Shifts in a quarter; every contract is due at its end. */
 export const QUARTER_SHIFTS = 3;
@@ -129,7 +147,7 @@ const TIERS = [
 ];
 
 export function newBusiness() {
-  return { money: INVESTOR.fronted, quarters: 0, wins: 0, paidOut: 0, owned: null, upgrades: [], crew: [...START_CREW], trained: {},
+  return { money: START_MONEY, debt: 0, quarters: 0, wins: 0, owned: null, upgrades: [], crew: [...START_CREW], trained: {},
     recruitedNow: [], boughtNow: [] };
 }
 
@@ -153,7 +171,6 @@ export function board(biz) {
 export const owns = (biz, id) => biz.owned === id || biz.upgrades.includes(id);
 export const machine = (biz) => SHOP.find((m) => m.id === biz.owned) ?? null;
 export const hasMachine = (biz, needs) => !needs || !!biz.owned; // both paint machines paint
-export const cutOf = (pay) => Math.round(pay * INVESTOR.cut);
 
 /** Buy a machine. A paint machine replaces the one you have, no money back. */
 export function buy(biz, id) {
@@ -190,20 +207,32 @@ export function quarterLevel(base, biz, contracts, candidates = []) {
   };
 }
 
-/** What each contract earned: `done` is what shipped of each, in the level's order. */
-export function payouts(contracts, done) {
+/**
+ * What each contract earned: `done` is what shipped of each, in the level's order. `cut` is what
+ * went to the lender out of it, while there's still a debt (`debt`, before this quarter).
+ */
+export function payouts(contracts, done, debt = 0) {
   return contracts.map((c, i) => {
     const won = done[i] >= c.count;
-    return { c, won, pay: won ? c.pay : 0, cut: won ? cutOf(c.pay) : 0 };
+    const cut = won ? repayOf(debt, c.pay) : 0;
+    debt -= cut;
+    return { c, won, pay: won ? c.pay : 0, cut };
   });
+}
+
+/** Before a quarter: what happens if every picked contract ships and `wages` are paid. */
+export function forecast(biz, contracts, wages) {
+  const pays = payouts(contracts, contracts.map((c) => c.count), biz.debt);
+  const pay = pays.reduce((a, p) => a + p.pay, 0), repay = pays.reduce((a, p) => a + p.cut, 0);
+  return { start: biz.money, pay, repay, wages, end: biz.money + pay - repay - wages, debtAfter: biz.debt - repay };
 }
 
 /** The quarter's over and you're back at the board. `left` is your money after the shifts' pay. */
 export function settle(biz, contracts, done, left) {
   biz.money = left;
-  for (const p of payouts(contracts, done)) {
+  for (const p of payouts(contracts, done, biz.debt)) {
     biz.money += p.pay - p.cut;
-    biz.paidOut += p.cut;
+    biz.debt -= p.cut;
     if (p.won) biz.wins++;
   }
   biz.quarters++;

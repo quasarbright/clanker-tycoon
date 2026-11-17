@@ -12,7 +12,7 @@ import { backendLabel } from "./llm.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money } from "./quarter.js";
-import { INVESTOR, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, cutOf, buy, owns, quarterLevel, payouts, settle,
+import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast,
   RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers } from "./business.js";
 import { SKILL_TIER, wageOf } from "./wages.js";
 
@@ -1148,15 +1148,21 @@ function openBoard() {
   $("#boardScreen").classList.remove("is-hidden");
 }
 
+// Under a contract's pay: what you keep of it, if part goes to the lender.
+const keepLine = (c) => (biz.debt ? `<span class="ct-offer-keep">you keep $${c.pay - repayOf(biz.debt, c.pay)}</span>` : "");
+
 function renderBoard() {
-  const pct = `${Math.round(INVESTOR.cut * 100)}%`;
+  const pct = `${Math.round(LENDER.share * 100)}%`;
   const short = (n) => (biz.money < n ? `disabled data-tooltip="You have ${money(biz.money)}."` : "");
   $("#bizMoney").textContent = money(biz.money);
   $("#boardTitle").textContent = `Quarter ${biz.quarters + 1}`;
   $("#boardShifts").textContent = `${QUARTER_SHIFTS} shifts. Every contract is due at the end of the last one.`;
-  $("#investorLine").innerHTML = biz.quarters
-    ? `"${biz.wins} ${biz.wins === 1 ? "contract" : "contracts"} done, and <b>$${biz.paidOut}</b> for me so far. I take ${pct} of every one. Numbers must go up."`
-    : `"I fronted you <b>$${INVESTOR.fronted}</b> to get started. I take <b>${pct}</b> of every contract you finish. Numbers must go up."`;
+  // The lender: borrow now, and ${pct} of every contract you finish goes to him until it's paid back.
+  $("#investorLine").innerHTML = biz.debt
+    ? `"You owe me <b class="is-debt">$${biz.debt}</b>. I take ${pct} of every contract you finish until it's paid. Numbers must go up."`
+    : `"Short on cash? Borrow from me, and I take ${pct} of every contract you finish until you've paid it back, with interest."`;
+  $("#loans").innerHTML = LENDER.loans.map((l, i) => `<button class="ct-btn" data-loan="${i}" data-tooltip="You'd owe $${l.owe}: $${l.amount} plus $${l.owe - l.amount} interest.">Borrow $${l.amount}</button>`).join("");
+  $("#loans").querySelectorAll("[data-loan]").forEach((b) => b.addEventListener("click", () => { if (borrow(biz, +b.dataset.loan)) renderBoard(); }));
 
   // ----- contracts: one card with a small and a large size (take one or neither), and a side one
   const offers = board(biz);
@@ -1167,7 +1173,7 @@ function renderBoard() {
   const size = (c) => `<button type="button" class="ct-size ${isOn(c) ? "is-on" : ""}" data-contract="${c.id}" ${blocked(c) ? "disabled" : ""}>
       <span class="ct-size-name">${isOn(c) ? CHECK : ""}${c.size === "small" ? "Small" : "Large"}</span>
       <span class="ct-size-count">${c.count} boxes</span>
-      <span class="ct-offer-pay">$${c.pay}</span><span class="ct-offer-keep">you keep $${c.pay - cutOf(c.pay)}</span>
+      <span class="ct-offer-pay">$${c.pay}</span>${keepLine(c)}
     </button>`;
   const painted = (c) => (c.needs ? `<span class="ct-offer-keep">Painted: the supply only gives out red.</span>` : "");
   $("#offers").innerHTML = `<div class="ct-offer ct-pair ${isOn(small) || isOn(large) ? "is-picked" : ""}">
@@ -1180,7 +1186,7 @@ function renderBoard() {
       <div class="ct-sizes"><button type="button" class="ct-size ${isOn(side) ? "is-on" : ""}" data-contract="${side.id}" ${blocked(side) ? "disabled" : ""}>
         <span class="ct-size-name">${isOn(side) ? CHECK : ""}${isOn(side) ? "Taking it" : "Take it"}</span>
         <span class="ct-size-count">${side.count} boxes</span>
-        <span class="ct-offer-pay">$${side.pay}</span><span class="ct-offer-keep">you keep $${side.pay - cutOf(side.pay)}</span>
+        <span class="ct-offer-pay">$${side.pay}</span>${keepLine(side)}
       </button></div>
       <div class="ct-offer-note is-bad">${blocked(side)}</div>${painted(side)}
     </div>`;
@@ -1190,11 +1196,20 @@ function renderBoard() {
     picked = isOn(c) ? picked.filter((p) => p.id !== c.id) : [...picked.filter((p) => p.color !== c.color), c];
     renderBoard();
   }));
-  const pay = picked.reduce((a, c) => a + c.pay, 0), total = picked.reduce((a, c) => a + c.count, 0);
+  const total = picked.reduce((a, c) => a + c.count, 0);
   $("#boardGo").disabled = !picked.length;
-  $("#boardGo").textContent = picked.length ? `Start the quarter: $${pay}` : "Start the quarter";
+  $("#boardGo").textContent = "Start the quarter";
   $("#boardNote").textContent = !picked.length ? "Pick at least one contract."
     : `${total} boxes in ${QUARTER_SHIFTS} shifts. A contract only pays if all its boxes ship.`;
+  // What happens this quarter if every picked contract ships, with the whole crew on every shift.
+  const crewWage = biz.crew.reduce((a, id) => a + robotOf(biz, CANDIDATES.find((c) => c.id === id)).wage, 0);
+  const f = forecast(biz, picked, crewWage * QUARTER_SHIFTS);
+  const row = (label, v, cls = "", tip = "") => `<span class="${cls}" ${tip ? `data-tooltip="${tip}"` : ""}>${label}</span><b class="${cls}">${v}</b>`;
+  $("#forecast").innerHTML = row("Your money now", money(f.start))
+    + row("Contracts pay, if they all ship", `+$${f.pay}`, "is-in")
+    + (biz.debt ? row("To the lender", `−$${f.repay}`, "is-out", `${pct} of each contract until your $${biz.debt} debt is paid. After this quarter you'd owe $${f.debtAfter}.`) : "")
+    + row(`Wages, whole crew, ${QUARTER_SHIFTS} shifts`, `−$${f.wages}`, "is-out", `$${crewWage} a shift if you schedule everyone. Fewer robots on a shift cost less.`)
+    + row("At the end of the quarter", money(f.end), "is-total");
 
   // ----- recruit: three robots this visit
   $("#recruits").innerHTML = recruitOffers(biz).map((id) => {
@@ -1249,24 +1264,24 @@ $("#boardGo").addEventListener("click", () => {
 });
 
 // A shift of the quarter ended: everything shipped, there's another shift, or the quarter's over.
-// At the end each contract that shipped in full pays, and the investor takes his cut of it.
+// At the end each contract that shipped in full pays, and part of it goes to the lender if you owe him.
 function endBusinessShift(won, last, done, total, shippedBefore) {
   const cs = level.contracts, n = quarter.shift;
   logEvent(game.t, "end", { won, contracts: cs.map((c) => c.id), quarter: { shift: n, of: QUARTER_SHIFTS }, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), money: Math.floor(quarter.money), crew: crewSummary() });
   const over = won || last;
-  const pays = payouts(cs, quarter.done);
+  const pays = payouts(cs, quarter.done, biz.debt);
   const paid = pays.reduce((a, p) => a + p.pay, 0), cut = pays.reduce((a, p) => a + p.cut, 0);
   const shipped = pays.filter((p) => p.won).length;
   $("#endTitle").textContent = won ? "Every contract shipped" : over ? "Quarter over" : `Shift ${n} done`;
   const shiftsLeft = QUARTER_SHIFTS - n;
-  $("#endNote").textContent = won ? `The clients paid $${paid}, and the investor took his ${Math.round(INVESTOR.cut * 100)}%.`
+  $("#endNote").textContent = won ? `The clients paid $${paid}${cut ? `, and $${cut} of it went to the lender` : ""}.`
     : over ? (shipped ? `${shipped} of ${cs.length} contracts shipped in full and paid. The others pay nothing.` : "No contract shipped in full, so nobody pays.")
     : `${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left in the quarter. Your crew and their instructions stay.`;
   // Each contract: its ticket, what shipped of it, and (at the end) what it paid.
   const rows = `<div class="ct-end-contracts">${pays.map((p, i) => `<div class="ct-end-contract ${p.won ? "is-done" : over ? "is-missed" : ""}">
       ${ticketHTML(p.c.color, p.c.count)}<span>${Math.min(quarter.done[i], p.c.count)} of ${p.c.count} shipped</span>
       <b>${p.won ? `$${p.c.pay}` : over ? "$0" : `pays $${p.c.pay}`}</b></div>`).join("")}</div>`;
-  const stats = over ? [["Paid", `$${paid}`], ["Investor's cut", `$${cut}`], ["Your money", money(quarter.money + paid - cut)]]
+  const stats = over ? [["Paid", `$${paid}`], ...(biz.debt ? [["To the lender", `$${cut}`]] : [["Crew pay", `$${Math.round(game.laborCost)}`]]), ["Your money", money(quarter.money + paid - cut)]]
     : [["Shipped", `${done - shippedBefore}`], ["Crew pay", `$${Math.round(game.laborCost)}`], ["Your money", money(quarter.money)]];
   $("#endStats").innerHTML = rows + stats.map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
   const btns = won ? [["board", "Next quarter", true]]

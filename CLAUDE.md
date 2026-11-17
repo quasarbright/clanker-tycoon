@@ -169,8 +169,9 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   and why, and what would help. Never a canned error.
 
 **Progression**
-- Progression is your own factory business: take contracts, get paid, buy equipment and then
-  lines, pay the dollar-eyed investor's growing cut. No rank ladder. You never leave the floor:
+- Progression is your own factory business, as a roguelike run (probably): take contracts, get
+  paid, recruit, train, buy equipment and then lines, and borrow from the dollar-eyed lender if you
+  need to. No rank ladder, no career mode. You never leave the floor:
   growth makes it bigger (lines that feed each other) and has you talk to foremen instead of every
   worker, but you still give robots instructions and watch what they do with them. Mike: "When it
   gets too managerial, it becomes a spreadsheet simulator." Design: `docs/progression-design.md`.

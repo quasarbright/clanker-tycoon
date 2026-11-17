@@ -1,10 +1,10 @@
 # Progression design
 
-Status: **proposal, not agreed.** A first prototype of the loop (contract board, money carrying
-over, two paint machines, a flat investor cut) is level 7, "Your business" (decision 53). This doc is the shape of the long-term
-game and stays short. Each idea in it, with detail and open questions, is an entry in
-[ideas.md](ideas.md). Reasons and evidence are in [decisions.md](decisions.md). Mocks are rough and
-live in [`mocks/progression/`](mocks/progression/).
+Status: **proposal, partly built.** Level 7, "Your business", is a playable prototype of the loop:
+a board of contracts each quarter, money carrying over, recruiting, training, machines and a lender
+(decisions 53 to 61). This doc is the shape of the long-term game and stays short. Each idea in it,
+with detail and open questions, is an entry in [ideas.md](ideas.md). Reasons and evidence are in
+[decisions.md](decisions.md). Mocks are rough and live in [`mocks/progression/`](mocks/progression/).
 
 ## Principles
 
@@ -15,53 +15,45 @@ live in [`mocks/progression/`](mocks/progression/).
 - **You choose your difficulty** by which contracts you take.
 - **Delegation comes from scale, not rules.** You can only talk to one robot at a time; a big
   enough factory makes foremen the obvious move.
+- **It's a roguelike (probably).** Mike: "This is going to be a roguelike anyway, probably. I don't
+  think I'm gonna wanna do game design for a whole career mode." A run is a string of quarters with
+  contracts that keep getting harder; between them you get a few choices, not everything.
 
 ## The game
 
 ![Contracts and equipment](mocks/progression/11-contracts.svg)
 
-You run your own small factory business. The dollar-eyed robot from the favicon is your
-**investor**: he put up your starting money, and every quarter he wants a cut that keeps growing.
-"Numbers must go up."
+You run your own small factory business. You start with a little money of your own. The
+dollar-eyed robot from the favicon is a **lender**: borrow from him at the board, and he takes 10%
+of every contract you finish until you've paid it back with interest. "Numbers must go up."
 
-**The loop:**
-1. **Take contracts** for the quarter from a board: "12 blue boxes, pays $320, needs a paint
-   machine." All of a quarter's contracts are due at its end, and no two ask for the same thing, so
-   every box counts for exactly one contract. Take too many and some won't ship in time.
-2. **Run shifts** on the floor: hire, give instructions, watch, fix. Wages tick.
-3. **Get paid** when a contract ships.
-4. **Buy equipment:** a better machine (a pricier paint machine that wears half as fast saves
-   repair labor), then whole lines.
-5. **Pay the investor** at the end of each quarter.
+**The loop (built in level 7):**
+1. **Pick contracts** for the quarter from the board: one color in a Small or Large size, and a side
+   contract in another color. All of a quarter's contracts are due at its end and never share a
+   color, so every box counts for exactly one contract. Take too much and some won't ship in time.
+   Before you start, the board shows what the quarter does to your money if everything ships.
+2. **Run shifts** on the floor: schedule your crew, give instructions, watch, fix. Wages tick.
+3. **Get paid** at the end of the quarter for every contract that shipped in full.
+4. **Shop between quarters**, three choices of each: recruit a robot (a cheap blank one to train,
+   a skilled one, or a pricey expert), train skills and traits, buy machines. Borrow if you need to.
 
-**Growth.** You start alone on one small line doing the work by hand (the tutorial). Contracts pay
-for robots, then machines, then a second line that turns the first one's output into something
-bigger: Line A paints and boxes, Line B builds mixed crates, Line C ships. A mistake upstream
-starves the line downstream.
+**Growth (not built).** Contracts pay for robots, then machines, then a second line that turns the
+first one's output into something bigger: Line A paints and boxes, Line B builds mixed crates, Line
+C ships. A mistake upstream starves the line downstream.
 
-**Foremen.** Past two lines, you can't keep up talking to every robot, so you promote one to run a
-line. You brief the foreman; the foreman writes their crew's instructions, which you can read on
-each robot's card. When something breaks, you trace it to what the foreman said and correct the
-foreman. Same game, one more robot between your words and the work.
+**Foremen (not built).** Past two lines, you can't keep up talking to every robot, so you promote
+one to run a line. You brief the foreman; the foreman writes their crew's instructions, which you
+can read on each robot's card. When something breaks, you trace it to what the foreman said and
+correct the foreman. Same game, one more robot between your words and the work.
 
 ![A foreman shift](mocks/progression/10-foreman-shift.svg)
 
-**The ending.** Your savings eventually buy out the investor. Final scene: you're the robot with
-dollar signs for eyes, saying "Numbers must go up." Then post-game, running the company as owner.
-
 ## Biggest open questions
 
-1. What happens when you can't pay the investor's cut?
-2. What happens to a contract that's late?
-3. How long until you can buy him out?
-4. **Career or roguelike? (Undecided; revisit after Mike plays level 7.)** Mike: "a long term
-   career mode thing or more like a roguelike where you go on a run and you try to get really big
-   stuff and the contracts get harder and harder over time and you die when you fail a contract."
-   - *Career:* one long save that you keep growing. Failure costs money, not the game.
-   - *Roguelike:* short runs, contracts keep getting harder, and a failed contract ends the run.
-   - *A middle ground (suggested):* each run is a whole career, from a small shop to buying out the
-     investor. Contracts get harder as you go. If you miss badly enough, the investor pulls out and
-     the run ends. Runs are short enough to play again.
+1. **How a run ends.** A roguelike run needs a way to lose (a missed contract? running out of
+   money with a debt you can't pay?) and maybe a goal or a final quarter.
+2. What happens to a contract that's late? (Now: it pays nothing.)
+3. What the lender does when you can't pay him back.
 
 The rest are with each idea in [ideas.md](ideas.md).
 
@@ -69,6 +61,7 @@ The rest are with each idea in [ideas.md](ideas.md).
 
 One evening, several shapes: a corporate ladder of ranks under a robot boss (dropped: higher ranks
 became a different, managerial game), then one boss and a growing factory with quotas (dropped for
-contracts you choose, which are more tycoon), ending at contracts, equipment and an investor.
-Decisions 38 to 46, 49 and 50 have each step; the dropped ideas are listed with reasons at the bottom of
-[ideas.md](ideas.md).
+contracts you choose, which are more tycoon), then contracts, equipment and an investor. Building
+level 7 turned the investor into a lender you choose to borrow from, dropped the buy-out ending,
+and settled on a roguelike. Decisions 38 to 46 and 49 to 62 have each step; the dropped ideas are
+listed with reasons at the bottom of [ideas.md](ideas.md).

@@ -24,9 +24,10 @@ What's being built.
 
 - **A first contract loop.** Level 7, "Your business", on level 6's floor. Each quarter you pick
   several contracts from a board, one per color, all due at the end of the quarter's 3 shifts.
-  Money carries over, a shop sells two paint machines (cheap, or sturdy and wearing half as fast),
-  and the investor takes a flat 10% of every contract (decisions 53, 54). Prototype, to see if
-  choosing contracts and buying machines is fun before building more.
+  Money carries over, a shop sells machines, and you can borrow from the lender, who takes 10% of
+  every finished contract until you've paid him back (decisions 53, 54, 58, 61). A forecast before
+  each quarter shows what it does to your money. Prototype, to see if choosing contracts and buying
+  machines is fun before building more.
 
 - **Training and a growing crew.** Built in level 7 (decisions 56, 58): three robots to recruit
   each quarter, and training skills or traits for $20. Your business starts with Blip
@@ -45,11 +46,13 @@ Agreed direction, not built yet. Roughly in roadmap order.
 - **Contracts.** A board of offers: what, how many, deadline in shifts, pay, machines needed. You
   pick which to take; some can't be done in time with what you have. You choose your difficulty.
   First version built (decision 53). Later: several at once, late pay, how often the board refreshes.
-- **Money comes in.** Contracts pay. Wages, hiring, equipment, training and the investor's cut go
+- **Money comes in.** Contracts pay. Wages, recruiting, training, machines and loan repayments go
   out. You can't start a shift you can't pay for.
-- **The investor.** The dollar-eyed robot fronted your starting money and wants a cut every quarter
-  that keeps growing. "Numbers must go up." Built so far: a flat 10% of each contract's pay
-  (decision 53). Open: the growing cut, what happens when you can't pay.
+- **The lender.** The dollar-eyed robot lends you money at the board; 10% of every contract you
+  finish repays it, with interest. Built (decision 61). Open: what happens when you can't pay him
+  back, and whether loans get pricier the more you owe.
+- **How a run ends.** It's a roguelike (decision 62): a run needs a way to lose (a missed contract,
+  money running out with a debt you can't pay) and maybe a final quarter or a goal.
 - **Buying equipment.** Machines are things you buy, one at a time, each tried by hand first.
 - **Equipment attributes.** Wear (a pricier machine that wears half as fast saves repair labor;
   built as the Sturdy paint machine, decision 53), speed, capacity. A trade-off between up-front cost and labor every shift.
@@ -75,11 +78,7 @@ Ideas worth keeping that aren't planned yet.
 
 - **A retired mentor.** An old robot, retired from the floor, who gives you advice. He could replace
   the generic tutorial coach and deliver lessons like "pause and fix it". A counterweight to the
-  dollar-eyed investor.
-- **The ending: buy out the investor.** Your savings buy him out; final scene, you're the
-  dollar-eyed robot saying "Numbers must go up." Mike loves it. Issue #14.
-- **Post-game.** Keep running the company as owner: endless contracts, or become an investor
-  yourself and fund a robot-run factory, wanting your cut (symmetry all the way up).
+  dollar-eyed lender.
 - **Symmetry.** Where it isn't silly, what you do to robots under you was done to you first.
 - **Moving robots between lines.** Transfers between your own lines once you have several.
 - **Supplies that run out.** The supply never runs out for now (decision 57). Later it could be
@@ -118,6 +117,13 @@ Ideas worth keeping that aren't planned yet.
 
 Each with the reason.
 
+- **An investor who takes a cut of everything:** a lender you choose to borrow from instead; you
+  start with your own money (decision 61).
+- **The ending: buy out the investor, and a post-game as owner:** "We could just drop the buyout
+  the investor ending. This is going to be a roguelike anyway, probably." (decision 62). Issue #14
+  is left open but no longer matches.
+- **A long career mode:** "I don't think I'm gonna wanna do game design for a whole career mode"
+  (decision 62).
 - **The belt for raw widgets:** "I don't want the belt anymore right now, for raw materials at
   least." A supply that never runs out replaces it (decision 57).
 - **Deliberately dumb workers** (mishearing, fumbling, seeing only their station): frustrating, not
