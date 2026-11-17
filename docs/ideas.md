@@ -17,6 +17,13 @@ What's being built.
 - **The quarter sandbox.** A quota, a few shifts and a budget on one floor, to prove the
   money-against-crew tension (decision 35). Built as level 6.
 
+- **Time to recover from mistakes.** Shifts feel too short to fix things, partly because typing a
+  message takes a person a while. Proposed: game time freezes while a robot thinks (same result no
+  matter how slow the model is, and it makes speed controls safe later), plus a plain pause button
+  you can use as often as you like. Not doing: speed-up controls (thinking can't speed up, so the
+  same shift would play out differently), a limited number of pauses (one more thing to keep in
+  mind), slower shifts (boring).
+
 ## Next
 
 Agreed direction, not built yet. Roughly in roadmap order.
@@ -67,6 +74,9 @@ Ideas worth keeping that aren't planned yet.
   instructions (issue #1).
 - **The Strong attribute.** Carries two at once. Agreed, not built.
 - **Worker personalities.** Late polish only; mechanics first.
+- **Make Smart matter.** Robots rarely think, so the Smart attribute (a bigger thinking budget)
+  barely changes anything yet. Maybe it matters late, for foremen; maybe early contracts need more
+  surprises to think about.
 - **Recovering from problems.** Time controls, clear alerts, buffers, one-click cleanup (issue #10).
 - **Challenge mode.** Write the robots' programs yourself, no model during the shift (issue #11).
 - **The business side.** Competitors, stock (issue #8). Probably post-game at most.
