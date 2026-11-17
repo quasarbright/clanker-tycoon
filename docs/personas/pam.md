@@ -50,8 +50,10 @@ Still open, by how much they get in the way:
    follow-ups sent: grey the Train button when nothing's affordable, keep "+$5 a shift" beside
    "$N short".
 
-Proposals, held for now (coordinator, 2026-11-17):
-- **A recap of the last quarter on the board,** instead of the stale last shift behind it.
+2. **Quarter recap** (Mike approved, "like a post-round summary in Balatro before the shop"). Spec
+   sent to the build thread: the quarter card becomes a tallied ledger (started with, contracts
+   paid, lender's cut, crew pay, budget now, result in green or red), and the board gets a quiet
+   "Last quarter: …" strip. The shift card's pace projection becomes plain counts.
 
 Smaller: pause icon doesn't change while paused and chips still say "Working"; the cards use the
 lender's face when you never borrowed; the ticket chip says "20" beside "15 of 20 shipped"; no way
@@ -83,3 +85,5 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
 - 2026-11-17: Mike dropped the live on-pace label: "they can see the fraction in the top left", and
   pace assumes orders fill evenly and in parallel, which isn't always true. Lesson: don't propose
   projections that assume how the player splits work; show what's true (counts) instead.
+- 2026-11-17: Mike approved the quarter recap and plain counts on the shift card; Pam's spec went to
+  the build thread (via the coordinator).
