@@ -10,7 +10,7 @@ import http from "node:http";
 import { readFile, appendFile, mkdir, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { ask, summarize } from "./server/claude.mjs";
+import { ask, summarize, MODEL } from "./server/claude.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = +process.argv[2] || 8473;
@@ -58,6 +58,7 @@ async function handleLlm(req, res) {
   let input;
   try { input = JSON.parse(body); } catch { return send(res, 400, { error: "bad JSON" }); }
   const { system, prompt, schema, shift, test } = input;
+  const source = typeof input.source === "string" ? input.source.slice(0, 20) : test ? "test" : "play";
   if (typeof system !== "string" || typeof prompt !== "string") return send(res, 400, { error: "need system and prompt" });
 
   const started = Date.now();
@@ -78,7 +79,11 @@ async function handleLlm(req, res) {
   const data = s.structured ?? parseLoose(s.text) ?? { reply: s.text };
   console.log(`llm ${Date.now() - started}ms in=${s.input_tokens} out=${s.output_tokens} (thinking ${s.thinking_tokens})`);
   // Every call, so a worker doing something odd can be traced back to what it was told and decided.
-  appendFile(LOG, JSON.stringify({ at: new Date().toISOString(), shift, test, ms: Date.now() - started, system, prompt, data }) + "\n").catch(() => {});
+  // Real usage too: tokens and what `claude -p` says the call cost at API prices (server/usage.mjs totals it).
+  // Everything `claude -p` reported about the call, with the timestamp on the line, so any period can be totaled later.
+  const usage = { input: s.input_uncached, cacheRead: s.cache_read, cacheWrite: s.cache_write, output: s.output_tokens, thinking: s.thinking_tokens,
+    costUsd: s.cost_usd_cumulative_cli, model: MODEL, durationMs: s.duration_ms, apiMs: s.duration_api_ms_cumulative, ttftMs: s.ttft_ms, iterations: s.iterations };
+  appendFile(LOG, JSON.stringify({ at: new Date().toISOString(), source, shift, test, ms: Date.now() - started, usage, system, prompt, data }) + "\n").catch(() => {});
   send(res, 200, { data, ms: Date.now() - started, tokens: { input: s.input_tokens, output: s.output_tokens } });
 }
 

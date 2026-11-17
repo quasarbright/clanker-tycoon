@@ -8,7 +8,7 @@
 //      instructions that really ask for no work (walk in circles) are still done.
 //   node tools/thinking-check.mjs [runs]
 const BASE = "http://localhost:8473";
-globalThis.location = new URL(BASE + "/?llm=local");
+globalThis.location = new URL(BASE + "/?llm=local&source=check");
 globalThis.addEventListener = () => {};
 Object.defineProperty(globalThis, "navigator", { value: { webdriver: true }, configurable: true });
 const realFetch = globalThis.fetch;

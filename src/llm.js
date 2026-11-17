@@ -9,6 +9,9 @@ import { shiftId, isTest } from "./playlog.js";
 const params = new URLSearchParams(location.search);
 const onLocalhost = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
 export const BACKEND = params.get("llm") || (onLocalhost ? "local" : "openrouter");
+// Who's making the call, for the usage log: "play" (Mike playing in a browser), "test" (an
+// automated browser), or whatever a script says with ?source= (e.g. "check" for thinking-check).
+export const SOURCE = params.get("source") || (isTest ? "test" : "play");
 
 // Not tested yet: check the id at openrouter.ai/models before shipping a web build.
 export const OPENROUTER_MODEL = "anthropic/claude-haiku-5.5";
@@ -26,8 +29,14 @@ async function slot() {
 }
 function release() { inFlight--; queue.shift()?.(); }
 
+// Tests swap in a fake model (test/brains.test.mjs, and the e2e suite through window.ct).
+let fake = null;
+/** Use `fn({ system, prompt, schema })` instead of the model; null goes back to the real one. */
+export function useFakeLlm(fn) { fake = fn; }
+
 /** Ask the model. `schema` is a JSON schema for the reply; resolves to the parsed object. */
 export async function llm({ system, prompt, schema }) {
+  if (fake) return fake({ system, prompt, schema });
   await slot();
   try {
     return BACKEND === "openrouter" ? await viaOpenRouter(system, prompt, schema) : await viaLocal(system, prompt, schema);
@@ -38,7 +47,7 @@ async function viaLocal(system, prompt, schema) {
   const res = await fetch("/api/llm", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ system, prompt, schema, shift: shiftId, test: isTest || undefined }),
+    body: JSON.stringify({ system, prompt, schema, shift: shiftId, test: isTest || undefined, source: SOURCE }),
   });
   const j = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(j.error || `server ${res.status}`);
