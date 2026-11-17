@@ -18,7 +18,7 @@ What's being built.
   money-against-crew tension (decision 35). Built as level 6.
 
 - **A pause button.** Shifts feel too short to fix mistakes, partly because typing a message takes
-  a person a while. A plain pause you can use as often as you like. Being built. Not doing:
+  a person a while. A plain pause you can use as often as you like. Built; Mike: "works well". Not doing:
   speed-up controls (thinking can't speed up, so the same shift would play out differently), a
   limited number of pauses (one more thing to keep in mind), slower shifts (boring).
 
@@ -26,6 +26,8 @@ What's being built.
 
 Agreed direction, not built yet. Roughly in roadmap order.
 
+- **Teach the pause.** Players need to learn they can pause and fix things. For example, a
+  tutorial moment where something goes wrong and the coach says to pause and sort it out.
 - **Crew variety through mechanics.** Robots differ by skills and attributes, not personality.
 - **Contracts.** A board of offers: what, how many, deadline in shifts, pay, machines needed. You
   pick which to take; some can't be done in time with what you have. You choose your difficulty.
