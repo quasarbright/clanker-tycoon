@@ -884,3 +884,16 @@ workers compiled through OpenRouter in 4.3 s, 3 calls, $0.001. Live on GitHub Pa
 (quasarbright.github.io/clanker-tycoon): Mike signed in with OpenRouter there, "Sign-in worked,
 everything was very nice."
 
+### 66. Stay on Claude Haiku 5.5 (2026-11-17)
+
+**Question:** Mike: "test models other than haiku that are similar price and intelligence to see if
+maybe some of them are faster ... there are also some free models on OpenRouter ... can we just
+like auto dispatch to one that's free but also similar intelligence and speed."
+**Picked:** keep Haiku 5.5. Ten models on the game's real compile path (six instructions, twice
+each): none was clearly faster, only DeepSeek V4.1 Flash and Muse Ember matched Haiku's 12/12, and
+free models are capped at 50 requests a day without credits. OpenRouter exposes prices and
+capabilities but not measured speed; it can sort providers by speed, and `openrouter/auto` can pick
+among an allow-list by cost tier, but there's no "free and fast" setting. Details:
+`tools/model-experiment/REPORT.md`. A free mode on Nemotron, or DeepSeek as a fallback, are
+options for later.
+

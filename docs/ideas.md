@@ -112,6 +112,9 @@ Ideas worth keeping that aren't planned yet.
 - **Recovering from problems.** Time controls, clear alerts, buffers, one-click cleanup (issue #10).
 - **Challenge mode.** Write the robots' programs yourself, no model during the shift (issue #11).
 - **The business side.** Competitors, stock (issue #8). Probably post-game at most.
+- **A free mode or a fallback model.** Nemotron 3.5 Super (free on OpenRouter) nearly matched Haiku,
+  but free models allow 50 requests a day without credits; DeepSeek V4.1 Flash matched it and costs
+  a third less (decision 66).
 - **A cheaper simulation for far-away lines,** if a big floor gets slow.
 
 ## Dropped

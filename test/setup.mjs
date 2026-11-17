@@ -4,4 +4,5 @@
 globalThis.location ??= new URL("http://localhost:8473/");
 if (!globalThis.navigator?.webdriver) Object.defineProperty(globalThis, "navigator", { value: { webdriver: true }, configurable: true });
 globalThis.addEventListener ??= () => {};
+globalThis.realFetch ??= globalThis.fetch; // tools that do need the network use this
 globalThis.fetch = async () => ({ ok: true, json: async () => ({}) });
