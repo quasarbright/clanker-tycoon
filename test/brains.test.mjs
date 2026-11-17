@@ -121,3 +121,13 @@ test("talk is just talk", async () => {
   assert.equal(r.kind, "talk");
   assert.equal(r.reply, "Thanks, boss!");
 });
+
+test("the model is told a 'talk' reply mustn't promise new work, for messages and for thoughts (Pam's playtest)", async () => {
+  const { s, ws: [blip] } = floor("Crew", "blip");
+  for (const trigger of [{ kind: "message", text: "Do whatever Pip needs." }, { kind: "unexpected", text: "nothing has moved" }]) {
+    const calls = fake({ reply: "I'm sticking to my instructions.", kind: "talk" });
+    await respond(s, blip, trigger);
+    const prompt = JSON.stringify(calls[0]);
+    assert.match(prompt, /promise any new work/, trigger.kind);
+  }
+});

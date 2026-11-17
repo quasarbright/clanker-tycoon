@@ -240,7 +240,7 @@ const RESPOND_SCHEMA = {
 const CHOICES = `Reply as JSON with these fields (leave the ones you don't use as ""):
 - "reply": what you say back out loud.
 - "kind": one of
-    "talk": nothing needs doing; keep doing what you were doing.
+    "talk": nothing needs doing; keep doing what you were doing. Your reply must not promise any new work ("I'll help", "I'll keep things tidy"): nothing changes, so say plainly that you're sticking to your instructions.
     "once": something to do now, one time. Put a short program for just that in "now" (it runs once, then you go back to your regular program), and a few words describing it in "summary".
     "change": your ongoing work changes for good. Put your complete new instructions in "instructions": everything you're now meant to do, the old instructions merged with the change, as one short sentence in the boss's own words (no step-by-step), and the full new program for them in "program".
     "boss": you need the boss: information you don't have, instructions that conflict, or something only the boss can do. Say what you need in "reply".
@@ -252,7 +252,7 @@ Prefer "talk" or "once". Use "change" only when your regular work really has to 
 const THINK_CHOICES = `Reply as JSON with these fields (leave the ones you don't use as ""):
 - "reply": what you say out loud.
 - "kind": one of
-    "talk": nothing needs doing, or you're waiting on something that's someone else's part; keep doing what you were doing.
+    "talk": nothing needs doing, or you're waiting on something that's someone else's part; keep doing what you were doing. Don't promise any new work in "reply".
     "once": something to do now, one time, that's part of your own instructions. Put a short program for just that in "now" (it runs once, then you go back to your regular program), and a few words describing it in "summary".
     "boss": you need the boss: information you don't have, instructions that conflict, or work that's outside your instructions (even if it looks like nobody is doing it). Say what you need in "reply".
 Only the boss can change your instructions, so never take on work they don't mention, not even once: if it seems needed, choose "boss" and say so. Prefer "talk" or "once".`;

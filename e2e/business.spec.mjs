@@ -264,6 +264,9 @@ test("reading and thinking look the same everywhere: the word, no dots, no speec
   await expect(page.locator(".ct-dots")).toHaveCount(0);
   await expect(page.locator(".ct-bubble")).toHaveCount(0);
   await expect(page.locator(".ct-bot-busy")).toHaveText("thinking");
+  // Under the robot's name, clear of the speech bubble and the stations above.
+  const [tag, name] = await page.evaluate(() => [".ct-bot-busy", ".ct-bot-name"].map((s) => document.querySelector(s).getBoundingClientRect().top));
+  expect(tag).toBeGreaterThan(name);
   await expect(page.locator("#crewReady .ct-busy")).toHaveText("thinking");
   await expect(page.locator(".ct-chip .ct-busy").first()).toHaveText("Thinking");
   await expect(page.locator("#chat .is-busyline")).toHaveText("Blip is thinking");
