@@ -568,7 +568,7 @@ big quota indicator with that stuff, since the quota shows as orders."
 - The top bar's center is the shift ("Shift 1 of 3"), its clock in big type, and the budget. The
   big shipped/quota count is gone; the tickets above the floor already show it.
 
-### 47. Contracts and equipment; the boss becomes your investor (2026-11-17)
+### 49. Contracts and equipment; the boss becomes your investor (2026-11-17)
 
 **Question:** Mike: "rather than you having a boss that sends you quotas, you're taking on
 contracts and you're gradually growing your business. By buying new equipment and new factories and
@@ -584,7 +584,7 @@ investor, who fronted your starting money and wants a growing cut every quarter;
 still the ending (#45). Replaces the boss's quotas and budgets in #44, and "no revenue" from #38.
 Symmetry (#43) is now a loose aim rather than a rule.
 
-### 48. Two living docs instead of one idea per issue (2026-11-17)
+### 50. Two living docs instead of one idea per issue (2026-11-17)
 
 **Question:** Mike: "My concern about issues is that some of them become out of date pretty
 quickly. Like they're entire concepts that we're just kind of not doing anymore, and I don't want to
