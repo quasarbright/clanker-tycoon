@@ -17,13 +17,12 @@ workspace `~/GitHub/CLAUDE.md` and `DESIGN.md` still apply on top of this.
 
 A factory management game where you run a floor staffed by AI robots. You write each robot's
 instructions in plain English; the model turns them into a routine and the sim plays it out. The
-long-term goal is a continuous career mode: start on one line, develop your people, delegate to
-managers, grow into something bigger (issue #3). Realistic enough to be interesting, but fun and
+long-term goal is growing your own factory business: start alone on one small line, take
+contracts, buy equipment and lines, hand lines to foremen (`docs/progression-design.md`). Realistic enough to be interesting, but fun and
 game-y in the right amount.
 
 Right now the game is a short, level-based tutorial that works out the core mechanics. Long-term
-systems (money, skill growth, morale, hiring and interviewing, managers, the business side) live in
-GitHub issues on this repo, one topic per issue, and don't get built until Mike asks.
+ideas live in `docs/ideas.md` and don't get built until Mike asks.
 
 ## Principles
 
@@ -163,17 +162,15 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   and why, and what would help. Never a canned error.
 
 **Progression**
-- Progression is one boss and a growing factory, not a rank ladder. You never leave the floor:
+- Progression is your own factory business: take contracts, get paid, buy equipment and then
+  lines, pay the dollar-eyed investor's growing cut. No rank ladder. You never leave the floor:
   growth makes it bigger (lines that feed each other) and has you talk to foremen instead of every
-  worker, but you still give
-  robots instructions and watch what they do with them. Mike: "When it gets too managerial, it
-  becomes a spreadsheet simulator." Budgets and quotas are a light layer between shifts.
-  Design: `docs/progression-design.md`.
+  worker, but you still give robots instructions and watch what they do with them. Mike: "When it
+  gets too managerial, it becomes a spreadsheet simulator." Design: `docs/progression-design.md`.
 - No factory building. New lines drop into pre-wired bays (supply bins, belts between lines,
   output belts already connected); anything flexible about routing is told to a foreman in words.
   The only thing the player builds is instructions.
-- Symmetry: what you do to the robots under you, the boss did to you first (quotas, budgets,
-  transfers, briefings), unless that would be silly (no robot-style rules for the player).
+- Delegation comes from scale, not rules: you can only talk to one robot at a time.
 
 **Controls**
 - Tools should let you choose what they act on: at Pack you pick which 3 widgets get boxed.
@@ -196,5 +193,13 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - A tab left open across an update shows a "game was updated, Reload" banner (`/api/version`).
   When Mike reports something that doesn't match the current code, suspect a stale tab first.
 - `tools/player-check.mjs` and `tools/balance.mjs` play levels headless to check timings and shift lengths.
-- Ideas go in this repo's issues, one topic each; check for an existing issue first.
+- **Where things are written down** (Mike, 2026-11-17: issues "become out of date pretty quickly",
+  and a couple of docs are "easier to keep those up to date"):
+  - `docs/progression-design.md`: the shape of the long-term game. Keep it short.
+  - `docs/ideas.md`: every idea, one short entry, in Now / Next / Maybe / Dropped (each dropped
+    one with a one-line reason). New ideas go here.
+  - `docs/decisions.md` and `docs/history.md` as below.
+  - GitHub issues only for concrete work that's ready to build, and bugs. Old idea issues 1 to 13
+    aren't kept up to date; don't clean them up.
+  When the direction changes, update both docs (and their artifacts) in the same turn.
 - Commit every change and push it to master right away (Mike, 2026-11-17: "you can be pushing stuff as we go"). Push with `git -C /Users/mdelmonaco/GitHub/clanker-tycoon push`, which the local settings allow.

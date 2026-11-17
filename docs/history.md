@@ -189,3 +189,31 @@ before the shift: 40 seconds on a private copy of the floor with a stage hand ha
 coworkers would. Run over the 102 programs in the model log, it flagged exactly one, which turned
 out to be Mike's joke order "run around in circles doing absolutely nothing", so the repair now
 gets to say "yes, really" and the worker goes and runs in circles.
+
+## Designing progression (2026-11-17, evening)
+
+With the quarter sandbox and "words matter" being built, Mike asked for a progression design "just
+to give me an idea of what this might look like." It changed shape five times in an evening.
+
+It started as a corporate ladder under the dollar-eyed robot from the favicon: quarters graded by a
+boss, promotions earned, then bought with leftover budget ("oh wait you use your money to buy a
+promotion, screw house lol"). A rank got cut ("this kind of feels like it shouldn't exist"). The
+hard part was the Plant manager rank: a dashboard of lines, then lines sharing a belt and a repair
+robot, then meetings with foremen. Each time Mike pushed back on the same thing: "you're kind of
+just setting quotas, which is like not that fun. It's kind of just a generic business game." And
+then the line that set the rule: "gameplay at a lower level is what really makes us special, like
+the whole give people instructions type of thing. When it gets too managerial, it becomes a
+spreadsheet simulator."
+
+So the player never leaves the floor. The factory grows instead (lines feeding lines, his idea), and
+foremen are robots who write their crew's instructions, so a mistake can be traced from a starved
+line back to what a foreman told a painter and what you told the foreman. The ladder went ("the
+factory just kind of grows"), then the boss's quotas went too: "rather than you having a boss that
+sends you quotas, you're taking on contracts and you're gradually growing your business ... That's
+pretty tycoon." The boss survived as your investor, and the ending came out of it: you buy him out
+and become the robot with dollar signs for eyes, saying "Numbers must go up." ("I really love that
+final scene.")
+
+Along the way the ideas outgrew GitHub issues, which went stale as fast as the design moved. They
+now live in two docs: a short progression doc and an ideas list sorted into Now, Next, Maybe and
+Dropped.

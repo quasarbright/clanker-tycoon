@@ -567,3 +567,30 @@ big quota indicator with that stuff, since the quota shows as orders."
   and 390×664, in the menu, planning, running, by hand and at shift end.
 - The top bar's center is the shift ("Shift 1 of 3"), its clock in big type, and the budget. The
   big shipped/quota count is gone; the tickets above the floor already show it.
+
+### 47. Contracts and equipment; the boss becomes your investor (2026-11-17)
+
+**Question:** Mike: "rather than you having a boss that sends you quotas, you're taking on
+contracts and you're gradually growing your business. By buying new equipment and new factories and
+stuff like that? That's pretty tycoon." And: "Equipment can also have its own attributes, like you
+could pay more for something that's not going to break down as often, and then you have to weigh
+the cost of labor breaking down with the cost of the better equipment."
+**Picked:** you own a small factory business. You choose contracts from a board (what, how many,
+deadline, pay, machines needed), so you choose your difficulty. Contracts pay, so money comes in
+again. You buy machines with attributes (wear, speed, capacity), then whole lines into pre-wired
+bays (#46). Foremen come from scale: with several lines and only one robot you can talk to at a
+time, delegating is the obvious move rather than a rule. The dollar-eyed robot becomes your
+investor, who fronted your starting money and wants a growing cut every quarter; buying him out is
+still the ending (#45). Replaces the boss's quotas and budgets in #44, and "no revenue" from #38.
+Symmetry (#43) is now a loose aim rather than a rule.
+
+### 48. Two living docs instead of one idea per issue (2026-11-17)
+
+**Question:** Mike: "My concern about issues is that some of them become out of date pretty
+quickly. Like they're entire concepts that we're just kind of not doing anymore, and I don't want to
+have to keep going around and cleaning the issues, but if there's just like a couple of docs, it's
+easier to keep those up to date." Also: "the progression doc shouldn't get overloaded."
+**Picked:** `docs/progression-design.md` stays short (the shape of the game);
+`docs/ideas.md` holds every idea as a short entry in Now / Next / Maybe / Dropped, each dropped
+one with its reason. Both are also artifacts. GitHub issues are only for ready-to-build work and
+bugs; old idea issues are left as they are. Replaces #5.
