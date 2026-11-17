@@ -53,6 +53,14 @@ dollar signs for eyes, saying "Numbers must go up." Then post-game, running the 
 1. What happens when you can't pay the investor's cut?
 2. What happens to a contract that's late?
 3. How long until you can buy him out?
+4. **Career or roguelike? (Undecided; revisit after Mike plays level 7.)** Mike: "a long term
+   career mode thing or more like a roguelike where you go on a run and you try to get really big
+   stuff and the contracts get harder and harder over time and you die when you fail a contract."
+   - *Career:* one long save that you keep growing. Failure costs money, not the game.
+   - *Roguelike:* short runs, contracts keep getting harder, and a failed contract ends the run.
+   - *A middle ground (suggested):* each run is a whole career, from a small shop to buying out the
+     investor. Contracts get harder as you go. If you miss badly enough, the investor pulls out and
+     the run ends. Runs are short enough to play again.
 
 The rest are with each idea in [ideas.md](ideas.md).
 
