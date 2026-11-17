@@ -4,5 +4,14 @@
   "type": "module",
   "dependencies": {
     "acorn": "8.14.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
+  },
+  "scripts": {
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node --test test/*.test.mjs && node tools/lang-test.mjs && node tools/dryrun-test.mjs",
+    "test:e2e": "playwright test",
+    "usage": "node server/usage.mjs"
   }
 }

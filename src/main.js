@@ -8,7 +8,7 @@ import {
 } from "./sim.js";
 import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond } from "./brains.js";
 import { LEVELS } from "./levels.js";
-import { backendLabel } from "./llm.js";
+import { backendLabel, useFakeLlm } from "./llm.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money } from "./quarter.js";
@@ -1346,4 +1346,5 @@ window.ct = {
   step: (dt) => { if (started) step(game, dt); handleEvents(); render(); },
   give: (id, text) => giveInstructions(worker(id), text), say: (id, text) => message(worker(id), "message", text),
   setPaused, begin, hire, playerActions, openBoard, get biz() { return biz; },
+  useFakeLlm, // e2e: answer model calls without a model
 };

@@ -206,6 +206,18 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   `?playlog`). Read it to see what a worker was told and decided.
 - A tab left open across an update shows a "game was updated, Reload" banner (`/api/version`).
   When Mike reports something that doesn't match the current code, suspect a stale tab first.
+- **Tests** (Mike, 2026-11-17: "I generally want to have test coverage so we don't end up introducing
+  bugs or regressing"): `npm test` runs everything; `npm run test:unit` is the fast part.
+  - `test/*.test.mjs` (node:test): level 7's money logic, the sim, the usage log, and compiling and
+    thinking in `brains.js` against a fake model (`useFakeLlm` in `src/llm.js`).
+  - `tools/lang-test.mjs` and `tools/dryrun-test.mjs`: the worker language and the dry run.
+  - `e2e/*.spec.mjs` (Playwright 1.63.0, its own server on port 8981): level 7 in a browser, with the
+    model faked through `window.ct.useFakeLlm`. No real model calls in any of these.
+  Every change comes with tests for what it changes, and `npm test` passes before every push. A bug
+  gets a failing test first.
+- **Model usage and cost:** every call's tokens, cost at API prices and source (`play` for Mike's
+  games, `test` for automated browsers, `check` for thinking-check) go into `logs/llm.jsonl`.
+  `npm run usage -- --since 2d` (or `--source play`, `--until <date>`) totals any window.
 - `tools/player-check.mjs` and `tools/balance.mjs` play levels headless to check timings and shift lengths;
   `balance.mjs` also plays every contract on the boards in `src/business.js` and prints the profit.
 - **Where things are written down** (Mike, 2026-11-17: issues "become out of date pretty quickly",
