@@ -96,7 +96,7 @@ const TOOL_TEXT = {
   pickUp: `pickUp(color)        pick up a widget here of that color; pickUp() takes any widget`,
   pickUpBox: `pickUpBox()          at PACK, pick up a finished box`,
   putDown: `putDown()            put down what you're holding here`,
-  pack: `pack(color)          at PACK, pack 3 widgets of that color into a box; pack() uses any 3`,
+  pack: `pack(color)          at PACK, pack 3 widgets of that color into a box (a box is always one color; they can be anywhere in PACK); pack() packs whichever color there are 3 of`,
   paint: `paint(color)         at PAINT, paint the widget you're holding ("red", "blue" or "green")`,
   service: `service()            at PAINT, service the machine (sets wear back to 0). Only does anything if you have the Repair skill; harmless otherwise`,
   wait: `wait(seconds)`,

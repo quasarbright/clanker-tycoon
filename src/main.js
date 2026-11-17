@@ -40,7 +40,7 @@ $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
 const STATION_HINTS = {
   BELT_A: "widgets arrive here",
   PAINT: "repaints a widget, wears with use",
-  PACK: "3 widgets → 1 box",
+  PACK: "3 of one color → 1 box",
   DOCK: "ship from here",
   BIN_1: "storage",
   BIN_2: "storage",
@@ -165,10 +165,8 @@ function buildFloor() {
 
 const itemHTML = (it, clickable = false) => it.kind === "box"
   ? `<span class="ct-box${it.building ? " is-building" : ""}" data-id="${it.id ?? ""}"${clickable && !it.building ? ` data-pick="box"` : ""}>${it.building ? `<span class="ct-box-fill"></span>` : ""}${it.colors.map((c) => `<i class="c-${c}"></i>`).join("")}</span>`
-  : `<span class="ct-dot c-${it.color}${packPick.has(it.id) ? " is-picked" : ""}" data-id="${it.id ?? ""}"${clickable ? ` data-pick="${it.color}"` : ""}></span>`;
+  : `<span class="ct-dot c-${it.color}" data-id="${it.id ?? ""}"${clickable ? ` data-pick="${it.color}"` : ""}></span>`;
 
-// Widgets you've picked at Pack to box up (ids). Cleared when you pack or walk away.
-const packPick = new Set();
 
 // ---------- moving yourself ----------
 
@@ -180,14 +178,6 @@ floor.addEventListener("click", (e) => {
   const pick = e.target.closest("[data-pick]");
   const st = e.target.closest(".ct-st");
   const p = game.player;
-  // Standing at Pack: clicking a widget there picks it (or un-picks it) for the next box.
-  if (st && pick && st.dataset.key === "PACK" && p.station === "PACK" && !p.act && pick.dataset.pick !== "box") {
-    const id = +pick.closest("[data-id]").dataset.id;
-    if (packPick.has(id)) packPick.delete(id);
-    else if (packPick.size < 3) packPick.add(id);
-    lastVersion = -1; lastHands = "";
-    return;
-  }
   if (st) {
     const then = pick ? (pick.dataset.pick === "box" ? { action: "pickUp" } : { action: "pickUp", color: pick.dataset.pick }) : null;
     logEvent(game.t, "you", { go: st.dataset.key, then });
@@ -278,7 +268,6 @@ function nudgeStart() {
 function doAct(act) {
   logEvent(game.t, "you", { action: act.a });
   playerDo(game, act.a);
-  if (act.a.action === "pack") packPick.clear();
   lastVersion = -1;
 }
 
@@ -298,12 +287,11 @@ function playerActions() {
     if (canDrop) st === "PAINT" ? acts.push(drop) : acts.unshift(drop);
   } else {
     if (st === "PACK") {
-      // Click widgets at Pack to choose which 3 go in the box; with nothing picked, the first 3.
-      const widgets = items.filter((i) => i.kind === "widget");
-      for (const id of [...packPick]) if (!widgets.some((i) => i.id === id)) packPick.delete(id);
-      if (packPick.size === 3) acts.push({ label: "Pack these 3", a: { action: "pack", ids: [...packPick] } });
-      else if (packPick.size) acts.push({ label: `Pick ${3 - packPick.size} more to pack`, disabled: true });
-      else if (widgets.length >= 3) acts.push({ label: "Pack 3", a: { action: "pack" } });
+      // One button per color there are 3 of: a box is one color, wherever the widgets sit. The
+      // colors the order still needs come first.
+      const needed = (c) => game.order.some((l) => l.done < l.count && (l.color === c || l.color === "any"));
+      const ready = COLORS.filter((c) => items.filter((i) => i.kind === "widget" && i.color === c).length >= 3);
+      for (const c of [...ready.filter(needed), ...ready.filter((c) => !needed(c))]) acts.push({ label: `Pack ${c}`, a: { action: "pack", color: c } });
       if (items.some((i) => i.kind === "box" && !i.building)) acts.push({ label: "Pick up box", a: { action: "pickUp" } });
     }
     for (const c of COLORS) if (items.some((i) => i.kind === "widget" && i.color === c)) acts.push({ label: `Pick up ${c}`, a: { action: "pickUp", color: c } });
@@ -331,7 +319,6 @@ function renderHands() {
   else if (acts.length) body = acts.map((a, i) => `<button class="ct-btn ${i === 0 && !a.disabled ? "is-gold" : ""}" type="button" data-act="${i}" ${a.disabled ? "disabled" : ""}>${a.label}${a.disabled ? "" : `<kbd>${i === 0 ? "Space" : i + 1}</kbd>`}</button>`).join("");
   else if (!where) body = `<span class="ct-hands-note">Walk to a station: click it, or use WASD / arrow keys.</span>`;
   else body = `<span class="ct-hands-note">Nothing to do here right now.</span>`;
-  if (p.station === "PACK" && !busy && !p.holding) body += `<span class="ct-hands-note">Click widgets at Pack to choose which go in the box.</span>`;
   $("#hands").innerHTML = head + `<span class="ct-hands-acts">${body}</span>`;
   $("#hands").querySelectorAll("[data-act]").forEach((b) => b.addEventListener("click", () => {
     const act = playerActions()[+b.dataset.act];
@@ -917,6 +904,12 @@ function render() {
     if (!bot) continue;
     const x = Math.min(96, Math.max(4, w.x + (spreads.get(w) ?? 0)));
     bot.style.transform = `translate(${x * k}px, ${w.y * k}px)`;
+    // Moving since last frame turns a Fast robot's wheels, backwards when heading left.
+    const dx = w.x - (bot._x ?? w.x), dy = w.y - (bot._y ?? w.y);
+    const moving = Math.hypot(dx, dy) > 1e-3;
+    if (moving !== bot._moving) { bot.classList.toggle("is-moving", moving); bot._moving = moving; }
+    if (moving && Math.abs(dx) > 1e-3) bot.classList.toggle("is-backwards", dx < 0);
+    bot._x = w.x; bot._y = w.y;
     const held = w.holding ? itemHTML(w.holding) : "";
     if (bot._held !== held) { bot.querySelector(".ct-bot-held").innerHTML = held; bot._held = held; }
     // Anything that takes time shows how far along it is (waiting fills toward giving up).
@@ -959,7 +952,6 @@ function render() {
   // In a quarter: the money left (the crew's pay comes out at Start). Otherwise what the crew costs.
   const labor = quarter ? money(quarter.money) : `$${started ? game.laborCost : payroll()}`;
   if ($("#labor").textContent !== labor) $("#labor").textContent = labor;
-  if (game.player.station !== "PACK" && packPick.size) { packPick.clear(); lastVersion = -1; }
   // With a shift length the clock counts down what's left of it.
   const left = level.shift ? Math.max(0, level.shift - game.t) : null;
   const clock = left == null ? fmtTime(game.t) : `${fmtTime(Math.ceil(left))} left`;
@@ -1053,7 +1045,6 @@ function openLevel(L, { again = false, shift = "restart" } = {}) {
   $("#levelName").textContent = quarter ? `Shift ${quarter.shift} of ${L.quarter.shifts}` : `Level ${L.id}: ${L.name}`;
   $("#goalLabel").textContent = quarter ? "This quarter" : "Today's order";
   $("#laborLabel").textContent = quarter ? "budget" : "labor";
-  packPick.clear();
   $("#startScreen").classList.add("is-hidden");
   $("#endScreen").classList.add("is-hidden");
   $("#pauseScreen").classList.add("is-hidden");

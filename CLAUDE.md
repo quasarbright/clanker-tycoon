@@ -78,7 +78,8 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
 - The page never scrolls, in any state (Mike: "the main page shouldn't scroll at all"). Everything
   fits the window; only inner panels (the crew list, the chat) scroll.
 - You can see what a robot can do by looking at it: skills are tools they carry, attributes change
-  their look (glasses for Smart, a bolt for Fast). New skills and attributes get a look too.
+  their look (glasses for Smart, wheels for Fast that turn as it moves). New skills and attributes
+  get a look too.
 
 **Levels and tutorials**
 - Tutorials are minimal: just enough to get the idea across, nothing more (level 2 is one box;
@@ -173,7 +174,8 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
 - Delegation comes from scale, not rules: you can only talk to one robot at a time.
 
 **Controls**
-- Tools should let you choose what they act on: at Pack you pick which 3 widgets get boxed.
+- Tools should let you choose what they act on: at Pack you choose the color ("Pack red"), and a
+  box is always one color, taken from wherever those widgets sit. Drop-off order never matters.
 
 ## Working on this repo
 

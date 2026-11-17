@@ -594,3 +594,21 @@ easier to keep those up to date." Also: "the progression doc shouldn't get overl
 `docs/ideas.md` holds every idea as a short entry in Now / Next / Maybe / Dropped, each dropped
 one with its reason. Both are also artifacts. GitHub issues are only for ready-to-build work and
 bugs; old idea issues are left as they are. Replaces #5.
+
+### 51. Pack by color; Fast robots roll on wheels (2026-11-17)
+
+**Problem:** Mike: "at packing, we should have an option to pack red or pack blue etc. just one
+color type per box for now. bc right now if packing has a RBR you're fucked. shouldn't depend on
+drop off order." Your Pack 3 button took the first three widgets in drop-off order, so red, blue,
+red made a mixed box that counted for nothing, and picking widgets by clicking them wasn't obvious.
+And on Fast: the lightning bolt "look[s] like Harry Potter", wings looked like "Albert Einstein
+hair".
+**Options for Fast (mocked on real robots at game size):** A wheels, B racing stripes, C speed
+lines while moving, D sneakers.
+**Picked:**
+- At Pack you get one button per color there are 3 of ("Pack red", "Pack blue"), the colors the
+  order still needs first. It takes 3 of that color from wherever they sit. A box is always one
+  color: a robot's `pack()` with no color packs a color there are 3 of (the one the order needs
+  first), never a mix. Clicking widgets at Pack to pick 3 is gone. Replaces the pick-3 control.
+- Fast is A, wheels under the head ("I like wheels. have them turn when he moves"). They turn while
+  the robot moves, backwards when it heads left. Replaces the bolt from #48.

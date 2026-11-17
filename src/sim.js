@@ -477,18 +477,23 @@ function pack(s, w, a, act) {
     delete act.box.building; s.version++;
     return ok(s, w, a);
   }
-  let chosen;
-  if (a.ids?.length) {
-    chosen = a.ids.map((id) => items.find((i) => i.id === id && i.kind === "widget"));
-    if (chosen.length !== 3 || chosen.some((i) => !i)) return fail(s, w, a, "pick 3 widgets at Pack to box up");
-  } else {
-    const pool = items.filter((i) => i.kind === "widget" && (!a.color || i.color === a.color));
-    if (pool.length < 3) {
-      const what = a.color ? `${a.color} widgets` : "widgets";
-      return keepWaiting(s, w, act) || fail(s, w, a, `there are only ${pool.length} ${what} at Pack, a box needs 3`);
-    }
-    chosen = pool.slice(0, 3);
+  // A box is always one color: "pack red" takes 3 red widgets from wherever they sit at Pack, so
+  // the order things were dropped off doesn't matter. pack() with no color packs a color there are
+  // 3 of, the one the order still needs first.
+  const widgets = items.filter((i) => i.kind === "widget");
+  const of = (c) => widgets.filter((i) => i.color === c);
+  let color = COLORS.includes(a.color) ? a.color : null;
+  if (!color) {
+    const ready = COLORS.filter((c) => of(c).length >= 3);
+    const needed = (c) => s.order.some((l) => l.done < l.count && (l.color === c || l.color === "any"));
+    color = ready.find(needed) ?? ready[0] ?? null;
   }
+  const pool = color ? of(color) : [];
+  if (pool.length < 3) {
+    const what = a.color ? `${a.color} widgets` : "widgets of one color";
+    return keepWaiting(s, w, act) || fail(s, w, a, `there are only ${a.color ? pool.length : Math.max(0, ...COLORS.map((c) => of(c).length))} ${what} at Pack, a box needs 3`);
+  }
+  const chosen = pool.slice(0, 3);
   for (const it of chosen) items.splice(items.indexOf(it), 1);
   const time = machineTime(w, "pack");
   const box = { id: ++s.ids, kind: "box", colors: chosen.map((i) => i.color), building: { start: s.t, until: s.t + time } };

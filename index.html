@@ -277,7 +277,6 @@
     .ct-box.is-building i { opacity: .5; }
     .ct-box-fill { position: absolute; inset: 0; background: #b88a52; transform-origin: left; transform: scaleX(0); }
     .ct-box i { position: relative; }
-    .ct-dot.is-picked { outline: 2px solid var(--accent); outline-offset: 2px; }
     /* machine wear: fills with every job, full = stopped until serviced */
     .ct-wear { position: absolute; left: 8%; right: 8%; bottom: calc(var(--u) * .7); height: calc(var(--u) * .6); border-radius: 99px; background: #0008; overflow: hidden; }
     .ct-wear i { display: block; height: 100%; background: linear-gradient(90deg, var(--success), var(--accent) 60%, var(--danger)); background-size: 100% 100%; transform-origin: left; transform: scaleX(0); transition: transform .3s; }
@@ -419,7 +418,14 @@
     /* what a robot's skills and attributes look like (looks.js): the same placement on the floor
        and on the small faces, since both put the eyes in the same spot */
     .ct-glasses { position: absolute; left: 12%; width: 76%; top: 27.5%; z-index: 1; pointer-events: none; display: block; }
-    .ct-bolt { position: absolute; left: 2%; top: 0; width: 36%; transform: rotate(-12deg); z-index: 1; display: block; }
+    /* Fast: wheels under the head, turning while the robot walks (forwards or backwards by direction) */
+    .ct-wheels { position: absolute; left: 0; width: 100%; top: 76%; display: block; pointer-events: none; }
+    .ct-bot-head:has(.ct-wheels) { margin-bottom: calc(var(--u) * 1.1); }
+    .ct-face .ct-wheels { left: 8%; width: 84%; top: 80%; }
+    .ct-wheel { transform-box: fill-box; transform-origin: center; animation: ct-roll .45s linear infinite paused; }
+    .ct-bot.is-moving .ct-wheel { animation-play-state: running; }
+    .ct-bot.is-moving.is-backwards .ct-wheel { animation-direction: reverse; }
+    @keyframes ct-roll { to { transform: rotate(360deg); } }
     .ct-tools { position: absolute; left: -40%; bottom: -10%; width: 62%; display: flex; flex-direction: column-reverse; z-index: 1; pointer-events: none; }
     .ct-tool { width: 100%; display: block; filter: drop-shadow(0 1px 1px #000a); }
     .ct-tools .ct-tool + .ct-tool { margin-bottom: -20%; }
