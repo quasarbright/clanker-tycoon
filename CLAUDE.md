@@ -84,6 +84,7 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   your reasoning (Mike, 2026-11-17: "i shouldn't see this, it should be caught before something
   comes to me ... do visual spot-checks for ugliness"). Disabled gold buttons with a gold lip and
   outlines that don't follow rounded corners were the examples.
+- **Showing screenshots and mocks:** each screenshot or mock is its own full-resolution PNG (2x), saved to /mnt/project-files and numbered in order for sequences (1-…, 2-…). No combined images, no gallery pages or artifacts for them (Mike, 2026-11-17: one big image is awkward, hard to zoom, and loses quality; he reads on mobile).
 - PC only (Mike, 2026-11-17: "This is going to be a PC only game"). Design for wide windows and
   use the horizontal space; phones don't need to work.
 - You can see what a robot can do by looking at it: skills are tools they carry, attributes change

@@ -74,3 +74,7 @@ pay. Source: `src/business.js`, decisions 53 to 67.
   into Maybe. Mark's take: the bank is the run-to-run meta-progression (the player's knowledge
   carries over, not their robots); onboarding and veterans make losing a robot cost something.
 - 2026-11-17: brief written from the progression doc, ideas, decisions 38 to 67 and `business.js`.
+
+## Showing images
+
+Images: each screenshot or mock is its own full-resolution PNG (2x), saved to /mnt/project-files and numbered in order for sequences (1-…, 2-…). No combined images, no gallery pages or artifacts for them (Mike, 2026-11-17: one big image is awkward, hard to zoom, and loses quality; he reads on mobile).

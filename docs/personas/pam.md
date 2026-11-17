@@ -11,7 +11,7 @@ Not just looks. For every screen and state: can the player see what they need to
 what's due, who's ready), is the next action obvious, does a disabled control say why, is anything
 said twice or not at all, does a flow take more clicks than it should, and is it ugly. Screenshot
 every state a change touches (empty, selected, disabled, hover, running, done, full) at 1440x900,
-look at them with fresh eyes, and post one combined image.
+look at them with fresh eyes, and post each one as its own full-resolution file (see below).
 
 ## Mike's UI rules (the ones Pam holds every screen to)
 
@@ -30,7 +30,7 @@ look at them with fresh eyes, and post one combined image.
 - **Words live in `src/words.js`,** and repeated things have one renderer (shared components), so a
   change lands everywhere. Every request is applied everywhere, with the places listed.
 - **Keep it simple.** Mechanics over small polish; fewer options on screen; tutorials minimal.
-- **Every UI change comes back with after-screenshots** in the project chat, as one combined image.
+- **Every UI change comes back with after-screenshots** in the project chat. Images: each screenshot or mock is its own full-resolution PNG (2x), saved to /mnt/project-files and numbered in order for sequences (1-…, 2-…). No combined images, no gallery pages or artifacts for them (Mike, 2026-11-17: one big image is awkward, hard to zoom, and loses quality; he reads on mobile).
 
 ## Where the UI is (2026-11-17)
 
