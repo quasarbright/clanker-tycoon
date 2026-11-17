@@ -366,7 +366,8 @@
     .ct-pin-text { margin-top: 4px; }
     .ct-pin summary:hover .ct-label, .ct-pin summary:hover svg { color: var(--text); }
     .ct-pin .ct-label { font-size: .62rem; }
-    .ct-log { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; padding-right: 2px; }
+    .ct-log { display: flex; flex-direction: column; gap: 6px; max-height: 360px; overflow-y: auto; padding-right: 2px; }
+    .ct-log > :first-child { margin-top: auto; } /* short conversations sit at the bottom, by the text box */
     .ct-log[hidden] { display: none; }
     .ct-msg { max-width: 88%; padding: 6px 10px; font-size: .9rem; line-height: 1.3; overflow-wrap: anywhere; }
     .ct-msg .ct-label { display: block; font-size: .6rem; }
@@ -401,6 +402,13 @@
 
     /* the floor stays in view while the crew list scrolls */
     @media (min-width: 901px) { .ct-main > section { position: sticky; top: 8px; } }
+    /* desktop: the sidebar is a full-height column; the open chat takes whatever the list leaves */
+    @media (min-width: 901px) {
+      .ct-side { position: sticky; top: 8px; height: calc(100dvh - 104px); min-height: 420px; }
+      .ct-crew { flex: 0 1 auto; max-height: 55%; overflow-y: auto; }
+      .ct-chat { flex: 1 1 auto; min-height: 0; }
+      .ct-chat .ct-log { flex: 1 1 auto; min-height: 0; max-height: none; }
+    }
     .ct-stale { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 20; display: flex; gap: 12px; align-items: center;
       background: var(--panel); border: 1px solid var(--accent); border-radius: 12px; padding: 8px 10px 8px 16px; box-shadow: 0 10px 30px #000a; }
   </style>
