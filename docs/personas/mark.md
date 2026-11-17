@@ -60,4 +60,7 @@ pay. Source: `src/business.js`, decisions 53 to 67.
 
 ## Log
 
+- 2026-11-17: Mike's idea of veterans' chat memory, onboarding, policies and a policy bank went
+  into Maybe. Mark's take: the bank is the run-to-run meta-progression (the player's knowledge
+  carries over, not their robots); onboarding and veterans make losing a robot cost something.
 - 2026-11-17: brief written from the progression doc, ideas, decisions 38 to 67 and `business.js`.
