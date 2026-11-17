@@ -422,3 +422,15 @@ painter, a repair worker pass; only-ships, ends-early and a tight loop fail). Of
 `logs/llm.jsonl`, it flagged one: "run around in circles", which the repair now accepts. In the
 game, "pack, but only while Gary-7 is at the dock" with no Gary hired came back red: "I keep
 waiting at PACK and never get to packing because Gary-7 isn't standing at the dock."
+
+### 38. A line lead's budget only goes down; leftovers are parked (2026-11-17)
+
+**Question:** in the progression mocks, the between-shifts card showed money spent against a pace.
+Mike: a "line manager shouldn't worry about how much money is earned by selling, that doesn't
+really make sense. I think just a dwindling budget for the quarter makes more sense, and quota is
+the thing that should go up."
+**Picked:** the quarter shows quota going up and budget left going down, with no revenue in view.
+Grades no longer count "over budget" as a miss, since Start already waits for payroll (#35).
+What happens to money left at the end is undecided; Mike's lead is that it goes to you, for your
+own little house you see between shifts. Replaces the "capital" fund in the first draft of
+`docs/progression-design.md`.

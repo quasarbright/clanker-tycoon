@@ -40,7 +40,7 @@ Each rank's quotas are sized so that the way you played the previous rank stops 
 2. **Before each shift:** hire and let people go, train, buy, write and adjust instructions.
    Hiring stays between shifts only (decision #7).
 3. **The shift** runs as it does now: orders arrive, the crew works them, wages tick.
-4. **Shift report.** Shipped against the pace needed, spent against the budget's pace, and anything
+4. **Shift report.** Shipped against the pace needed, the budget left, and anything
    worth knowing (a machine that sat worn out for 40 s, a worker who came to your desk three times).
 5. After the last shift, **the review.**
 
@@ -52,13 +52,16 @@ the run): a shift going wrong becomes something you recover from between shifts.
 
 ### Money inside a quarter
 
-- **Budget** is what the boss gives you for the quarter. Wages, hiring fees, training and purchases
-  come out of it.
-- Going over isn't blocked (a shift doesn't stop because you're out of money), but ending the
-  quarter over budget counts against your review.
-- **Unspent budget** carries into a small **capital** fund that belongs to you, not the quarter. It
-  buys lasting things between quarters: machines, training, a bigger floor. That gives
-  a reason to run lean beyond passing. (Open question 3.)
+- **Budget** is what the boss gives you for the quarter, and it only goes down. Wages, hiring fees,
+  training and purchases come out of it. A line lead doesn't see sales or revenue: the money a box
+  makes is the company's business, not yours (Mike: a line manager worrying about money earned by
+  selling "doesn't really make sense"). Quota is the number that goes up; budget is the one that
+  goes down.
+- As in the quarter sandbox (decision #35), Start waits until the budget covers the shift's payroll,
+  so you can't overspend. Running short means a smaller crew, not debt.
+- **What happens to money left over** is undecided (open question 3). Mike's idea: it goes to you,
+  and you spend it on your own little house that you see between shifts. That makes running lean
+  pay off for you personally, separate from the floor.
 
 ---
 
@@ -70,9 +73,9 @@ Each quarter ends with one of three grades:
 
 | Grade | When | What happens |
 |---|---|---|
-| **Beat it** | Quota met with a shift to spare, or met at least 20% under budget | Counts double toward promotion |
-| **Met** | Quota met, at or under budget | Counts toward promotion |
-| **Missed** | Quota short, or over budget | You're **on notice** |
+| **Beat it** | Quota met with a shift to spare, or with at least 20% of the budget left | Counts double toward promotion |
+| **Met** | Quota met | Counts toward promotion |
+| **Missed** | Quota short | You're **on notice** |
 
 **Promotion** comes after a set number of credits at your rank: 2 at Line lead, 3 at Supervisor,
 4 at Plant manager. Beat-it quarters get you there faster. Lower ranks are short on purpose
@@ -81,7 +84,7 @@ Each quarter ends with one of three grades:
 **Failure:**
 - Missed once: on notice. The next quarter's quota stays the same instead of growing, and the boss
   says so.
-- Missed twice in a row: **demoted** one rank. You keep your crew and capital; you lose the
+- Missed twice in a row: **demoted** one rank. You keep your crew; you lose the
   rank's unlocks until you earn it back. At the bottom rank there's nowhere to fall, so you replay
   the quarter.
 - No game over in the main mode. Getting fired (a run ending) is the roguelike variant's failure,
@@ -96,10 +99,9 @@ voice: the dollar eyes, the corporate phrasing.
 
 | Carries | Doesn't |
 |---|---|
-| Your crew: every worker, their skills, attributes, wage, experience | The budget (each quarter gets a fresh one) |
+| Your crew: every worker, their skills, attributes, wage, experience | The budget (each quarter gets a fresh one; leftovers are open question 3) |
 | Each worker's instructions, as written on their card | Orders in progress (the quarter closes them out) |
 | The floor: machines, layout, stations you bought | The shift clock |
-| Capital (unspent budget, see above) | |
 | Your rank and promotion credits | |
 | Who runs what (foremen, managers) | |
 
@@ -141,7 +143,7 @@ Each rank says what you do, what's new, and why the previous way of playing stop
 
 ### Rank 3: Plant manager
 - **You:** a plant of 3 to 5 lines. You don't walk the floor anymore. Your screen is the plant view:
-  one row per line, its foreman, its pace and its spending. Click a line to drop in and watch it, or
+  one row per line, its foreman, its pace and its budget left. Click a line to drop in and watch it, or
   open a chat with anyone there.
 - **New:** **managers**, a step above foremen, who can hire and fire for their lines within a budget
   you give them. You split the quarter's budget across lines.
@@ -221,8 +223,9 @@ following the no-random-breakdowns principle.
 1. **Failure:** demotion with no game over (proposed), or getting fired ends the run?
 2. **Rank 0:** is the tutorial reframed as "your first week as a floor hand", or kept separate?
    Does being a worker under a robot boss stay that short?
-3. **Capital:** should unspent budget carry over (proposed), or is the budget use-it-or-lose-it
-   with the grade as the only reward?
+3. **Leftover budget:** parked for later. Mike's lead: it goes to you, to spend on your own little
+   house that you see between shifts. Open: what the house buys you (looks only, or something
+   that helps on the floor), and whether the boss takes a cut.
 4. **Grades:** three grades (beat / met / missed) or just pass and fail?
 5. **Quota counting:** does quota count boxes shipped of any kind, or must every order in the
    quarter be filled? (The second makes order mix matter more.)
