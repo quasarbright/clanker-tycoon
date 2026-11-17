@@ -44,6 +44,19 @@ let biz = null; // your business (business.js), once you've opened level 7; live
 $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
 
 /**
+ * A robot as a card: face, name, pay per shift, skills and traits, and (optionally) their blurb,
+ * an action on the right (Schedule, Recruit …) and something underneath (training buttons). The
+ * same everywhere a robot is listed: the crew list, Recruit, Training. `cls` sets the container's
+ * look for where it sits.
+ */
+function robotCard(r, { cls = "", blurb = true, action = "", extra = "" } = {}) {
+  return `<div class="ct-robot ${cls}" style="--c:${r.color}">
+    ${faceHTML(r)}<div class="ct-robot-info"><div><b>${r.name}</b> <span class="ct-wage">$${r.wage}/shift</span></div>${skillBadges(r)}${blurb ? `<div class="ct-robot-blurb">${r.blurb}</div>` : ""}</div>
+    ${action ? `<div class="ct-robot-act">${action}</div>` : ""}${extra}
+  </div>`;
+}
+
+/**
  * An order ticket: three dots of the color (one for loose widgets) and a count, the same
  * everywhere (the floor, the end cards, the board). Options: `cls`, `tip` (a tooltip), `pay` (a
  * contract's pay, shown after the count; `paid` checks it), `loose` (widgets, not boxes).
@@ -476,11 +489,7 @@ function renderList() {
         // In a quarter you can't hire past what the budget covers for this shift.
         const broke = cantAfford(c);
         const tip = broke ? `With ${c.name} the crew would cost $${payroll() + c.wage} for the shift, and you have ${money(quarter.money)}.` : "";
-        return `<div class="ct-cand" style="--c:${c.color}">
-          ${faceHTML(c)}<span><b>${c.name}</b> <span class="ct-wage">$${c.wage}/shift</span></span>
-          <button class="ct-btn is-gold ct-small-btn" type="button" data-hire="${c.id}" ${broke ? "disabled" : ""} ${tip ? `data-tooltip="${tip}"` : ""}>${words().hire}</button>
-          <span class="ct-cand-line">${skillBadges(c)}<span>${c.blurb}</span></span>
-        </div>`;
+        return robotCard(c, { cls: "ct-cand", action: `<button class="ct-btn is-gold ct-small-btn" type="button" data-hire="${c.id}" ${broke ? "disabled" : ""} ${tip ? `data-tooltip="${tip}"` : ""}>${words().hire}</button>` });
       }).join("") : "");
   list.hidden = !list.innerHTML;
   list.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openChat(b.dataset.open)));
@@ -1266,10 +1275,7 @@ function renderBoard() {
   // ----- recruit: three robots this visit
   $("#recruits").innerHTML = recruitOffers(biz).map((id) => {
     const r = robotOf(biz, CANDIDATES.find((c) => c.id === id)), done = biz.crew.includes(id), price = recruitPrice(biz, id);
-    return `<div class="ct-biz-bot ${done ? "is-done" : ""}" style="--c:${r.color}">
-      ${faceHTML(r)}<div><div><b>${r.name}</b> <span class="ct-wage">$${r.wage}/shift</span></div>${skillBadges(r)}<div class="ct-biz-blurb">${r.blurb}</div></div>
-      <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} ${WORDS.recruited}</span>` : `<button class="ct-btn is-gold" data-recruit="${id}" ${short(price)}>${WORDS.recruit} $${price}</button>`}</div>
-    </div>`;
+    return robotCard(r, { cls: `ct-biz-bot ${done ? "is-done" : ""}`, action: `${done ? `<span class="ct-owned">${CHECK} ${WORDS.recruited}</span>` : `<button class="ct-btn is-gold" data-recruit="${id}" ${short(price)}>${WORDS.recruit} $${price}</button>`}` });
   }).join("") || `<p class="ct-offer-note">Everyone's already on your crew.</p>`;
 
   // ----- training: your crew
@@ -1281,11 +1287,8 @@ function renderBoard() {
       const tip = biz.money < TRAIN_PRICE ? short(TRAIN_PRICE) : `data-tooltip="${(isSkill ? SKILLS : ATTRIBUTES)[k].tip} ${r.name} would then cost $${after} a shift."`;
       return `<button class="ct-train-btn ${isSkill ? "" : "is-trait"}" data-train="${id}:${k}" ${tip}>+ ${(isSkill ? SKILLS : ATTRIBUTES)[k].label}</button>`;
     };
-    return `<div class="ct-biz-bot ct-trainee" style="--c:${r.color}">
-      ${faceHTML(r)}<div><div><b>${r.name}</b> <span class="ct-wage">$${r.wage}/shift</span></div>${skillBadges(r)}</div>
-      <div class="ct-train-row">${TRAINABLE.filter((k) => !r.skills.includes(k)).map((k) => btn(k, true)).join("")}${
-        TRAINABLE_ATTRS.filter((k) => !r.attributes.includes(k)).map((k) => btn(k, false)).join("")}</div>
-    </div>`;
+    return robotCard(r, { cls: "ct-biz-bot ct-trainee", blurb: false, extra: `<div class="ct-train-row">${TRAINABLE.filter((k) => !r.skills.includes(k)).map((k) => btn(k, true)).join("")}${
+      TRAINABLE_ATTRS.filter((k) => !r.attributes.includes(k)).map((k) => btn(k, false)).join("")}</div>` });
   }).join("");
 
   // ----- machines: three this visit, and what's on your floor
