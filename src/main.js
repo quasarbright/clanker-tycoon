@@ -459,6 +459,10 @@ function buildChat() {
       e.preventDefault();
       send();
     });
+    const log = $(".ct-log", box);
+    log._stick = true;
+    log.addEventListener("scroll", () => { log._stick = log.scrollHeight - log.scrollTop - log.clientHeight < 24; });
+    new ResizeObserver(() => { if (log._stick) log.scrollTop = log.scrollHeight; }).observe(log);
     w._cardSig = null;
     w._logSig = null;
   } else {
@@ -503,6 +507,9 @@ function renderLog(w, box) {
   if (busy) lines.push(`<div class="ct-msg is-them is-typing" aria-label="${w.compiling ? "reading" : "thinking"}"><span class="ct-dots"><i></i><i></i><i></i></span></div>`);
   el.innerHTML = lines.join("");
   el.hidden = !lines.length;
+  // Every new message scrolls to the bottom, and so does anything that changes the log's size while
+  // you're reading the latest (the instructions row appearing above it, the window resizing).
+  el._stick = true;
   el.scrollTop = el.scrollHeight;
 }
 
