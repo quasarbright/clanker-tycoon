@@ -57,6 +57,9 @@ Agreed direction, not built yet. Roughly in roadmap order.
 
 Ideas worth keeping that aren't planned yet.
 
+- **A retired mentor.** An old robot, retired from the floor, who gives you advice. He could replace
+  the generic tutorial coach and deliver lessons like "pause and fix it". A counterweight to the
+  dollar-eyed investor.
 - **The ending: buy out the investor.** Your savings buy him out; final scene, you're the
   dollar-eyed robot saying "Numbers must go up." Mike loves it. Issue #14.
 - **Post-game.** Keep running the company as owner: endless contracts, or become an investor
