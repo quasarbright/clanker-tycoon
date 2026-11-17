@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { newGame, step, setProgram, RULES, toolNamesFor } from "../src/sim.js";
 import { parseProgram, checkProgram } from "../src/lang.js";
-import { newQuarter, payShift, closeShift, nextShift, restartShift, shiftPayroll } from "../src/quarter.js";
+import { newQuarter, payShift, closeShift, nextShift, restartShift, shiftPayroll, pace } from "../src/quarter.js";
 
 const FLOOR = (extra = {}) => ({
   id: 99, name: "Test floor", stations: ["SUPPLY", "PAINT", "PACK", "DOCK", "BIN_1", "BIN_2"],
@@ -186,4 +186,10 @@ test("a quarter: Start pays the crew, shipped boxes carry over, a replay undoes 
   assert.equal(q.shift, 2);
   const g2 = newGame(L, crew, 1, { done: q.done });
   assert.equal(g2.order[0].done, 4, "the next shift starts from what's shipped");
+});
+
+test("the shift card's pace: this shift's rate carried over the shifts left", () => {
+  assert.deepEqual(pace([20], [6], 0, 2), { total: 20, now: 6, projected: 18 });
+  assert.deepEqual(pace([20, 9], [12, 9], 10, 1), { total: 29, now: 21, projected: 29 });
+  assert.equal(pace([10], [15], 5, 1).now, 10, "extra boxes of a finished line don't count");
 });

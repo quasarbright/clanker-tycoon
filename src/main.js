@@ -13,7 +13,7 @@ import { getKey, setKey, signIn, finishSignIn } from "./openrouter-auth.js";
 import { WORDS, applyWords } from "./words.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
-import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money } from "./quarter.js";
+import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, pace } from "./quarter.js";
 import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
   RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers } from "./business.js";
 import { SKILL_TIER, wageOf } from "./wages.js";
@@ -42,6 +42,16 @@ let quarter = null; // the quarter being played (quarter.js), when the level is 
 let biz = null; // your business (business.js), once you've opened level 7; lives in memory like the rest
 
 $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
+
+/**
+ * After a shift with more to go: whether the quarter is on pace, at this shift's rate. `counts` and
+ * `done` are per order line, `before` the total shipped before this shift.
+ */
+function paceLine(counts, done, before, shiftsLeft) {
+  const { total, projected } = pace(counts, done, before, shiftsLeft);
+  if (projected >= total) return `At this pace you'll finish.`;
+  return `At this pace you'll ship about ${projected} of ${total}: ${total - projected} short. Put more robots on the shift or split the work differently.`;
+}
 
 /**
  * A robot as a card: face, name, pay per shift, skills and traits, and (optionally) their blurb,
@@ -489,7 +499,7 @@ function renderList() {
         // In a quarter you can't hire past what the budget covers for this shift.
         const broke = cantAfford(c);
         const tip = broke ? `With ${c.name} the crew would cost $${payroll() + c.wage} for the shift, and you have ${money(quarter.money)}.` : "";
-        return robotCard(c, { cls: "ct-cand", action: `<button class="ct-btn is-gold ct-small-btn" type="button" data-hire="${c.id}" ${broke ? "disabled" : ""} ${tip ? `data-tooltip="${tip}"` : ""}>${words().hire}</button>` });
+        return robotCard(c, { cls: "ct-cand", action: `<button class="ct-btn ct-small-btn" type="button" data-hire="${c.id}" ${broke ? "disabled" : ""} ${tip ? `data-tooltip="${tip}"` : ""}>${words().hire}</button>` });
       }).join("") : "");
   list.hidden = !list.innerHTML;
   list.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openChat(b.dataset.open)));
@@ -599,6 +609,7 @@ function renderLog(w, box) {
 
 // The chip on a worker's row: where they stand right now.
 function cardState(w) {
+  if (phase === "end") return ["Shift over", "is-off"];
   if (w.compiling) return ["Reading", "is-busy"];
   if (ui.thinking[w.id]) return ["Thinking", "is-busy"];
   if (atDesk(w)) return ["At your desk", "is-desk"];
@@ -1135,7 +1146,7 @@ function endLevel() {
   logEvent(t, "end", { won, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), crew: crewSummary() });
   $("#endTitle").textContent = won ? "Order filled" : "Shift over";
   $("#endNote").textContent = won ? "" : "The order didn't ship before the shift ended. Try again keeps your crew and their instructions.";
-  $("#endStats").innerHTML = [[won ? "Time" : "Shipped", won ? fmtTime(t) : `${done}/${total}`], ["Labor cost", `$${Math.round(game.laborCost)}`], ["Crew", game.workers.length]]
+  $("#endStats").innerHTML = [[won ? "Finished in" : "Shipped", won ? fmtTime(t) : `${done}/${total}`], ["Labor cost", `$${Math.round(game.laborCost)}`], ["Crew", game.workers.length]]
     .map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
   const next = won && LEVELS.find((L) => L.id === level.id + 1);
   const btns = [];
@@ -1164,13 +1175,13 @@ function endQuarterShift() {
   logEvent(game.t, "end", { won, quarter: { shift: n, of: Q.shifts }, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), money: Math.floor(quarter.money), crew: crewSummary() });
   if (won && (!best[level.id] || quarter.money > best[level.id].left)) best[level.id] = { left: quarter.money };
   // The quarter ends as soon as the quota ships; what's left of the budget is saved.
-  const stats = won ? [["Shifts", `${n} of ${Q.shifts}`], ["Spent", spent], ["Saved", left]]
-    : !last ? [["Shipped", `${done - shippedBefore}`], [WORDS.crewPay, `$${Math.round(game.laborCost)}`], [`${WORDS.budget} left`, left]]
-    : [["Shipped", `${done}/${total}`], ["Spent", spent], ["Left", left]];
+  const stats = won ? [["Shifts", `${n} of ${Q.shifts}`], [`${WORDS.crewPay}, all shifts`, spent], [WORDS.budget, left]]
+    : !last ? [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.budget, left]]
+    : [["Shipped", `${done}/${total}`], [`${WORDS.crewPay}, all shifts`, spent], [WORDS.budget, left]];
   $("#endTitle").textContent = won ? "Quota met" : !last ? `Shift ${n} done` : "Quota missed";
   const shiftsLeft = Q.shifts - n;
   $("#endNote").textContent = won ? `You shipped the quarter's quota in ${n === 1 ? "one shift" : `${n} shifts`} and saved ${left} of your $${Q.budget} budget.`
-    : !last ? `${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left. Your crew and their instructions stay; change who's on the shift before the next one if you like.`
+    : !last ? `${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left. ${paceLine(level.order.map((l) => l.count), quarter.done, shippedBefore, shiftsLeft)} Your crew and their instructions stay; change who's on the shift before the next one if you like.`
     : "The quarter ended short of the quota.";
   // What's still to ship, as the same tickets the floor shows.
   const togo = won ? "" : `<div class="ct-end-togo"><span class="ct-label">Still to ship</span>${level.order.map((l, i) => {
@@ -1179,8 +1190,8 @@ function endQuarterShift() {
   }).join("")}</div>`;
   $("#endStats").innerHTML = togo + stats.map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
   const btns = won || last
-    ? [["new", "Try again", true], ...(won ? [] : [["restart", "Replay this shift"]])]
-    : [["next", "Next shift", true], ["restart", "Replay this shift"]];
+    ? [["new", "Try again", true], ...(won ? [] : [["restart", WORDS.replayShift]])]
+    : [["next", "Next shift", true], ["restart", WORDS.replayShift]];
   $("#endBtns").innerHTML = btns.map(([go, text, gold]) => `<button class="ct-btn ${gold ? "is-gold" : ""}" data-go="${go}">${text}</button>`).join("")
     + `<button class="ct-btn" data-go="menu">Levels</button>`;
   $("#endBtns").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
@@ -1222,7 +1233,7 @@ function renderBoard() {
     : n
     ? `"You owe me <b class="is-debt">$${debtOf(biz)}</b>${n > 1 ? ` on ${n} loans` : ""}, and I take <b class="is-debt">${now}</b> of every contract you finish until you're paid up."`
     : `"Short on cash? Borrow from me, no interest. Each loan takes ${pct} of every contract you finish until it's paid off; two loans take ${Math.round(LENDER.share * 200)}%."`;
-  $("#loans").innerHTML = LENDER.amounts.map((a, i) => `<button class="ct-btn" data-loan="${i}" ${n >= LENDER.max ? "disabled" : ""} data-tooltip="${n >= LENDER.max ? `You have ${LENDER.max} loans, the most he'll give. Pay one off first.`
+  $("#loans").innerHTML = LENDER.amounts.map((a, i) => `<button class="ct-btn" data-loan="${i}" ${n >= LENDER.max ? "disabled" : ""} data-tooltip="${n >= LENDER.max ? `You have ${LENDER.max} loans, the most he'll give. He's paid back from your contracts, 10% of each per loan.`
     : `You'd owe $${a}, paid back by ${pct} of every contract you finish${n ? `, on top of the ${now} you already pay` : ""}.`}">Borrow $${a}</button>`).join("");
   $("#loans").querySelectorAll("[data-loan]").forEach((b) => b.addEventListener("click", () => { if (borrow(biz, +b.dataset.loan)) renderBoard(); }));
 
@@ -1331,20 +1342,24 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
   const shiftsLeft = QUARTER_SHIFTS - n;
   $("#endNote").textContent = won ? `The clients paid $${paid}${cut ? `, and $${cut} of it went to the lender` : ""}.`
     : over ? (shipped ? `${shipped} of ${cs.length} contracts shipped in full and paid. The others pay nothing.` : "No contract shipped in full, so nobody pays.")
-    : `${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left in the quarter. Your crew and their instructions stay.`;
+    : `${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left in the quarter. ${paceLine(cs.map((c) => c.count), quarter.done, shippedBefore, shiftsLeft)} Your crew and their instructions stay; change who's on the shift before the next one if you like.`;
   // Each contract: its ticket, what shipped of it, and (at the end) what it paid.
   const rows = `<div class="ct-end-contracts">${pays.map((p, i) => `<div class="ct-end-contract ${p.won ? "is-done" : over ? "is-missed" : ""}">
       ${ticketHTML(p.c.color, p.c.count)}<span>${Math.min(quarter.done[i], p.c.count)} of ${p.c.count} shipped</span>
       <b>${p.won ? `$${p.c.pay}` : over ? "$0" : `pays $${p.c.pay}`}</b></div>`).join("")}</div>`;
-  const stats = over ? [["Paid", `$${paid}`], ...(cut ? [[WORDS.toLender, `$${cut}`]] : [[WORDS.crewPay, `$${Math.round(game.laborCost)}`]]), [WORDS.budget, money(quarter.money + paid - cut)]]
-    : [["Shipped", `${done - shippedBefore}`], [WORDS.crewPay, `$${Math.round(game.laborCost)}`], [WORDS.budget, money(quarter.money)]];
+  // The quarter card adds up the whole quarter; a shift card says what that shift did.
+  const crewPayAll = Math.round(level.quarter.budget - quarter.money);
+  const stats = over ? [["Paid", `$${paid}`], [`${WORDS.crewPay}, all shifts`, `$${crewPayAll}`], ...(cut ? [[WORDS.toLender, `$${cut}`]] : []), [WORDS.budget, money(quarter.money + paid - cut)]]
+    : [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.budget, money(quarter.money)]];
   $("#endStats").innerHTML = rows + stats.map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
   const btns = won ? [["board", "Next quarter", true]]
-    : last ? [["board", "Next quarter", true], ["restart", "Replay this shift"]]
-    : [["next", "Next shift", true], ["restart", "Replay this shift"]];
-  $("#endBtns").innerHTML = btns.map(([go, text, gold]) => `<button class="ct-btn ${gold ? "is-gold" : ""}" data-go="${go}">${text}</button>`).join("");
+    : last ? [["board", "Next quarter", true], ["restart", WORDS.replayShift]]
+    : [["next", "Next shift", true], ["restart", WORDS.replayShift]];
+  $("#endBtns").innerHTML = btns.map(([go, text, gold]) => `<button class="ct-btn ${gold ? "is-gold" : ""}" data-go="${go}">${text}</button>`).join("")
+    + `<button class="ct-btn" data-go="menu">Levels</button>`;
   $("#endBtns").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
-    if (b.dataset.go === "board") { settle(biz, cs, quarter.done, quarter.money); openBoard(); }
+    if (b.dataset.go === "menu") showMenu();
+    else if (b.dataset.go === "board") { settle(biz, cs, quarter.done, quarter.money); openBoard(); }
     else openLevel(level, { again: true, shift: b.dataset.go });
   }));
   $("#endScreen").classList.remove("is-hidden");

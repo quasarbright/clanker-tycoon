@@ -40,3 +40,13 @@ export function restartShift(q) {
 }
 
 export const money = (n) => `$${Math.max(0, Math.floor(n))}`;
+
+/**
+ * Where the quarter is heading at the last shift's rate: `counts` and `done` per order line,
+ * `before` the total shipped before that shift. Resolves to { total, now, projected }.
+ */
+export function pace(counts, done, before, shiftsLeft) {
+  const total = counts.reduce((a, b) => a + b, 0);
+  const now = done.reduce((a, d, i) => a + Math.min(d, counts[i]), 0);
+  return { total, now, projected: Math.min(total, now + (now - before) * shiftsLeft) };
+}

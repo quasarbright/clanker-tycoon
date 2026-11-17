@@ -193,7 +193,7 @@
     /* ---------- overlays ---------- */
     .ct-overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; overflow-y: auto; background: rgba(8, 9, 11, .78); padding: 20px; }
     .ct-overlay.is-hidden { display: none; }
-    #boardScreen { place-items: start center; background: rgba(8, 9, 11, .96); }
+    #boardScreen { background: rgba(8, 9, 11, .96); }
     .ct-pause { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 12px; border-radius: 14px; background: rgba(8, 9, 11, .62); }
     .ct-pause.is-hidden { display: none; }
     .ct-pause .ct-card-big { width: min(440px, 100%); padding: 20px; }
@@ -239,13 +239,13 @@
     .ct-board-shifts { font-weight: 700; font-size: 1.05rem; margin-top: 2px; }
     .ct-investor { flex: 1; display: flex; align-items: center; gap: 12px; background: var(--panel-2); border-radius: 12px; padding: 8px 14px; }
     .ct-investor img { width: 40px; height: 40px; flex: none; }
-    .ct-investor p { margin: 0; line-height: 1.4; }
+    .ct-investor p { margin: 0; line-height: 1.4; min-height: 5.6em; display: flex; flex-direction: column; justify-content: center; }
     .ct-investor b { color: var(--success); }
     .ct-investor b.is-debt { color: #ffb4ae; }
     .ct-loans { margin-left: auto; display: flex; gap: 8px; flex: none; }
     .ct-loans .ct-btn { padding: 6px 12px; font-size: .88rem; white-space: nowrap; }
     /* the quarter's forecast, if every picked contract ships */
-    .ct-forecast { display: grid; grid-template-columns: 1fr auto; row-gap: 2px; font-size: .9rem; color: var(--muted); }
+    .ct-forecast { display: grid; grid-template-columns: 1fr auto; row-gap: 2px; font-size: .9rem; color: var(--muted); min-height: 7.2em; align-content: start; }
     .ct-forecast b { padding-left: 12px; }
     .ct-forecast b { font-family: var(--font-mono); color: var(--text); text-align: right; }
     .ct-forecast .is-in { color: var(--success); }
@@ -466,6 +466,7 @@
       .ct-side.is-chat .ct-crew { display: none; }
       .ct-back { display: inline-flex; }
     }
+    .ct-chip.is-off { color: var(--muted); border: 1px solid var(--border); padding: 2px 9px; }
     .ct-chip.is-need { color: var(--muted); border: 1px dashed var(--border); padding: 2px 9px; }
     .ct-chip.is-busy { color: var(--on-accent); background: var(--accent); }
     .ct-chip.is-desk { color: var(--on-accent); background: var(--accent); }

@@ -6,7 +6,7 @@
 export const WORDS = {
   // putting robots on a shift (never "hire" / "let go": they're paid by the shift, decision #58)
   schedule: "Schedule",
-  offShift: "Off shift",
+  offShift: "Take off shift",
   takeSomeoneOff: "Take someone off the shift",
   // your business between quarters
   recruit: "Recruit",
@@ -19,6 +19,8 @@ export const WORDS = {
   lender: "The lender",
   toLender: "To the lender",
   crewPay: "Crew pay",
+  thisShift: "This shift",
+  replayShift: "Replay this shift",
   // the top bar's money line, per kind of level
   labor: "labor",
 };

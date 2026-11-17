@@ -117,9 +117,11 @@ export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0, { 
 
 /** Hire someone onto the floor. They start at the dock with no program. */
 export function addWorker(s, hire) {
+  // They line up by the dock, one robot-width apart, so nobody starts on top of anyone.
+  const at = standPoint("DOCK", { x: DESK.x + 8, y: DESK.y }), i = s.workers.length;
   const w = {
-    id: hire.id, hire, index: s.workers.length,
-    ...standPoint("DOCK", { x: DESK.x + 8, y: DESK.y }), station: "DOCK", holding: null,
+    id: hire.id, hire, index: i,
+    x: Math.max(4, at.x - 7 * i), y: at.y, station: i === 0 ? "DOCK" : null, holding: null,
     gen: null, nowGen: null, lastOk: undefined, programEnded: false,
     act: null, waiting: null, returnTo: null,
     fails: 0, failLog: [], lastStuck: -1e9,

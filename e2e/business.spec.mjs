@@ -147,3 +147,29 @@ test("the end-of-quarter card: a missed contract pays nothing, the shipped one p
   expect(small$.wins).toBe(1);
   expect(small$.money).toBeGreaterThan(money);
 });
+
+test("a shift card says whether the quarter is on pace; the quarter card adds up all shifts' pay", async ({ page }) => {
+  await openBoard(page);
+  const [small] = await contracts(page).evaluateAll((els) => els.map((e) => e.dataset.contract));
+  await page.click(`[data-contract="${small}"]`);
+  await page.click("#boardGo");
+  await page.evaluate(() => { ct.hire("blip"); ct.hire("pip"); });
+  await endShift(page, [6]); // 6 of 20 in the first shift
+  await expect(page.locator("#endNote")).toContainText("about 18 of 20: 2 short");
+  await expect(page.locator("#endStats")).toContainText("Shipped this shift");
+  await page.click('[data-go="next"]');
+  await endShift(page, [12]);
+  await page.click('[data-go="next"]');
+  await endShift(page, [18]);
+  await expect(page.locator("#endStats")).toContainText("Crew pay, all shifts");
+  await expect(page.locator("#endStats")).toContainText("$45"); // 3 shifts of $15
+});
+
+test("robots put on the shift don't start on top of each other", async ({ page }) => {
+  await openBoard(page);
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  await page.evaluate(() => { ct.hire("blip"); ct.hire("pip"); });
+  const xs = await page.evaluate(() => ct.game.workers.map((w) => w.x));
+  expect(Math.abs(xs[0] - xs[1])).toBeGreaterThanOrEqual(6);
+});
