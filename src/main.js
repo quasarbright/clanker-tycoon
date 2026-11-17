@@ -1162,7 +1162,7 @@ function renderBoard() {
   // The lender: no interest; each loan takes 10% of every contract you finish until it's paid back.
   const n = biz.loans.length;
   $("#investorLine").innerHTML = n >= LENDER.max
-    ? `"I'm not lending you any more money until you pay up. You owe me <b class="is-debt">$${debtOf(biz)}</b>, so I take <b class="is-debt">${now}</b> of every contract you finish."`
+    ? `"I'm not lending you any more money until you pay up, deadbeat! You owe me <b class="is-debt">$${debtOf(biz)}</b>, so I take <b class="is-debt">${now}</b> of every contract you finish."`
     : n
     ? `"You owe me <b class="is-debt">$${debtOf(biz)}</b> on ${n === 1 ? "one loan" : `${n} loans`}, so I take <b class="is-debt">${now}</b> of every contract you finish. Each loan takes ${pct} until it's paid off."`
     : `"Short on cash? Borrow from me, no interest. Each loan takes ${pct} of every contract you finish until it's paid off; two loans take ${Math.round(LENDER.share * 200)}%."`;

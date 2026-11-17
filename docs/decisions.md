@@ -852,6 +852,6 @@ should say that."
   budget as the shifts run. The money in the board's corner is labeled **Budget**.
 - At most three loans at once (Mike: "you can only have three outstanding loans at once"). With
   three, the Borrow buttons grey out and the lender says "I'm not lending you any more money until
-  you pay up."
+  you pay up, deadbeat!"
 Amends #61. The "Numbers must go up" line is gone too ("getting a little cheesy").
 
