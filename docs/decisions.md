@@ -434,3 +434,13 @@ Grades no longer count "over budget" as a miss, since Start already waits for pa
 What happens to money left at the end is undecided; Mike's lead is that it goes to you, for your
 own little house you see between shifts. Replaces the "capital" fund in the first draft of
 `docs/progression-design.md`.
+
+### 39. You buy your promotion with the budget you didn't spend (2026-11-17)
+
+**Question:** what leftover budget is for (parked in #38, with "your own little house" as the lead).
+Mike, looking at the review mock: "oh wait you use your money to buy a promotion, screw house lol".
+**Picked:** a quarter that meets quota puts its unspent budget into your savings; a missed quarter's
+leftover goes back to the company. Each rank's promotion has a price, and you buy it from the boss
+once savings cover it. This replaces the beat/met/missed grades and promotion credits in the first
+draft of `docs/progression-design.md`: the money already says how well you did, and finishing a
+shift early saves that shift's payroll. The house idea is dropped.

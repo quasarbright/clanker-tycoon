@@ -13,7 +13,8 @@ What's already agreed (from the coordinator thread and decisions #7, #25):
 
 The shape this doc proposes is Mike's "corporate ladder" from issue #3: a robot boss gives you a
 quota, you hit it, you get promoted into a bigger job, and the job changes what you do all day.
-The roguelike and the continuous business are compared in "Alternatives" at the end.
+Mike's twist on it: you buy the promotion with the budget you didn't spend. The roguelike and the
+continuous business are compared in "Alternatives" at the end.
 
 ---
 
@@ -21,7 +22,8 @@ The roguelike and the continuous business are compared in "Alternatives" at the 
 
 Your boss is the dollar-eyed robot from the favicon. Every quarter they hand you a quota, a number
 of shifts and a budget. You staff your floor, write instructions, run the shifts, and at the end the
-boss reviews you. Hit quota under budget and you move toward a promotion. Each promotion gives you
+boss reviews you. Hit quota and you keep your job; whatever budget you didn't spend is yours, and
+you save it up to buy your promotion from the boss. Each promotion gives you
 more floor than you can personally watch, so the only way to keep hitting quota is to put people
 you've developed in charge of parts of it. By the top of the ladder you mostly talk to managers,
 and the robots you hired in your first quarter are running lines for you.
@@ -59,9 +61,11 @@ the run): a shift going wrong becomes something you recover from between shifts.
   goes down.
 - As in the quarter sandbox (decision #35), Start waits until the budget covers the shift's payroll,
   so you can't overspend. Running short means a smaller crew, not debt.
-- **What happens to money left over** is undecided (open question 3). Mike's idea: it goes to you,
-  and you spend it on your own little house that you see between shifts. That makes running lean
-  pay off for you personally, separate from the floor.
+- **Money left over is yours, and it buys your promotion.** When a quarter ends with the quota met,
+  the unspent budget goes into your savings. A promotion has a price, and you buy it from the boss
+  once you can afford it (Mike: "you use your money to buy a promotion"). So running lean is how
+  you climb: every robot you didn't need is money toward the next rank. It also fits the dollar-eyed
+  boss. (An earlier idea, spending it on your own little house, was dropped for this.)
 
 ---
 
@@ -69,17 +73,20 @@ the run): a shift going wrong becomes something you recover from between shifts.
 
 ![Quarter review](mocks/progression/3-review.svg)
 
-Each quarter ends with one of three grades:
+Each quarter ends one of two ways:
 
-| Grade | When | What happens |
-|---|---|---|
-| **Beat it** | Quota met with a shift to spare, or with at least 20% of the budget left | Counts double toward promotion |
-| **Met** | Quota met | Counts toward promotion |
-| **Missed** | Quota short | You're **on notice** |
+| Result | What happens |
+|---|---|
+| **Quota met** | The budget you didn't spend goes into your savings |
+| **Quota missed** | The leftover goes back to the company, and you're **on notice** |
 
-**Promotion** comes after a set number of credits at your rank: 2 at Line lead, 3 at Supervisor,
-4 at Plant manager. Beat-it quarters get you there faster. Lower ranks are short on purpose
-(Mike: "keep the lower stages short").
+There are no grades beyond that, because the money already says how well you did. Meeting quota a
+shift early leaves that shift's payroll unspent, so speed pays too.
+
+**Promotion** has a price at each rank, and you buy it from the boss between quarters once your
+savings cover it. Prices are set so a lean quarter or two gets you there at the lower ranks and it
+takes longer higher up (Mike: "keep the lower stages short"). Buying it spends the savings, so you
+start the new rank at zero.
 
 **Failure:**
 - Missed once: on notice. The next quarter's quota stays the same instead of growing, and the boss
@@ -102,7 +109,7 @@ voice: the dollar eyes, the corporate phrasing.
 | Your crew: every worker, their skills, attributes, wage, experience | The budget (each quarter gets a fresh one; leftovers are open question 3) |
 | Each worker's instructions, as written on their card | Orders in progress (the quarter closes them out) |
 | The floor: machines, layout, stations you bought | The shift clock |
-| Your rank and promotion credits | |
+| Your rank and your savings | |
 | Who runs what (foremen, managers) | |
 
 Carrying instructions matters: quarter two should start with a working floor you tune, not a blank
@@ -223,10 +230,11 @@ following the no-random-breakdowns principle.
 1. **Failure:** demotion with no game over (proposed), or getting fired ends the run?
 2. **Rank 0:** is the tutorial reframed as "your first week as a floor hand", or kept separate?
    Does being a worker under a robot boss stay that short?
-3. **Leftover budget:** parked for later. Mike's lead: it goes to you, to spend on your own little
-   house that you see between shifts. Open: what the house buys you (looks only, or something
-   that helps on the floor), and whether the boss takes a cut.
-4. **Grades:** three grades (beat / met / missed) or just pass and fail?
+3. **Savings:** leftover budget buys your promotion (agreed). Open: can savings buy anything else
+   (training, a machine), or only the promotion? If both, every purchase delays your promotion,
+   which is an interesting choice but might make training feel like a trap.
+4. **Demotion and savings:** do you keep your savings when demoted? Keeping them makes the climb
+   back quick.
 5. **Quota counting:** does quota count boxes shipped of any kind, or must every order in the
    quarter be filled? (The second makes order mix matter more.)
 6. **Foremen:** can any worker be promoted, or only one with enough experience? Does a foreman keep
