@@ -150,47 +150,74 @@ Each rank says what you do, what's new, and why the previous way of playing stop
 cut it: "this kind of feels like it shouldn't exist.")
 
 ### Rank 2: Plant manager
-- **You:** a plant of lines, starting with 2 (your old line, run by the foreman you left in charge,
-  plus a new one) and growing to 3 to 5. You don't walk the floor anymore. Your screen is the plant
-  view: one row per line, its foreman, its pace and its budget left. Click a line to drop in and
-  watch it, or open a chat with anyone there.
-- **New:** you split the quarter's budget across lines. Later, **managers**, a step above foremen,
-  who can hire and fire for their lines within the budget you give them.
-- **The skill now:** judging people by results and by what they tell you, and deciding who gets
-  which line. Issue #6's question "do you stop seeing a line's floor once a manager runs it?"
-  gets the answer: you can still see it, but nothing pulls you there unless something goes wrong.
-- **Token cost:** lines you aren't looking at run as plain sim. The model only runs for the
-  conversations you start, and for thinking that workers and managers would do anyway (#3).
 
-![Plant view](mocks/progression/5-plant-view.svg)
+You run a plant of lines, starting with 2 (your old line, under the foreman you left in charge,
+plus a new one) and growing to 3 to 5. You don't walk the floor anymore. Each line has a foreman,
+one of your robots, promoted.
 
-#### Open: what is Plant manager's gameplay?
+![What a Plant manager does](mocks/progression/6-plant-options.svg)
 
-Mike: "we need to think about what this gameplay is even going to be." The bullets above say what
-you're responsible for, not what you do minute to minute. At Line lead your actions are hire,
-write instructions, watch and step in. Plant manager needs its own actions, and they should still
-be about talking to robots, since that's the game. Options, not decided:
+#### What a plant manager does in real life
 
-- **A. Escalations, live.** All lines run at once. Foremen handle what they can and come to your
-  desk with the rest ("Line B's paint machine is down and nobody there has Repair"). You answer,
-  lend a worker from another line, or drop into a line and sort it out yourself. It plays like a
-  dispatcher juggling calls. Busy and tense; more model calls, and it can get chaotic.
-- **B. Plan between shifts, watch during.** Shifts run on their own, at a speed you choose. The
-  game is between shifts: split the budget, move workers between lines, pick foremen, decide which
-  orders each line takes, set each foreman's goal. Like a sports-manager game. Cheap and thoughtful,
-  but you're mostly watching during shifts.
-- **C. Instructions one level up.** The same core action as Line lead, writing instructions, but
-  to foremen, who turn your goal into instructions for their crew. You can read what they wrote on
-  their robots' cards, so the puzzle is noticing where a foreman misread you and correcting them.
-  Debugging second-hand. This is the "multi-agent orchestration" feel Mike noticed in the worker
-  design.
-- **D. Design the plant.** You choose each line's machines and connect lines (Line A paints, Line B
-  packs what A painted), and robots staff what you build. A factory-builder layer. The most new
-  gameplay, the most to build, and it drifts away from managing people.
+Mike's challenge: "what would you even do other than say hey make sure you meet your quota and
+yell at them when they aren't, but what can you really do to control that?" A real plant manager
+doesn't tell lines how to do the work. They control things no single line controls:
 
-My pick: C as the core, with B's rhythm (plan between shifts) and a light dose of A (foremen still
-come to your desk when they're stuck). C keeps the one verb the whole game is built on and makes it
-harder in a new way at each rank, which is what a ladder should do.
+- **Headcount.** Who works on which line, hiring, moving people, who's foreman.
+- **Money.** How the budget splits between lines; approving a line's request for more.
+- **Priorities.** Which orders go to which line, and what comes first when two lines want the
+  same thing.
+- **Shared resources.** The things every line uses and there isn't enough of: the incoming
+  supply, the maintenance crew, the dock.
+- **Standing policies.** Rules every foreman follows without asking ("service any machine past
+  80%", "blue orders before red"), so the same question doesn't come back every shift.
+
+#### Lines have to share things, or there's no game
+
+If every line has its own belt, its own repair robot and its own budget, each line is just the Line
+lead game with a foreman playing it, and your only job really is "meet your quota". The rank only
+works if lines **compete for scarce shared things**, so foremen run into conflicts they can't settle
+on their own:
+
+- **One supply belt** feeds the whole plant, and you set how it splits between lines.
+- **Floaters**: a small pool of robots that belong to the plant, not a line (a repair robot, a
+  spare hauler). One floater, three lines that want it.
+- **One dock** with trucks on a schedule.
+- **One budget**, split by you.
+
+Those conflicts are what foremen bring to your desk:
+
+- "Paint on Line B is at 90%. The repair robot is on Line A. Wait 20 s, or pull it over?"
+- "We're behind on blue. Can I borrow C's hauler for this shift?"
+- "A new order for 6 green came in. Who takes it?"
+- "Pip keeps standing around. Replace him?"
+
+#### How you play it
+
+- **Between shifts (plan):** split the budget, move robots between lines, decide which lines get
+  which orders, set the belt split, and write **policies**.
+- **During shifts (respond):** foremen come to your desk with conflicts. You answer in a word or a
+  sentence, or click one of the options they offer. Anything you answer twice is a sign it should
+  have been a policy.
+- **Policies are instructions one level up.** At Line lead you wrote instructions for a robot's
+  task. Here you write rules for the whole plant, and foremen apply them. A good set of policies
+  means a quiet desk. A foreman can still misread a policy, and you see it in what they do.
+- **Drop in** to any line to watch it or talk to a robot directly, as an escape hatch.
+- Later in the rank, **managers** (a step above foremen) can hire and fire for their lines within
+  the budget you give them.
+
+Token cost stays low: lines run as plain sim, and the model only runs when a foreman decides
+something needs you, when you talk, and for policies being read.
+
+(This replaces the four options A to D posted earlier. Live escalations (A), planning between
+shifts (B) and instructions one level up (C) are all in it; designing the plant (D) is not.)
+
+#### Open questions for Plant manager
+
+- Which shared things to start with. Floaters and the belt split are the cheapest to build on the
+  current sim; a shared dock needs trucks on a schedule.
+- Does time pause while a foreman waits at your desk, or does their line lose time?
+- Do foremen offer you options to click, or do you always answer in words?
 
 ### Rank 3: Director (top of the core ladder)
 - **You:** several plants, each run by a plant manager. You're your old boss now.
