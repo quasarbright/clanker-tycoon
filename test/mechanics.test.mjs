@@ -4,7 +4,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { newGame, step, setProgram, RULES, toolNamesFor } from "../src/sim.js";
 import { parseProgram, checkProgram } from "../src/lang.js";
-import { newQuarter, payShift, closeShift, nextShift, restartShift, shiftPayroll, shippedOf } from "../src/quarter.js";
+import { newQuarter, payShift, closeShift, nextShift, restartShift, shiftPayroll, shippedOf, signed } from "../src/quarter.js";
 
 const FLOOR = (extra = {}) => ({
   id: 99, name: "Test floor", stations: ["SUPPLY", "PAINT", "PACK", "DOCK", "BIN_1", "BIN_2"],
@@ -192,4 +192,10 @@ test("the shift card's counts: what's shipped of the quarter, no projection (dec
   assert.deepEqual(shippedOf([20], [6]), { total: 20, now: 6 });
   assert.deepEqual(shippedOf([20, 9], [12, 9]), { total: 29, now: 21 });
   assert.equal(shippedOf([10], [15]).now, 10, "extra boxes of a finished line don't count");
+});
+
+test("signed money uses a real minus sign (Pam's review, decision 72)", () => {
+  assert.equal(signed(150), "+$150");
+  assert.equal(signed(-15), "\u2212$15");
+  assert.equal(signed(0), "+$0");
 });

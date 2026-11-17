@@ -40,6 +40,8 @@ export function restartShift(q) {
 }
 
 export const money = (n) => `$${Math.max(0, Math.floor(n))}`;
+/** Money coming in or going out, with its sign: "+$150", "−$15" (a real minus sign, never a hyphen). */
+export const signed = (n) => `${n < 0 ? "\u2212" : "+"}$${Math.abs(Math.round(n))}`;
 
 /** How much of the quarter has shipped: `counts` and `done` per order line. { total, now }; extra
  *  boxes of a finished line don't count. */

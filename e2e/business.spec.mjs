@@ -140,6 +140,9 @@ test("the end-of-quarter card: a missed contract pays nothing, the shipped one p
     if (shift < 3) await page.click('[data-go="next"]');
   }
   await expect(page.locator("#endTitle")).toHaveText("Quarter over");
+  await expect(page.locator("#endNote")).toHaveText("1 of 2 contracts shipped in full and paid. The other pays nothing.");
+  // Money with a sign uses a real minus sign, never a hyphen.
+  expect(await page.locator("#endScreen").textContent()).not.toMatch(/-\$/);
   await expect(page.locator(".ct-end-contract.is-done")).toHaveCount(1);
   await expect(page.locator(".ct-end-contract.is-missed")).toHaveCount(1);
   const money = await page.evaluate(() => ct.biz.money);
@@ -156,7 +159,10 @@ test("a shift card says plainly what has shipped and how many shifts are left; t
   await page.click("#boardGo");
   await page.evaluate(() => { ct.hire("blip"); ct.hire("pip"); });
   await endShift(page, [6]); // 6 of 20 in the first shift
-  await expect(page.locator("#endNote")).toContainText("6 of 20 shipped, 2 shifts left.");
+  await expect(page.locator("#endNote")).toContainText("2 shifts left. Your crew");
+  await expect(page.locator("#endNote")).not.toContainText("6 of 20"); // the contract row says it
+  await expect(page.locator(".ct-end-contract")).toContainText("6 of 20 shipped");
+  await expect(page.locator("#endScreen .ct-mascot")).toBeHidden();
   await expect(page.locator("#endNote")).not.toContainText("pace");
   await expect(page.locator("#endStats")).toContainText("Shipped this shift");
   await page.click('[data-go="next"]');

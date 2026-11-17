@@ -13,7 +13,7 @@ import { getKey, setKey, signIn, finishSignIn } from "./openrouter-auth.js";
 import { WORDS, applyWords } from "./words.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
-import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, shippedOf, shiftCost } from "./quarter.js";
+import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, signed as signedText, shippedOf, shiftCost } from "./quarter.js";
 import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
   RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers, crewCost } from "./business.js";
 import { SKILL_TIER, wageOf } from "./wages.js";
@@ -47,6 +47,9 @@ $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
  * After a shift with more to go: plain counts, "15 of 20 shipped, 2 shifts left." No projection:
  * a pace assumes the work goes evenly, which often isn't true (Mike, decision 72).
  */
+// Signed money on screen: the sign in the UI font, whose minus reads as a minus next to the mono
+// digits (JetBrains Mono draws U+2212 about as short as a hyphen).
+const signed = (n) => { const t = signedText(n); return `<span class="ct-sign">${t[0]}</span>${t.slice(1)}`; };
 function countsLine(counts, done, shiftsLeft) {
   const { total, now } = shippedOf(counts, done);
   return `${now} of ${total} shipped, ${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left.`;
@@ -1302,7 +1305,7 @@ function renderBoard() {
   // How the last quarter went, one quiet line (not in the first quarter).
   const L = biz.last;
   $("#boardLast").hidden = !L;
-  if (L) $("#boardLast").innerHTML = `${WORDS.lastQuarter}: ${L.won} of ${L.of} ${L.of === 1 ? "contract" : "contracts"} shipped, <b class="${L.net >= 0 ? "is-in" : "is-out"}">${L.net >= 0 ? "+" : "−"}$${Math.abs(L.net)}</b>`;
+  if (L) $("#boardLast").innerHTML = `${WORDS.lastQuarter}: ${L.won} of ${L.of} ${L.of === 1 ? "contract" : "contracts"} shipped, <b class="${L.net >= 0 ? "is-in" : "is-out"}">${signed(L.net)}</b>`;
   $("#boardShifts").textContent = `${QUARTER_SHIFTS} shifts. Every contract is due at the end of the last one.`;
   // The lender: no interest; each loan takes 10% of every contract you finish until it's paid back.
   const n = biz.loans.length;
@@ -1356,9 +1359,9 @@ function renderBoard() {
   // the shifts run), and what the picked contracts bring in at the end if they all ship.
   const f = forecast(biz, picked);
   const row = (label, v, cls = "", tip = "") => `<span class="${cls}" ${tip ? `data-tooltip="${tip}"` : ""}>${label}</span><b class="${cls}">${v}</b>`;
-  $("#forecast").innerHTML = !picked.length ? "" : row("Contracts pay, if they all ship", `+$${f.pay}`, "is-in")
-    + (n ? row(`${WORDS.toLender} (${now})`, `−$${f.repay}`, "is-out", `After this quarter you'd owe $${f.debtAfter}.`)
-      + row("You keep", `+$${f.gain}`, "is-total") : "");
+  $("#forecast").innerHTML = !picked.length ? "" : row("Contracts pay, if they all ship", signed(f.pay), "is-in")
+    + (n ? row(`${WORDS.toLender} (${now})`, signed(-f.repay), "is-out", `After this quarter you'd owe $${f.debtAfter}.`)
+      + row("You keep", signed(f.gain), "is-total") : "");
 
   // ----- recruit: three robots this visit
   $("#recruits").innerHTML = recruitOffers(biz).map((id) => {
@@ -1374,7 +1377,7 @@ function renderBoard() {
     const item = (k, isSkill) => {
       const after = isSkill ? wageOf([...r.skills, k], r.attributes) : wageOf(r.skills, [...r.attributes, k]);
       const broke = biz.money < TRAIN_PRICE;
-      return `<button class="ct-train-item" data-train="${id}:${k}" ${broke ? short(TRAIN_PRICE) : `data-tooltip="${(isSkill ? SKILLS : ATTRIBUTES)[k].tip}"`}>${(isSkill ? SKILLS : ATTRIBUTES)[k].label}<span>+$${after - r.wage} a shift${broke ? ` · ${shortNote(TRAIN_PRICE)}` : ""}</span></button>`;
+      return `<button class="ct-train-item" data-train="${id}:${k}" ${broke ? short(TRAIN_PRICE) : `data-tooltip="${(isSkill ? SKILLS : ATTRIBUTES)[k].tip}"`}>${(isSkill ? SKILLS : ATTRIBUTES)[k].label}<span>${signed(after - r.wage)} a shift${broke ? ` · ${shortNote(TRAIN_PRICE)}` : ""}</span></button>`;
     };
     const skills = TRAINABLE.filter((k) => !r.skills.includes(k)), traits = TRAINABLE_ATTRS.filter((k) => !r.attributes.includes(k));
     const open = trainOpen === id;
@@ -1453,11 +1456,11 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
   $("#endTitle").textContent = won ? (n < QUARTER_SHIFTS ? "Quarter over early" : "Every contract shipped") : over ? "Quarter over" : `Shift ${n} done`;
   const shiftsLeft = QUARTER_SHIFTS - n;
   quarter.payout = over ? paid - cut : 0;
-  // The quarter's recap has no mascot up top: that face is the lender's, and sits by his cut instead.
-  $("#endScreen .ct-mascot").hidden = over;
+  // No mascot on the business cards: that face is the lender's, and sits by his cut in the recap.
+  $("#endScreen .ct-mascot").hidden = true;
   $("#endNote").textContent = won ? earlyLine(n, QUARTER_SHIFTS)
-    : over ? (shipped ? `${shipped} of ${cs.length} contracts shipped in full and paid. The others pay nothing.` : "No contract shipped in full, so nobody pays.")
-    : `${countsLine(cs.map((c) => c.count), quarter.done, shiftsLeft)} Your crew and their instructions stay; change who's on the shift before the next one if you like.`;
+    : over ? (shipped ? `${shipped} of ${cs.length} contracts shipped in full and paid. ${cs.length - shipped === 1 ? "The other pays nothing." : "The others pay nothing."}` : "No contract shipped in full, so nobody pays.")
+    : `${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left. Your crew and their instructions stay; change who's on the shift before the next one if you like.`;
   // Each contract: its ticket, what shipped of it, and (at the end) what it paid.
   const rows = `<div class="ct-end-contracts">${pays.map((p, i) => `<div class="ct-end-contract ${p.won ? "is-done" : over ? "is-missed" : ""}">
       ${ticketHTML(p.c.color, p.c.count)}<span>${Math.min(quarter.done[i], p.c.count)} of ${p.c.count} shipped</span>
@@ -1490,14 +1493,14 @@ function recapHTML({ start, paid, cut, crew }) {
   const lender = `<img class="ct-recap-face" src="favicon.svg" alt="">`;
   const lines = [
     [WORDS.startedWith, money(start), ""],
-    ...(paid ? [[WORDS.contractsPaid, `+$${paid}`, "is-in"]] : []),
-    ...(cut ? [[`${WORDS.lendersCut} ${lender}`, `−$${cut}`, "is-out"]] : []),
-    ...(crew ? [[WORDS.crewPayAll, `−$${crew}`, "is-out"]] : []),
+    ...(paid ? [[WORDS.contractsPaid, signed(paid), "is-in"]] : []),
+    ...(cut ? [[`${WORDS.lendersCut} ${lender}`, signed(-cut), "is-out"]] : []),
+    ...(crew ? [[WORDS.crewPayAll, signed(-crew), "is-out"]] : []),
     [WORDS.budgetNow, money(now), "is-total"],
   ];
   const row = ([l, v, cls], i) => `<span class="${cls}" style="--i:${i}">${l}</span><b class="${cls}" style="--i:${i}">${v}</b>`;
   return `<div class="ct-recap">${lines.map(row).join("")}
-    <div class="ct-recap-net ${net >= 0 ? "is-in" : "is-out"}" style="--i:${lines.length}">${WORDS.thisQuarter} <b>${net >= 0 ? "+" : "−"}$${Math.abs(net)}</b></div></div>`;
+    <div class="ct-recap-net ${net >= 0 ? "is-in" : "is-out"}" style="--i:${lines.length}">${WORDS.thisQuarter} <b>${signed(net)}</b></div></div>`;
 }
 $("#endScreen").addEventListener("click", () => $(".ct-recap")?.classList.add("is-shown"));
 
