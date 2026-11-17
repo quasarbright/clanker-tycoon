@@ -149,14 +149,15 @@ test("the end-of-quarter card: a missed contract pays nothing, the shipped one p
   expect(small$.money).toBeGreaterThan(money);
 });
 
-test("a shift card says whether the quarter is on pace; the quarter card adds up all shifts' pay", async ({ page }) => {
+test("a shift card says plainly what has shipped and how many shifts are left; the quarter card adds up all shifts' pay", async ({ page }) => {
   await openBoard(page);
   const [small] = await contracts(page).evaluateAll((els) => els.map((e) => e.dataset.contract));
   await page.click(`[data-contract="${small}"]`);
   await page.click("#boardGo");
   await page.evaluate(() => { ct.hire("blip"); ct.hire("pip"); });
   await endShift(page, [6]); // 6 of 20 in the first shift
-  await expect(page.locator("#endNote")).toContainText("about 18 of 20: 2 short");
+  await expect(page.locator("#endNote")).toContainText("6 of 20 shipped, 2 shifts left.");
+  await expect(page.locator("#endNote")).not.toContainText("pace");
   await expect(page.locator("#endStats")).toContainText("Shipped this shift");
   await page.click('[data-go="next"]');
   await endShift(page, [12]);
@@ -217,10 +218,7 @@ test("a quarter that ships everything early says so, and the header budget match
   await endShift(page); // everything ships in shift 1
   await expect(page.locator("#endTitle")).toHaveText("Quarter over early");
   await expect(page.locator("#endNote")).toContainText("Everything shipped in shift 1 of 3, so the quarter ends early and shifts 2 and 3 are skipped.");
-  // The stats sit in one row, however many there are.
-  const tops = await page.locator("#endStats > div:has(.ct-stat-value)").evaluateAll((els) => new Set(els.map((e) => e.getBoundingClientRect().top)).size);
-  expect(tops).toBe(1);
-  const budget = await page.locator("#endStats > div", { hasText: "Budget" }).locator(".ct-stat-value").textContent();
+  const budget = await page.locator(".ct-recap b.is-total").textContent();
   await expect(page.locator("#labor")).toHaveText(budget);
   await page.click('[data-go="board"]');
   await expect(page.locator("#bizMoney")).toHaveText(budget);
@@ -372,4 +370,54 @@ test("everything on the board you can't afford says how much you're short, the s
   await page.locator('#bizCrew [data-train-open="pip"]').click();
   await page.evaluate(() => { ct.biz.money = 12; ct.renderBoard(); });
   expect(await look(".ct-train-item .ct-short")).toEqual(recruitLook);
+});
+
+/** The recap's lines as [label, value] pairs. */
+const recap = (page) => page.locator(".ct-recap").evaluate((r) => {
+  const cells = [...r.children].filter((c) => !c.classList.contains("ct-recap-net")).map((c) => c.textContent.trim());
+  const out = [];
+  for (let i = 0; i < cells.length; i += 2) out.push([cells[i], cells[i + 1]]);
+  return { lines: out, net: r.querySelector(".ct-recap-net").textContent.trim() };
+});
+
+test("the quarter card is a recap: started with, paid, lender, crew, budget now, and the quarter's result (decision 72)", async ({ page }) => {
+  await openBoard(page);
+  await expect(page.locator("#boardLast")).toBeHidden(); // nothing to recap in quarter 1
+  await page.click('[data-loan="0"]'); // $200, one loan: the lender takes 10%
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  await page.evaluate(() => { ct.hire("blip"); ct.hire("pip"); });
+  await endShift(page); // everything ships in shift 1: crew $15, contract $150, lender $15
+  await expect(page.locator("#endScreen .ct-mascot")).toBeHidden();
+  expect(await recap(page)).toEqual({
+    lines: [["Started with", "$200"], ["Contracts paid", "+$150"], ["Lender's cut", "−$15"], ["Crew pay, all shifts", "−$15"], ["Budget now", "$320"]],
+    net: "This quarter +$120",
+  });
+  await expect(page.locator(".ct-recap-face")).toHaveCount(1);
+  await expect(page.locator('[data-go="restart"]')).toHaveCount(0);
+  await expect(page.locator('[data-go="board"]')).toHaveText("To the board");
+  // It fits the window.
+  expect(await page.evaluate(() => { const c = document.querySelector("#endScreen .ct-card-big").getBoundingClientRect(); return c.top >= 0 && c.bottom <= innerHeight; })).toBe(true);
+  await page.click('[data-go="board"]');
+  await expect(page.locator("#boardLast")).toHaveText("Last quarter: 1 of 1 contract shipped, +$120");
+});
+
+test("a losing quarter: no $0 lines, no lender line without a loan, the result in red", async ({ page }) => {
+  await openBoard(page);
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  await page.evaluate(() => { ct.hire("blip"); ct.hire("pip"); });
+  for (let shift = 1; shift <= 3; shift++) {
+    await endShift(page, [shift * 2]);
+    if (shift < 3) await page.click('[data-go="next"]');
+  }
+  await expect(page.locator("#endTitle")).toHaveText("Quarter over");
+  expect(await recap(page)).toEqual({
+    lines: [["Started with", "$100"], ["Crew pay, all shifts", "−$45"], ["Budget now", "$55"]],
+    net: "This quarter −$45",
+  });
+  await expect(page.locator(".ct-recap-net")).toHaveClass(/is-out/);
+  await page.click('[data-go="board"]');
+  await expect(page.locator("#boardLast")).toHaveText("Last quarter: 0 of 1 contract shipped, −$45");
+  await expect(page.locator("#boardLast b")).toHaveClass(/is-out/);
 });

@@ -1001,3 +1001,24 @@ floor in a shift", so a quarter total on the board would be a guess.
 - Tests: `shiftCost` and `crewCost` in `test/business.test.mjs`; the picker (prices, nothing
   hidden under it, Escape), the cost line (both wordings, page still fits) and the coach in
   `e2e/business.spec.mjs`.
+
+### 72. A quarter recap before the board; plain counts on the shift card (2026-11-17)
+
+Mike approved Pam's recap: "like a post-round summary in balatro before the shop". He also said
+yes to dropping the shift card's projection ("At this pace you'll ship about 18 of 20: 2 short"),
+for the same reason the live pace label was dropped: a pace assumes the work goes evenly.
+
+- **The quarter card is the recap** (Pam's spec). The title and the skipped-shifts line stay,
+  and the lender's face leaves the header. The contract rows stay. Then comes a receipt with labels
+  on the left and mono numbers on the right: Started with, Contracts paid, Lender's cut (only with
+  a loan out, with his face beside it), Crew pay for all shifts, a rule, Budget now. $0 lines are
+  left out. Under it is "This quarter +$N" in green or "−$N" in red. Lines tally in 150 ms apart,
+  and a click shows them all at once. The buttons are "To the board" (gold) and "Levels"; there's
+  no replaying the last shift (`recapHTML` in `src/main.js`).
+- **The board** shows "Last quarter: 1 of 2 contracts shipped, +$90" under the title: muted, with
+  only the amount colored, and hidden in quarter 1 (`biz.last`, set by `settle`).
+- **Shift card:** "6 of 20 shipped, 2 shifts left." The projection and its advice are gone
+  (`countsLine`; `pace` became `shippedOf` in `src/quarter.js`).
+- Strings are in `src/words.js`. Tests: two recap tests in `e2e/business.spec.mjs` (a winning
+  quarter with a loan, a losing one with no $0 lines and no lender line), the shift-card text, and
+  `shippedOf` in `test/mechanics.test.mjs`.

@@ -205,6 +205,7 @@
     .ct-card-big { width: min(520px, 100%); background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 26px; text-align: center; box-shadow: 0 20px 60px #000a; }
     .ct-mascot { display: block; width: 96px; height: 96px; margin: 0 auto 6px; }
     .ct-mascot.is-small { width: 64px; height: 64px; margin-bottom: 4px; }
+    .ct-mascot[hidden] { display: none; }
     .ct-logo { font: 400 clamp(2.2rem, 7vw, 3.4rem)/1 var(--font-display); color: var(--accent); text-shadow: 0 4px 0 #8f6d0c; transform: rotate(-2deg); margin: 4px 0 18px; }
     .ct-howto { color: var(--text); line-height: 1.5; margin: 0 0 18px; }
     .ct-small { font-size: .82rem; color: var(--muted); margin-top: 14px; }
@@ -254,6 +255,23 @@
     .ct-forecast b.is-total { color: var(--accent); font-size: 1.05rem; }
     .ct-forecast-note { grid-column: 1 / -1; font-size: .82rem; margin-top: 4px; }
     .ct-board-money { text-align: right; }
+    .ct-board-last { color: var(--muted); font-size: .9rem; margin-top: 2px; }
+    .ct-board-last[hidden] { display: none; }
+    .ct-board-last b { font-family: var(--font-mono); }
+    .ct-board-last .is-in { color: var(--success); } .ct-board-last .is-out { color: #ff8a80; }
+    /* the quarter's recap: a receipt that tallies in, line by line */
+    .ct-recap { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr auto; row-gap: 4px; column-gap: 0; max-width: 360px; width: 100%; margin: 4px auto 0; text-align: left; font-size: .95rem; color: var(--muted); }
+    .ct-recap b { font-family: var(--font-mono); color: var(--text); text-align: right; padding-left: 16px; }
+    .ct-recap b.is-in { color: var(--success); } .ct-recap b.is-out { color: #ffb4ae; } /* labels stay plain; the numbers carry the color */
+    .ct-recap span.is-total { border-top: 1px solid var(--border); padding-top: 6px; margin-top: 2px; color: var(--text); font-weight: 700; }
+    .ct-recap b.is-total { border-top: 1px solid var(--border); padding-top: 6px; margin-top: 2px; color: var(--accent); font-size: 1.05rem; }
+    .ct-recap-face { width: 18px; height: 18px; vertical-align: -4px; margin-left: 4px; }
+    .ct-recap-net { grid-column: 1 / -1; text-align: center; margin-top: 10px; font-weight: 700; font-size: 1.05rem; color: var(--text); }
+    .ct-recap-net b { font: 400 1.6rem var(--font-display); margin-left: 6px; vertical-align: -2px; }
+    .ct-recap-net.is-in b { color: var(--success); } .ct-recap-net.is-out b { color: #ff8a80; }
+    .ct-recap > * { animation: tally .25s ease-out both; animation-delay: calc(var(--i) * 150ms); }
+    .ct-recap.is-shown > * { animation: none; }
+    @keyframes tally { from { opacity: 0; transform: translateY(4px); } }
     .ct-board-money .ct-cash-value { display: block; }
     .ct-crew-cost { display: block; font-weight: 600; font-size: .9rem; color: var(--text); white-space: nowrap; margin-top: 2px; }
     .ct-shift-cost { flex: none; margin-left: auto; font-weight: 600; font-size: .95rem; color: var(--text); }
@@ -689,7 +707,7 @@
   <div class="ct-overlay is-hidden" id="boardScreen">
     <div class="ct-card-big ct-board">
       <div class="ct-board-head">
-        <div><div class="ct-title" id="boardTitle">Quarter 1</div><div class="ct-board-shifts" id="boardShifts"></div></div>
+        <div><div class="ct-title" id="boardTitle">Quarter 1</div><div class="ct-board-shifts" id="boardShifts"></div><div class="ct-board-last" id="boardLast" hidden></div></div>
         <div class="ct-investor"><img src="favicon.svg" alt=""><p><span class="ct-label" data-word="lender">The lender</span><br><span id="investorLine"></span></p><div class="ct-loans" id="loans"></div></div>
         <div class="ct-board-money"><span class="ct-cash-label" data-word="budget">Budget</span><span class="ct-cash-value" id="bizMoney"></span><span class="ct-crew-cost" id="bizCrewCost"></span></div>
         <button class="ct-btn" id="boardMenuBtn">Levels</button>

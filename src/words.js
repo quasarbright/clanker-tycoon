@@ -21,6 +21,15 @@ export const WORDS = {
   crewPay: "Crew pay",
   thisShift: "This shift",
   replayShift: "Replay this shift",
+  // the quarter's recap (decision 72)
+  toBoard: "To the board",
+  startedWith: "Started with",
+  contractsPaid: "Contracts paid",
+  lendersCut: "Lender's cut",
+  crewPayAll: "Crew pay, all shifts",
+  budgetNow: "Budget now",
+  thisQuarter: "This quarter",
+  lastQuarter: "Last quarter",
   // the top bar's money line, per kind of level
   labor: "labor",
 };

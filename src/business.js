@@ -251,11 +251,15 @@ export function forecast(biz, contracts) {
 
 /** The quarter's over and you're back at the board. `left` is your money after the shifts' pay. */
 export function settle(biz, contracts, done, left) {
+  const before = biz.money;
   biz.money = left;
+  let won = 0;
   for (const p of payouts(contracts, done, biz.loans)) {
     biz.money += p.pay - p.cut;
-    if (p.won) biz.wins++;
+    if (p.won) { biz.wins++; won++; }
   }
+  // For the board's "Last quarter" line: contracts shipped, and what the quarter did to the budget.
+  biz.last = { won, of: contracts.length, net: Math.round(biz.money - before) };
   biz.loans = biz.loans.filter((l) => l > 0); // paid off
   biz.quarters++;
   biz.recruitedNow = [];
