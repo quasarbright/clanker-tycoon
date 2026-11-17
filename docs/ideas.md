@@ -112,6 +112,9 @@ Ideas worth keeping that aren't planned yet.
 - **Recovering from problems.** Time controls, clear alerts, buffers, one-click cleanup (issue #10).
 - **Challenge mode.** Write the robots' programs yourself, no model during the shift (issue #11).
 - **The business side.** Competitors, stock (issue #8). Probably post-game at most.
+- **Talk to robots by voice.** Push-to-talk dictation instead of typing, so you can manage on the
+  fly (typing is slow, which is half of why a shift feels short). Options: the browser's speech
+  recognition, a local Whisper, or a cloud speech-to-text.
 - **A free mode or a fallback model.** Nemotron 3.5 Super (free on OpenRouter) nearly matched Haiku,
   but free models allow 50 requests a day without credits; DeepSeek V4.1 Flash matched it and costs
   a third less (decision 66).
