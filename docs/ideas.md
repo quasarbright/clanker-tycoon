@@ -37,6 +37,13 @@ Agreed direction, not built yet. Roughly in roadmap order.
 - **Contracts.** A board of offers: what, how many, deadline in shifts, pay, machines needed. You
   pick which to take; some can't be done in time with what you have. You choose your difficulty.
   First version built (decision 53). Later: several at once, late pay, how often the board refreshes.
+- **Several contracts at once (open question).** Mike: "Which contract should an output go to?"
+  Different deadlines and overlapping orders (two contracts both wanting red boxes) make it
+  ambiguous. His options: limit how many you take per quarter so they share a deadline, and make
+  their orders never overlap. Suggested: each active contract gets its own shipping dock, and you
+  tell robots which dock to deliver to, so routing is done by talking, like everything else.
+  Fallback if that's too much: a shipped box fills the contract with the earliest deadline first.
+  Not decided.
 - **Money comes in.** Contracts pay. Wages, hiring, equipment, training and the investor's cut go
   out. You can't start a shift you can't pay for.
 - **The investor.** The dollar-eyed robot fronted your starting money and wants a cut every quarter
