@@ -344,26 +344,25 @@ function rebuildCrew() {
 // ---------- the crew list and the open chat ----------
 // Like a messages app: one row per worker (face, name, status, their last line, a dot for anything
 // unread) and the open conversation under it. Clicking a row or a robot on the floor opens theirs.
-// Hiring is the list's last row while the shift hasn't started. On a phone the sidebar shows the
+// The people you can hire are in the same list, under the crew, until the shift starts. On a phone the sidebar shows the
 // list or one chat, with a Back button.
 
 const CHEVRON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const BACK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
-const PLUS = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>`;
 
 const openCandidates = () => level.pool.map((id) => CANDIDATES.find((c) => c.id === id)).filter((c) => !game.workers.some((w) => w.id === c.id));
 const canHire = () => !started && level.pool.length > 0;
 
 // Called after hiring, firing, a new shift or Start: pick what's open and draw everything fresh.
 function buildCrew() {
-  const open = ui.open === "hire" ? (canHire() ? "hire" : null) : worker(ui.open) && ui.open !== "you" ? ui.open : null;
-  ui.open = open ?? game.workers[0]?.id ?? (canHire() ? "hire" : null);
+  const open = worker(ui.open) && ui.open !== "you" ? ui.open : null;
+  ui.open = open ?? game.workers[0]?.id ?? null;
   lastList = "";
   buildChat();
   $(".ct-side").hidden = !game.workers.length && !level.pool.length;
 }
 
-/** Open a worker's conversation (or "hire"), saving what you'd typed in the one you leave. */
+/** Open a worker's conversation, saving what you'd typed in the one you leave. */
 function openChat(id, { focus = true } = {}) {
   keepTyped();
   ui.open = id;
@@ -389,39 +388,39 @@ function renderList() {
     const unread = ui.open !== w.id && (w.log ?? []).slice(w.seen ?? 0).some((l) => l.who === "them");
     return { w, st, cls, prev, bad: last?.kind === "problem", unread };
   });
-  const sig = JSON.stringify([ui.open, started, canHire(), rows.map((r) => [r.w.id, r.st, r.prev, r.unread, atDesk(r.w)])]);
+  const sig = JSON.stringify([ui.open, started, canHire(), openCandidates().map((c) => c.id), rows.map((r) => [r.w.id, r.st, r.prev, r.unread, atDesk(r.w)])]);
   if (sig === lastList) return;
   lastList = sig;
   const payroll = game.workers.reduce((a, w) => a + w.hire.wage, 0);
   const list = $("#crew");
-  list.innerHTML = `<div class="ct-list-head"><span class="ct-label">Crew</span>${game.workers.length ? `<span class="ct-wage">payroll $${payroll}/min</span>` : ""}</div>`
+  // The crew first (only once there is one), then whoever you can still hire, each with a Hire
+  // button on their row. Hiring moves them up and opens their chat. The hire part goes once the
+  // shift starts.
+  const cands = canHire() ? openCandidates() : [];
+  list.innerHTML = (rows.length ? `<div class="ct-list-head"><span class="ct-label">Crew</span><span class="ct-wage">payroll $${payroll}/min</span></div>` : "")
     + rows.map((r) => `<button type="button" class="ct-convo ${ui.open === r.w.id ? "is-open" : ""} ${atDesk(r.w) ? "is-waiting" : ""}" data-open="${r.w.id}" style="--c:${r.w.hire.color}">
         ${r.unread ? `<span class="ct-unread" aria-label="unread"></span>` : ""}
         <span class="ct-face"></span><b>${r.w.hire.name}</b>
         <span class="ct-chip ${r.cls}">${r.cls === "is-ok" ? CHECK : r.cls === "is-bad" ? ALERT : ""}${r.st}${r.cls === "is-busy" ? DOTS : ""}</span>
         <span class="ct-convo-prev ${r.bad ? "is-bad" : ""}">${escapeHTML(r.prev)}</span>
       </button>`).join("")
-    + (canHire() ? `<button type="button" class="ct-hire-row ${ui.open === "hire" ? "is-open" : ""}" data-open="hire">${PLUS}Hire</button>`
-      : started && level.pool.length ? `<p class="ct-blurb ct-list-note">Hiring's closed while the shift runs.</p>` : "");
+    + (cands.length ? `<div class="ct-list-head ${rows.length ? "is-sep" : ""}"><span class="ct-label">Hire</span>${rows.length ? "" : `<span class="ct-wage">before the shift starts</span>`}</div>`
+      + cands.map((c) => `<div class="ct-cand" style="--c:${c.color}">
+          <span class="ct-face"></span><span><b>${c.name}</b> <span class="ct-wage">$${c.wage}/min</span></span>
+          <button class="ct-btn is-gold ct-small-btn" type="button" data-hire="${c.id}">Hire</button>
+          <span class="ct-cand-line">${skillBadges(c)}<span>${c.blurb}</span></span>
+        </div>`).join("") : "");
+  list.hidden = !list.innerHTML;
   list.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openChat(b.dataset.open)));
+  list.querySelectorAll("[data-hire]").forEach((b) => b.addEventListener("click", () => hire(b.dataset.hire)));
 }
 
-// The open panel: one worker's conversation, or the people you can hire.
+// The open panel: one worker's conversation.
 function buildChat() {
   const box = $("#chat");
-  const w = ui.open && ui.open !== "hire" ? worker(ui.open) : null;
+  const w = ui.open ? worker(ui.open) : null;
   const back = `<button class="ct-back" type="button" data-back>${BACK}Crew</button>`;
-  if (ui.open === "hire") {
-    const open = openCandidates();
-    box.innerHTML = `<div class="ct-chat-head">${back}<span class="ct-label">Hire</span></div>`
-      + (open.length ? open.map((c) => `
-        <div class="ct-candidate" style="--c:${c.color}">
-          <span class="ct-face"></span>
-          <div class="ct-candidate-info"><b>${c.name}</b> <span class="ct-wage">$${c.wage}/min</span><br><span class="ct-blurb">${c.blurb}</span>${skillBadges(c)}</div>
-          <button class="ct-btn is-gold" type="button" data-hire="${c.id}">Hire</button>
-        </div>`).join("") : `<p class="ct-blurb">You've hired everyone available.</p>`);
-    box.querySelectorAll("[data-hire]").forEach((b) => b.addEventListener("click", () => hire(b.dataset.hire)));
-  } else if (w) {
+  if (w) {
     const h = w.hire;
     box.style.setProperty("--c", h.color);
     box.innerHTML = `
@@ -523,7 +522,7 @@ const CHECK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-
 const ALERT = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 7.5v5.5M12 16.5h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
 const DOTS = `<span class="ct-dots"><i></i><i></i><i></i></span>`;
 function renderChat() {
-  const w = ui.open && ui.open !== "hire" ? worker(ui.open) : null;
+  const w = ui.open ? worker(ui.open) : null;
   const box = $("#chat");
   if (!w || box.hidden) return;
   w.seen = w.log?.length ?? 0;

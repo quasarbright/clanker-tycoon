@@ -338,3 +338,13 @@ quieter signs ("none of those are obvious").
 **Picked:** "say it with words": a small tag under the worker's name, an hourglass, "waiting for"
 and the item (a colored dot, "a box", "room", "3" and a dot). Work that takes time (packing,
 painting, servicing) keeps its bar. Replaces the waiting half of #30.
+
+### 34. Hiring lives in the crew list (2026-11-17)
+
+**Problem:** Mike: the empty Crew box with only a "+ Hire" row "shouldn't show until we have at
+least one employee. the whole hiring vs messaging flow is kind of awkward", and the Hire row "is
+useless when the crew window is open".
+**Picked:** one list. Before anyone is hired it shows only the people you can hire, each with a
+Hire button on their row. Hiring moves them up into Crew and opens their chat; the rest stay
+under Hire until the shift starts, then that part goes away. Replaces the Hire row and panel from
+#29.
