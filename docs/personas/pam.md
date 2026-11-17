@@ -46,11 +46,12 @@ Machines). Shift and quarter cards are modals over the floor. Source: `index.htm
 All five held up in real play (2026-11-17, level 7 quarter 1 with the real model). Order is by
 how much they get in the way.
 
-1. **The money question isn't answerable on the board.** "Can I afford this quarter?" needs crew
-   pay for three shifts. The board shows contract pay and the budget, and the forecast says outright
-   that wages are "not counted here". Each robot's rate is only in the Training column, never
-   totaled. Show the crew's cost for the quarter next to the budget and in the forecast (yes to the
-   pending call). This is the decision the board exists for.
+1. **The money question isn't answerable on the board.** Mike (2026-11-17): crew cost isn't known
+   until you pick who's on a shift, so a quarter total on the board would be a guess. Revised: the
+   board shows **what your whole crew costs a shift** next to the budget ("Whole crew $15 a shift"),
+   updating as you recruit or train, as a ceiling, and the forecast drops "You get" (contract pay
+   only). The real number lives at **scheduling**: by Start, "This shift $15, budget after $85,
+   enough for 5 more shifts like this", updating as robots go on or off the shift.
 2. **The player can't tell what a message did.** Told "Do whatever Pip needs, and keep the floor
    tidy", Blip answered "I'll help Pip and keep things tidy! Sorry, I'll keep carrying red widgets
    to Pack for now" and kept his old routine. Nothing said it was just talk. When a message does
@@ -103,7 +104,9 @@ Smaller, seen in play:
 
 ## Open calls waiting on Mike
 
-- Crew cost per quarter next to the budget (Pam: yes).
+- Money info (revised after Mike's answer that crew cost depends on the shift): board shows the
+  whole crew's per-shift cost as a ceiling; the schedule shows this shift's cost, budget after, and
+  how many shifts like it the budget covers.
 - Block Start for scheduled robots without instructions (Pam: yes, one message, in the status bar).
 - Compact Training (Pam: yes, picker per robot).
 - Dedupe "needs instructions" (Pam: status bar only).
@@ -120,3 +123,5 @@ Smaller, seen in play:
   between shifts, quarter done, back to the board for Q2). All five concerns confirmed, and the
   spawn-on-You bug is confirmed. New from real play: what a message did isn't clear (now #2), and
   thinking looks like talking (#4). Start is inconsistent and the cards have small mismatches.
+- 2026-11-17: Mike answered the open calls. Block Start: yes; mocks wanted for thinking indicator
+  and reply marker (the build thread mocks, Pam reviews). Crew cost: rethought per his point above.
