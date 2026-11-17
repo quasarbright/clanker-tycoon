@@ -77,4 +77,16 @@ export const LEVELS = [
     quarter: { shifts: 3, budget: 110 },
     start: "Ship the quota within three shifts. Each robot's pay for the shift comes out of your budget when you press <b>Start</b>. Your crew stays from shift to shift.",
   },
+  {
+    // Your business (src/business.js): the contract loop on level 6's floor. Opens on the
+    // contract board; each contract you take plays as a quarter with its own order and deadline.
+    id: 7, name: "Your business",
+    blurb: "Take contracts, buy equipment, pay the investor.",
+    stations: ["BELT_A", "PAINT", "PACK", "DOCK", "BIN_1", "BIN_2"],
+    ship: "boxes", colors: ["red"], beltEvery: 1.6,
+    order: [{ color: "red", count: 1 }],
+    pool: ["blip", "dot", "pip", "gary", "rusty", "vex"],
+    shift: SHIFT_FLOOR,
+    business: true,
+  },
 ];

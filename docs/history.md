@@ -217,3 +217,8 @@ final scene.")
 Along the way the ideas outgrew GitHub issues, which went stale as fast as the design moved. They
 now live in two docs: a short progression doc and an ideas list sorted into Now, Next, Maybe and
 Dropped.
+
+The same night, the first quarter (level 6) worked well enough to build on, so the contract loop got
+a first playable version as level 7: a board of three contracts, a shop with a cheap and a sturdy
+paint machine, and the investor taking 10% of every contract. It starts you without a paint
+machine, so the first real choice is whether to spend most of the investor's $100 on one.

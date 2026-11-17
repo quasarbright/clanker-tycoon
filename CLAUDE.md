@@ -196,7 +196,8 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   `?playlog`). Read it to see what a worker was told and decided.
 - A tab left open across an update shows a "game was updated, Reload" banner (`/api/version`).
   When Mike reports something that doesn't match the current code, suspect a stale tab first.
-- `tools/player-check.mjs` and `tools/balance.mjs` play levels headless to check timings and shift lengths.
+- `tools/player-check.mjs` and `tools/balance.mjs` play levels headless to check timings and shift lengths;
+  `balance.mjs` also plays every contract on the boards in `src/business.js` and prints the profit.
 - **Where things are written down** (Mike, 2026-11-17: issues "become out of date pretty quickly",
   and a couple of docs are "easier to keep those up to date"):
   - `docs/progression-design.md`: the shape of the long-term game. Keep it short.

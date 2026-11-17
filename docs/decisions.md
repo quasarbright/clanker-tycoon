@@ -622,3 +622,34 @@ pacing of the game. I think plain pause is the way to go for now."
 cost. The Paused card sits on the floor only, so the crew list and chats stay usable: you can talk
 to robots and change their instructions while nothing moves. Resume, Restart shift and Levels are
 on the card. Thinking never freezes the floor, and there are no speed controls.
+
+### 53. A first prototype of the contract loop, on level 6's floor (2026-11-17)
+
+**Question:** level 6's single quarter "works decently" (Mike). What's the smallest playable version
+of the loop in #49: contracts, money that carries over, equipment with trade-offs, the investor?
+**Picked:** a new level 7, "Your business", that opens on a contract board. No new lines, no
+foremen, same floor and robots as level 6.
+- **The board** offers three contracts at a time: an easy one, one that needs a machine, and a
+  stretch. Each has an order (boxes of 3), a deadline in shifts and a pay. A contract needing a
+  machine you don't own can't be taken; one that asks for more boxes than the belt can bring says so
+  ("the belt only brings enough widgets for about 25 boxes a shift"), and you can still take it.
+  Boards are written by hand, one per contract finished; past the last, the last one repeats at 15%
+  more pay per win.
+- **A contract plays as a quarter** (#35, #47): its order is the quota, its deadline the number of
+  shifts, all your money the budget. Crew pay still comes out at Start.
+- **Money carries over.** The investor fronted $100. When a contract ships, the client pays and the
+  investor takes 10% (a flat cut for now; growing it is for later). A missed deadline pays nothing,
+  and you see the same board again. You're free labor, so you're never stuck without money.
+- **The shop:** you start with no paint machine (the floor has no Paint station until you buy one).
+  Paint machine, $80, wears 10% a job; Sturdy paint machine, $170, wears 5% a job and replaces it.
+- **The crew carries over** from one contract to the next, with their instructions.
+**Evidence (`tools/balance.mjs`, hand-written programs):** board 1's red contract makes $78 to $88
+after wages and the cut; its blue one $111 to $141 but first needs the $80 machine, which leaves
+$20 for wages at the start, so you paint yourself or do the red one first. The 45-in-one-shift
+stretch tops out at 25. On board 3, 12 blue in 2 shifts works with the sturdy machine and just a
+painter and a packer, and needs servicing (you or Rusty at $15 a shift) with the cheap one; the
+same for the 20 red + 15 blue contract. With you servicing for free, the sturdy machine only buys
+you attention, which is the trade-off we want.
+**Open:** late contracts (nothing, or partial pay?), whether the board should change after a miss,
+and what happens when you can't pay the investor (he only takes a cut of pay for now, so you
+always can).

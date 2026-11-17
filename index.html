@@ -221,6 +221,34 @@
     .ct-stat-value { font: 400 1.4rem var(--font-display); }
     .ct-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
+    /* contract board (your business): contracts to take and equipment to buy, between contracts */
+    .ct-board { width: min(860px, 100%); text-align: left; padding: 22px; }
+    .ct-board-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    .ct-board-head .ct-title { margin: 0; }
+    .ct-board-money { margin-left: auto; text-align: right; }
+    .ct-investor { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; }
+    .ct-investor img { width: 44px; height: 44px; flex: none; }
+    .ct-investor p { margin: 0; line-height: 1.4; }
+    .ct-investor b { color: var(--success); }
+    .ct-board-sec { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 4px 0 8px; }
+    .ct-offers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+    .ct-shop { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .ct-offer { display: flex; flex-direction: column; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .ct-offer-order { display: flex; flex-wrap: wrap; gap: 6px; }
+    .ct-offer-pay { font: 400 1.6rem/1 var(--font-display); color: var(--accent); }
+    .ct-offer-keep { color: var(--muted); font-size: .85rem; }
+    .ct-offer-due { font-weight: 600; }
+    .ct-offer-note { font-size: .88rem; color: var(--muted); line-height: 1.35; flex: 1; }
+    .ct-offer-note.is-bad { color: #ffb4ae; }
+    .ct-offer .ct-btn { align-self: flex-start; }
+    .ct-offer.is-owned { border-color: var(--success); }
+    .ct-owned { color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .ct-owned svg { width: 1.1em; height: 1.1em; display: block; flex: none; }
+    @media (max-width: 700px) {
+      .ct-offers, .ct-shop { grid-template-columns: 1fr; }
+      .ct-board { padding: 14px; }
+    }
+
     /* ---------- phases: plan (write instructions) → run ---------- */
     body[data-phase="plan"] .ct-run-only, body[data-phase="loading"] .ct-run-only, body[data-phase="menu"] .ct-run-only { display: none !important; }
     body[data-phase="run"] .ct-plan-only, body[data-phase="end"] .ct-plan-only, body[data-phase="menu"] .ct-plan-only { display: none !important; }
@@ -545,6 +573,22 @@
       <p class="ct-end-note" id="endNote"></p>
       <div class="ct-stats" id="endStats"></div>
       <div class="ct-btns" id="endBtns"></div>
+    </div>
+  </div>
+
+  <!-- Your business: between contracts you're here. Contracts to take, equipment to buy. -->
+  <div class="ct-overlay is-hidden" id="boardScreen">
+    <div class="ct-card-big ct-board">
+      <div class="ct-board-head">
+        <div class="ct-title">Contract board</div>
+        <div class="ct-board-money"><span class="ct-cash-label">Your money</span><span class="ct-cash-value" id="bizMoney"></span></div>
+      </div>
+      <div class="ct-investor"><img src="favicon.svg" alt=""><p id="investorLine"></p></div>
+      <div class="ct-board-sec">Contracts</div>
+      <div class="ct-offers" id="offers"></div>
+      <div class="ct-board-sec">Shop</div>
+      <div class="ct-shop" id="shop"></div>
+      <div class="ct-btns" style="margin-top:16px"><button class="ct-btn" id="boardMenuBtn">Levels</button></div>
     </div>
   </div>
 

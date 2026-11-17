@@ -1,6 +1,7 @@
 # Progression design
 
-Status: **proposal, not agreed.** Nothing here is built. This doc is the shape of the long-term
+Status: **proposal, not agreed.** A first prototype of the loop (contract board, money carrying
+over, two paint machines, a flat investor cut) is level 7, "Your business" (decision 53). This doc is the shape of the long-term
 game and stays short. Each idea in it, with detail and open questions, is an entry in
 [ideas.md](ideas.md). Reasons and evidence are in [decisions.md](decisions.md). Mocks are rough and
 live in [`mocks/progression/`](mocks/progression/).

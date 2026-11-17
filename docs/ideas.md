@@ -22,6 +22,11 @@ What's being built.
   speed-up controls (thinking can't speed up, so the same shift would play out differently), a
   limited number of pauses (one more thing to keep in mind), slower shifts (boring).
 
+- **A first contract loop.** Level 7, "Your business", on level 6's floor: a board of three
+  contracts, money that carries over, a shop with two paint machines (cheap, or sturdy and wearing
+  half as fast), and the investor's flat 10% of every contract (decision 53). Prototype, to see if
+  choosing contracts and buying machines is fun before building more.
+
 ## Next
 
 Agreed direction, not built yet. Roughly in roadmap order.
@@ -31,14 +36,15 @@ Agreed direction, not built yet. Roughly in roadmap order.
 - **Crew variety through mechanics.** Robots differ by skills and attributes, not personality.
 - **Contracts.** A board of offers: what, how many, deadline in shifts, pay, machines needed. You
   pick which to take; some can't be done in time with what you have. You choose your difficulty.
-  Several at once later. Open: late pay, how often the board refreshes.
+  First version built (decision 53). Later: several at once, late pay, how often the board refreshes.
 - **Money comes in.** Contracts pay. Wages, hiring, equipment, training and the investor's cut go
   out. You can't start a shift you can't pay for.
 - **The investor.** The dollar-eyed robot fronted your starting money and wants a cut every quarter
-  that keeps growing. "Numbers must go up." Open: what happens when you can't pay.
+  that keeps growing. "Numbers must go up." Built so far: a flat 10% of each contract's pay
+  (decision 53). Open: the growing cut, what happens when you can't pay.
 - **Buying equipment.** Machines are things you buy, one at a time, each tried by hand first.
-- **Equipment attributes.** Wear (a pricier machine that wears half as fast saves repair labor),
-  speed, capacity. A trade-off between up-front cost and labor every shift.
+- **Equipment attributes.** Wear (a pricier machine that wears half as fast saves repair labor;
+  built as the Sturdy paint machine, decision 53), speed, capacity. A trade-off between up-front cost and labor every shift.
 - **Buying a whole line.** It drops into the next empty bay of a fixed plant layout, already wired:
   supply bins, the belt from the line before it, its output belt. No placing or wiring.
 - **Lines feed lines.** Stages of one product: Line A paints and boxes, Line B builds mixed crates,

@@ -12,6 +12,7 @@ import { backendLabel } from "./llm.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money } from "./quarter.js";
+import { INVESTOR, SHOP, newBusiness, board, hasMachine, cutOf, buy, beltBoxes, contractLevel, settle } from "./business.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const floor = $("#floor");
@@ -34,6 +35,7 @@ const REPEAT_WINDOW = 45;
 let unlocked = LEVELS.length;
 const best = {}; // best[levelId] = { time }: your fastest filled order; { left } for a quarter: the most money left
 let quarter = null; // the quarter being played (quarter.js), when the level is one
+let biz = null; // your business (business.js), once you've opened level 7; lives in memory like the rest
 
 $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
 
@@ -63,7 +65,10 @@ function renderLevels() {
       ${b ? `<span class="ct-level-done">${CHECK} ${b.left != null ? `${money(b.left)} left` : fmtTime(b.time)}</span>` : ""}
     </button>`;
   }).join("");
-  document.querySelectorAll(".ct-level").forEach((b) => b.addEventListener("click", () => openLevel(LEVELS.find((L) => L.id === +b.dataset.level))));
+  document.querySelectorAll(".ct-level").forEach((b) => b.addEventListener("click", () => {
+    const L = LEVELS.find((L) => L.id === +b.dataset.level);
+    if (L.business) openBoard(); else openLevel(L);
+  }));
 }
 
 function showMenu() {
@@ -72,6 +77,7 @@ function showMenu() {
   renderLevels();
   $("#endScreen").classList.add("is-hidden");
   $("#pauseScreen").classList.add("is-hidden");
+  $("#boardScreen").classList.add("is-hidden");
   $("#startScreen").classList.remove("is-hidden");
 }
 
@@ -986,7 +992,7 @@ function renderCoach() {
   const worn = level.worn && game.wear.PAINT >= 100;
   // A quarter's later shifts say where you stand instead of the level's opening line.
   const start = quarter && quarter.shift > 1
-    ? `Shift ${quarter.shift} of ${level.quarter.shifts}. What's shipped counts toward the quota, and your crew is still here. Hire, let people go or change instructions, then press <b>Start</b>.`
+    ? `Shift ${quarter.shift} of ${level.quarter.shifts}. What's shipped counts toward the ${level.contract ? "contract" : "quota"}, and your crew is still here. Hire, let people go or change instructions, then press <b>Start</b>.`
     : level.start;
   if (phase === "plan") text = idle ? `${start} ${idle.hire.name} still needs instructions: tell them what to do in their chat.`
     : cantDo ? `${cantDo.hire.name} can't do their instructions; their chat says why. Change them, or let ${cantDo.hire.name} go.`
@@ -1015,8 +1021,9 @@ function frame(now) {
  * In a quarter, `shift` says which shift that is: "restart" plays this one again (undoing what it
  * spent and shipped, if it ran), "next" moves on to the next one, and "new" starts the quarter over.
  */
-function openLevel(L, { again = false, shift = "restart" } = {}) {
-  const crew = again && game?.level === L ? game.workers : [];
+function openLevel(L, { again = false, shift = "restart", keepCrew = false } = {}) {
+  // A new contract keeps the crew from the last one, with their instructions.
+  const crew = (again && game?.level === L) || (keepCrew && game?.level.contract) ? game.workers : [];
   const ran = started || phase === "end";
   if (!L.quarter) quarter = null;
   else if (!again || shift === "new") quarter = newQuarter(L);
@@ -1032,8 +1039,10 @@ function openLevel(L, { again = false, shift = "restart" } = {}) {
     w.log = old.log ?? [];
     w.seen = old.seen;
     if (ran) logLine(w, "sys", quarter && shift !== "new" ? `Shift ${quarter.shift}${shift === "restart" ? ", again" : ""}` : "New shift", "divider");
+    else if (keepCrew) logLine(w, "sys", "New contract", "divider");
   }
-  startShift(L, { again, crew: crewSummary(), quarter: quarter ? { shift: quarter.shift, money: Math.floor(quarter.money), done: quarter.done } : undefined });
+  startShift(L, { again, crew: crewSummary(), quarter: quarter ? { shift: quarter.shift, money: Math.floor(quarter.money), done: quarter.done } : undefined,
+    contract: L.contract ? { id: L.contract.id, order: L.contract.order, shifts: L.contract.shifts, pay: L.contract.pay, machine: biz?.owned ?? null } : undefined });
   started = false;
   lastVersion = -1; lastClock = null; lastOrder = ""; lastHands = ""; lastList = ""; lastReady = "";
   ui.thinking = {};
@@ -1043,9 +1052,10 @@ function openLevel(L, { again = false, shift = "restart" } = {}) {
   buildFloor();
   buildCrew();
   $("#levelName").textContent = quarter ? `Shift ${quarter.shift} of ${L.quarter.shifts}` : `Level ${L.id}: ${L.name}`;
-  $("#goalLabel").textContent = quarter ? "This quarter" : "Today's order";
-  $("#laborLabel").textContent = quarter ? "budget" : "labor";
+  $("#goalLabel").textContent = L.contract ? "This contract" : quarter ? "This quarter" : "Today's order";
+  $("#laborLabel").textContent = L.contract ? "money" : quarter ? "budget" : "labor";
   $("#startScreen").classList.add("is-hidden");
+  $("#boardScreen").classList.add("is-hidden");
   $("#endScreen").classList.add("is-hidden");
   $("#pauseScreen").classList.add("is-hidden");
   paused = false;
@@ -1086,6 +1096,7 @@ function endQuarterShift() {
   closeShift(quarter, game);
   const total = sum(level.order.map((l) => l.count)), done = sum(quarter.done);
   const won = game.won, last = n >= Q.shifts;
+  if (level.contract) return endContractShift(won, last, done, total, shippedBefore);
   const left = money(quarter.money), spent = money(Q.budget - quarter.money);
   logEvent(game.t, "end", { won, quarter: { shift: n, of: Q.shifts }, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), money: Math.floor(quarter.money), crew: crewSummary() });
   if (won && (!best[level.id] || quarter.money > best[level.id].left)) best[level.id] = { left: quarter.money };
@@ -1111,6 +1122,93 @@ function endQuarterShift() {
     + `<button class="ct-btn" data-go="menu">Levels</button>`;
   $("#endBtns").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
     if (b.dataset.go === "menu") showMenu();
+    else openLevel(level, { again: true, shift: b.dataset.go });
+  }));
+  $("#endScreen").classList.remove("is-hidden");
+}
+
+// ---------- your business: the contract board ----------
+
+const ticketHTML = (color, count) => `<span class="ct-ticket"><span class="ct-ticket-dots">${`<span class="ct-dot c-${color}"></span>`.repeat(3)}</span><span class="ct-ticket-pay">${count}</span></span>`;
+const BUSINESS = LEVELS.find((L) => L.business);
+
+/** Between contracts: pick the next one, buy equipment. */
+function openBoard() {
+  if (!biz) biz = newBusiness();
+  setPhase("menu");
+  paused = false;
+  for (const id of ["startScreen", "endScreen", "pauseScreen"]) $(`#${id}`).classList.add("is-hidden");
+  renderBoard();
+  $("#boardScreen").classList.remove("is-hidden");
+}
+
+function renderBoard() {
+  const pct = `${Math.round(INVESTOR.cut * 100)}%`;
+  $("#bizMoney").textContent = money(biz.money);
+  $("#investorLine").innerHTML = biz.wins
+    ? `Your investor: "${biz.wins} ${biz.wins === 1 ? "contract" : "contracts"} done, and <b>$${biz.paidOut}</b> for me so far. I take ${pct} of every one. Numbers must go up."`
+    : `Your investor: "I fronted you <b>$${INVESTOR.fronted}</b> to get started. I take <b>${pct}</b> of every contract you finish. Numbers must go up."`;
+  const perShift = beltBoxes(BUSINESS);
+  const offers = board(biz);
+  $("#offers").innerHTML = offers.map((c, i) => {
+    const boxes = c.order.reduce((a, l) => a + l.count, 0);
+    const noMachine = !hasMachine(biz, c.needs);
+    const tooMany = boxes > perShift * c.shifts;
+    const note = noMachine ? `Needs a paint machine, and you don't own one yet.`
+      : tooMany ? `The belt only brings enough widgets for about ${perShift} boxes a shift.`
+      : c.needs ? `The belt only brings red: every blue widget goes through your paint machine.` : "";
+    return `<div class="ct-offer">
+      <div class="ct-offer-order">${c.order.map((l) => ticketHTML(l.color, l.count)).join("")}</div>
+      <div class="ct-offer-due">${c.order.map((l) => `${l.count} ${l.color}`).join(" and ")} boxes, due in ${c.shifts === 1 ? "1 shift" : `${c.shifts} shifts`}</div>
+      <div><div class="ct-offer-pay">$${c.pay}</div><div class="ct-offer-keep">You keep $${c.pay - cutOf(c.pay)} after his cut</div></div>
+      <div class="ct-offer-note ${noMachine || tooMany ? "is-bad" : ""}">${note}</div>
+      <button class="ct-btn ${noMachine ? "" : "is-gold"}" data-take="${i}" ${noMachine ? "disabled" : ""}>Take it</button>
+    </div>`;
+  }).join("");
+  $("#offers").querySelectorAll("[data-take]").forEach((b) => b.addEventListener("click", () => {
+    openLevel(contractLevel(BUSINESS, biz, offers[+b.dataset.take]), { keepCrew: true });
+  }));
+  $("#shop").innerHTML = SHOP.map((m) => {
+    const owned = biz.owned === m.id, short = biz.money < m.price;
+    const replaces = biz.owned && !owned ? " Replaces your paint machine." : "";
+    return `<div class="ct-offer ${owned ? "is-owned" : ""}">
+      <div class="ct-offer-due">${m.name}</div>
+      <div class="ct-offer-pay">$${m.price}</div>
+      <div class="ct-offer-note">${m.blurb}${replaces}</div>
+      ${owned ? `<span class="ct-owned">${CHECK} On your floor</span>`
+        : `<button class="ct-btn" data-buy="${m.id}" ${short ? `disabled data-tooltip="You have ${money(biz.money)}."` : ""}>Buy</button>`}
+    </div>`;
+  }).join("");
+  $("#shop").querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { if (buy(biz, b.dataset.buy)) renderBoard(); }));
+}
+$("#boardMenuBtn").addEventListener("click", () => showMenu());
+
+// A contract's shift ended: it shipped (the client pays, the investor takes his cut), there's
+// another shift before the deadline, or the deadline passed and the client pays nothing.
+function endContractShift(won, last, done, total, shippedBefore) {
+  const c = level.contract, n = quarter.shift;
+  const cut = cutOf(c.pay);
+  logEvent(game.t, "end", { won, contract: c.id, quarter: { shift: n, of: c.shifts }, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), money: Math.floor(quarter.money), crew: crewSummary() });
+  const after = won ? quarter.money + c.pay - cut : quarter.money;
+  const stats = won ? [["Client paid", `$${c.pay}`], ["Investor's cut", `$${cut}`], ["Your money", money(after)]]
+    : !last ? [["Shipped", `${done - shippedBefore}`], ["Crew pay", `$${Math.round(game.laborCost)}`], ["Your money", money(quarter.money)]]
+    : [["Shipped", `${done}/${total}`], ["Paid", "$0"], ["Your money", money(quarter.money)]];
+  $("#endTitle").textContent = won ? "Contract shipped" : !last ? `Shift ${n} done` : "Deadline missed";
+  const shiftsLeft = c.shifts - n;
+  $("#endNote").textContent = won ? `The client paid $${c.pay}, and the investor took his ${Math.round(INVESTOR.cut * 100)}%.`
+    : !last ? `${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left before the deadline. Your crew and their instructions stay.`
+    : "The order didn't all ship in time, so the client won't pay. You can replay the last shift, or go back to the board.";
+  const togo = won ? "" : `<div class="ct-end-togo"><span class="ct-label">Still to ship</span>${level.order.map((l, i) => {
+    const left = l.count - quarter.done[i];
+    return left > 0 ? ticketHTML(l.color, left) : "";
+  }).join("")}</div>`;
+  $("#endStats").innerHTML = togo + stats.map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
+  const btns = won ? [["board", "Back to the board", true]]
+    : last ? [["board", "Back to the board", true], ["restart", "Replay this shift"]]
+    : [["next", "Next shift", true], ["restart", "Replay this shift"]];
+  $("#endBtns").innerHTML = btns.map(([go, text, gold]) => `<button class="ct-btn ${gold ? "is-gold" : ""}" data-go="${go}">${text}</button>`).join("");
+  $("#endBtns").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+    if (b.dataset.go === "board") { settle(biz, c, quarter.money, won); openBoard(); }
     else openLevel(level, { again: true, shift: b.dataset.go });
   }));
   $("#endScreen").classList.remove("is-hidden");
@@ -1159,5 +1257,5 @@ window.ct = {
   openLevel: (n) => openLevel(LEVELS[n - 1]), unlockAll: () => { unlocked = LEVELS.length; renderLevels(); },
   step: (dt) => { if (started) step(game, dt); handleEvents(); render(); },
   give: (id, text) => giveInstructions(worker(id), text), say: (id, text) => message(worker(id), "message", text),
-  setPaused, begin, hire, playerActions,
+  setPaused, begin, hire, playerActions, openBoard, get biz() { return biz; },
 };

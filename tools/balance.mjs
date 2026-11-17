@@ -4,6 +4,7 @@
 import { newGame, step, setProgram, toolNamesFor } from "../src/sim.js";
 import { parseProgram, checkProgram } from "../src/lang.js";
 import { LEVELS } from "../src/levels.js";
+import { board, contractLevel, cutOf, SHOP } from "../src/business.js";
 
 const robot = (id, skills, attributes = []) => ({ id, name: id, skills, attributes, wage: 5 + 5 * (skills.length + attributes.length) });
 const level = (name) => LEVELS.find((l) => l.name === name);
@@ -100,3 +101,39 @@ const PLANS = [
 ];
 console.log(`\n${Q.name}: quota ${Q.order.map((l) => `${l.count} ${l.color}`).join(" + ")}, ${Q.quarter.shifts} shifts of ${Q.shift}s, budget $${Q.quarter.budget}`);
 for (const [name, plan] of PLANS) console.log(name.padEnd(38), [1, 2].map((seed) => quarter(plan, seed).padEnd(34)).join(" "));
+
+// ---------- contracts (your business, src/business.js) ----------
+// Each contract on each board, played by a few crews, with each paint machine. Prints what
+// shipped after each shift, the wages, and the profit after the investor's cut (pay − cut − wages).
+function contract(L, plan, seed) {
+  let wages = 0, done = L.order.map(() => 0);
+  const log = [];
+  for (let shift = 1; shift <= L.quarter.shifts; shift++) {
+    const hires = plan.map(qr);
+    wages += hires.reduce((a, h) => a + h.wage, 0);
+    const g = newGame(L, hires, seed * 10 + shift, { done });
+    g.workers.forEach((w, i) => setProgram(g, w, program(hires[i], L, Q_PROG[hires[i].id])));
+    while (!g.over) { step(g, 1 / 30); g.events.length = 0; }
+    done = g.order.map((l) => l.done);
+    log.push(done.join("+"));
+    if (g.won) { const c = L.contract; return `${log.join(" ")} met  wages $${wages}  profit $${c.pay - cutOf(c.pay) - wages}`; }
+  }
+  return `${log.join(" ")} missed  wages $${wages}`;
+}
+const CREWS = {
+  red: [["hauler + packer", ["blip", "pip"]], ["2 haulers + packer", ["blip", "dot", "pip"]], ["2 haulers + fast packer", ["blip", "dot", "gary"]]],
+  blue: [["painter + packer", ["vex", "pip"]], ["you service; painter + packer", ["you", "vex", "pip"]], ["painter + repair + packer", ["vex", "rusty", "pip"]]],
+  mixed: [["painter + hauler + packer", ["vex", "blip", "pip"]], ["you service; painter + hauler + packer", ["you", "vex", "blip", "pip"]],
+    ["painter + repair + hauler + packer", ["vex", "rusty", "blip", "pip"]], ["you service; painter + 2 haulers + packer", ["you", "vex", "blip", "dot", "pip"]]],
+};
+for (let wins = 0; wins < 3; wins++) {
+  console.log(`\nBoard ${wins + 1}`);
+  for (const c of board({ wins })) {
+    const kind = c.order.length > 1 ? "mixed" : c.order[0].color;
+    console.log(`  ${c.order.map((l) => `${l.count} ${l.color}`).join(" + ")} in ${c.shifts}, pays $${c.pay}${c.needs ? ", needs paint" : ""}`);
+    for (const m of c.needs ? SHOP : [null]) {
+      const L = contractLevel(Q, { money: 9999, owned: m?.id ?? null }, c);
+      for (const [name, plan] of CREWS[kind]) console.log(`    ${(m ? m.id + ": " : "") + name}`.padEnd(52), contract(L, plan, 1));
+    }
+  }
+}
