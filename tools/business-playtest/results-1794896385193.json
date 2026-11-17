@@ -1,0 +1,328 @@
+{
+ "quarters": 5,
+ "results": [
+  {
+   "name": "careful",
+   "log": [
+    {
+     "quarter": 1,
+     "picks": [
+      "small 20 red $150"
+     ],
+     "crew": [
+      "pip:pack",
+      "blip:haul"
+     ],
+     "shipped": [
+      "20/20"
+     ],
+     "paid": 1,
+     "wages": 30,
+     "money": 220,
+     "debt": 0
+    },
+    {
+     "quarter": 2,
+     "picks": [
+      "small 30 red $230",
+      "side 9 green $250"
+     ],
+     "crew": [
+      "pip:pack",
+      "blip:paint"
+     ],
+     "shipped": [
+      "0/30",
+      "0/9"
+     ],
+     "paid": 0,
+     "wages": 60,
+     "money": 60,
+     "debt": 0
+    },
+    {
+     "quarter": 3,
+     "picks": [
+      "small 12 green $330",
+      "side 40 red $310"
+     ],
+     "crew": [
+      "pip:pack",
+      "blip:paint"
+     ],
+     "shipped": [
+      "9/12",
+      "15/40"
+     ],
+     "paid": 0,
+     "wages": 60,
+     "money": 0,
+     "debt": 0
+    },
+    {
+     "quarter": 4,
+     "picks": [
+      "small 15 blue $420",
+      "side 45 red $360"
+     ],
+     "crew": [
+      "pip:pack(no routine)",
+      "blip:paint"
+     ],
+     "shipped": [
+      "0/15",
+      "0/45"
+     ],
+     "paid": 0,
+     "wages": 0,
+     "money": 0,
+     "debt": 0
+    },
+    {
+     "quarter": 5,
+     "picks": [
+      "small 15 blue $480",
+      "side 45 red $410"
+     ],
+     "crew": [
+      "pip:pack(no routine)",
+      "blip:paint"
+     ],
+     "shipped": [
+      "0/15",
+      "0/45"
+     ],
+     "paid": 0,
+     "wages": 0,
+     "money": 0,
+     "debt": 0
+    }
+   ],
+   "money": 0,
+   "debt": 0
+  },
+  {
+   "name": "greedy",
+   "log": [
+    {
+     "quarter": 1,
+     "picks": [
+      "large 40 red $320",
+      "side 9 blue $240"
+     ],
+     "crew": [
+      "pip:pack",
+      "cog:paint",
+      "rusty:repair",
+      "blip:haul"
+     ],
+     "shipped": [
+      "40/40",
+      "9/9"
+     ],
+     "paid": 2,
+     "wages": 135,
+     "money": 579,
+     "debt": 194
+    },
+    {
+     "quarter": 2,
+     "picks": [
+      "large 55 red $450",
+      "side 9 green $250"
+     ],
+     "crew": [
+      "pip:pack(no routine)",
+      "cog:paint",
+      "rusty:repair",
+      "blip:haul",
+      "vex:haul"
+     ],
+     "shipped": [
+      "0/55",
+      "0/9"
+     ],
+     "paid": 0,
+     "wages": 195,
+     "money": 324,
+     "debt": 194
+    },
+    {
+     "quarter": 3,
+     "picks": [
+      "large 20 green $560",
+      "side 40 red $310"
+     ],
+     "crew": [
+      "pip:pack",
+      "cog:paint",
+      "rusty:repair",
+      "blip:haul",
+      "vex:haul"
+     ],
+     "shipped": [
+      "0/20",
+      "0/40"
+     ],
+     "paid": 0,
+     "wages": 195,
+     "money": 129,
+     "debt": 194
+    },
+    {
+     "quarter": 4,
+     "picks": [
+      "large 25 blue $700",
+      "side 45 red $360"
+     ],
+     "crew": [
+      "pip:pack",
+      "cog:paint",
+      "rusty:repair",
+      "blip:haul",
+      "vex:haul"
+     ],
+     "shipped": [
+      "7/25",
+      "29/45"
+     ],
+     "paid": 0,
+     "wages": 65,
+     "money": 64,
+     "debt": 194
+    },
+    {
+     "quarter": 5,
+     "picks": [
+      "large 25 blue $800",
+      "side 45 red $410"
+     ],
+     "crew": [
+      "pip:pack",
+      "cog:paint",
+      "rusty:repair",
+      "blip:haul",
+      "vex:haul"
+     ],
+     "shipped": [
+      "0/25",
+      "0/45"
+     ],
+     "paid": 0,
+     "wages": 0,
+     "money": 64,
+     "debt": 194
+    }
+   ],
+   "money": 64,
+   "debt": 194
+  },
+  {
+   "name": "middle",
+   "log": [
+    {
+     "quarter": 1,
+     "picks": [
+      "large 40 red $320"
+     ],
+     "crew": [
+      "pip:pack",
+      "blip:haul",
+      "cog:haul"
+     ],
+     "shipped": [
+      "40/40"
+     ],
+     "paid": 1,
+     "wages": 60,
+     "money": 340,
+     "debt": 0
+    },
+    {
+     "quarter": 2,
+     "picks": [
+      "large 55 red $450",
+      "side 9 green $250"
+     ],
+     "crew": [
+      "pip:pack",
+      "cog:paint",
+      "blip:repair"
+     ],
+     "shipped": [
+      "0/55",
+      "9/9"
+     ],
+     "paid": 1,
+     "wages": 105,
+     "money": 385,
+     "debt": 0
+    },
+    {
+     "quarter": 3,
+     "picks": [
+      "small 12 green $330",
+      "side 40 red $310"
+     ],
+     "crew": [
+      "pip:pack",
+      "cog:paint",
+      "blip:repair"
+     ],
+     "shipped": [
+      "12/12",
+      "0/40"
+     ],
+     "paid": 1,
+     "wages": 105,
+     "money": 610,
+     "debt": 0
+    },
+    {
+     "quarter": 4,
+     "picks": [
+      "small 15 blue $420",
+      "side 45 red $360"
+     ],
+     "crew": [
+      "pip:pack(no routine)",
+      "cog:paint",
+      "blip:repair"
+     ],
+     "shipped": [
+      "0/15",
+      "0/45"
+     ],
+     "paid": 0,
+     "wages": 105,
+     "money": 505,
+     "debt": 0
+    },
+    {
+     "quarter": 5,
+     "picks": [
+      "small 15 blue $480",
+      "side 45 red $410"
+     ],
+     "crew": [
+      "pip:pack",
+      "cog:paint",
+      "blip:repair"
+     ],
+     "shipped": [
+      "15/15",
+      "0/45"
+     ],
+     "paid": 1,
+     "wages": 105,
+     "money": 880,
+     "debt": 0
+    }
+   ],
+   "money": 880,
+   "debt": 0
+  }
+ ],
+ "calls": 67,
+ "spent": 0.023549229
+}
