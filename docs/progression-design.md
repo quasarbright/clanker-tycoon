@@ -134,26 +134,28 @@ Each rank says what you do, what's new, and why the previous way of playing stop
 - **You:** run one line. Hire 2 to 4 robots, write their instructions, still walk the floor and
   step in by hand.
 - **Quarters:** 3 shifts. Small quotas, generous budgets.
-- **Unlocks during the rank:** new machines arrive one at a time, each used by hand first.
-- **Why it stops working:** the next rank's quotas need two lines' worth of output.
-
-### Rank 2: Shift supervisor
-- **You:** two lines on one floor, up to about 8 robots. You can't be at both lines.
-- **New:** **training** (pay to teach a worker a skill, #4) and **foremen**. You promote one of your
-  workers to foreman of a line. You tell the foreman what the line has to do; the foreman writes
-  the instructions for the robots on that line, and they show up on those robots' cards. The foreman
-  is still a robot on the floor and still does work.
-- **Why foremen work here:** the worker design already has the pieces. A foreman is a worker whose
+- **Unlocks during the rank:** new machines arrive one at a time, each used by hand first. Later in
+  the rank, **training** (pay to teach a worker a skill, #4) and **foremen**: you can make one of
+  your workers foreman of your line. You tell the foreman what the line has to do; the foreman
+  writes the instructions for the others, and they show up on those robots' cards. The foreman is
+  still a robot on the floor and still does work. You're still there too, so it's delegation with
+  you watching, which is the practice you need before you leave the floor.
+- **Why foremen fit:** the worker design already has the pieces. A foreman is a worker whose
   instructions are about other workers' instructions, and decision #19 parked worker-to-worker
   messages for exactly this.
-- **Why it stops working:** at the next rank you leave the floor.
+- **Why it stops working:** the next rank needs several lines' worth of output, and you can only
+  stand on one.
 
-### Rank 3: Plant manager
-- **You:** a plant of 3 to 5 lines. You don't walk the floor anymore. Your screen is the plant view:
-  one row per line, its foreman, its pace and its budget left. Click a line to drop in and watch it, or
-  open a chat with anyone there.
-- **New:** **managers**, a step above foremen, who can hire and fire for their lines within a budget
-  you give them. You split the quarter's budget across lines.
+(A Shift supervisor rank, two lines on one floor, sat between these two in the first draft. Mike
+cut it: "this kind of feels like it shouldn't exist.")
+
+### Rank 2: Plant manager
+- **You:** a plant of lines, starting with 2 (your old line, run by the foreman you left in charge,
+  plus a new one) and growing to 3 to 5. You don't walk the floor anymore. Your screen is the plant
+  view: one row per line, its foreman, its pace and its budget left. Click a line to drop in and
+  watch it, or open a chat with anyone there.
+- **New:** you split the quarter's budget across lines. Later, **managers**, a step above foremen,
+  who can hire and fire for their lines within the budget you give them.
 - **The skill now:** judging people by results and by what they tell you, and deciding who gets
   which line. Issue #6's question "do you stop seeing a line's floor once a manager runs it?"
   gets the answer: you can still see it, but nothing pulls you there unless something goes wrong.
@@ -162,7 +164,7 @@ Each rank says what you do, what's new, and why the previous way of playing stop
 
 ![Plant view](mocks/progression/5-plant-view.svg)
 
-### Rank 4: Director (top of the core ladder)
+### Rank 3: Director (top of the core ladder)
 - **You:** several plants, each run by a plant manager. You're your old boss now.
 - **New:** you set quotas and budgets for your plant managers, the way the boss set them for you.
 - **Endgame:** the business side (#8: investors, competitors) would hang off this rank. Out of scope
@@ -195,13 +197,13 @@ working for you at the top.
 
 Five dials. Each rank turns some of them, one new thing at a time:
 
-| Dial | Line lead | Supervisor | Plant manager |
-|---|---|---|---|
-| Quota per shift | small | about 2x | about 5x |
-| Order mix | one color, then two | 2 to 3 colors | several products |
-| New machines | one per quarter | a new line type | the line types you choose |
-| Budget | generous | normal | tight, split by you |
-| Span (robots you're responsible for) | 2 to 4 | about 8 | 15 to 30 |
+| Dial | Line lead | Plant manager |
+|---|---|---|
+| Quota per shift | small, growing each quarter | 2x at first, about 5x by the end |
+| Order mix | one color, then two or three | several products |
+| New machines | one per quarter | a new line type, then the line types you choose |
+| Budget | generous | tight, split by you |
+| Span (robots you're responsible for) | 2 to 5 | 8 at first, 15 to 30 by the end |
 
 Within a rank, each quarter's quota grows a bit over the last (unless you're on notice). Budget grows
 more slowly, so the same crew gets tighter and you have to get smarter.

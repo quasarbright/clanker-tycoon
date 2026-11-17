@@ -444,3 +444,12 @@ leftover goes back to the company. Each rank's promotion has a price, and you bu
 once savings cover it. This replaces the beat/met/missed grades and promotion credits in the first
 draft of `docs/progression-design.md`: the money already says how well you did, and finishing a
 shift early saves that shift's payroll. The house idea is dropped.
+
+### 40. No Shift supervisor rank: Line lead goes straight to Plant manager (2026-11-17)
+
+**Question:** the first progression draft had five ranks, with Shift supervisor (two lines on one
+floor, training and foremen) between Line lead and Plant manager. Mike: "this kind of feels like it
+shouldn't exist. maybe straight from line to plant?"
+**Picked:** four ranks: Floor hand, Line lead, Plant manager, Director. Training and foremen move
+to late in Line lead, so you practice delegating while you're still on the floor. Plant manager
+starts with two lines (your old one under the foreman you left, plus a new one) and grows to 3 to 5.
