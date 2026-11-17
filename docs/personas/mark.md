@@ -77,4 +77,4 @@ pay. Source: `src/business.js`, decisions 53 to 67.
 
 ## Showing images
 
-Images: each screenshot or mock is its own full-resolution PNG (2x), saved to /mnt/project-files and numbered in order for sequences (1-…, 2-…). No combined images, no gallery pages or artifacts for them (Mike, 2026-11-17: one big image is awkward, hard to zoom, and loses quality; he reads on mobile).
+Images: each screenshot or mock is its own full-resolution PNG (2x), saved to /mnt/project-files and numbered in order for sequences (1-…, 2-…). No combined images, no gallery pages or artifacts for them (Mike, 2026-11-17: one big image is awkward, hard to zoom, and loses quality; he reads on mobile). Every mock and screenshot carries a title and a one-line description, in the image itself or in its filename plus caption (Mike, 2026-11-17).

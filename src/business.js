@@ -100,6 +100,12 @@ export function robotOf(biz, c) {
   return { ...c, skills, attributes, wage: wageOf(skills, attributes) };
 }
 
+/** What your whole crew costs for a shift if everyone works it: the most a shift can cost. Shown
+ *  on the board next to the budget (decision 71). `candidates` is brains.js CANDIDATES. */
+export function crewCost(biz, candidates) {
+  return biz.crew.reduce((a, id) => a + robotOf(biz, candidates.find((c) => c.id === id)).wage, 0);
+}
+
 // The same few choices for the whole visit: a small seeded shuffle per quarter.
 function pickFew(list, n, seed) {
   let a = (seed * 2654435761) >>> 0;

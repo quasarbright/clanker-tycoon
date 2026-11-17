@@ -13,9 +13,9 @@ import { getKey, setKey, signIn, finishSignIn } from "./openrouter-auth.js";
 import { WORDS, applyWords } from "./words.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
-import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, pace } from "./quarter.js";
+import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, pace, shiftCost } from "./quarter.js";
 import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
-  RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers } from "./business.js";
+  RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers, crewCost } from "./business.js";
 import { SKILL_TIER, wageOf } from "./wages.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -324,9 +324,10 @@ function renderReady() {
   if (phase !== "plan") return;
   const short = cantPay();
   const blocker = startBlocker();
-  const sig = game.workers.map((w) => `${w.id}:${cardState(w)[0]}`).join() + blocker;
+  const sig = game.workers.map((w) => `${w.id}:${cardState(w)[0]}`).join() + blocker + (quarter ? `${payroll()}/${quarter.money}` : "");
   if (sig === lastReady) return;
   lastReady = sig;
+  renderShiftCost(short);
   $("#goBtn").disabled = !!blocker;
   $("#goBtn").dataset.tooltip = blocker || "";
   const el = $("#crewReady");
@@ -342,6 +343,17 @@ function renderReady() {
     const [st, cls] = cardState(w);
     return `<span class="ct-ready ${cls}" style="--c:${w.hire.color}"><i class="ct-face"></i><b>${w.hire.name}</b> ${cls === "is-busy" ? busyHTML(st.toLowerCase()) : st.toLowerCase()}</span>`;
   }).join("");
+}
+/** By Start, in a quarter: this shift's crew pay, the budget after it, and whether shifts like it
+ *  cover the rest of the quarter. Updates as robots go on or off the shift (Pam's plan, decision 71). */
+function renderShiftCost(short) {
+  const el = $("#shiftCost");
+  const p = payroll();
+  el.hidden = !quarter || short || !p;
+  if (el.hidden) return;
+  const c = shiftCost(quarter.money, p, quarter.shift, level.quarter.shifts);
+  el.innerHTML = `This shift <b>$${c.pay}</b> <i>·</i> budget after <b>${money(c.after)}</b> <i>·</i> `
+    + (c.covers ? (quarter.shift >= level.quarter.shifts ? "the last shift" : "covers the rest of the quarter") : `<span class="is-bad">short for shift ${c.shortAt}</span>`);
 }
 function nudgeStart() {
   const b = $("#goBtn");
@@ -1108,8 +1120,9 @@ function renderCoach() {
   const start = quarter && quarter.shift > 1
     ? `Shift ${quarter.shift} of ${level.quarter.shifts}. What's shipped counts toward the ${level.contracts ? "contracts" : "quota"}, and your crew is still here. Change who's on the shift or their instructions, then press <b>Start</b>.`
     : level.start;
-  if (phase === "plan") text = idle ? `${start} ${idle.hire.name} still needs instructions: tell them what to do in their chat.`
-    : cantDo ? `${cantDo.hire.name} can't do their instructions; their chat says why. Change them, or let ${cantDo.hire.name} go.`
+  // Before the shift, who still needs instructions is said by their crew chip and by Start's status
+  // bar, not again here (decision 71).
+  if (phase === "plan") text = cantDo ? `${cantDo.hire.name} can't do their instructions; their chat says why. Change them, or let ${cantDo.hire.name} go.`
     : start + (level.pool.length ? "" : " Press <b>Start</b> when you're ready.");
   else if (worn) text = level.worn;
   else if (deskVisitor) text = `${deskVisitor.hire.name} came to your desk. Answer in their chat.`;
@@ -1279,6 +1292,8 @@ function renderBoard() {
   const pct = `${Math.round(LENDER.share * 100)}%`, now = `${Math.round(shareOf(biz) * 100)}%`;
   const short = (n) => (biz.money < n ? `disabled data-tooltip="You have ${money(biz.money)}."` : "");
   $("#bizMoney").textContent = money(biz.money);
+  // The most a shift can cost: everyone on it. The real cost shows by Start while you schedule.
+  $("#bizCrewCost").textContent = biz.crew.length ? `Whole crew $${crewCost(biz, CANDIDATES)} a shift` : "";
   $("#boardTitle").textContent = `Quarter ${biz.quarters + 1}`;
   $("#boardShifts").textContent = `${QUARTER_SHIFTS} shifts. Every contract is due at the end of the last one.`;
   // The lender: no interest; each loan takes 10% of every contract you finish until it's paid back.
@@ -1334,9 +1349,8 @@ function renderBoard() {
   const f = forecast(biz, picked);
   const row = (label, v, cls = "", tip = "") => `<span class="${cls}" ${tip ? `data-tooltip="${tip}"` : ""}>${label}</span><b class="${cls}">${v}</b>`;
   $("#forecast").innerHTML = !picked.length ? "" : row("Contracts pay, if they all ship", `+$${f.pay}`, "is-in")
-    + (n ? row(`${WORDS.toLender} (${now})`, `−$${f.repay}`, "is-out", `After this quarter you'd owe $${f.debtAfter}.`) : "")
-    + row("You get at the end of the quarter", `+$${f.gain}`, "is-total")
-    + `<span class="ct-forecast-note">Wages come out of your ${money(f.budget)} budget as the shifts run, so they're not counted here.</span>`;
+    + (n ? row(`${WORDS.toLender} (${now})`, `−$${f.repay}`, "is-out", `After this quarter you'd owe $${f.debtAfter}.`)
+      + row("You keep", `+$${f.gain}`, "is-total") : "");
 
   // ----- recruit: three robots this visit
   $("#recruits").innerHTML = recruitOffers(biz).map((id) => {
@@ -1348,13 +1362,21 @@ function renderBoard() {
   $("#crewNote").textContent = `$${TRAIN_PRICE} a skill or trait. Each adds $5 a shift to their pay; a third skill, or a third trait, adds $${SKILL_TIER.extra} more.`;
   $("#bizCrew").innerHTML = biz.crew.map((id) => {
     const r = robotOf(biz, CANDIDATES.find((c) => c.id === id));
-    const btn = (k, isSkill) => {
+    // One Train picker per robot: what's left to learn, and what each adds to their pay.
+    const item = (k, isSkill) => {
       const after = isSkill ? wageOf([...r.skills, k], r.attributes) : wageOf(r.skills, [...r.attributes, k]);
-      const tip = biz.money < TRAIN_PRICE ? short(TRAIN_PRICE) : `data-tooltip="${(isSkill ? SKILLS : ATTRIBUTES)[k].tip} ${r.name} would then cost $${after} a shift."`;
-      return `<button class="ct-train-btn ${isSkill ? "" : "is-trait"}" data-train="${id}:${k}" ${tip}>+ ${(isSkill ? SKILLS : ATTRIBUTES)[k].label}</button>`;
+      const broke = biz.money < TRAIN_PRICE;
+      const tip = broke ? `data-tooltip="$${TRAIN_PRICE - Math.floor(biz.money)} short."` : `data-tooltip="${(isSkill ? SKILLS : ATTRIBUTES)[k].tip}"`;
+      return `<button class="ct-train-item" data-train="${id}:${k}" ${broke ? "disabled" : ""} ${tip}>${(isSkill ? SKILLS : ATTRIBUTES)[k].label}<span>+$${after - r.wage} a shift</span></button>`;
     };
-    return robotCard(r, { cls: "ct-biz-bot ct-trainee", blurb: false, extra: `<div class="ct-train-row">${TRAINABLE.filter((k) => !r.skills.includes(k)).map((k) => btn(k, true)).join("")}${
-      TRAINABLE_ATTRS.filter((k) => !r.attributes.includes(k)).map((k) => btn(k, false)).join("")}</div>` });
+    const skills = TRAINABLE.filter((k) => !r.skills.includes(k)), traits = TRAINABLE_ATTRS.filter((k) => !r.attributes.includes(k));
+    const open = trainOpen === id;
+    const menu = !open ? "" : `<div class="ct-train-menu">${skills.length ? `<div class="ct-train-head">Skills · $${TRAIN_PRICE} each</div>${skills.map((k) => item(k, true)).join("")}` : ""}${
+      traits.length ? `<div class="ct-train-head">Traits · $${TRAIN_PRICE} each</div>${traits.map((k) => item(k, false)).join("")}` : ""}</div>`;
+    const picker = skills.length + traits.length
+      ? `<div class="ct-train-pick"><button class="ct-btn ct-train-open ${open ? "is-on" : ""}" data-train-open="${id}" aria-expanded="${open}">Train ${CHEVRON_DOWN}</button>${menu}</div>`
+      : `<span class="ct-owned">Knows everything</span>`;
+    return robotCard(r, { cls: "ct-biz-bot ct-trainee", blurb: false, action: picker });
   }).join("");
 
   // ----- machines: three this visit, and what's on your floor
@@ -1370,12 +1392,38 @@ function renderBoard() {
 
   $("#boardScreen").querySelectorAll("[data-recruit]").forEach((b) => b.addEventListener("click", () => { if (recruit(biz, b.dataset.recruit)) renderBoard(); }));
   $("#boardScreen").querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { if (buy(biz, b.dataset.buy)) renderBoard(); }));
-  $("#boardScreen").querySelectorAll("[data-train]").forEach((b) => b.addEventListener("click", () => {
+  $("#boardScreen").querySelectorAll("[data-train]").forEach((b) => b.addEventListener("click", (e) => {
+    e.stopPropagation();
     const [id, k] = b.dataset.train.split(":");
-    if (train(biz, CANDIDATES.find((c) => c.id === id), k)) renderBoard();
+    if (train(biz, CANDIDATES.find((c) => c.id === id), k)) { trainOpen = null; renderBoard(); }
+  }));
+  placeTrainMenu();
+  $("#boardScreen").querySelectorAll("[data-train-open]").forEach((b) => b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    trainOpen = trainOpen === b.dataset.trainOpen ? null : b.dataset.trainOpen;
+    renderBoard();
   }));
 }
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
+// The open Train picker (a robot id), if any. A click anywhere else or Escape closes it.
+let trainOpen = null;
+const CHEVRON_DOWN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const closeTraining = () => { if (trainOpen) { trainOpen = null; renderBoard(); } };
+/** The open Train menu floats over the board (fixed), under its button, or above it when there's
+ *  no room below, so the Training column's scroll box never cuts it off. */
+function placeTrainMenu() {
+  const menu = $(".ct-train-menu");
+  if (!menu) return;
+  const r = menu.parentElement.querySelector(".ct-train-open").getBoundingClientRect();
+  const h = menu.offsetHeight, w = menu.offsetWidth;
+  const below = r.bottom + 6 + h <= innerHeight - 8;
+  menu.style.top = `${below ? r.bottom + 6 : Math.max(8, r.top - 6 - h)}px`;
+  menu.style.left = `${Math.max(8, Math.min(innerWidth - w - 8, r.right - w))}px`;
+}
+document.addEventListener("scroll", () => trainOpen && closeTraining(), true);
+addEventListener("resize", () => placeTrainMenu());
+document.addEventListener("click", (e) => { if (trainOpen && !e.target.closest?.(".ct-train-pick")) closeTraining(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeTraining(); });
 $("#boardMenuBtn").addEventListener("click", () => showMenu());
 $("#boardGo").addEventListener("click", () => {
   if (!picked.length) return;

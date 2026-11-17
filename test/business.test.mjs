@@ -173,3 +173,22 @@ test("the quarter's level: a paint station only with a machine, caps from upgrad
   assert.deepEqual(L.order, [{ color: small.color, count: small.count }, { color: side.color, count: side.count }]);
   assert.equal(L.roster.pip.wage, 10);
 });
+
+test("shift cost by Start: budget after, and whether shifts like this cover the rest of the quarter (decision 71)", async () => {
+  const { shiftCost } = await import("../src/quarter.js");
+  assert.deepEqual(shiftCost(80, 15, 1, 3), { pay: 15, after: 65, covers: true, shortAt: null });
+  assert.deepEqual(shiftCost(80, 35, 1, 3), { pay: 35, after: 45, covers: false, shortAt: 3 });
+  assert.deepEqual(shiftCost(80, 50, 1, 3), { pay: 50, after: 30, covers: false, shortAt: 2 });
+  assert.deepEqual(shiftCost(40, 20, 2, 3), { pay: 20, after: 20, covers: true, shortAt: null });
+  assert.equal(shiftCost(30, 15, 3, 3).covers, true); // the last shift has nothing after it
+  assert.equal(shiftCost(80, 0, 1, 3).covers, true);
+});
+
+test("the board's whole-crew cost is the sum of every robot's wage (decision 71)", () => {
+  const biz = B.newBusiness();
+  const cands = [{ id: "blip", skills: [], attributes: [] }, { id: "pip", skills: ["packing"], attributes: [] }, { id: "cog", skills: ["painting"], attributes: ["smart"] }];
+  biz.crew = ["blip", "pip"];
+  assert.equal(B.crewCost(biz, cands), 5 + 10);
+  biz.crew.push("cog"); biz.trained.pip = ["painting"];
+  assert.equal(B.crewCost(biz, cands), 5 + 15 + 15);
+});

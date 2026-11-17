@@ -50,3 +50,16 @@ export function pace(counts, done, before, shiftsLeft) {
   const now = done.reduce((a, d, i) => a + Math.min(d, counts[i]), 0);
   return { total, now, projected: Math.min(total, now + (now - before) * shiftsLeft) };
 }
+
+/**
+ * What this shift's crew costs against the budget, said by Start while you schedule (Pam's plan,
+ * decision 71): the budget after paying them, and whether shifts like this one cover the rest of
+ * the quarter or which shift they'd fall short on. `shift` is this shift's number (1-based).
+ */
+export function shiftCost(budget, pay, shift, shifts) {
+  const after = budget - pay;
+  if (pay <= 0) return { pay, after, covers: true, shortAt: null };
+  const more = Math.floor(after / pay); // later shifts like this one the budget still covers
+  const later = shifts - shift;
+  return more >= later ? { pay, after, covers: true, shortAt: null } : { pay, after, covers: false, shortAt: shift + more + 1 };
+}

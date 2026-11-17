@@ -78,6 +78,7 @@ test("recruit a cheap robot and train them in the same visit", async ({ page }) 
   const id = await page.locator("[data-recruit]").first().getAttribute("data-recruit");
   await page.click(`[data-recruit="${id}"]`);
   await expect(page.locator("#recruits")).toContainText("Recruited");
+  await page.click(`[data-train-open="${id}"]`);
   const train = page.locator(`[data-train^="${id}:"]`).first();
   await expect(train).toBeEnabled();
   const before = await page.evaluate(() => ct.biz.money);
@@ -272,4 +273,57 @@ test("reading and thinking look the same everywhere: the word, no dots, no speec
   await expect(page.locator("#chat .is-busyline")).toHaveText("Blip is thinking");
   await page.evaluate(() => { ct.thinking("blip", -1); ct.step(0); });
   await expect(page.locator(".ct-busy")).toHaveCount(0);
+});
+
+test("Training: one row per robot with one Train picker that lists what's left and what it adds", async ({ page }) => {
+  await openBoard(page);
+  await page.evaluate(() => { ct.biz.trained.pip = ["painting"]; ct.openBoard(); }); // Pip: packing + painting
+  const pip = page.locator("#bizCrew .ct-robot", { hasText: "Pip" });
+  await expect(pip.locator("[data-train]")).toHaveCount(0); // closed until you open it
+  await pip.locator("[data-train-open]").click();
+  const menu = pip.locator(".ct-train-menu");
+  await expect(menu).toBeVisible();
+  await expect(menu.locator('[data-train="pip:repair"]')).toContainText("+$25 a shift"); // a third skill jumps a tier
+  await expect(menu.locator('[data-train="pip:fast"]')).toContainText("+$5 a shift");
+  await expect(menu.locator('[data-train="pip:packing"]')).toHaveCount(0); // already has it
+  // Nothing cuts the menu off: every item is the topmost thing at its own center, on screen.
+  const hidden = await menu.locator(".ct-train-item").evaluateAll((els) => els.filter((e) => {
+    const r = e.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2;
+    return y > innerHeight || !e.contains(document.elementFromPoint(x, y));
+  }).length);
+  expect(hidden).toBe(0);
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await pip.locator("[data-train-open]").click();
+  const before = await page.evaluate(() => ct.biz.money);
+  await page.click('[data-train="pip:fast"]');
+  expect(await page.evaluate(() => ct.biz.money)).toBe(before - 20);
+  await expect(pip).toContainText("Fast");
+  await expect(page.locator(".ct-train-menu")).toHaveCount(0);
+});
+
+test("crew cost: the whole crew's shift on the board, this shift's cost by Start (decision 71)", async ({ page }) => {
+  await openBoard(page);
+  await expect(page.locator("#bizCrewCost")).toHaveText(/^Whole crew \$\d+ a shift$/);
+  await page.locator("[data-contract]").first().click();
+  await expect(page.locator("#forecast")).not.toContainText("You get");
+  await expect(page.locator("#forecast")).not.toContainText("not counted");
+  await page.click("#boardGo");
+  await expect(page.locator("#shiftCost")).toBeHidden(); // nobody on the shift yet
+  await page.evaluate(() => ct.hire("blip"));
+  await expect(page.locator("#shiftCost")).toHaveText("This shift $5 · budget after $95 · covers the rest of the quarter");
+  await page.evaluate(() => { ct.quarter.money = 20; ct.hire("pip"); });
+  await expect(page.locator("#shiftCost")).toHaveText("This shift $15 · budget after $5 · short for shift 2");
+  // The extra line by Start doesn't push the page past the window.
+  expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(true);
+  expect(await page.locator("#shiftCost").evaluate((e) => e.getBoundingClientRect().bottom <= innerHeight)).toBe(true);
+});
+
+test("before a shift the coach doesn't repeat who needs instructions; the chip and status bar say it", async ({ page }) => {
+  await openBoard(page);
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  await page.evaluate(() => ct.hire("pip"));
+  await expect(page.locator("#crewReady")).toContainText("needs instructions");
+  await expect(page.locator("#coach")).not.toContainText("needs instructions");
 });

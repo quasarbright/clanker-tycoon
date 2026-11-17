@@ -254,6 +254,12 @@
     .ct-forecast b.is-total { color: var(--accent); font-size: 1.05rem; }
     .ct-forecast-note { grid-column: 1 / -1; font-size: .82rem; margin-top: 4px; }
     .ct-board-money { text-align: right; }
+    .ct-board-money .ct-cash-value { display: block; }
+    .ct-crew-cost { display: block; font-weight: 600; font-size: .9rem; color: var(--text); white-space: nowrap; margin-top: 2px; }
+    .ct-shift-cost { flex-basis: 100%; font-weight: 600; font-size: .95rem; color: var(--text); }
+    .ct-shift-cost[hidden] { display: none; }
+    .ct-shift-cost b { color: var(--accent); } .ct-shift-cost i { font-style: normal; color: var(--muted); }
+    .ct-shift-cost .is-bad { color: #ff8a80; }
     .ct-board-sec { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
     .ct-board-top { display: grid; grid-template-columns: 1fr auto; gap: 16px; }
     .ct-offers { display: grid; grid-template-columns: 2fr 1.15fr; gap: 12px; align-items: start; }
@@ -293,14 +299,17 @@
     .ct-investor p, .ct-biz-blurb, .ct-offer-note, .ct-coach, .ct-forecast-note { text-wrap: pretty; }
     .ct-biz-act { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
     .ct-biz-act .ct-btn { white-space: nowrap; }
-    .ct-biz-bot.ct-trainee { grid-template-columns: auto 1fr; }
-    .ct-train-row { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 5px; }
-    .ct-train-btn { border: 1px dashed #6a5a22; background: transparent; color: var(--accent); border-radius: 999px; padding: 2px 9px; font: 700 .72rem var(--font-ui);
-      letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
-    .ct-train-btn.is-trait { border-color: #3c4a63; color: #9fb4d8; }
-    .ct-train-btn:hover:not(:disabled) { border-style: solid; background: #2b2614; }
-    .ct-train-btn.is-trait:hover:not(:disabled) { background: #1d2532; }
-    .ct-train-btn:disabled { opacity: .4; cursor: not-allowed; }
+    /* one Train picker per robot */
+    .ct-train-pick { position: relative; }
+    .ct-train-open { display: inline-flex; align-items: center; gap: 4px; padding: 7px 12px; font-size: .9rem; }
+    .ct-train-open svg { width: 14px; height: 14px; display: block; transition: transform .15s; }
+    .ct-train-open.is-on svg { transform: rotate(180deg); }
+    .ct-train-menu { position: fixed; width: 220px; background: #2a3038; border: 1px solid var(--border); border-radius: 10px; padding: 6px; z-index: 20; box-shadow: 0 10px 30px #0008; }
+    .ct-train-head { font: 600 .62rem var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 6px 8px 3px; }
+    .ct-train-item { display: flex; width: 100%; justify-content: space-between; align-items: baseline; padding: 6px 8px; border: 0; border-radius: 6px; background: none; color: var(--text); font: 600 .9rem var(--font-ui); cursor: pointer; text-align: left; }
+    .ct-train-item span { font: 400 .75rem var(--font-mono); color: var(--muted); }
+    .ct-train-item:hover:not(:disabled) { background: #f2c23022; }
+    .ct-train-item:disabled { opacity: .45; cursor: not-allowed; }
     .ct-owned { color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
     .ct-owned svg { width: 1.1em; height: 1.1em; display: block; flex: none; }
     /* the top bar in a quarter: which shift this is, with a pip per shift */
@@ -635,6 +644,7 @@
       <div class="ct-planbar ct-plan-only">
         <button class="ct-btn is-gold ct-big" id="goBtn">Start</button>
         <div class="ct-crew-ready" id="crewReady"></div>
+        <div class="ct-shift-cost" id="shiftCost" hidden></div>
       </div>
       <div class="ct-hands ct-run-only" id="hands"></div>
       <form class="ct-yell ct-run-only" id="yellForm">
@@ -678,7 +688,7 @@
       <div class="ct-board-head">
         <div><div class="ct-title" id="boardTitle">Quarter 1</div><div class="ct-board-shifts" id="boardShifts"></div></div>
         <div class="ct-investor"><img src="favicon.svg" alt=""><p><span class="ct-label" data-word="lender">The lender</span><br><span id="investorLine"></span></p><div class="ct-loans" id="loans"></div></div>
-        <div class="ct-board-money"><span class="ct-cash-label" data-word="budget">Budget</span><span class="ct-cash-value" id="bizMoney"></span></div>
+        <div class="ct-board-money"><span class="ct-cash-label" data-word="budget">Budget</span><span class="ct-cash-value" id="bizMoney"></span><span class="ct-crew-cost" id="bizCrewCost"></span></div>
         <button class="ct-btn" id="boardMenuBtn">Levels</button>
       </div>
       <div class="ct-board-top">

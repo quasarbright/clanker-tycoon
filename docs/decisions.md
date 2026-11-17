@@ -980,3 +980,24 @@ pips drawn as three dots that read as "typing". Mike: "yeah fix that somehow" an
 Mocks only, waiting on Mike: compact Training (one Train picker per robot), the coach dropping
 "needs instructions", and Pam's crew-cost plan (whole crew's cost a shift on the board, this
 shift's cost and what's left by Start).
+
+### 71. Crew cost by the schedule, compact Training, one place for "needs instructions" (2026-11-17)
+
+Mike approved three mocks. On crew cost he said Pam's plan "is the standard now, I loved that",
+after pointing out that "you don't know what your crew costs until you choose who to put on the
+floor in a shift", so a quarter total on the board would be a guess.
+
+- **Crew cost (the standard):** the board shows "Whole crew $N a shift" under the budget, the most
+  a shift can cost (`crewCost` in `src/business.js`). The forecast shows only what contracts pay
+  (plus the lender's cut and "You keep" when there's a loan); "You get" and the wages note are
+  gone. By Start, while you schedule: "This shift $N · budget after $M · covers the rest of the
+  quarter", or "short for shift K" in red, updating as robots go on or off (`shiftCost` in
+  `src/quarter.js`).
+- **Compact Training:** one row per robot, with one Train picker listing what's left to learn and
+  what each adds to the wage (a third skill or trait shows +$25). The menu floats over the board so
+  the column's scroll box can't cut it off; Escape or a click outside closes it.
+- **"Needs instructions" said once:** before a shift the coach no longer repeats it; the crew chip
+  and the status bar by Start say it.
+- Tests: `shiftCost` and `crewCost` in `test/business.test.mjs`; the picker (prices, nothing
+  hidden under it, Escape), the cost line (both wordings, page still fits) and the coach in
+  `e2e/business.spec.mjs`.
