@@ -3,8 +3,8 @@
 import { newGame, step, playerGo } from "../src/sim.js";
 import { LEVELS } from "../src/levels.js";
 
-// Level 1: belt → dock forever. Level 2: three widgets to Pack, pack, carry the box to the dock.
-// Paint level: belt → paint it the ordered color → dock.
+// Level 1: supply → dock forever. Level 2: three widgets to Pack, pack, carry the box to the dock.
+// Paint level: supply → paint it the ordered color → dock.
 function nextMove(g) {
   const p = g.player;
   if (g.level.ship === "widgets") {
@@ -12,14 +12,14 @@ function nextMove(g) {
     if (p.holding && want !== "any" && p.holding.color !== want) {
       return ["PAINT", g.wear.PAINT >= 100 ? { action: "service" } : { action: "paint", color: want }];
     }
-    return p.holding ? ["DOCK", { action: "putDown" }] : ["BELT_A", { action: "pickUp" }];
+    return p.holding ? ["DOCK", { action: "putDown" }] : ["SUPPLY", { action: "pickUp" }];
   }
   const pack = g.stations.PACK;
   if (p.holding?.kind === "box") return ["DOCK", { action: "putDown" }];
   if (p.holding) return ["PACK", { action: "putDown" }];
   if (pack.some((i) => i.kind === "box")) return ["PACK", { action: "pickUp" }];
   if (pack.filter((i) => i.kind === "widget").length >= 3) return ["PACK", { action: "pack" }];
-  return ["BELT_A", { action: "pickUp" }];
+  return ["SUPPLY", { action: "pickUp" }];
 }
 
 for (const L of LEVELS.filter((L) => !L.pool.length)) {

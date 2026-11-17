@@ -5,7 +5,7 @@
 //
 // The worker is alone on the copy, so their coworkers' part has to come from somewhere: a stage
 // hand keeps the things they'd be handed within reach (widgets of the color the order wants on the
-// belt and at Pack, and a finished box at Pack unless the instructions ask this worker to pack).
+// supply and at Pack, and a finished box at Pack unless the instructions ask this worker to pack).
 // With everything they need on hand, a program that still does no work is broken, whatever the
 // rest of the crew does. A second try with the paint machine worn out covers a worker whose only
 // work is servicing it. No model calls; it takes a few milliseconds.
@@ -24,8 +24,6 @@ function wanted(L) {
 
 function stageHand(g, color, boxes) {
   const add = (st, it) => g.stations[st].push({ id: ++g.ids, ...it });
-  const belt = g.stations.BELT_A;
-  if (belt && belt.filter((i) => i.color === color).length < 2 && belt.length < RULES.beltCap) add("BELT_A", { kind: "widget", color });
   const pack = g.stations.PACK;
   if (!pack) return;
   // Leave room at Pack: a worker whose job is bringing things there needs space to put them down.
@@ -53,7 +51,7 @@ export function dryRun(L, hire, crew, ast, instructions) {
     while (g.t < SECONDS && !g.over) {
       if (g.t >= next) { stageHand(g, color, boxes); next += 0.5; }
       step(g, DT);
-      if (w.station) visited.add(w.station === "BELT_A" ? "BELT" : w.station);
+      if (w.station) visited.add(w.station);
       for (const e of g.events.splice(0)) {
         if (e.worker !== w.id) continue;
         if (e.type === "fail") fails.push(e.why);
@@ -70,5 +68,5 @@ export function dryRun(L, hire, crew, ast, instructions) {
     : last.ended ? "it finished without doing anything"
     : "it only walked and waited";
   const where = last.visited.size ? `, at ${[...last.visited].join(", ")}` : "";
-  return { ok: false, why: `In a ${SECONDS}-second practice run, with ${color} widgets on the belt and at PACK${boxes ? " and a finished box at PACK" : ""}, your program never put anything down, packed, painted or serviced anything: ${what}${where}. It has to actually do the work your instructions describe.` };
+  return { ok: false, why: `In a ${SECONDS}-second practice run, with ${color} widgets at the supply and at PACK${boxes ? " and a finished box at PACK" : ""}, your program never put anything down, packed, painted or serviced anything: ${what}${where}. It has to actually do the work your instructions describe.` };
 }

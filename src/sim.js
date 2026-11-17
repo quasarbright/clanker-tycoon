@@ -11,16 +11,19 @@ import { runProgram } from "./lang.js";
 
 export const FLOOR = { w: 100, h: 64 };
 export const STATIONS = {
-  BELT_A: { x: 20, y: 12, label: "Belt" },
+  SUPPLY: { x: 20, y: 12, label: "Supply" },
   PAINT:  { x: 45, y: 12, label: "Paint" },
   PACK:   { x: 70, y: 12, label: "Pack" },
   DOCK:   { x: 89, y: 37, label: "Dock" },
   BIN_1:  { x: 26, y: 37, label: "Bin 1" },
   BIN_2:  { x: 50, y: 37, label: "Bin 2" },
 };
-// Programs say "BELT"; inside the sim the belt is BELT_A.
-const stationKey = (name) => (name === "BELT" ? "BELT_A" : name);
-export const programStationName = (key) => (key === "BELT_A" ? "BELT" : key);
+// Raw widgets come from the supply, which never runs out (decision #57; there used to be a belt that
+// brought one every few seconds). Old programs that say "BELT" still mean the supply.
+const stationKey = (name) => (name === "BELT" ? "SUPPLY" : name);
+export const programStationName = (key) => key;
+/** The widget colors the supply gives out: the level's colors, red by default. */
+export const supplyColors = (level) => level.colors ?? ["red"];
 export const DESK = { x: 70, y: 58 };
 // Half-size of a station's tile in floor units, and how far from its edge a robot stands.
 const TILE = { hw: 8, hh: 5.5 }, STAND = 4;
@@ -54,10 +57,9 @@ const SIDE = { service: "repair" };                      // without the skill: s
 
 export const RULES = {
   speed: 22,            // floor units per second
-  binCap: 5, packCap: 6, paintCap: 3, beltCap: 8,
-  beltEvery: 3.2,       // seconds between new widgets
+  binCap: 5, packCap: 6, paintCap: 3,
+  supplyShown: 4,       // widgets of each color drawn at the supply (it never runs out)
   reach: 6,             // how close to a station's tile you have to stand to use it (corners are 4√2 ≈ 5.7 away)
-  beltWait: 6,          // how long a worker waits at the belt for a widget
   stationWait: 8,       // how long a worker waits anywhere else (for a box, for room, for 3 widgets)
   fastSpeed: 1.5,       // walking speed multiplier for Fast workers
   nimble: 0.6,          // machine work takes this much as long for Nimble workers
@@ -81,15 +83,8 @@ export function mulberry32(a) {
   };
 }
 
-// New widgets: the level's colors (levels.js), or all three with green rarest.
-const randColor = (s) => {
-  const cs = s.level.colors ?? COLORS;
-  if (cs.length === 1) return cs[0];
-  const r = s.rng();
-  return r < 0.4 ? "red" : r < 0.8 ? "blue" : "green";
-};
 const label = (st) => STATIONS[st]?.label ?? st;
-const widget = (s) => ({ id: ++s.ids, kind: "widget", color: randColor(s) });
+const widget = (s, color) => ({ id: ++s.ids, kind: "widget", color });
 const itemName = (it) => (it.kind === "box" ? "box" : `${it.color} widget`);
 
 /**
@@ -104,7 +99,7 @@ export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0, { 
     wear: level.stations.includes("PAINT") ? { PAINT: 0 } : {},
     workers: [], events: [],
     order: level.order.map((l, i) => ({ ...l, done: done?.[i] ?? 0 })),
-    nextBelt: 1, over: false, won: false, lastProgress: 0,
+    over: false, won: false, lastProgress: 0,
     // You. Starts by the desk; same shape as a worker so the same action code runs for both.
     // You know every skill.
     player: {
@@ -114,8 +109,8 @@ export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0, { 
       vx: 0, vy: 0, fails: 0, failLog: [],
     },
   };
-  // A few widgets already waiting, so there's something on the floor before the clock starts.
-  for (let i = 0; i < 4; i++) s.stations.BELT_A.push(widget(s));
+  // The supply's stock, drawn on the floor; taking one puts another in its place.
+  if (s.stations.SUPPLY) for (const c of supplyColors(level)) for (let i = 0; i < RULES.supplyShown; i++) s.stations.SUPPLY.push(widget(s, c));
   for (const hire of hires) addWorker(s, hire);
   return s;
 }
@@ -152,13 +147,6 @@ export function step(s, dt) {
     s.over = true; s.won = false;
     emit(s, { type: "end" });
     return;
-  }
-  while (s.t >= s.nextBelt) {
-    s.nextBelt += s.level.beltEvery ?? RULES.beltEvery;
-    // A full belt drops its oldest widget off the end, so new ones keep coming.
-    if (s.stations.BELT_A.length >= RULES.beltCap) s.stations.BELT_A.shift();
-    s.stations.BELT_A.push(widget(s));
-    s.version++;
   }
   stepPlayer(s, s.player, dt);
   for (const w of s.workers) stepWorker(s, w);
@@ -217,7 +205,7 @@ function makeTools(s, w) {
   return { actions, queries };
 }
 
-const capOf = (st) => (st.startsWith("BIN_") ? RULES.binCap : st === "PACK" ? RULES.packCap : st === "PAINT" ? RULES.paintCap : st === "DOCK" ? Infinity : RULES.beltCap);
+const capOf = (st) => (st.startsWith("BIN_") ? RULES.binCap : st === "PACK" ? RULES.packCap : st === "PAINT" ? RULES.paintCap : st === "DOCK" ? Infinity : 0);
 
 /** Give a worker a (parsed, checked) program. It starts from the top. */
 export function setProgram(s, w, ast) {
@@ -409,12 +397,12 @@ function finish(s, w, act) {
   }
 }
 
-// Workers wait a little for what they need (a widget at the belt, a box, room in a bin, three
+// Workers wait a little for what they need (a box, room in a bin, three
 // widgets to pack) instead of failing right away. You don't: you just try again.
 // Returns true if they're waiting another half second.
 function keepWaiting(s, w, act) {
   if (w.isPlayer) return false;
-  const limit = w.station === "BELT_A" ? RULES.beltWait : RULES.stationWait;
+  const limit = RULES.stationWait;
   if ((act.waited ?? 0) >= limit) return false;
   w.act = { ...act, waited: (act.waited ?? 0) + 0.5, limit, until: s.t + 0.5 };
   return true;
@@ -435,6 +423,8 @@ function pickUp(s, w, a, act) {
     return fail(s, w, a, `there's no ${what} at ${label(w.station)}`);
   }
   w.holding = items.splice(idx, 1)[0];
+  // The supply never runs out: another of that color takes its place.
+  if (w.station === "SUPPLY" && w.holding.kind === "widget") items.splice(idx, 0, widget(s, w.holding.color));
   s.version++;
   ok(s, w, a);
 }

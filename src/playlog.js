@@ -1,5 +1,5 @@
 // The play log: what happened in each shift you play, so a later session can look up "the time
-// Blip stood at the belt doing nothing" and see exactly what happened. Lines go to the local
+// Blip stood at the supply doing nothing" and see exactly what happened. Lines go to the local
 // server, which appends them to logs/play/<date>.jsonl. Each line has the page session, the shift
 // (one per attempt at a level) and the game time. Model calls in logs/llm.jsonl carry the same
 // shift id. Automated test browsers (navigator.webdriver) don't log unless the URL has ?playlog.

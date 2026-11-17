@@ -57,7 +57,7 @@ export function train(biz, c, skill) {
 }
 
 // One board per quarter. Each contract is boxes of one color (boxes of 3) and what the client pays
-// when they've all shipped. The belt only brings red, so blue and green need a paint machine.
+// when they've all shipped. The supply only gives out red, so blue and green need a paint machine.
 const TIERS = [
   [
     { color: "red", count: 20, pay: 150 },
@@ -102,9 +102,6 @@ export function buy(biz, id) {
   biz.owned = id;
   return true;
 }
-
-/** Most boxes the belt brings in one shift of level `base`. */
-export const beltBoxes = (base) => Math.floor(base.shift / base.beltEvery / 3);
 
 /** Can this contract join the ones already picked? One contract per color. */
 export const clashes = (picked, c) => picked.some((p) => p.id !== c.id && p.color === c.color);

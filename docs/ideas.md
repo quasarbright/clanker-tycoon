@@ -52,6 +52,9 @@ Agreed direction, not built yet. Roughly in roadmap order.
 - **Buying equipment.** Machines are things you buy, one at a time, each tried by hand first.
 - **Equipment attributes.** Wear (a pricier machine that wears half as fast saves repair labor;
   built as the Sturdy paint machine, decision 53), speed, capacity. A trade-off between up-front cost and labor every shift.
+- **Upgrading machines.** Mike: "we should be able to upgrade machines ... the durability and the
+  capacity, like the inventory space of it." Improve a machine you own (wears slower, holds more)
+  instead of only buying a different one.
 - **Buying a whole line.** It drops into the next empty bay of a fixed plant layout, already wired:
   supply bins, the belt from the line before it, its output belt. No placing or wiring.
 - **Lines feed lines.** Stages of one product: Line A paints and boxes, Line B builds mixed crates,
@@ -78,7 +81,8 @@ Ideas worth keeping that aren't planned yet.
   yourself and fund a robot-run factory, wanting your cut (symmetry all the way up).
 - **Symmetry.** Where it isn't silly, what you do to robots under you was done to you first.
 - **Moving robots between lines.** Transfers between your own lines once you have several.
-- **Supplies.** Supply bins and input belts as things a line runs out of; how they refill.
+- **Supplies that run out.** The supply never runs out for now (decision 57). Later it could be
+  something a line runs out of, with refills to plan for.
 - **Titles as flavor.** "Line lead", "Plant manager" handed out at milestones, changing nothing.
 - **Disruptions.** Supply delays, rush contracts, a robot out sick. Later and not core; they land
   where you can plan around them, never mid-decision.
@@ -109,6 +113,8 @@ Ideas worth keeping that aren't planned yet.
 
 Each with the reason.
 
+- **The belt for raw widgets:** "I don't want the belt anymore right now, for raw materials at
+  least." A supply that never runs out replaces it (decision 57).
 - **Deliberately dumb workers** (mishearing, fumbling, seeing only their station): frustrating, not
   funny; workers follow clear instructions (decision 3).
 - **Random jams:** randomness after you've decided can only be reacted to; replaced by predictable

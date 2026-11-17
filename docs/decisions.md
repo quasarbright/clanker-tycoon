@@ -711,3 +711,25 @@ Then: "Let's just do it now."
 **Why a jump, not a creep:** Mike asked for a threshold, and a jump keeps the first two skills an
 easy call while making a do-everything robot a real decision.
 
+### 57. A supply that never runs out instead of the belt (2026-11-17)
+
+**Question:** Mike: "let's implement sources now so we don't have the belt. I don't want the belt
+anymore right now, for raw materials at least."
+**Picked:** on every level the belt is gone. In its place is a **Supply** station that gives out
+raw widgets and never runs out: take one and another takes its place. It gives out the level's
+colors, red unless a level says otherwise, so blue and green always mean painting. Nothing can be put
+down at the supply. Programs say `move("SUPPLY")`; old programs that say "BELT" still work, and
+"belt" in your instructions still counts as naming the supply. The conveyor drawn in from the left
+wall is gone.
+- Level 5 (Full floor) used to bring all three colors with green rare; now its supply is red only,
+  so its green boxes need the painter. Its opening line says so.
+- Level 6's faster belt (1.6 s, decision 35) and the board's "the belt only brings enough for 25
+  boxes a shift" warning are gone with the belt.
+**Evidence (`tools/balance.mjs`, `tools/player-check.mjs`, one live model run):** throughput is now
+set by walking. Level 3 (4 boxes in 45 s): two haulers and a packer take 18 s, one hauler and a
+packer 35 s, a packer alone runs out of time, as before. Level 6 barely moved, since the 1.6 s belt
+was close to what two haulers carry anyway (24 red a shift either way); the one change is that
+hiring everyone now finishes the quota in one shift with $55 left. In the browser, Blip and Pip,
+told in plain words to "carry red widgets from the supply to Pack" and to pack and ship, compiled
+and filled level 3 in 34 s.
+

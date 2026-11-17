@@ -4,7 +4,7 @@
 // instructions, and they do the work too. A level ends when today's order is filled.
 import {
   newGame, step, resume, setProgram, setNow, goToDesk, atDesk, addWorker, removeWorker, playerGo, playerWalkTo,
-  playerSteer, playerDo, orderLineText, actProgress, boxProgress, hasAttr, STATIONS, DESK, RULES, COLORS,
+  playerSteer, playerDo, orderLineText, actProgress, boxProgress, hasAttr, STATIONS, DESK, RULES, COLORS, supplyColors,
 } from "./sim.js";
 import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond } from "./brains.js";
 import { LEVELS } from "./levels.js";
@@ -12,7 +12,7 @@ import { backendLabel } from "./llm.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money } from "./quarter.js";
-import { INVESTOR, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, clashes, cutOf, buy, beltBoxes, quarterLevel, payouts, settle,
+import { INVESTOR, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, clashes, cutOf, buy, quarterLevel, payouts, settle,
   RECRUITS, TRAIN_PRICE, TRAINABLE, robotOf, recruit, train } from "./business.js";
 import { SKILL_TIER, wageOf } from "./wages.js";
 
@@ -42,7 +42,7 @@ let biz = null; // your business (business.js), once you've opened level 7; live
 $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
 
 const STATION_HINTS = {
-  BELT_A: "widgets arrive here",
+  SUPPLY: "raw widgets",
   PAINT: "repaints a widget, wears with use",
   PACK: "3 of one color → 1 box",
   DOCK: "ship from here",
@@ -99,32 +99,24 @@ function makeBot(id, name, color, isYou, hire) {
   return bot;
 }
 
-// What the belt brings, said plainly with the colors: "brings ● red only", or the mix.
-function beltHint() {
-  const cs = level.colors ?? COLORS;
+// What the supply gives out, said plainly with the colors: "● red, never runs out".
+function supplyHint() {
   const dot = (c) => `<span class="ct-dot c-${c}"></span>`;
-  if (cs.length === 1) return `brings ${dot(cs[0])} ${cs[0]} only`;
-  return `brings ${cs.map((c) => `${dot(c)} ${c}`).join(", ")}${cs.includes("green") ? " (green is rare)" : ""}`;
+  return `${supplyColors(level).map((c) => `${dot(c)} ${c}`).join(", ")}, never runs out`;
 }
 
 function buildFloor() {
-  floor.querySelectorAll(".ct-st, .ct-belt, .ct-desk, .ct-bot, .ct-float, .ct-truckbay").forEach((el) => el.remove());
+  floor.querySelectorAll(".ct-st, .ct-desk, .ct-bot, .ct-float, .ct-truckbay").forEach((el) => el.remove());
   ui.stations = {}; ui.bots = {};
-  const belt = document.createElement("div");
-  belt.className = "ct-belt";
-  belt.style.top = `${(STATIONS.BELT_A.y / 64) * 100}%`;
-  belt.style.width = `${STATIONS.BELT_A.x}%`;
-  belt.innerHTML = `<div class="ct-belt-tread"></div>`;
-  floor.append(belt);
   for (const key of level.stations) {
     const st = STATIONS[key];
     const el = document.createElement("div");
     el.className = "ct-st";
     el.dataset.key = key;
     el.style.left = `${st.x}%`; el.style.top = `${(st.y / 64) * 100}%`;
-    const cap = key.startsWith("BIN_") ? RULES.binCap : key === "PACK" ? RULES.packCap : key === "PAINT" ? RULES.paintCap : key === "BELT_A" ? RULES.beltCap : null;
-    const hint = key === "DOCK" ? (level.ship === "widgets" ? "ship widgets here" : "ship boxes here") : key === "BELT_A" ? beltHint() : STATION_HINTS[key];
-    if (key === "BELT_A") el.dataset.tooltip = `A new widget every ${level.beltEvery ?? RULES.beltEvery} seconds. It holds ${RULES.beltCap}; when it's full the oldest falls off the end.`;
+    const cap = key.startsWith("BIN_") ? RULES.binCap : key === "PACK" ? RULES.packCap : key === "PAINT" ? RULES.paintCap : null;
+    const hint = key === "DOCK" ? (level.ship === "widgets" ? "ship widgets here" : "ship boxes here") : key === "SUPPLY" ? supplyHint() : STATION_HINTS[key];
+    if (key === "SUPPLY") el.dataset.tooltip = "Raw widgets. Take as many as you like; it never runs out.";
     el.innerHTML = `<div class="ct-st-label"><span>${st.label}</span><span class="ct-st-cap"></span></div><div class="ct-st-hint">${hint}</div><div class="ct-st-items"></div>`
       + (key === "PAINT" ? `<div class="ct-wear" data-tooltip="Wear. At 100% the machine stops until someone with Repair services it."><i></i></div>` : "");
     el.dataset.cap = cap ?? "";
@@ -132,7 +124,7 @@ function buildFloor() {
     ui.stations[key] = el;
   }
   // The main line, drawn between the tiles, through whichever stations this level has.
-  const line = ["BELT_A", "PAINT", "PACK", "DOCK"].filter((k) => level.stations.includes(k));
+  const line = ["SUPPLY", "PAINT", "PACK", "DOCK"].filter((k) => level.stations.includes(k));
   const seg = (a, b) => {
     const A = STATIONS[a], B = STATIONS[b];
     const dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy);
@@ -1162,7 +1154,6 @@ function renderBoard() {
   $("#investorLine").innerHTML = biz.quarters
     ? `Your investor: "${biz.wins} ${biz.wins === 1 ? "contract" : "contracts"} done, and <b>$${biz.paidOut}</b> for me so far. I take ${pct} of every one. Numbers must go up."`
     : `Your investor: "I fronted you <b>$${INVESTOR.fronted}</b> to get started. I take <b>${pct}</b> of every contract you finish. Numbers must go up."`;
-  const perQuarter = beltBoxes(BUSINESS) * QUARTER_SHIFTS;
   const offers = board(biz);
   // Kept only if still on this board (a machine bought since can't un-pick anything).
   picked = picked.filter((p) => offers.some((c) => c.id === p.id));
@@ -1173,7 +1164,7 @@ function renderBoard() {
     const clash = !on && clashes(picked, c);
     const note = noMachine ? `Needs a paint machine, and you don't own one yet.`
       : clash ? `You've already picked ${c.color} boxes this quarter. One contract per color.`
-      : c.needs ? `Painted: the belt only brings red.` : "";
+      : c.needs ? `Painted: the supply only gives out red.` : "";
     return `<div class="ct-offer ${on ? "is-picked" : ""}">
       <div class="ct-offer-order">${ticketHTML(c.color, c.count)}</div>
       <div class="ct-offer-due">${c.count} ${c.color} boxes</div>
@@ -1191,9 +1182,8 @@ function renderBoard() {
   const pay = picked.reduce((a, c) => a + c.pay, 0);
   $("#boardGo").disabled = !picked.length;
   $("#boardGo").textContent = picked.length ? `Start the quarter: ${picked.length} ${picked.length === 1 ? "contract" : "contracts"}, $${pay}` : "Start the quarter";
-  $("#boardNote").className = `ct-planbar-note ${total > perQuarter ? "is-bad" : ""}`;
+  $("#boardNote").className = "ct-planbar-note";
   $("#boardNote").textContent = !picked.length ? `Pick the contracts you'll take. They're all due at the end of the quarter's ${QUARTER_SHIFTS} shifts.`
-    : total > perQuarter ? `That's ${total} boxes. The belt only brings enough widgets for about ${perQuarter} in a quarter.`
     : `${total} boxes in ${QUARTER_SHIFTS} shifts. A contract only pays if all its boxes ship.`;
   $("#shop").innerHTML = SHOP.map((m) => {
     const owned = biz.owned === m.id, short = biz.money < m.price;

@@ -31,15 +31,15 @@ function run(L, crew, seed) {
   return `${g.won ? g.t.toFixed(0) + "s" : g.over ? "out of time" : "unfinished"}${Object.keys(seen).length ? " " + JSON.stringify(seen) : ""}`;
 }
 
-const HAUL = `while (true) { move("BELT"); pickUp("red"); move("PACK"); putDown(); }`;
+const HAUL = `while (true) { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); }`;
 const PACKER = `while (needsAny() > 0) { move("PACK"); if (count("PACK", "red") >= 3) pack("red"); if (boxes("PACK") > 0) { pickUpBox(); move("DOCK"); putDown(); } else wait(1); }`;
-const PAINTER = `while (true) { move("BELT"); pickUp(); move("PAINT"); paint(needs("green") > 0 ? "green" : "red"); move("PACK"); putDown(); }`;
+const PAINTER = `while (true) { move("SUPPLY"); pickUp(); move("PAINT"); paint(needs("green") > 0 ? "green" : "red"); move("PACK"); putDown(); }`;
 const COLOR_PACKER = `while (true) { move("PACK"); const c = needs("green") > 0 ? "green" : "red"; if (count("PACK", c) >= 3) pack(c); if (boxes("PACK") > 0) { pickUpBox(); move("DOCK"); putDown(); } else wait(1); }`;
 
 const CASES = [
   ["Crew: 2 haulers + 1 packer", level("Crew"), [[robot("a", [], ["fast"]), HAUL], [robot("b", []), HAUL], [robot("c", ["packing"]), PACKER]]],
   ["Crew: 1 hauler + 1 packer", level("Crew"), [[robot("b", []), HAUL], [robot("c", ["packing"]), PACKER]]],
-  ["Crew: 1 packer does it all", level("Crew"), [[robot("c", ["packing"]), `while (needsAny() > 0) { if (count("PACK", "red") >= 3) { move("PACK"); pack("red"); pickUpBox(); move("DOCK"); putDown(); } else { move("BELT"); pickUp("red"); move("PACK"); putDown(); } }`]]],
+  ["Crew: 1 packer does it all", level("Crew"), [[robot("c", ["packing"]), `while (needsAny() > 0) { if (count("PACK", "red") >= 3) { move("PACK"); pack("red"); pickUpBox(); move("DOCK"); putDown(); } else { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); } }`]]],
   ["Crew: packer program ends early", level("Crew"), [[robot("c", ["packing"]), `move("PACK");`]]],
   ["Full floor: painter + packer, no servicing", level("Full floor"), [[robot("p1", ["painting"]), PAINTER], [robot("pk", ["packing"]), COLOR_PACKER]]],
   ["Full floor: + repair worker watching wear", level("Full floor"), [[robot("p1", ["painting"]), PAINTER], [robot("pk", ["packing"]), COLOR_PACKER],
@@ -59,9 +59,9 @@ const QB = { blip: [[], []], dot: [[], []], pip: [["packing"], []], gary: [["pac
 // "you" stands in for the player servicing the paint machine yourself: a free repair worker.
 QB.you = [["repair"], []];
 const qr = (id) => (id === "you" ? { ...robot(id, ...QB[id]), wage: 0 } : robot(id, ...QB[id]));
-const Q_HAUL = `while (needs("red") > 0) { move("BELT"); pickUp("red"); move("PACK"); putDown(); }`;
+const Q_HAUL = `while (needs("red") > 0) { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); }`;
 const Q_PACK = `while (needsAny() > 0) { move("PACK"); let c = "none"; for (const k of ["blue", "red"]) { if (c == "none" && needs(k) > 0 && count("PACK", k) >= 3) c = k; } if (c != "none") pack(c); if (boxes("PACK") > 0) { pickUpBox(); move("DOCK"); putDown(); } else wait(1); }`;
-const Q_PAINT = `while (needs("blue") > 0) { if (wear("PAINT") >= 100) { wait(1); } else { move("BELT"); pickUp("red"); move("PAINT"); paint("blue"); move("PACK"); putDown(); } }`;
+const Q_PAINT = `while (needs("blue") > 0) { if (wear("PAINT") >= 100) { wait(1); } else { move("SUPPLY"); pickUp("red"); move("PAINT"); paint("blue"); move("PACK"); putDown(); } }`;
 const Q_FIX = `while (needsAny() > 0) { if (wear("PAINT") >= 80) { move("PAINT"); service(); } else wait(1); }`;
 const Q_PROG = { blip: Q_HAUL, dot: Q_HAUL, pip: Q_PACK, gary: Q_PACK, vex: Q_PAINT, rusty: Q_FIX, you: Q_FIX };
 
@@ -106,9 +106,9 @@ for (const [name, plan] of PLANS) console.log(name.padEnd(38), [1, 2].map((seed)
 // A quarter's pick of contracts (one per color, all due at the quarter's end), played by a few
 // crews, with each paint machine. Prints what shipped after each shift, the wages, what the
 // contracts paid after the investor's cut, and the profit.
-const B_HAUL = `while (needs("red") > 0) { move("BELT"); pickUp("red"); move("PACK"); putDown(); }`;
+const B_HAUL = `while (needs("red") > 0) { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); }`;
 const B_PACK = `while (needsAny() > 0) { move("PACK"); let c = "none"; for (const k of ["blue", "green", "red"]) { if (c == "none" && needs(k) > 0 && count("PACK", k) >= 3) c = k; } if (c != "none") pack(c); if (boxes("PACK") > 0) { pickUpBox(); move("DOCK"); putDown(); } else wait(1); }`;
-const B_PAINT = `while (needs("blue") + needs("green") > 0) { const c = needs("blue") > 0 ? "blue" : "green"; if (wear("PAINT") >= 100) { wait(1); } else { move("BELT"); pickUp("red"); move("PAINT"); paint(c); move("PACK"); putDown(); } }`;
+const B_PAINT = `while (needs("blue") + needs("green") > 0) { const c = needs("blue") > 0 ? "blue" : "green"; if (wear("PAINT") >= 100) { wait(1); } else { move("SUPPLY"); pickUp("red"); move("PAINT"); paint(c); move("PACK"); putDown(); } }`;
 const B_PROG = { blip: B_HAUL, dot: B_HAUL, pip: B_PACK, gary: B_PACK, vex: B_PAINT, rusty: Q_FIX, you: Q_FIX };
 function businessQuarter(L, plan, seed) {
   let wages = 0, done = L.order.map(() => 0);

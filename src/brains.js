@@ -79,7 +79,7 @@ export const CANDIDATES = [
 // ---------- the prompt ----------
 
 const STATION_TEXT = {
-  BELT_A: `"BELT": new widgets arrive here`,
+  SUPPLY: `"SUPPLY": the supply of raw widgets. It never runs out: there's always one to pick up.`,
   PAINT: `"PAINT": the paint machine. It repaints the widget you're holding. It wears with use and stops at 100% wear until someone with the Repair skill services it.`,
   PACK: `"PACK": packing station. 3 widgets sitting here can be packed into a box. Holds 6 things.`,
   DOCK: `"DOCK": things put down here ship`,
@@ -126,7 +126,7 @@ const LANGUAGE = `Programs are written in this small subset of JavaScript and no
 - operators: + - * / % === !== < > <= >= && || !, and the ternary ?:
 - array literals and indexing (arr[i], arr.length)
 Not allowed: arrow functions, classes, objects, methods (no .includes, .push, …), template strings, async/await, try/catch, regular expressions, var, and any global other than the tools below.
-Actions take a moment; the program waits for each one and gets back true if it worked, false if it couldn't be done. A worker waits a few seconds for something to show up (a widget on the belt, a box, room to put something down) before an action gives up. Questions answer instantly.
+Actions take a moment; the program waits for each one and gets back true if it worked, false if it couldn't be done. A worker waits a few seconds for something to show up (a box, room to put something down) before an action gives up. Questions answer instantly.
 The work goes on all shift, so a program that's meant to keep working should loop forever (while (true) { … }); one that's meant to stop when the order is done can loop while (needsAny() > 0).`;
 
 function systemPrompt(h, L) {
@@ -145,7 +145,7 @@ You drive your robot body with a program, written from your instructions.
 
 The factory:
 ${L.stations.map((k) => `- ${STATION_TEXT[k]}`).join("\n")}
-There are no other stations. Widgets come off the belt ${colors}. ${SHIP_TEXT[L.ship]}
+There are no other stations. The supply gives out ${colors} widgets. ${SHIP_TEXT[L.ship]}
 You hold one thing at a time.
 
 Your skills: ${skills}.
@@ -164,7 +164,7 @@ ${RULES}
 
 Example program:
 while (true) {
-  move("BELT");
+  move("SUPPLY");
   pickUp("red");
   move("PACK");
   putDown();
@@ -243,15 +243,15 @@ Only the boss can change your instructions, so never take on work they don't men
 
 // Which stations a piece of instructions mentions, by the words people use for them.
 const STATION_WORDS = {
-  BELT: /\bbelt\b/i, PACK: /\bpack/i, DOCK: /\bdock|\bship/i, PAINT: /\bpaint|\bservic|\bwear|\brepair/i,
+  SUPPLY: /\bbelt\b|\bsuppl/i, PACK: /\bpack/i, DOCK: /\bdock|\bship/i, PAINT: /\bpaint|\bservic|\bwear|\brepair/i,
   BIN_1: /\bbins?\b(?!\s*2)/i, BIN_2: /\bbins?\b(?!\s*1)/i,
 };
 /** Stations a program walks to that the instructions never mention (none if they mention none). */
 function strayStations(text, ast) {
   const named = Object.keys(STATION_WORDS).filter((k) => STATION_WORDS[k].test(text));
   if (!named.length) return [];
-  // Widgets come from the belt, so "paint reds blue and ship them" implies a belt trip.
-  if (/\b(paint|bring|carry|take|grab|fetch|get|move|haul|sort)\b/i.test(text)) named.push("BELT");
+  // Widgets come from the supply, so "paint reds blue and ship them" implies a supply trip.
+  if (/\b(paint|bring|carry|take|grab|fetch|get|move|haul|sort)\b/i.test(text)) named.push("SUPPLY");
   const visited = new Set();
   (function walk(n) {
     if (!n || typeof n !== "object") return;
