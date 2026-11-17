@@ -493,3 +493,24 @@ unless it is a stupid idea." **Picked:** quotas, budgets, transfers and briefing
 you from the boss at Line lead before you hand them out as Plant manager. Standing rules are the
 exception: the boss doesn't give the player robot-style rules. In `docs/progression-design.md` and
 the repo CLAUDE.md.
+
+### 44. One boss and a growing factory, not a rank ladder (2026-11-17)
+
+**Question:** Mike: "Do you think that maybe this whole climb the corporate ladder thing is not
+really going to produce the type of shit we want? ... the factory just kind of grows, would that
+lend itself more to this kind of same type of gameplay just at a higher level". And: "since it's a
+tycoon game, the concept of budgets and quotas is nice. Maybe you just have one boss that stays
+your boss the whole game and you just keep doing bigger stuff."
+**Picked:** no ranks to play through. The dollar-eyed boss sets every quarter's quota and budget
+for the whole game. Unspent budget from a met quota becomes savings, and savings buy growth (a new
+line feeding the others, a machine, a robot slot, a foreman's badge, training) instead of a
+promotion. Growth raises the next quotas. Titles survive only as flavor the boss hands out.
+Foremen arrive when the floor is too big to run yourself (#42). Missing twice shrinks the factory
+(proposed). Replaces the ladder in #39 and #40.
+
+### 45. The ending: you buy the company (2026-11-17)
+
+The tycoon fantasy is the story's ending, not the gameplay: your savings eventually buy the company
+out from under the boss, and the last scene is you as the dollar-eyed robot saying "Numbers must go
+up." Mike: "I really love that final scene." Post-game, you keep running the company as owner.
+Issue #14.
