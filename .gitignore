@@ -4,3 +4,5 @@ logs/
 tools/lang-experiment/results-run.log
 test-results/
 playwright-report/
+.env
+.env.*
