@@ -95,8 +95,8 @@ Ideas worth keeping that aren't planned yet.
 - **Worker personalities.** Late polish only; mechanics first.
 - **Looks that hint at personality.** Instead of a bio, a robot's appearance shows its quirks. A
   library of parts and accessories (little articles of clothing and the like); the model generates
-  a personality and picks parts to match. Open: skills already show as tools, so it could get
-  crowded.
+  a personality and picks parts to match. Mike: "Ooh, I like the idea of hats": personality on
+  the head (hats), skills on the body (tools). Open: whether that still gets crowded.
 - **Make Smart matter.** Robots rarely think, so the Smart attribute (a bigger thinking budget)
   barely changes anything yet. Maybe it matters late, for foremen; maybe early contracts need more
   surprises to think about.
