@@ -88,9 +88,9 @@ Each with the reason.
 - **Buying your promotion:** no ranks anymore (decision 44).
 - **A "capital" fund, and spending savings on your own little house:** replaced by buying
   promotions, then by buying equipment (decisions 38, 39).
-- **A boss who sets your quota and budget:** replaced by contracts you choose and an investor (decision 47).
+- **A boss who sets your quota and budget:** replaced by contracts you choose and an investor (decision 49).
 - **Budget only goes down, no revenue:** right for a line lead under a boss, wrong for an owner
-  (decision 47).
+  (decision 49).
 - **A plant dashboard of lines and bars:** a spreadsheet simulator (decision 42).
 - **Shared resources between lines with conflicts at your desk:** managerial, and repairs belong to
   the line (decision 41).

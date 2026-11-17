@@ -60,5 +60,5 @@ The rest are with each idea in [ideas.md](ideas.md).
 One evening, several shapes: a corporate ladder of ranks under a robot boss (dropped: higher ranks
 became a different, managerial game), then one boss and a growing factory with quotas (dropped for
 contracts you choose, which are more tycoon), ending at contracts, equipment and an investor.
-Decisions 38 to 47 have each step; the dropped ideas are listed with reasons at the bottom of
+Decisions 38 to 46, 49 and 50 have each step; the dropped ideas are listed with reasons at the bottom of
 [ideas.md](ideas.md).
