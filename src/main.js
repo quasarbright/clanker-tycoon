@@ -4,7 +4,7 @@
 // instructions, and they do the work too. A level ends when today's order is filled.
 import {
   newGame, step, resume, setProgram, setNow, goToDesk, atDesk, addWorker, removeWorker, playerGo, playerWalkTo,
-  playerSteer, playerDo, orderLineText, actProgress, boxProgress, hasAttr, STATIONS, DESK, RULES, COLORS, supplyColors,
+  playerSteer, playerDo, orderLineText, actProgress, boxProgress, hasAttr, STATIONS, DESK, RULES, COLORS, supplyColors, capOf,
 } from "./sim.js";
 import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond } from "./brains.js";
 import { LEVELS } from "./levels.js";
@@ -12,8 +12,8 @@ import { backendLabel } from "./llm.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money } from "./quarter.js";
-import { INVESTOR, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, clashes, cutOf, buy, quarterLevel, payouts, settle,
-  RECRUITS, TRAIN_PRICE, TRAINABLE, robotOf, recruit, train } from "./business.js";
+import { INVESTOR, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, cutOf, buy, owns, quarterLevel, payouts, settle,
+  RECRUITS, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers } from "./business.js";
 import { SKILL_TIER, wageOf } from "./wages.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -114,7 +114,7 @@ function buildFloor() {
     el.className = "ct-st";
     el.dataset.key = key;
     el.style.left = `${st.x}%`; el.style.top = `${(st.y / 64) * 100}%`;
-    const cap = key.startsWith("BIN_") ? RULES.binCap : key === "PACK" ? RULES.packCap : key === "PAINT" ? RULES.paintCap : null;
+    const cap = ["PACK", "PAINT"].includes(key) || key.startsWith("BIN_") ? capOf(level, key) : null;
     const hint = key === "DOCK" ? (level.ship === "widgets" ? "ship widgets here" : "ship boxes here") : key === "SUPPLY" ? supplyHint() : STATION_HINTS[key];
     if (key === "SUPPLY") el.dataset.tooltip = "Raw widgets. Take as many as you like; it never runs out.";
     el.innerHTML = `<div class="ct-st-label"><span>${st.label}</span><span class="ct-st-cap"></span></div><div class="ct-st-hint">${hint}</div><div class="ct-st-items"></div>`
@@ -245,14 +245,14 @@ function renderReady() {
   lastReady = sig;
   $("#goBtn").disabled = reading || short;
   $("#goBtn").dataset.tooltip = reading ? "Waiting for everyone to finish reading their instructions."
-    : short ? `This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. Let someone go.` : "";
+    : short ? `This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. ${level.roster ? "Take someone off the shift." : "Let someone go."}` : "";
   const el = $("#crewReady");
   if (short) {
-    el.innerHTML = `<span class="ct-planbar-note is-bad">This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. Let someone go to start.</span>`;
+    el.innerHTML = `<span class="ct-planbar-note is-bad">This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. ${level.roster ? "Take someone off the shift" : "Let someone go"} to start.</span>`;
     return;
   }
   if (!game.workers.length) {
-    el.innerHTML = level.pool.length ? `<span class="ct-planbar-note">Hire and give instructions first. Start begins the clock; hiring closes then.</span>` : "";
+    el.innerHTML = level.pool.length ? `<span class="ct-planbar-note">${level.roster ? "Schedule your crew for this shift and give instructions first. Start begins the clock." : "Hire and give instructions first. Start begins the clock; hiring closes then."}</span>` : "";
     return;
   }
   el.innerHTML = game.workers.map((w) => {
@@ -369,6 +369,8 @@ const BACK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-
 
 const openCandidates = () => level.pool.map(candidate).filter((c) => !game.workers.some((w) => w.id === c.id));
 const canHire = () => !started && level.pool.length > 0;
+// In your business the robots are already your crew: you schedule them for a shift, not hire them.
+const words = () => (level.roster ? { hire: "Schedule", fire: "Off shift" } : { hire: "Hire", fire: "Let go" });
 
 // Called after hiring, firing, a new shift or Start: pick what's open and draw everything fresh.
 function buildCrew() {
@@ -420,14 +422,14 @@ function renderList() {
         <span class="ct-chip ${r.cls}">${r.cls === "is-ok" ? CHECK : r.cls === "is-bad" ? ALERT : ""}${r.st}${r.cls === "is-busy" ? DOTS : ""}</span>
         <span class="ct-convo-prev ${r.bad ? "is-bad" : ""}">${escapeHTML(r.prev)}</span>
       </button>`).join("")
-    + (cands.length ? `<div class="ct-list-head ${rows.length ? "is-sep" : ""}"><span class="ct-label">Hire</span>${rows.length ? "" : `<span class="ct-wage">before the shift starts</span>`}</div>`
+    + (cands.length ? `<div class="ct-list-head ${rows.length ? "is-sep" : ""}"><span class="ct-label">${words().hire}</span>${rows.length ? "" : `<span class="ct-wage">before the shift starts</span>`}</div>`
       + cands.map((c) => {
         // In a quarter you can't hire past what the budget covers for this shift.
         const broke = cantAfford(c);
         const tip = broke ? `With ${c.name} the crew would cost $${payroll() + c.wage} for the shift, and you have ${money(quarter.money)}.` : "";
         return `<div class="ct-cand" style="--c:${c.color}">
           ${faceHTML(c)}<span><b>${c.name}</b> <span class="ct-wage">$${c.wage}/shift</span></span>
-          <button class="ct-btn is-gold ct-small-btn" type="button" data-hire="${c.id}" ${broke ? "disabled" : ""} ${tip ? `data-tooltip="${tip}"` : ""}>Hire</button>
+          <button class="ct-btn is-gold ct-small-btn" type="button" data-hire="${c.id}" ${broke ? "disabled" : ""} ${tip ? `data-tooltip="${tip}"` : ""}>${words().hire}</button>
           <span class="ct-cand-line">${skillBadges(c)}<span>${c.blurb}</span></span>
         </div>`;
       }).join("") : "");
@@ -449,7 +451,7 @@ function buildChat() {
         ${back}${faceHTML(h)}
         <div class="ct-chat-who"><b>${h.name}</b><span class="ct-wage">$${h.wage}/shift</span></div>
         <span class="ct-pips"></span>
-        ${started ? "" : `<button class="ct-btn ct-small-btn" type="button" data-fire>Let go</button>`}
+        ${started ? "" : `<button class="ct-btn ct-small-btn" type="button" data-fire>${words().fire}</button>`}
       </div>
       <p class="ct-blurb">${h.blurb}</p>
       ${skillBadges(h)}
@@ -1148,86 +1150,96 @@ function openBoard() {
 
 function renderBoard() {
   const pct = `${Math.round(INVESTOR.cut * 100)}%`;
+  const short = (n) => (biz.money < n ? `disabled data-tooltip="You have ${money(biz.money)}."` : "");
   $("#bizMoney").textContent = money(biz.money);
   $("#boardTitle").textContent = `Quarter ${biz.quarters + 1}`;
   $("#boardShifts").textContent = `${QUARTER_SHIFTS} shifts. Every contract is due at the end of the last one.`;
   $("#investorLine").innerHTML = biz.quarters
-    ? `Your investor: "${biz.wins} ${biz.wins === 1 ? "contract" : "contracts"} done, and <b>$${biz.paidOut}</b> for me so far. I take ${pct} of every one. Numbers must go up."`
-    : `Your investor: "I fronted you <b>$${INVESTOR.fronted}</b> to get started. I take <b>${pct}</b> of every contract you finish. Numbers must go up."`;
+    ? `"${biz.wins} ${biz.wins === 1 ? "contract" : "contracts"} done, and <b>$${biz.paidOut}</b> for me so far. I take ${pct} of every one. Numbers must go up."`
+    : `"I fronted you <b>$${INVESTOR.fronted}</b> to get started. I take <b>${pct}</b> of every contract you finish. Numbers must go up."`;
+
+  // ----- contracts: one card with a small and a large size (take one or neither), and a side one
   const offers = board(biz);
-  // Kept only if still on this board (a machine bought since can't un-pick anything).
   picked = picked.filter((p) => offers.some((c) => c.id === p.id));
-  const total = picked.reduce((a, c) => a + c.count, 0);
-  $("#offers").innerHTML = offers.map((c, i) => {
-    const on = picked.some((p) => p.id === c.id);
-    const noMachine = !hasMachine(biz, c.needs);
-    const clash = !on && clashes(picked, c);
-    const note = noMachine ? `Needs a paint machine, and you don't own one yet.`
-      : clash ? `You've already picked ${c.color} boxes this quarter. One contract per color.`
-      : c.needs ? `Painted: the supply only gives out red.` : "";
-    return `<div class="ct-offer ${on ? "is-picked" : ""}">
-      <div class="ct-offer-order">${ticketHTML(c.color, c.count)}</div>
-      <div class="ct-offer-due">${c.count} ${c.color} boxes</div>
-      <div><div class="ct-offer-pay">$${c.pay}</div><div class="ct-offer-keep">You keep $${c.pay - cutOf(c.pay)} after his cut</div></div>
-      <div class="ct-offer-note ${noMachine || clash ? "is-bad" : ""}">${note}</div>
-      ${on ? `<button class="ct-btn ct-offer-on" data-pick="${i}">${CHECK} Taking it</button>`
-        : `<button class="ct-btn" data-pick="${i}" ${noMachine || clash ? "disabled" : ""}>Take it</button>`}
+  const isOn = (c) => picked.some((p) => p.id === c.id);
+  const [small, large, side] = offers;
+  const blocked = (c) => (!hasMachine(biz, c.needs) ? `Needs a paint machine, and you don't own one yet.` : "");
+  const size = (c) => `<button type="button" class="ct-size ${isOn(c) ? "is-on" : ""}" data-contract="${c.id}" ${blocked(c) ? "disabled" : ""}>
+      <span class="ct-size-name">${isOn(c) ? CHECK : ""}${c.size === "small" ? "Small" : "Large"}</span>
+      <span class="ct-size-count">${c.count} boxes</span>
+      <span class="ct-offer-pay">$${c.pay}</span><span class="ct-offer-keep">you keep $${c.pay - cutOf(c.pay)}</span>
+    </button>`;
+  const painted = (c) => (c.needs ? `<span class="ct-offer-keep">Painted: the supply only gives out red.</span>` : "");
+  $("#offers").innerHTML = `<div class="ct-offer ct-pair ${isOn(small) || isOn(large) ? "is-picked" : ""}">
+      <div class="ct-offer-head">${ticketHTML(small.color, "")}<b>${cap(small.color)} boxes</b><span class="ct-offer-keep">Pick one size</span></div>
+      <div class="ct-sizes">${size(small)}${size(large)}</div>
+      <div class="ct-offer-note is-bad">${blocked(small)}</div>${painted(small)}
+    </div>
+    <div class="ct-offer ct-side ${isOn(side) ? "is-picked" : ""}">
+      <div class="ct-offer-head">${ticketHTML(side.color, "")}<b>${cap(side.color)} boxes</b><span class="ct-offer-keep">Side contract</span></div>
+      <div class="ct-sizes"><button type="button" class="ct-size ${isOn(side) ? "is-on" : ""}" data-contract="${side.id}" ${blocked(side) ? "disabled" : ""}>
+        <span class="ct-size-name">${isOn(side) ? CHECK : ""}${isOn(side) ? "Taking it" : "Take it"}</span>
+        <span class="ct-size-count">${side.count} boxes</span>
+        <span class="ct-offer-pay">$${side.pay}</span><span class="ct-offer-keep">you keep $${side.pay - cutOf(side.pay)}</span>
+      </button></div>
+      <div class="ct-offer-note is-bad">${blocked(side)}</div>${painted(side)}
     </div>`;
-  }).join("");
-  $("#offers").querySelectorAll("[data-pick]").forEach((b) => b.addEventListener("click", () => {
-    const c = offers[+b.dataset.pick];
-    picked = picked.some((p) => p.id === c.id) ? picked.filter((p) => p.id !== c.id) : [...picked, c];
+  $("#offers").querySelectorAll("[data-contract]").forEach((b) => b.addEventListener("click", () => {
+    const c = offers.find((o) => o.id === b.dataset.contract);
+    // Taking one size drops the other: a quarter's contracts never share a color.
+    picked = isOn(c) ? picked.filter((p) => p.id !== c.id) : [...picked.filter((p) => p.color !== c.color), c];
     renderBoard();
   }));
-  const pay = picked.reduce((a, c) => a + c.pay, 0);
+  const pay = picked.reduce((a, c) => a + c.pay, 0), total = picked.reduce((a, c) => a + c.count, 0);
   $("#boardGo").disabled = !picked.length;
-  $("#boardGo").textContent = picked.length ? `Start the quarter: ${picked.length} ${picked.length === 1 ? "contract" : "contracts"}, $${pay}` : "Start the quarter";
-  $("#boardNote").className = "ct-planbar-note";
-  $("#boardNote").textContent = !picked.length ? `Pick the contracts you'll take. They're all due at the end of the quarter's ${QUARTER_SHIFTS} shifts.`
+  $("#boardGo").textContent = picked.length ? `Start the quarter: $${pay}` : "Start the quarter";
+  $("#boardNote").textContent = !picked.length ? "Pick at least one contract."
     : `${total} boxes in ${QUARTER_SHIFTS} shifts. A contract only pays if all its boxes ship.`;
-  $("#shop").innerHTML = SHOP.map((m) => {
-    const owned = biz.owned === m.id, short = biz.money < m.price;
-    const replaces = biz.owned && !owned ? " Replaces your paint machine." : "";
-    return `<div class="ct-offer ${owned ? "is-owned" : ""}">
-      <div class="ct-offer-due">${m.name}</div>
-      <div class="ct-offer-pay">$${m.price}</div>
-      <div class="ct-offer-note">${m.blurb}${replaces}</div>
-      ${owned ? `<span class="ct-owned">${CHECK} On your floor</span>`
-        : `<button class="ct-btn" data-buy="${m.id}" ${short ? `disabled data-tooltip="You have ${money(biz.money)}."` : ""}>Buy</button>`}
-    </div>`;
-  }).join("");
-  $("#shop").querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { if (buy(biz, b.dataset.buy)) renderBoard(); }));
-  renderBoardCrew();
-}
 
-// Your crew on the board: train the robots you have, take on new ones.
-function renderBoardCrew() {
-  const short = (n) => biz.money < n ? `disabled data-tooltip="You have ${money(biz.money)}."` : "";
-  $("#crewNote").textContent = `Training costs $${TRAIN_PRICE} a skill, and every skill adds $5 to a robot's pay. A robot's ${["", "first", "second", "third", "fourth"][SKILL_TIER.at]} skill adds $${SKILL_TIER.extra} more.`;
+  // ----- recruit: three robots this visit
+  $("#recruits").innerHTML = recruitOffers(biz).map((id) => {
+    const r = robotOf(biz, CANDIDATES.find((c) => c.id === id)), done = biz.crew.includes(id), price = RECRUITS[id];
+    return `<div class="ct-biz-bot ${done ? "is-done" : ""}" style="--c:${r.color}">
+      ${faceHTML(r)}<div><div><b>${r.name}</b> <span class="ct-wage">$${r.wage}/shift</span></div>${skillBadges(r)}<div class="ct-biz-blurb">${r.blurb}</div></div>
+      <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} Recruited</span>` : `<button class="ct-btn is-gold" data-recruit="${id}" ${short(price)}>Recruit $${price}</button>`}</div>
+    </div>`;
+  }).join("") || `<p class="ct-offer-note">Everyone's already on your crew.</p>`;
+
+  // ----- training: your crew
+  $("#crewNote").textContent = `$${TRAIN_PRICE} a skill or trait. Each adds $5 a shift to their pay; a third skill, or a third trait, adds $${SKILL_TIER.extra} more.`;
   $("#bizCrew").innerHTML = biz.crew.map((id) => {
     const r = robotOf(biz, CANDIDATES.find((c) => c.id === id));
-    const can = TRAINABLE.filter((k) => !r.skills.includes(k));
-    return `<div class="ct-biz-bot" style="--c:${r.color}">
+    const btn = (k, isSkill) => {
+      const after = isSkill ? wageOf([...r.skills, k], r.attributes) : wageOf(r.skills, [...r.attributes, k]);
+      const tip = biz.money < TRAIN_PRICE ? short(TRAIN_PRICE) : `data-tooltip="${(isSkill ? SKILLS : ATTRIBUTES)[k].tip} ${r.name} would then cost $${after} a shift."`;
+      return `<button class="ct-train-btn ${isSkill ? "" : "is-trait"}" data-train="${id}:${k}" ${tip}>+ ${(isSkill ? SKILLS : ATTRIBUTES)[k].label}</button>`;
+    };
+    return `<div class="ct-biz-bot ct-trainee" style="--c:${r.color}">
       ${faceHTML(r)}<div><div><b>${r.name}</b> <span class="ct-wage">$${r.wage}/shift</span></div>${skillBadges(r)}</div>
-      <div class="ct-train">${can.length ? `<span class="ct-label">Train</span>` : ""}${can.map((k) => {
-        const after = wageOf([...r.skills, k], r.attributes);
-        return `<button class="ct-btn" data-train="${id}:${k}" ${biz.money < TRAIN_PRICE ? `disabled data-tooltip="You have ${money(biz.money)}."`
-          : `data-tooltip="${r.name} would then cost $${after} a shift."`}>${SKILLS[k].label} $${TRAIN_PRICE}</button>`;
-      }).join("")}</div>
-    </div>`;
-  }).join("") + Object.entries(RECRUITS).filter(([id]) => !biz.crew.includes(id)).map(([id, price]) => {
-    const r = robotOf(biz, CANDIDATES.find((c) => c.id === id));
-    return `<div class="ct-biz-bot is-recruit" style="--c:${r.color}">
-      ${faceHTML(r)}<div><div><b>${r.name}</b> <span class="ct-wage">$${r.wage}/shift</span></div>${skillBadges(r)}<div class="ct-biz-blurb">${r.blurb}</div></div>
-      <div class="ct-train"><button class="ct-btn is-gold" data-recruit="${id}" ${short(price)}>Take on $${price}</button></div>
+      <div class="ct-train-row">${TRAINABLE.filter((k) => !r.skills.includes(k)).map((k) => btn(k, true)).join("")}${
+        TRAINABLE_ATTRS.filter((k) => !r.attributes.includes(k)).map((k) => btn(k, false)).join("")}</div>
     </div>`;
   }).join("");
-  $("#bizCrew").querySelectorAll("[data-train]").forEach((b) => b.addEventListener("click", () => {
+
+  // ----- machines: three this visit, and what's on your floor
+  const mine = SHOP.filter((m) => owns(biz, m.id));
+  $("#machines").innerHTML = machineOffers(biz).map((m) => {
+    const done = owns(biz, m.id) && biz.boughtNow.includes(m.id);
+    const replaces = m.kind === "paint" && biz.owned && !owns(biz, m.id) ? " Replaces your paint machine." : "";
+    return `<div class="ct-biz-bot ct-machine ${done ? "is-done" : ""}">
+      <div><div><b>${m.name}</b></div><div class="ct-biz-blurb">${m.blurb}${replaces}</div></div>
+      <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} Bought</span>` : `<button class="ct-btn is-gold" data-buy="${m.id}" ${short(m.price)}>Buy $${m.price}</button>`}</div>
+    </div>`;
+  }).join("") + `<p class="ct-offer-note">On your floor: ${mine.length ? mine.map((m) => m.name.toLowerCase()).join(", ") : "nothing yet"}.</p>`;
+
+  $("#boardScreen").querySelectorAll("[data-recruit]").forEach((b) => b.addEventListener("click", () => { if (recruit(biz, b.dataset.recruit)) renderBoard(); }));
+  $("#boardScreen").querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { if (buy(biz, b.dataset.buy)) renderBoard(); }));
+  $("#boardScreen").querySelectorAll("[data-train]").forEach((b) => b.addEventListener("click", () => {
     const [id, k] = b.dataset.train.split(":");
     if (train(biz, CANDIDATES.find((c) => c.id === id), k)) renderBoard();
   }));
-  $("#bizCrew").querySelectorAll("[data-recruit]").forEach((b) => b.addEventListener("click", () => { if (recruit(biz, b.dataset.recruit)) renderBoard(); }));
 }
+const cap = (s) => s[0].toUpperCase() + s.slice(1);
 $("#boardMenuBtn").addEventListener("click", () => showMenu());
 $("#boardGo").addEventListener("click", () => {
   if (!picked.length) return;

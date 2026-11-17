@@ -1,12 +1,15 @@
-// Your business (docs/progression-design.md, docs/decisions.md #53, #54): the contract loop, on
-// level 6's floor. Between quarters you're at the board: pick the contracts you'll take this quarter
-// and buy equipment. Every contract you take is due at the end of the quarter, and no two ask for
-// the same color, so a shipped box only ever counts for one contract (Mike: "The fewer decisions
-// that workers have to make ... the better right now"). The quarter plays as in quarter.js, with the
-// contracts' orders together as the quota and all your money as the budget. At the end, each
-// contract that shipped in full pays, and the investor takes his cut; money carries over.
+// Your business (docs/progression-design.md, docs/decisions.md #53, #54, #56, #58): the contract
+// loop, on level 6's floor. Between quarters you're at the board: pick the contracts you'll take
+// this quarter, recruit, train and buy machines. Every contract you take is due at the end of the
+// quarter, and no two ask for the same color, so a shipped box only ever counts for one contract
+// (Mike: "The fewer decisions that workers have to make ... the better right now"). The quarter
+// plays as in quarter.js, with the contracts' orders together as the quota and all your money as
+// the budget. At the end, each contract that shipped in full pays, and the investor takes his cut;
+// money carries over.
 //
-// The boards are written by hand, one per quarter. Numbers from tools/balance.mjs.
+// Like a roguelike, each visit offers a few choices rather than everything: three contracts (a
+// small and a large one of the same color, and a side contract of another color), three robots to
+// recruit and three machines. The boards are written by hand; numbers from tools/balance.mjs.
 
 import { wageOf } from "./wages.js";
 
@@ -16,90 +19,125 @@ export const INVESTOR = { fronted: 100, cut: 0.1 };
 /** Shifts in a quarter; every contract is due at its end. */
 export const QUARTER_SHIFTS = 3;
 
-/** Equipment in the shop. Paint machines replace each other (the floor has one paint station). */
+/**
+ * Machines. Paint machines replace each other (the floor has one paint station); the others are
+ * upgrades you keep. `caps` raises how much a station holds.
+ */
 export const SHOP = [
-  { id: "paint", name: "Paint machine", price: 80, wear: 10, blurb: "Wears 10% a job. Cheap, but someone with Repair has to service it every 10 jobs." },
-  { id: "sturdy", name: "Sturdy paint machine", price: 170, wear: 5, blurb: "Wears 5% a job. Costs more, and needs half the servicing." },
+  { id: "paint", kind: "paint", name: "Paint machine", price: 80, wear: 10, blurb: "Paints widgets. Wears 10% a job, so someone with Repair services it every 10 jobs." },
+  { id: "sturdy", kind: "paint", name: "Sturdy paint machine", price: 170, wear: 5, blurb: "Paints widgets. Wears 5% a job: half the servicing." },
+  { id: "bigpack", name: "Bigger pack table", price: 50, caps: { PACK: 9 }, blurb: "Pack holds 9 things instead of 6." },
+  { id: "bigbins", name: "Bigger bins", price: 30, caps: { BIN: 10 }, blurb: "Each bin holds 10 instead of 5." },
 ];
 
-// Your crew (decision #56): the robots you can hire for a shift. You start with two; between
-// quarters you can take on more (a one-time fee) and train the ones you have in a new skill. A
-// trained skill raises the wage like any skill, and a third skill jumps it a tier (brains.js).
+// Your crew (decision #56): the robots you can put on a shift. You start with two; between
+// quarters you can recruit more (a one-time fee) and train the ones you have in a new skill. A
+// trained skill raises the wage like any skill, and a third skill jumps it a tier (wages.js).
 export const START_CREW = ["blip", "pip"];
-export const RECRUITS = { dot: 20, gary: 40, rusty: 40, vex: 60 };
-export const TRAIN_PRICE = 50;
+export const RECRUITS = { dot: 20, gary: 40, rusty: 40, vex: 60, doris: 80, bolt: 120 };
+export const TRAIN_PRICE = 20;
 export const TRAINABLE = ["packing", "painting", "repair"];
+// Attributes can be trained too, at the same price, and count the same way toward the wage.
+export const TRAINABLE_ATTRS = ["fast", "nimble", "steady", "smart"];
 
 /** A robot (`c`, from brains.js CANDIDATES) as your business has them: their own skills plus what
  *  you've trained. */
 export function robotOf(biz, c) {
-  const id = c.id;
-  const skills = [...c.skills, ...(biz.trained[id] ?? [])];
-  return { ...c, skills, wage: wageOf(skills, c.attributes) };
+  const t = biz.trained[c.id] ?? [];
+  const skills = [...c.skills, ...t.filter((k) => TRAINABLE.includes(k))];
+  const attributes = [...c.attributes, ...t.filter((k) => TRAINABLE_ATTRS.includes(k))];
+  return { ...c, skills, attributes, wage: wageOf(skills, attributes) };
 }
 
-/** Take a robot onto your crew for its fee. */
+// The same few choices for the whole visit: a small seeded shuffle per quarter.
+function pickFew(list, n, seed) {
+  let a = (seed * 2654435761) >>> 0;
+  const rnd = () => ((a = (a * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  return out.slice(0, n);
+}
+
+// The pools are what you didn't have when this visit started, so buying or recruiting one keeps the
+// same three on show (marked done) instead of dealing a new one.
+
+/** The three robots you can recruit this visit (fewer once most of them work for you). */
+export const recruitOffers = (biz) => pickFew(Object.keys(RECRUITS).filter((id) => !biz.crew.includes(id) || biz.recruitedNow.includes(id)), 3, biz.quarters + 1)
+  .sort((x, y) => RECRUITS[x] - RECRUITS[y]);
+
+/** The three machines this visit. A paint machine is always among them until you own one. */
+export function machineOffers(biz) {
+  const had = (id) => owns(biz, id) && !biz.boughtNow.includes(id);
+  const hadPaint = SHOP.some((m) => m.kind === "paint" && had(m.id));
+  const open = SHOP.filter((m) => !had(m.id) && !(m.id === "paint" && had("sturdy")));
+  const paint = hadPaint ? [] : open.filter((m) => m.id === "paint");
+  const rest = pickFew(open.filter((m) => !paint.includes(m)).map((m) => m.id), 3 - paint.length, biz.quarters + 7);
+  return [...paint, ...open.filter((m) => rest.includes(m.id))].sort((x, y) => x.price - y.price);
+}
+
+/** Recruit a robot onto your crew for its fee. */
 export function recruit(biz, id) {
   const price = RECRUITS[id];
   if (price == null || biz.crew.includes(id) || biz.money < price) return false;
   biz.money -= price;
   biz.crew.push(id);
+  biz.recruitedNow.push(id);
   return true;
 }
 
-/** Teach one of your robots a skill. */
+/** Teach one of your robots a skill or an attribute. */
 export function train(biz, c, skill) {
-  const id = c.id;
-  if (!biz.crew.includes(id) || biz.money < TRAIN_PRICE || robotOf(biz, c).skills.includes(skill)) return false;
+  const id = c.id, r = robotOf(biz, c);
+  if (!biz.crew.includes(id) || biz.money < TRAIN_PRICE || r.skills.includes(skill) || r.attributes.includes(skill)) return false;
   biz.money -= TRAIN_PRICE;
   (biz.trained[id] ??= []).push(skill);
   return true;
 }
 
-// One board per quarter. Each contract is boxes of one color (boxes of 3) and what the client pays
-// when they've all shipped. The supply only gives out red, so blue and green need a paint machine.
+// One board per quarter: a contract in a small and a large size (same color, so you take one or
+// neither) and a side contract of another color. Boxes of 3; pay when they've all shipped. The
+// supply only gives out red, so blue and green need a paint machine.
 const TIERS = [
-  [
-    { color: "red", count: 20, pay: 150 },
-    { color: "red", count: 40, pay: 320 },
-    { color: "blue", count: 9, pay: 240 },
-    { color: "green", count: 6, pay: 170 },
-  ],
-  [
-    { color: "red", count: 30, pay: 230 },
-    { color: "red", count: 55, pay: 450 },
-    { color: "blue", count: 12, pay: 320 },
-    { color: "green", count: 9, pay: 250 },
-  ],
-  [
-    { color: "red", count: 40, pay: 310 },
-    { color: "blue", count: 18, pay: 480 },
-    { color: "green", count: 12, pay: 330 },
-    { color: "green", count: 20, pay: 560 },
-  ],
+  { main: { color: "red", small: [20, 150], large: [40, 320] }, side: { color: "blue", count: 9, pay: 240 } },
+  { main: { color: "red", small: [30, 230], large: [55, 450] }, side: { color: "green", count: 9, pay: 250 } },
+  { main: { color: "green", small: [12, 330], large: [20, 560] }, side: { color: "red", count: 40, pay: 310 } },
+  { main: { color: "blue", small: [15, 420], large: [25, 700] }, side: { color: "red", count: 45, pay: 360 } },
 ];
 
 export function newBusiness() {
-  return { money: INVESTOR.fronted, quarters: 0, wins: 0, paidOut: 0, owned: null, crew: [...START_CREW], trained: {} };
+  return { money: INVESTOR.fronted, quarters: 0, wins: 0, paidOut: 0, owned: null, upgrades: [], crew: [...START_CREW], trained: {},
+    recruitedNow: [], boughtNow: [] };
 }
 
-/** This quarter's board; past the last one, the last again at 15% more pay per quarter. */
+/**
+ * This quarter's three contracts, as a flat list: the small and large of the main color (`size`
+ * "small" / "large"), then the side contract ("side"). Past the last board, the last one again at
+ * 15% more pay per quarter.
+ */
 export function board(biz) {
-  const t = Math.min(biz.quarters, TIERS.length - 1), extra = Math.max(0, biz.quarters - (TIERS.length - 1));
-  return TIERS[t].map((c, i) => ({ ...c, id: `${biz.quarters}-${i}`, needs: c.color === "red" ? null : "paint",
-    pay: Math.round((c.pay * 1.15 ** extra) / 10) * 10 }));
+  const T = TIERS[Math.min(biz.quarters, TIERS.length - 1)], extra = Math.max(0, biz.quarters - (TIERS.length - 1));
+  const pay = (p) => Math.round((p * 1.15 ** extra) / 10) * 10;
+  const needs = (color) => (color === "red" ? null : "paint");
+  const q = biz.quarters;
+  return [
+    { id: `${q}-s`, size: "small", color: T.main.color, count: T.main.small[0], pay: pay(T.main.small[1]), needs: needs(T.main.color) },
+    { id: `${q}-l`, size: "large", color: T.main.color, count: T.main.large[0], pay: pay(T.main.large[1]), needs: needs(T.main.color) },
+    { id: `${q}-x`, size: "side", color: T.side.color, count: T.side.count, pay: pay(T.side.pay), needs: needs(T.side.color) },
+  ];
 }
 
+export const owns = (biz, id) => biz.owned === id || biz.upgrades.includes(id);
 export const machine = (biz) => SHOP.find((m) => m.id === biz.owned) ?? null;
-export const hasMachine = (biz, needs) => !needs || !!biz.owned; // both machines paint
+export const hasMachine = (biz, needs) => !needs || !!biz.owned; // both paint machines paint
 export const cutOf = (pay) => Math.round(pay * INVESTOR.cut);
 
-/** Buy a machine: it replaces the one you have, no money back. */
+/** Buy a machine. A paint machine replaces the one you have, no money back. */
 export function buy(biz, id) {
   const m = SHOP.find((x) => x.id === id);
-  if (!m || biz.owned === id || biz.money < m.price) return false;
+  if (!m || owns(biz, id) || biz.money < m.price) return false;
   biz.money -= m.price;
-  biz.owned = id;
+  if (m.kind === "paint") biz.owned = id; else biz.upgrades.push(id);
+  biz.boughtNow.push(id);
   return true;
 }
 
@@ -113,12 +151,14 @@ const list = (cs) => cs.map((c) => `${c.count} ${c.color}`).join(", ").replace(/
 export function quarterLevel(base, biz, contracts, candidates = []) {
   const m = machine(biz);
   const pay = contracts.reduce((a, c) => a + c.pay, 0);
+  const caps = Object.assign({}, ...biz.upgrades.map((id) => SHOP.find((x) => x.id === id).caps ?? {}));
   return {
     ...base, name: "Quarter",
     stations: base.stations.filter((k) => k !== "PAINT" || m),
     pool: [...biz.crew],
     roster: Object.fromEntries(candidates.filter((c) => biz.crew.includes(c.id)).map((c) => [c.id, robotOf(biz, c)])),
     wear: m?.wear,
+    caps,
     order: contracts.map((c) => ({ color: c.color, count: c.count })),
     quarter: { shifts: QUARTER_SHIFTS, budget: biz.money },
     contracts,
@@ -143,4 +183,6 @@ export function settle(biz, contracts, done, left) {
     if (p.won) biz.wins++;
   }
   biz.quarters++;
+  biz.recruitedNow = [];
+  biz.boughtNow = [];
 }

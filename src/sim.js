@@ -195,7 +195,7 @@ function makeTools(s, w) {
     holding: () => holdingOf(w),
     count: (st, c) => at(st).filter((i) => i.kind === "widget" && (!c || i.color === c)).length,
     boxes: (st) => at(st).filter((i) => i.kind === "box" && !i.building).length,
-    space: (st) => Math.max(0, capOf(stationKey(st)) - at(st).length),
+    space: (st) => Math.max(0, capOf(s.level, stationKey(st)) - at(st).length),
     needs: (c) => s.order.filter((l) => l.color === c || l.color === "any").reduce((a, l) => a + l.count - l.done, 0),
     needsAny: () => s.order.reduce((a, l) => a + l.count - l.done, 0),
     wear: (st) => Math.round(s.wear[stationKey(st)] ?? 0),
@@ -205,7 +205,9 @@ function makeTools(s, w) {
   return { actions, queries };
 }
 
-const capOf = (st) => (st.startsWith("BIN_") ? RULES.binCap : st === "PACK" ? RULES.packCap : st === "PAINT" ? RULES.paintCap : st === "DOCK" ? Infinity : 0);
+/** How much a station holds. A level's `caps` ({ PACK, BIN }) can raise it: bought upgrades. */
+export const capOf = (level, st) => (st.startsWith("BIN_") ? level.caps?.BIN ?? RULES.binCap : st === "PACK" ? level.caps?.PACK ?? RULES.packCap
+  : st === "PAINT" ? RULES.paintCap : st === "DOCK" ? Infinity : 0);
 
 /** Give a worker a (parsed, checked) program. It starts from the top. */
 export function setProgram(s, w, ast) {
@@ -439,7 +441,7 @@ function putDown(s, w, a, act) {
     w.holding = null; s.version++;
     return ok(s, w, a);
   }
-  if (s.stations[st].length >= capOf(st)) return keepWaiting(s, w, act) || fail(s, w, a, `${label(st)} is full`);
+  if (s.stations[st].length >= capOf(s.level, st)) return keepWaiting(s, w, act) || fail(s, w, a, `${label(st)} is full`);
   s.stations[st].push(w.holding);
   w.holding = null; s.version++;
   ok(s, w, a);

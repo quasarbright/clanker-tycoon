@@ -13,7 +13,7 @@
 // can change them, and a thought's one-off stays inside them (or the worker comes to your desk).
 // Nothing here is specific to one model.
 import { llm } from "./llm.js";
-import { COLORS, viewFor, toolNamesFor, programStationName } from "./sim.js";
+import { COLORS, viewFor, toolNamesFor, programStationName, capOf } from "./sim.js";
 import { parseProgram, checkProgram } from "./lang.js";
 import { dryRun } from "./dryrun.js";
 import { wageOf } from "./wages.js";
@@ -81,10 +81,10 @@ export const CANDIDATES = [
 const STATION_TEXT = {
   SUPPLY: `"SUPPLY": the supply of raw widgets. It never runs out: there's always one to pick up.`,
   PAINT: `"PAINT": the paint machine. It repaints the widget you're holding. It wears with use and stops at 100% wear until someone with the Repair skill services it.`,
-  PACK: `"PACK": packing station. 3 widgets sitting here can be packed into a box. Holds 6 things.`,
+  PACK: `"PACK": packing station. 3 widgets sitting here can be packed into a box. Holds {cap} things.`,
   DOCK: `"DOCK": things put down here ship`,
-  BIN_1: `"BIN_1": storage, holds 5`,
-  BIN_2: `"BIN_2": storage, holds 5`,
+  BIN_1: `"BIN_1": storage, holds {cap}`,
+  BIN_2: `"BIN_2": storage, holds {cap}`,
 };
 const SHIP_TEXT = {
   widgets: "Widgets put down at DOCK ship. Each counts toward today's order if it's a color the order still needs.",
@@ -144,7 +144,7 @@ When you speak, it's one or two short sentences of plain speech in your own voic
 You drive your robot body with a program, written from your instructions.
 
 The factory:
-${L.stations.map((k) => `- ${STATION_TEXT[k]}`).join("\n")}
+${L.stations.map((k) => `- ${STATION_TEXT[k].replace("{cap}", capOf(L, k))}`).join("\n")}
 There are no other stations. The supply gives out ${colors} widgets. ${SHIP_TEXT[L.ship]}
 You hold one thing at a time.
 

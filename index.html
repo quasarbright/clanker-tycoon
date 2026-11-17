@@ -215,12 +215,64 @@
     .ct-stat-value { font: 400 1.4rem var(--font-display); }
     .ct-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
-    /* contract board (your business): contracts to take and equipment to buy, between contracts */
-    .ct-board { width: min(860px, 100%); text-align: left; padding: 22px; }
-    .ct-board-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+    /* the board (your business), between quarters. PC only: wide, and it fits without scrolling.
+       Top: contracts and Start. Below, three columns: Recruit, Training, Machines. */
+    .ct-board { width: min(1380px, 100%); max-height: calc(100vh - 40px); overflow: hidden; display: flex; flex-direction: column; gap: 12px; text-align: left; padding: 18px 22px; }
+    .ct-board-head { display: flex; align-items: center; gap: 20px; }
     .ct-board-head .ct-title { margin: 0; }
-    .ct-board-money { margin-left: auto; text-align: right; }
-    .ct-board-shifts { font-weight: 700; font-size: 1.05rem; margin-top: 4px; }
+    .ct-board-shifts { font-weight: 700; font-size: 1.05rem; margin-top: 2px; }
+    .ct-investor { flex: 1; display: flex; align-items: center; gap: 12px; background: var(--panel-2); border-radius: 12px; padding: 8px 14px; }
+    .ct-investor img { width: 40px; height: 40px; flex: none; }
+    .ct-investor p { margin: 0; line-height: 1.4; }
+    .ct-investor b { color: var(--success); }
+    .ct-board-money { text-align: right; }
+    .ct-board-sec { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
+    .ct-board-top { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: stretch; }
+    .ct-offers { display: grid; grid-template-columns: 2fr 1.15fr; gap: 12px; }
+    .ct-board-go { display: flex; flex-direction: column; justify-content: center; gap: 10px; width: 260px; }
+    .ct-board-go .ct-btn:disabled { opacity: 1; background: var(--panel-2); color: var(--faint); cursor: not-allowed; }
+    .ct-offer { display: flex; flex-direction: column; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .ct-offer.is-picked { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .ct-offer-head { display: flex; align-items: center; gap: 10px; }
+    .ct-offer-head b { font-size: 1.05rem; }
+    .ct-offer-head .ct-offer-keep { margin-left: auto; }
+    .ct-offer-head .ct-ticket-pay:empty { display: none; }
+    .ct-offer-pay { font: 400 1.5rem/1 var(--font-display); color: var(--accent); }
+    .ct-offer-keep { color: var(--muted); font-size: .85rem; }
+    .ct-offer-note { font-size: .88rem; color: var(--muted); line-height: 1.35; margin: 0; }
+    .ct-offer-note:empty { display: none; }
+    .ct-offer-note.is-bad { color: #ffb4ae; }
+    /* a contract's sizes: one card, pick one */
+    .ct-sizes { display: flex; gap: 10px; }
+    .ct-size { flex: 1; display: grid; grid-template-columns: 1fr auto; align-items: baseline; gap: 2px 10px; text-align: left; color: var(--text);
+      background: var(--panel); border: 2px solid var(--border); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+    .ct-size:hover:not(:disabled) { border-color: var(--accent); }
+    .ct-size:disabled { opacity: .5; cursor: not-allowed; }
+    .ct-size.is-on { border-color: var(--accent); background: #2b2614; }
+    .ct-size-name { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+    .ct-size-name svg { width: 1.1em; height: 1.1em; color: var(--accent); }
+    .ct-size-count { color: var(--muted); font-weight: 600; justify-self: end; }
+    /* the shop: three columns */
+    .ct-shop-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .ct-shop-col { min-height: 0; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--border); padding-top: 12px; }
+    .ct-shop-list { min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+    .ct-biz-bot { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: center; background: var(--panel-2); border-radius: 12px; padding: 8px 12px; }
+    .ct-biz-bot .ct-skills { margin-top: 4px; }
+    .ct-biz-bot.ct-machine { grid-template-columns: 1fr auto; }
+    .ct-biz-bot.is-done { outline: 1px solid var(--success); }
+    .ct-biz-blurb { color: var(--muted); font-size: .85rem; margin-top: 3px; }
+    .ct-biz-act { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
+    .ct-biz-act .ct-btn { padding: 6px 12px; font-size: .88rem; white-space: nowrap; }
+    .ct-biz-bot.ct-trainee { grid-template-columns: auto 1fr; }
+    .ct-train-row { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 5px; }
+    .ct-train-btn { border: 1px dashed #6a5a22; background: transparent; color: var(--accent); border-radius: 999px; padding: 2px 9px; font: 700 .72rem var(--font-ui);
+      letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+    .ct-train-btn.is-trait { border-color: #3c4a63; color: #9fb4d8; }
+    .ct-train-btn:hover:not(:disabled) { border-style: solid; background: #2b2614; }
+    .ct-train-btn.is-trait:hover:not(:disabled) { background: #1d2532; }
+    .ct-train-btn:disabled { opacity: .4; cursor: not-allowed; }
+    .ct-owned { color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .ct-owned svg { width: 1.1em; height: 1.1em; display: block; flex: none; }
     /* the top bar in a quarter: which shift this is, with a pip per shift */
     .ct-shift-of { display: inline-flex; align-items: center; gap: 8px; font-size: 1rem; letter-spacing: .08em; color: var(--text); font-weight: 700; }
     .ct-shift-pips { display: inline-flex; gap: 4px; }
@@ -232,49 +284,13 @@
     .ct-ticket-money svg { width: 1em; height: 1em; display: block; }
     .ct-ticket.is-shipped .ct-ticket-money { color: #1d7a42; }
     .ct-ticket.is-shipped .ct-ticket-pay { opacity: .55; }
-    .ct-investor { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; }
-    .ct-investor img { width: 44px; height: 44px; flex: none; }
-    .ct-investor p { margin: 0; line-height: 1.4; }
-    .ct-investor b { color: var(--success); }
-    .ct-board-sec { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 4px 0 8px; }
-    .ct-offers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-    .ct-board-go { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 12px 0 18px; }
-    .ct-board-go .ct-btn:disabled { opacity: 1; background: var(--panel-2); color: var(--faint); cursor: not-allowed; }
     .ct-end-contract .ct-ticket { min-width: 4.6em; }
-    .ct-offer.is-picked { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-    .ct-offer-on { display: flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); --lip: #8f6d0c; }
-    .ct-offer-on svg { width: 1.1em; height: 1.1em; display: block; }
     .ct-end-contracts { grid-column: 1 / -1; display: grid; gap: 6px; margin-bottom: 8px; }
     .ct-end-contract { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border-radius: 10px; padding: 6px 10px; text-align: left; }
     .ct-end-contract span:not(.ct-ticket):not(.ct-ticket-dots):not(.ct-ticket-pay):not(.ct-dot) { flex: 1; color: var(--muted); }
     .ct-end-contract b { font-family: var(--font-mono); }
     .ct-end-contract.is-done b { color: var(--success); }
     .ct-end-contract.is-missed b { color: #ffb4ae; }
-    .ct-shop { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
-    .ct-biz-crew { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-    .ct-biz-bot { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: start; background: var(--panel-2); border-radius: 12px; padding: 10px 12px; text-align: left; }
-    .ct-biz-bot.is-recruit { background: transparent; border: 1px dashed var(--border); }
-    .ct-biz-blurb { color: var(--muted); font-size: .85rem; margin-top: 4px; }
-    .ct-biz-bot .ct-train { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
-    .ct-biz-bot .ct-train .ct-btn { padding: 6px 12px; font-size: .88rem; }
-    .ct-offer { display: flex; flex-direction: column; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
-    .ct-offer-order { display: flex; flex-wrap: wrap; gap: 6px; }
-    .ct-offer-pay { font: 400 1.6rem/1 var(--font-display); color: var(--accent); }
-    .ct-offer-keep { color: var(--muted); font-size: .85rem; }
-    .ct-offer-due { font-weight: 600; }
-    .ct-offer-note { font-size: .88rem; color: var(--muted); line-height: 1.35; flex: 1; }
-    .ct-offer-note.is-bad { color: #ffb4ae; }
-    .ct-offer .ct-btn { align-self: flex-start; }
-    .ct-offer.is-owned { border-color: var(--success); }
-    .ct-owned { color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 6px; }
-    .ct-owned svg { width: 1.1em; height: 1.1em; display: block; flex: none; }
-    @media (max-width: 900px) { .ct-offers { grid-template-columns: repeat(2, 1fr); } }
-    @media (max-width: 700px) {
-      .ct-offers, .ct-shop, .ct-biz-crew { grid-template-columns: 1fr; }
-      /* the Start button stays in reach while you scroll the offers */
-      .ct-board-go { position: sticky; bottom: -20px; z-index: 1; background: var(--panel); padding: 10px 0 20px; margin-bottom: 4px; }
-      .ct-board { padding: 14px; }
-    }
 
     /* ---------- phases: plan (write instructions) → run ---------- */
     body[data-phase="plan"] .ct-run-only, body[data-phase="loading"] .ct-run-only, body[data-phase="menu"] .ct-run-only { display: none !important; }
@@ -608,21 +624,22 @@
     <div class="ct-card-big ct-board">
       <div class="ct-board-head">
         <div><div class="ct-title" id="boardTitle">Quarter 1</div><div class="ct-board-shifts" id="boardShifts"></div></div>
+        <div class="ct-investor"><img src="favicon.svg" alt=""><p><span class="ct-label">Your investor</span><br><span id="investorLine"></span></p></div>
         <div class="ct-board-money"><span class="ct-cash-label">Your money</span><span class="ct-cash-value" id="bizMoney"></span></div>
+        <button class="ct-btn" id="boardMenuBtn">Levels</button>
       </div>
-      <div class="ct-investor"><img src="favicon.svg" alt=""><p id="investorLine"></p></div>
-      <div class="ct-board-sec">Contracts for this quarter</div>
-      <div class="ct-offers" id="offers"></div>
-      <div class="ct-board-go">
-        <button class="ct-btn is-gold ct-big" id="boardGo" disabled>Start the quarter</button>
-        <div class="ct-planbar-note" id="boardNote"></div>
+      <div class="ct-board-top">
+        <div><div class="ct-board-sec">Contracts this quarter</div><div class="ct-offers" id="offers"></div></div>
+        <div class="ct-board-go">
+          <button class="ct-btn is-gold ct-big" id="boardGo" disabled>Start the quarter</button>
+          <div class="ct-planbar-note" id="boardNote"></div>
+        </div>
       </div>
-      <div class="ct-board-sec">Your crew</div>
-      <p class="ct-offer-note" id="crewNote" style="margin:0 0 8px"></p>
-      <div class="ct-biz-crew" id="bizCrew"></div>
-      <div class="ct-board-sec" style="margin-top:18px">Shop</div>
-      <div class="ct-shop" id="shop"></div>
-      <div class="ct-btns" style="margin-top:16px"><button class="ct-btn" id="boardMenuBtn">Levels</button></div>
+      <div class="ct-shop-cols">
+        <div class="ct-shop-col"><div class="ct-board-sec">Recruit</div><p class="ct-offer-note">New robots for your crew. A one-time fee, then their pay each shift you schedule them.</p><div class="ct-shop-list" id="recruits"></div></div>
+        <div class="ct-shop-col"><div class="ct-board-sec">Training</div><p class="ct-offer-note" id="crewNote"></p><div class="ct-shop-list" id="bizCrew"></div></div>
+        <div class="ct-shop-col"><div class="ct-board-sec">Machines</div><p class="ct-offer-note">Paint machines replace each other; the rest you keep.</p><div class="ct-shop-list" id="machines"></div></div>
+      </div>
     </div>
   </div>
 

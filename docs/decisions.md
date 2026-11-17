@@ -733,3 +733,35 @@ hiring everyone now finishes the quota in one shift with $55 left. In the browse
 told in plain words to "carry red widgets from the supply to Pack" and to pack and ship, compiled
 and filled level 3 in 34 s.
 
+### 58. The board as a roguelike shop: three of each, wide, no scrolling (2026-11-17)
+
+**Feedback:** Mike: "Training is too expensive right now. Call it recruit instead of take on. And in
+the staffing, don't say hire ... Also have a clearer division in the shop between training and new
+hires and machines ... This is going to be a PC only game ... Ideally we shouldn't have to scroll in
+the post-quarter view." And: "for a classic roguelike, only give choices between three employees to
+recruit and three machine things. Let's also just have three contracts. A small contract, a bigger
+version of that contract, and then a side contract that doesn't overlap ... some other visual
+indication that makes it more obvious that one is a bigger version of the other." Then: "You should
+also be able to buy attributes like fast and smart, similar pricing model, and wage model."
+**Picked:**
+- **Three contracts a quarter.** One card holds a contract in two sizes, Small and Large, of the
+  same color; picking one size drops the other, so you can't try to take both. A second card is the
+  side contract, in another color. Replaces the four-contract board from #54.
+- **Three columns under the contracts: Recruit, Training, Machines.** Recruit and Machines each show
+  three choices per visit (seeded per quarter, so they don't reshuffle when you buy one; a paint
+  machine is always offered until you own one). Doris and Bolt are now recruitable, at $80 and $120:
+  tempting, and expensive every shift.
+- **Training is $20** (was $50), for a skill or a trait: Fast, Nimble, Steady or Smart. Each adds $5
+  a shift, and a third skill or a third trait adds $20 more (the threshold from #56, now for traits
+  too).
+- **Two new machines** so there are three to choose from: a bigger pack table (Pack holds 9, $50)
+  and bigger bins (10 each, $30). These are the first capacity upgrades.
+- **Wording:** "Recruit" instead of "take on". In level 7 the floor's list says **Schedule** and
+  **Off shift** instead of Hire and Let go, since they're already your crew. Other levels still hire.
+- **Layout:** the board fills a wide window (up to 1380 px) and fits without scrolling at 1440x900
+  and 1920x1080. At 1280x720 the three columns scroll inside themselves. Mobile isn't a target
+  anymore ("PC only").
+**Evidence (`tools/balance.mjs`, now four boards):** on board 1 both sizes pay with the starting
+crew; from board 2 the large size or the large plus the side contract can lose money with a thin
+crew (55 red with one hauler: $-45), and pays most with a full one.
+

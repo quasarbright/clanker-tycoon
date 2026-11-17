@@ -28,7 +28,8 @@ What's being built.
   and the investor takes a flat 10% of every contract (decisions 53, 54). Prototype, to see if
   choosing contracts and buying machines is fun before building more.
 
-- **Training and a growing crew.** Built in level 7 (decision 56). Your business starts with Blip
+- **Training and a growing crew.** Built in level 7 (decisions 56, 58): three robots to recruit
+  each quarter, and training skills or traits for $20. Your business starts with Blip
   and Pip; between quarters you take on more robots for a one-time fee and train skills for $50
   each. Every skill adds $5 a shift, and a robot's third skill adds $20 more, so one robot who can do
   everything costs more than a crew (the "Bolt does everything" problem). Later: experience making
@@ -52,7 +53,7 @@ Agreed direction, not built yet. Roughly in roadmap order.
 - **Buying equipment.** Machines are things you buy, one at a time, each tried by hand first.
 - **Equipment attributes.** Wear (a pricier machine that wears half as fast saves repair labor;
   built as the Sturdy paint machine, decision 53), speed, capacity. A trade-off between up-front cost and labor every shift.
-- **Upgrading machines.** Mike: "we should be able to upgrade machines ... the durability and the
+- **Upgrading machines.** Started: a bigger pack table and bigger bins are on sale (decision 58). Mike: "we should be able to upgrade machines ... the durability and the
   capacity, like the inventory space of it." Improve a machine you own (wears slower, holds more)
   instead of only buying a different one.
 - **Buying a whole line.** It drops into the next empty bay of a fixed plant layout, already wired:

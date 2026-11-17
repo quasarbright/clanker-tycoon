@@ -79,6 +79,8 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
 - The factory floor stays in view; scrolling the crew list doesn't scroll the floor away.
 - The page never scrolls, in any state (Mike: "the main page shouldn't scroll at all"). Everything
   fits the window; only inner panels (the crew list, the chat) scroll.
+- PC only (Mike, 2026-11-17: "This is going to be a PC only game"). Design for wide windows and
+  use the horizontal space; phones don't need to work.
 - You can see what a robot can do by looking at it: skills are tools they carry, attributes change
   their look (glasses for Smart, wheels for Fast that turn as it moves). New skills and attributes
   get a look too.
