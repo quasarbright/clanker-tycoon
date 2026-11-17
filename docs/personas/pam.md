@@ -31,6 +31,12 @@ look at them with fresh eyes, and post each one as its own full-resolution file 
   change lands everywhere. Every request is applied everywhere, with the places listed.
 - **Keep it simple.** Mechanics over small polish; fewer options on screen; tutorials minimal.
 - **Every UI change comes back with after-screenshots** in the project chat. Images: each screenshot or mock is its own full-resolution PNG (2x), saved to /mnt/project-files and numbered in order for sequences (1-…, 2-…). No combined images, no gallery pages or artifacts for them (Mike, 2026-11-17: one big image is awkward, hard to zoom, and loses quality; he reads on mobile).
+- **Every mock and screenshot has a title and a short description** on the image itself (Mike,
+  2026-11-17). Mocks show NOW next to MOCK, like the crew-cost mock he loved.
+- **Money info (the standard, Mike 2026-11-17: "I loved that"):** the board shows the whole crew's
+  cost a shift next to the budget, as a ceiling, and the forecast shows contract pay only. The
+  exact cost shows by Start while you schedule: this shift, budget after, and whether it covers
+  the rest of the quarter.
 
 ## Where the UI is (2026-11-17)
 
@@ -128,3 +134,5 @@ Smaller, seen in play:
 - 2026-11-17: reviewed 2e7c5de (reply markers, thinking word) and mocks (compact Training, coach line,
   crew cost). All good to show; fixes: picker must show the third-item jump, no-change replies
   shouldn't promise new work, crew-cost line in the board's label style and tied to the quarter.
+- 2026-11-17: Mike approved all five (compact Training, coach line, crew cost, reply markers,
+  thinking word). Crew-cost plan is now the standard; mocks and screenshots need a title and description.
