@@ -507,6 +507,8 @@ function focusCard(w) {
 // The conversation: what you said, what they said back, and what happened.
 //   who: "you" | "them" | "sys"; kind: "yell" | "problem" | "desk" | a label
 function logLine(w, who, text, kind = "") {
+  // A divider with nothing said after it is replaced, so empty shifts don't stack up dividers.
+  if (kind === "divider" && w.log?.at(-1)?.kind === "divider") w.log.pop();
   (w.log ??= []).push({ who, text, kind });
   logEvent(clockT(), "chat", { worker: w.id, who, text, kind: kind || undefined });
   if (w.log.length > 150) { w.log.shift(); w.seen = Math.max(0, (w.seen ?? 0) - 1); }
@@ -1211,7 +1213,7 @@ function renderBoard() {
   // the shifts run), and what the picked contracts bring in at the end if they all ship.
   const f = forecast(biz, picked);
   const row = (label, v, cls = "", tip = "") => `<span class="${cls}" ${tip ? `data-tooltip="${tip}"` : ""}>${label}</span><b class="${cls}">${v}</b>`;
-  $("#forecast").innerHTML = row("Contracts pay, if they all ship", `+$${f.pay}`, "is-in")
+  $("#forecast").innerHTML = !picked.length ? "" : row("Contracts pay, if they all ship", `+$${f.pay}`, "is-in")
     + (n ? row(`To the lender (${now})`, `−$${f.repay}`, "is-out", `After this quarter you'd owe $${f.debtAfter}.`) : "")
     + row("You get at the end of the quarter", `+$${f.gain}`, "is-total")
     + `<span class="ct-forecast-note">Wages come out of your ${money(f.budget)} budget as the shifts run, so they're not counted here.</span>`;

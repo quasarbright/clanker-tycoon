@@ -79,6 +79,11 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
 - The factory floor stays in view; scrolling the crew list doesn't scroll the floor away.
 - The page never scrolls, in any state (Mike: "the main page shouldn't scroll at all"). Everything
   fits the window; only inner panels (the crew list, the chat) scroll.
+- Before reporting any UI change, screenshot every state it touches (disabled, selected, hover,
+  done, empty, full) and spot-check them for ugliness, with a fresh-eyes reviewer that hasn't seen
+  your reasoning (Mike, 2026-11-17: "i shouldn't see this, it should be caught before something
+  comes to me ... do visual spot-checks for ugliness"). Disabled gold buttons with a gold lip and
+  outlines that don't follow rounded corners were the examples.
 - PC only (Mike, 2026-11-17: "This is going to be a PC only game"). Design for wide windows and
   use the horizontal space; phones don't need to work.
 - You can see what a robot can do by looking at it: skills are tools they carry, attributes change

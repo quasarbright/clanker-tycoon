@@ -34,8 +34,9 @@
       box-shadow: 0 4px 0 var(--lip); transition: transform .06s, box-shadow .06s;
     }
     .ct-btn:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--lip); }
-    .ct-btn:disabled { opacity: .45; cursor: default; }
     .ct-btn.is-gold { background: var(--accent); color: var(--on-accent); --lip: #8f6d0c; }
+    /* Disabled looks the same for every button, gold or not: flat gray, gray lip, faint label. */
+    .ct-btn:disabled, .ct-btn.is-gold:disabled { opacity: 1; background: transparent; color: var(--faint); box-shadow: inset 0 0 0 1px var(--border); transform: none; cursor: not-allowed; }
     .ct-round { width: 46px; height: 46px; border-radius: 50%; padding: 0; display: grid; place-items: center; }
 
     /* ---------- top bar ---------- */
@@ -192,6 +193,7 @@
     /* ---------- overlays ---------- */
     .ct-overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; overflow-y: auto; background: rgba(8, 9, 11, .78); padding: 20px; }
     .ct-overlay.is-hidden { display: none; }
+    #boardScreen { place-items: start center; background: rgba(8, 9, 11, .96); }
     .ct-pause { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 12px; border-radius: 14px; background: rgba(8, 9, 11, .62); }
     .ct-pause.is-hidden { display: none; }
     .ct-pause .ct-card-big { width: min(440px, 100%); padding: 20px; }
@@ -229,7 +231,8 @@
     .ct-loans { margin-left: auto; display: flex; gap: 8px; flex: none; }
     .ct-loans .ct-btn { padding: 6px 12px; font-size: .88rem; white-space: nowrap; }
     /* the quarter's forecast, if every picked contract ships */
-    .ct-forecast { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; font-size: .9rem; color: var(--muted); }
+    .ct-forecast { display: grid; grid-template-columns: 1fr auto; row-gap: 2px; font-size: .9rem; color: var(--muted); }
+    .ct-forecast b { padding-left: 12px; }
     .ct-forecast b { font-family: var(--font-mono); color: var(--text); text-align: right; }
     .ct-forecast .is-in { color: var(--success); }
     .ct-forecast .is-out { color: #ffb4ae; }
@@ -238,8 +241,9 @@
     .ct-forecast-note { grid-column: 1 / -1; font-size: .82rem; margin-top: 4px; }
     .ct-board-money { text-align: right; }
     .ct-board-sec { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
-    .ct-board-top { display: grid; grid-template-columns: 1fr auto; gap: 16px; align-items: stretch; }
-    .ct-offers { display: grid; grid-template-columns: 2fr 1.15fr; gap: 12px; }
+    .ct-board-top { display: grid; grid-template-columns: 1fr auto; gap: 16px; }
+    .ct-offers { display: grid; grid-template-columns: 2fr 1.15fr; gap: 12px; align-items: start; }
+    .ct-board-top { align-items: start; }
     .ct-board-go { display: flex; flex-direction: column; justify-content: center; gap: 10px; width: 300px; }
     .ct-board-go .ct-btn:disabled { opacity: 1; background: var(--panel-2); color: var(--faint); cursor: not-allowed; }
     .ct-offer { display: flex; flex-direction: column; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
@@ -270,8 +274,9 @@
     .ct-biz-bot { display: grid; grid-template-columns: auto 1fr auto; gap: 4px 12px; align-items: center; background: var(--panel-2); border-radius: 12px; padding: 8px 12px; }
     .ct-biz-bot .ct-skills { margin-top: 4px; }
     .ct-biz-bot.ct-machine { grid-template-columns: 1fr auto; }
-    .ct-biz-bot.is-done { outline: 1px solid var(--success); }
+    .ct-biz-bot.is-done { box-shadow: inset 0 0 0 1px var(--success); }
     .ct-biz-blurb { color: var(--muted); font-size: .85rem; margin-top: 3px; }
+    .ct-investor p, .ct-biz-blurb, .ct-offer-note, .ct-coach, .ct-cand-line, .ct-forecast-note { text-wrap: pretty; }
     .ct-biz-act { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
     .ct-biz-act .ct-btn { padding: 6px 12px; font-size: .88rem; white-space: nowrap; }
     .ct-biz-bot.ct-trainee { grid-template-columns: auto 1fr; }
@@ -295,7 +300,8 @@
     .ct-ticket-money svg { width: 1em; height: 1em; display: block; }
     .ct-ticket.is-shipped .ct-ticket-money { color: #1d7a42; }
     .ct-ticket.is-shipped .ct-ticket-pay { opacity: .55; }
-    .ct-end-contract .ct-ticket { min-width: 4.6em; }
+    .ct-end-contract .ct-ticket { min-width: 5.2em; }
+    .ct-end-contract .ct-ticket-pay { min-width: 2ch; text-align: right; }
     .ct-end-contracts { grid-column: 1 / -1; display: grid; gap: 6px; margin-bottom: 8px; }
     .ct-end-contract { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border-radius: 10px; padding: 6px 10px; text-align: left; }
     .ct-end-contract span:not(.ct-ticket):not(.ct-ticket-dots):not(.ct-ticket-pay):not(.ct-dot) { flex: 1; color: var(--muted); }
@@ -398,6 +404,7 @@
     .ct-crew, .ct-chat { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; }
     .ct-crew { padding: 6px; display: flex; flex-direction: column; gap: 2px; }
     .ct-list-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 4px; }
+    .ct-list-head .ct-wage { font-family: var(--font-ui); }
     .ct-convo { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1px 10px; align-items: center; text-align: left;
       padding: 7px 8px 7px 10px; border: 0; border-radius: 10px; background: none; color: var(--text); cursor: pointer; }
     .ct-convo:hover { background: var(--panel-2); }
