@@ -680,3 +680,14 @@ pays $720 if someone services the cheap machine, and only $495 with the sturdy o
 servicing (green comes up short). On board 3, blue 18 plus green 20 is 38 painted boxes, more than
 one painter makes in a quarter, so one of them misses whatever the machine.
 
+### 55. The shift count and each contract's pay stay in view (2026-11-17)
+
+**Problem:** Mike, on level 7: "you should see how many shifts are in the [quarter] somewhere more
+prominent. For each contract in the top left, when you're on the factory floor, also show how much
+money that's going to give you."
+**Picked:** the top bar's "Shift 2 of 3" is now full-size text with a dot per shift (done, now,
+still to come), on level 6 too. The board says under its title how many shifts the quarter has and
+that every contract is due at the end of the last one. Each contract's ticket on the floor shows
+its pay after the shipped count; once all its boxes have shipped the pay turns green with a check,
+because that money is now coming at the end of the quarter.
+

@@ -226,6 +226,18 @@
     .ct-board-head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
     .ct-board-head .ct-title { margin: 0; }
     .ct-board-money { margin-left: auto; text-align: right; }
+    .ct-board-shifts { font-weight: 700; font-size: 1.05rem; margin-top: 4px; }
+    /* the top bar in a quarter: which shift this is, with a pip per shift */
+    .ct-shift-of { display: inline-flex; align-items: center; gap: 8px; font-size: 1rem; letter-spacing: .08em; color: var(--text); font-weight: 700; }
+    .ct-shift-pips { display: inline-flex; gap: 4px; }
+    .ct-shift-pips i { width: 9px; height: 9px; border-radius: 50%; border: 2px solid var(--faint); }
+    .ct-shift-pips i.is-past { background: var(--faint); }
+    .ct-shift-pips i.is-now { background: var(--accent); border-color: var(--accent); }
+    /* a contract's ticket: shipped/count, then what it pays */
+    .ct-ticket-money { display: inline-flex; align-items: center; gap: 3px; font: 700 .9rem var(--font-mono); color: #7a5b00; border-left: 1px solid #c9bfa4; padding-left: 8px; }
+    .ct-ticket-money svg { width: 1em; height: 1em; display: block; }
+    .ct-ticket.is-shipped .ct-ticket-money { color: #1d7a42; }
+    .ct-ticket.is-shipped .ct-ticket-pay { opacity: .55; }
     .ct-investor { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border-radius: 12px; padding: 10px 14px; margin-bottom: 16px; }
     .ct-investor img { width: 44px; height: 44px; flex: none; }
     .ct-investor p { margin: 0; line-height: 1.4; }
@@ -595,7 +607,7 @@
   <div class="ct-overlay is-hidden" id="boardScreen">
     <div class="ct-card-big ct-board">
       <div class="ct-board-head">
-        <div class="ct-title" id="boardTitle">Quarter 1</div>
+        <div><div class="ct-title" id="boardTitle">Quarter 1</div><div class="ct-board-shifts" id="boardShifts"></div></div>
         <div class="ct-board-money"><span class="ct-cash-label">Your money</span><span class="ct-cash-value" id="bizMoney"></span></div>
       </div>
       <div class="ct-investor"><img src="favicon.svg" alt=""><p id="investorLine"></p></div>

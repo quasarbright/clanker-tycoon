@@ -222,3 +222,10 @@ The same night, the first quarter (level 6) worked well enough to build on, so t
 a first playable version as level 7: a board of three contracts, a shop with a cheap and a sturdy
 paint machine, and the investor taking 10% of every contract. It starts you without a paint
 machine, so the first real choice is whether to spend most of the investor's $100 on one.
+
+Mike's first look at it raised the obvious problem with one contract at a time: what if you take
+several, with different deadlines or overlapping orders? "Which contract should an output go to?"
+He settled it the simple way: a quarter's contracts all share its deadline and never ask for the
+same thing. "The fewer decisions that workers have to make and the fewer options they have, I think
+the better right now." Still open: whether the whole thing is a long career or roguelike runs.
+

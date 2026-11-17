@@ -970,11 +970,14 @@ function render() {
   const order = game.order.map((l) => `${l.color}${l.done}`).join();
   if (order !== lastOrder) {
     lastOrder = order;
-    $("#orders").innerHTML = game.order.map((l) => {
+    $("#orders").innerHTML = game.order.map((l, i) => {
       const icon = level.ship === "boxes"
         ? `<span class="ct-ticket-dots">${(l.color === "any" ? `<span class="ct-dot c-any"></span>` : `<span class="ct-dot c-${l.color}"></span>`).repeat(3)}</span>`
         : `<span class="ct-dot ${l.color === "any" ? "c-any" : `c-${l.color}`}"></span>`;
-      return `<span class="ct-ticket ${l.done >= l.count ? "is-done" : ""}" title="${orderLineText(level, l)}">${icon}<span class="ct-ticket-pay">${l.done}/${l.count}</span></span>`;
+      // A contract's ticket also says what it pays; once it's all shipped, that money is coming.
+      const c = level.contracts?.[i], full = l.done >= l.count;
+      if (c) return `<span class="ct-ticket ${full ? "is-shipped" : ""}" data-tooltip="${c.count} ${c.color} boxes. Pays $${c.pay} at the end of the quarter if they've all shipped.">${icon}<span class="ct-ticket-pay">${l.done}/${l.count}</span><span class="ct-ticket-money">${full ? CHECK : ""}$${c.pay}</span></span>`;
+      return `<span class="ct-ticket ${full ? "is-done" : ""}" title="${orderLineText(level, l)}">${icon}<span class="ct-ticket-pay">${l.done}/${l.count}</span></span>`;
     }).join("");
   }
   renderHands();
@@ -1051,7 +1054,9 @@ function openLevel(L, { again = false, shift = "restart", keepCrew = false } = {
   $(".ct-side").classList.remove("is-chat");
   buildFloor();
   buildCrew();
-  $("#levelName").textContent = quarter ? `Shift ${quarter.shift} of ${L.quarter.shifts}` : `Level ${L.id}: ${L.name}`;
+  // In a quarter, which shift this is, big enough to see at a glance, with a pip per shift.
+  $("#levelName").innerHTML = quarter ? `<span class="ct-shift-of">Shift ${quarter.shift} of ${L.quarter.shifts}<span class="ct-shift-pips">${
+    Array.from({ length: L.quarter.shifts }, (_, k) => `<i class="${k + 1 < quarter.shift ? "is-past" : k + 1 === quarter.shift ? "is-now" : ""}"></i>`).join("")}</span></span>` : `Level ${L.id}: ${L.name}`;
   $("#goalLabel").textContent = L.contracts ? "Contracts" : quarter ? "This quarter" : "Today's order";
   $("#laborLabel").textContent = L.contracts ? "money" : quarter ? "budget" : "labor";
   $("#startScreen").classList.add("is-hidden");
@@ -1148,6 +1153,7 @@ function renderBoard() {
   const pct = `${Math.round(INVESTOR.cut * 100)}%`;
   $("#bizMoney").textContent = money(biz.money);
   $("#boardTitle").textContent = `Quarter ${biz.quarters + 1}`;
+  $("#boardShifts").textContent = `${QUARTER_SHIFTS} shifts. Every contract is due at the end of the last one.`;
   $("#investorLine").innerHTML = biz.quarters
     ? `Your investor: "${biz.wins} ${biz.wins === 1 ? "contract" : "contracts"} done, and <b>$${biz.paidOut}</b> for me so far. I take ${pct} of every one. Numbers must go up."`
     : `Your investor: "I fronted you <b>$${INVESTOR.fronted}</b> to get started. I take <b>${pct}</b> of every contract you finish. Numbers must go up."`;
