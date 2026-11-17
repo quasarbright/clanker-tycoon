@@ -842,6 +842,20 @@ function snapshot() {
   });
 }
 
+const HOURGLASS = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h12M6 22h12M7 2v4l5 6-5 6v4M17 2v4l-5 6 5 6v4" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+/** What a worker holding on at a station is waiting for, as HTML for their tag. */
+function waitingFor(w) {
+  const a = w.act?.a ?? {};
+  const dot = (c) => `<span class="ct-dot c-${c}"></span>`;
+  if (a.action === "putDown") return "room";
+  if (a.action === "pack") return a.color ? `3 ${dot(a.color)}` : "3 widgets";
+  if (a.action === "pickUp") {
+    if (a.box || (!a.color && w.station === "PACK")) return "a box";
+    return a.color ? dot(a.color) : "a widget";
+  }
+  return "something";
+}
+
 const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
 function render() {
@@ -865,11 +879,18 @@ function render() {
     const held = w.holding ? itemHTML(w.holding) : "";
     if (bot._held !== held) { bot.querySelector(".ct-bot-held").innerHTML = held; bot._held = held; }
     // Anything that takes time shows how far along it is (waiting fills toward giving up).
+    // Work that takes time fills a bar. Waiting on something at a station says so in words instead.
     const pr = actProgress(game, w);
+    const working = pr && !pr.waiting;
     const bar = bot.querySelector(".ct-bot-bar");
-    bar.classList.toggle("is-on", !!pr);
-    bar.classList.toggle("is-waiting", !!pr?.waiting);
-    if (pr) bar.firstElementChild.style.transform = `scaleX(${pr.p})`;
+    bar.classList.toggle("is-on", !!working);
+    if (working) bar.firstElementChild.style.transform = `scaleX(${pr.p})`;
+    const wait = pr?.waiting ? waitingFor(w) : "";
+    if (bot._wait !== wait) {
+      bot._wait = wait;
+      bot.querySelector(".ct-wait")?.remove();
+      if (wait) bot.insertAdjacentHTML("beforeend", `<div class="ct-wait">${HOURGLASS}<span>waiting for</span>${wait}</div>`);
+    }
     if (w.isPlayer) continue;
     if (!atDesk(w) && w._wasAtDesk) clearBubble(w);
     w._wasAtDesk = atDesk(w);

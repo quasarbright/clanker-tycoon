@@ -261,7 +261,13 @@
     .ct-bot-bar { height: calc(var(--u) * .55); margin: calc(var(--u) * .4) auto 0; width: 80%; border-radius: 99px; background: #0008; overflow: hidden; visibility: hidden; }
     .ct-bot-bar.is-on { visibility: visible; }
     .ct-bot-bar i { display: block; height: 100%; background: var(--accent); transform-origin: left; transform: scaleX(0); }
-    .ct-bot-bar.is-waiting i { background: var(--muted); }
+    /* waiting on something at a station: said in words under the name */
+    .ct-wait { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; display: inline-flex; align-items: center; gap: 4px; white-space: nowrap;
+      background: #0d0f12e6; border: 1px solid #f2c23088; color: var(--accent-hi); font-weight: 700; font-size: clamp(9px, calc(var(--u) * 1.3), 12px);
+      padding: 1px 7px 1px 5px; border-radius: 999px; pointer-events: none; z-index: 3; }
+    .ct-wait svg { width: 1.1em; height: 1.1em; display: block; animation: hourglass 2s ease-in-out infinite; }
+    .ct-wait .ct-dot { width: 1em; height: 1em; }
+    @keyframes hourglass { 0%, 40% { transform: rotate(0); } 50%, 90% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
     .ct-box { position: relative; overflow: hidden; }
     .ct-box.is-building { background: #b88a5240; }
     .ct-box.is-building i { opacity: .5; }

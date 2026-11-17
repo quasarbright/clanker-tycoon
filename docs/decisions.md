@@ -329,3 +329,12 @@ first when Mike mentions something from a playthrough.
 red/green stripe on crew rows (and the stripes on the instructions and one-off boxes).
 **Picked:** all left stripes are gone. The open conversation's whole row is lit; readiness before
 the shift is the status chip's red or green. Also added to the workspace UX-CHECKLIST.md.
+
+### 33. Waiting is said in words (2026-11-17)
+
+**Problem:** the meter that filled while a worker held on at a station (for a widget, a box, room,
+3 to pack). Mike rejected a speech-like bubble ("makes it seem like he's about to talk") and two
+quieter signs ("none of those are obvious").
+**Picked:** "say it with words": a small tag under the worker's name, an hourglass, "waiting for"
+and the item (a colored dot, "a box", "room", "3" and a dot). Work that takes time (packing,
+painting, servicing) keeps its bar. Replaces the waiting half of #30.

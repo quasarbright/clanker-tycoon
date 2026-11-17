@@ -59,9 +59,9 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - Workers cost money (wages), even while the bigger money system is parked.
 
 **Feel**
-- A worker's own pause (wait() between checks) shows no meter; standing by is just standing.
-  Mike doesn't like a filling meter as the sign for waiting at all; what replaces it for waiting on
-  an item is being decided.
+- Waiting is said in words, never a filling meter: a worker holding on at a station gets a
+  "waiting for <item>" tag under their name. A worker's own pause (wait() between checks) shows
+  nothing; standing by is just standing.
 - Nothing just waits without moving. Anything that takes time shows its progress: packing fills a
   box in, painting, servicing a machine, a worker waiting for something. A still screen reads as broken.
 - Simple actions are instant: picking up and putting down take no time.
