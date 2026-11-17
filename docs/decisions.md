@@ -816,3 +816,23 @@ roguelike anyway, probably. I don't think I'm gonna wanna do game design for a w
 The ending and the post-game move to Dropped. How a run ends (a way to lose, maybe a goal) is now
 the first open question. Replaces #45. Issue #14 (the ending) stays open; I haven't commented on it.
 
+### 63. No more freezing at a full Pack (2026-11-17)
+
+**Problem:** Mike saw workers freeze, then drop what they held. A worker putting something down at
+a full station waits up to 8 seconds for room; the drop is the put-down going through when a slot
+opens. At Pack it jams: in his quarter, Gary-7 (the packer) and Blip both stood at a full Pack
+holding reds, because Gary's routine was fetch, put down, then pack, so he never got to packing and
+nobody else could make room. Waiting it out counts as one failure, and only six in a row made a
+worker think, so Dot and Vex froze at a full Pack for about 70 seconds before Dot came to ask.
+**Picked (Mike: "Sure, let's do one and two"):**
+1. Routines pack before putting down. A sixth writing rule in the compile prompt says so, and the
+   dry run gives anyone who packs one more try that starts with Pack full of the wanted color: a
+   routine that walks up holding something and waits for room fails it, and the model gets told why
+   and repairs it. In a live run, Gary told to "fetch red widgets, put them at Pack, pack red boxes
+   and ship them" failed this check once and was repaired.
+2. A worker who gives up waiting for room at a full station thinks about it right away (a new
+   "full" unexpected), instead of after six failures. If they're out of thoughts, they come to your
+   desk and say the station is full.
+**Evidence:** `tools/dryrun-test.mjs` has the jamming routine (caught) and a pack-first one (passes);
+all other cases still pass.
+

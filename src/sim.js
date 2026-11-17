@@ -441,7 +441,17 @@ function putDown(s, w, a, act) {
     w.holding = null; s.version++;
     return ok(s, w, a);
   }
-  if (s.stations[st].length >= capOf(s.level, st)) return keepWaiting(s, w, act) || fail(s, w, a, `${label(st)} is full`);
+  if (s.stations[st].length >= capOf(s.level, st)) {
+    if (keepWaiting(s, w, act)) return;
+    fail(s, w, a, `${label(st)} is full`);
+    // Gave up waiting for room: that's unexpected right away (decision #63), not after six of these.
+    // Holding something at a full station usually means a jam nobody else will clear.
+    if (!w.isPlayer && s.t - w.lastStuck >= RULES.stuckCooldown) {
+      w.lastStuck = s.t; w.fails = 0;
+      emit(s, { type: "unexpected", worker: w.id, reason: "full", detail: `${label(st)} is full and I waited ${RULES.stationWait} seconds for room, holding a ${itemName(w.holding)}` });
+    }
+    return;
+  }
   s.stations[st].push(w.holding);
   w.holding = null; s.version++;
   ok(s, w, a);

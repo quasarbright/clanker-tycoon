@@ -134,7 +134,8 @@ const RULES = `How to write a good program:
 2. Put each choice in a variable, then do the work once. For example, \`const color = needs("red") > 0 ? "red" : "blue";\` followed by one sequence that uses \`color\`. Don't copy the same sequence once per case.
 3. Read numbers from the questions (needs, count, space, boxes, wear) instead of writing them in.
 4. Don't add steps the instructions don't ask for.
-5. Before answering, walk through one pass of your loop and check: does every step serve your instructions, and does the thing your instructions are about actually get done? (If you ship boxes and no coworker packs them, you have to pack them.)`;
+5. Before answering, walk through one pass of your loop and check: does every step serve your instructions, and does the thing your instructions are about actually get done? (If you ship boxes and no coworker packs them, you have to pack them.)
+6. If you pack, pack before you put things down at PACK: when PACK has 3 of a color, pack them first, so there's room. Never stand at a full station holding something, waiting for room that only you can make. (space("PACK") says how much room there is.)`;
 
 const LANGUAGE = `Programs are written in this small subset of JavaScript and nothing else:
 - let and const, numbers, strings, true/false/null

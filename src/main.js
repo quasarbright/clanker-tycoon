@@ -730,6 +730,7 @@ function deskLine(ev) {
   if (ev.reason === "ended") return "I've done everything you told me, but the order isn't done yet. What should I do next?";
   if (ev.reason === "stuck") return `I keep running into trouble: ${ev.detail}. What should I do?`;
   if (ev.reason === "stalled") return "Nothing's moving on the floor and I don't know why. What should I do?";
+  if (ev.reason === "full") return `${ev.detail}. What should I do?`;
   return "I got tangled up in my instructions. Can you tell me again, another way?";
 }
 
@@ -740,6 +741,7 @@ function onUnexpected(w, ev) {
   if (!repeat && budgetOf(w).n > 0) {
     const text = ev.reason === "ended" ? `${ev.detail}.` : ev.reason === "stuck" ? `you keep failing: ${ev.detail}.`
       : ev.reason === "stalled" ? `${ev.detail}, and the order isn't done. Is something you're doing (or waiting for) holding up the line?`
+      : ev.reason === "full" ? `${ev.detail}. Nobody has made room. Is your routine waiting on something only you could do (like packing what's there first)?`
       : `your program broke down (${ev.detail}), so you've stopped working.`;
     think(w, { kind: "unexpected", text }, problem);
     return;

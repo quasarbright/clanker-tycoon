@@ -14,6 +14,9 @@ const cases = [
  ["painter", full, r("p", ["painting"]), `while (true) { move("BELT"); pickUp(); move("PAINT"); paint(needs("green") > 0 ? "green" : "red"); move("PACK"); putDown(); }`, "paint widgets for the order and bring them to pack", true],
  ["green packer", full, r("pk", ["packing"]), `while (true) { move("PACK"); const c = needs("green") > 0 ? "green" : "red"; if (count("PACK", c) >= 3) pack(c); if (boxes("PACK") > 0) { pickUpBox(); move("DOCK"); putDown(); } else wait(1); }`, "pack boxes the order needs and ship them", true],
  ["ends early", crew, r("c", ["packing"]), `move("PACK");`, "pack", false],
+ // decision #63: a packer who fetches, then waits at a full Pack instead of packing first, jams it
+ ["fetch-then-pack jams a full Pack", crew, r("g", ["packing"], ["fast"]), `while (needsAny() > 0) { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); if (count("PACK", "red") >= 3) { pack("red"); pickUpBox(); move("DOCK"); putDown(); } }`, "fetch red widgets, put them at pack, pack red boxes and ship them", false],
+ ["pack-first does all of it", crew, r("g", ["packing"], ["fast"]), `while (needsAny() > 0) { move("PACK"); if (count("PACK", "red") >= 3) { pack("red"); pickUpBox(); move("DOCK"); putDown(); } else { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); } }`, "fetch red widgets, put them at pack, pack red boxes and ship them", true],
  ["tight loop", crew, r("c", ["packing"]), `while (true) { if (boxes("PACK") > 5) { pack("red"); } }`, "pack red boxes", false],
 ];
 let bad = 0;

@@ -9,7 +9,11 @@
 // With everything they need on hand, a program that still does no work is broken, whatever the
 // rest of the crew does. A second try with the paint machine worn out covers a worker whose only
 // work is servicing it. No model calls; it takes a few milliseconds.
-import { newGame, step, setProgram, RULES } from "./sim.js";
+//
+// A worker who packs gets one more try that starts with Pack full of the color the order wants
+// (decision #63). A routine that walks up holding something and waits for room, instead of packing
+// to make room, jams the line in play: nobody else can clear a full Pack.
+import { newGame, step, setProgram, RULES, capOf } from "./sim.js";
 
 const SECONDS = 40, DT = 1 / 20;
 
@@ -60,13 +64,34 @@ export function dryRun(L, hire, crew, ast, instructions) {
       if (w.worked || broke) break;
       if (!w.gen && !w.act) break; // the program ended
     }
-    if (w.worked) return { ok: true };
+    if (w.worked) { last = null; break; }
     last = { broke, fails, visited, ended: !w.gen };
   }
+  if (!last) return boxes ? { ok: true } : fullPack(L, hires, ast, color);
   const what = last.broke ? `it broke down (${last.broke})`
     : last.fails.length ? `everything it tried failed (${[...new Set(last.fails)].slice(-3).join("; ")})`
     : last.ended ? "it finished without doing anything"
     : "it only walked and waited";
   const where = last.visited.size ? `, at ${[...last.visited].join(", ")}` : "";
   return { ok: false, why: `In a ${SECONDS}-second practice run, with ${color} widgets at the supply and at PACK${boxes ? " and a finished box at PACK" : ""}, your program never put anything down, packed, painted or serviced anything: ${what}${where}. It has to actually do the work your instructions describe.` };
+}
+
+// A packer facing a full Pack: they should pack to make room, not wait for it.
+function fullPack(L, hires, ast, color) {
+  if (!L.stations.includes("PACK")) return { ok: true };
+  const g = newGame({ ...L, shift: null }, hires, 1);
+  const cap = capOf(L, "PACK");
+  for (let i = 0; i < cap; i++) g.stations.PACK.push({ id: ++g.ids, kind: "widget", color });
+  const w = g.workers[0];
+  setProgram(g, w, ast);
+  while (g.t < 20 && !g.over) {
+    step(g, DT);
+    for (const e of g.events.splice(0)) {
+      if (e.worker !== w.id) continue;
+      const jam = (e.type === "fail" && /PACK is full|Pack is full/i.test(e.why)) || (e.type === "unexpected" && e.reason === "full");
+      if (jam) return { ok: false, why: `In a practice run that starts with PACK full (${cap} ${color} widgets), your program waited at PACK holding something, for room that never came, instead of packing a box to make room. Nobody else can clear a full PACK. Pack first when PACK has 3 of a color (check space("PACK") before putting down).` };
+    }
+    if (w.worked) return { ok: true };
+  }
+  return { ok: true };
 }
