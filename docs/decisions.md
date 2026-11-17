@@ -469,3 +469,27 @@ of just setting quotas, which is like not that fun. It's kind of just a generic 
 **Picked:** the above, with transfers between quarters at Line lead. How to put talking and
 instructing back at the center of Plant manager is open; six ideas are in
 `docs/progression-design.md`. Replaces the shared-resources version.
+
+### 42. Never leave the floor: promotion grows the floor (2026-11-17)
+
+**Question:** every version of Plant manager so far (a dashboard of lines, shared resources with
+desk conflicts, between-shift meetings) drifted into managing numbers. Mike: "gameplay at a higher
+level doesn't feel like gameplay at a lower level, and gameplay at a lower level is what really
+makes us special, like the whole give people instructions type of thing. When it gets too
+managerial, it becomes a spreadsheet simulator, which isn't really that fun." He also suggested
+lines that feed each other: "one line is building boxes and then another line is combining boxes
+into other shit."
+**Picked:** Plant manager stays on the floor. The floor grows into stages joined by belts, each line
+run by a foreman robot who writes its crew's instructions, visible on their cards. You brief
+foremen, watch the result travel down the chain, and debug by tracing it back. Splitting the
+budget and moving robots is a short step between shifts. Replaces the Plant manager design in #41
+(its calls on budgets, transfers and repairs still stand). Added to CLAUDE.md as a principle.
+
+### 43. Symmetry between ranks (2026-11-17)
+
+Mike: "it would be cleaner if anything that you do to your subordinates at some level is something
+that your superior did to you when you were at that level ... in some cases that symmetry is nice
+unless it is a stupid idea." **Picked:** quotas, budgets, transfers and briefings in words all reach
+you from the boss at Line lead before you hand them out as Plant manager. Standing rules are the
+exception: the boss doesn't give the player robot-style rules. In `docs/progression-design.md` and
+the repo CLAUDE.md.

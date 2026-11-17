@@ -156,6 +156,15 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - When a worker can't do their instructions, they say what's wrong in their own words: which part
   and why, and what would help. Never a canned error.
 
+**Progression**
+- Higher ranks play like the floor. You never leave it: promotion makes the floor bigger (lines
+  that feed each other) and has you talk to foremen instead of every worker, but you still give
+  robots instructions and watch what they do with them. Mike: "When it gets too managerial, it
+  becomes a spreadsheet simulator." Budgets and quotas are a light layer between shifts.
+  Design: `docs/progression-design.md`.
+- Symmetry: what you do to subordinates at a rank, your boss did to you at the rank below (quotas,
+  budgets, transfers, briefings), unless that would be silly (no robot-style rules for the player).
+
 **Controls**
 - Tools should let you choose what they act on: at Pack you pick which 3 widgets get boxed.
 

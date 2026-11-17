@@ -24,9 +24,11 @@ Your boss is the dollar-eyed robot from the favicon. Every quarter they hand you
 of shifts and a budget. You staff your floor, write instructions, run the shifts, and at the end the
 boss reviews you. Hit quota and you keep your job; whatever budget you didn't spend is yours, and
 you save it up to buy your promotion from the boss. Each promotion gives you
-more floor than you can personally watch, so the only way to keep hitting quota is to put people
-you've developed in charge of parts of it. By the top of the ladder you mostly talk to managers,
-and the robots you hired in your first quarter are running lines for you.
+a bigger floor, with more lines feeding into each other, than you can personally run, so the only
+way to keep hitting quota is to put robots you've developed in charge of lines. **You never leave
+the floor**: at every rank you're on it, talking to robots and watching what they do with your
+words. What changes is who you talk to (a foreman instead of each worker) and how far your words
+travel before they turn into work.
 
 The difficulty ramp comes from **your attention running out**, more than from harder numbers.
 Each rank's quotas are sized so that the way you played the previous rank stops working.
@@ -155,58 +157,60 @@ cut it: "this kind of feels like it shouldn't exist.")
 
 ### Rank 2: Plant manager
 
-You run a plant of lines, starting with 2 (your old line, under the foreman you left in charge,
-plus a new one) and growing to 3 to 5. You don't walk the floor anymore. Each line has a foreman,
-one of your robots, promoted. Mike's calls so far (2026-11-17):
+**The principle (Mike, 2026-11-17):** the higher ranks have to play like the floor. "Gameplay at a
+lower level is what really makes us special, like the whole give people instructions type of
+thing. When it gets too managerial, it becomes a spreadsheet simulator." So promotion makes the
+floor bigger. It doesn't swap the floor for a dashboard.
 
-- **You work between shifts only.** Shifts run without you. Foremen talk to you between shifts,
-  for example when they're at risk of missing their quota.
-- **Corporate's order becomes your lines' quotas.** The boss hands you one big order for the
-  quarter; you split it into a quota per line.
-- **Your budget becomes your lines' budgets.** You split the plant's budget across lines.
-- **Headcount.** You move robots between lines, hire, and choose foremen.
-- **Repairs stay at Line lead.** Machines and wear are the foreman's problem, never yours.
-- **Lines run as a deterministic simulation.** A line's output comes from its crew, its plan and
-  its quota, worked out without simulating every robot on the floor (or calling the model for them).
+![Never leave the floor](mocks/progression/8-never-leave-the-floor.svg)
 
-![Plant manager ideas](mocks/progression/7-plant-talking.svg)
+**A floor of lines that feed each other.** Mike's idea: lines are stages of one product. Line A
+makes painted widgets and boxes them, Line B combines boxes into something bigger (a kit, a crate of
+mixed colors), Line C ships. Each line's output is the next line's input, joined by belts you can
+see. You start with two stages (your old line, now under the foreman you left in charge, plus the
+next stage) and grow to 3 to 5.
 
-#### The worry: this turns into a generic business game
+**Foremen run lines, in plain view.** Each line has a foreman, one of your robots, promoted. You
+talk to the foreman, and the foreman talks to their crew. Their crew's instructions are the
+foreman's words, written on the robots' cards like always, so you can open any robot on any line
+and see exactly what it was told and by whom. You can still walk to any line, watch it and talk to
+any robot directly.
 
-Mike: "the whole what we have so far is you are giving instructions to AIs, but what we're
-thinking about here feels like a whole different game where ... you're kind of just setting
-quotas, which is like not that fun." Splitting numbers is fine as a backdrop, but the thing you
-*do* at this rank has to be talking to robots and having them act on what you said. Plant rules
-help a little; Mike: "it feels like that's still not really enough." Ideas for putting it back,
-not decided:
+**What you do, minute to minute, is the same game one level up:**
+- **Brief foremen.** "Line B needs 12 mixed crates this shift; red is short, so build the
+  all-blue crates first." The foreman turns it into instructions for their crew.
+- **Watch it play out on the floor,** across lines. Because the lines are joined, a mistake travels:
+  Line A paints too much blue, and twenty seconds later Line B is starved of red. You see the pile
+  grow on the belt between them.
+- **Debug second-hand.** Trace the problem back: open Line A's painter, read what Doris told her,
+  and fix it by talking to Doris, not to the painter (or go around her, at some cost, see open
+  questions).
+- **Foremen come to your desk** when their line is starved, flooded or behind, the same way workers
+  do at Line lead.
 
-1. **Foremen write a line plan, you read it.** Between shifts you talk to each foreman about the
-   coming shift. They turn what you said into a short written plan (who's on what, what they'll
-   tell the crew, what they'll do if paint falls behind). You read it and correct it before the
-   shift. It's the Line lead loop one level up: you write, a robot interprets, you check.
-2. **Foremen push back on quotas.** Give Doris 40 boxes and she says "we can do 30 with this
-   crew." You argue, offer her a robot, or take it back. Her estimate comes from the sim, so
-   whether she's right is a real question you can check.
-3. **Coaching a foreman.** Each foreman has their own standing instructions about how to manage
-   ("ask me before letting anyone go", "train before you hire"). A foreman who keeps missing gets a
-   talk, and what you say changes how they run their line from then on.
-4. **One memo, read differently.** You write one plant-wide memo before the quarter. Each foreman
-   reads it their own way, and their plans show it. You spot who misread it.
-5. **Reports can be wrong.** Foremen report between shifts, and some are optimistic. You question
-   them ("why is blue behind?") and check what they say against the numbers.
-6. **Choosing foremen by talking to them.** For a new line, you interview candidates (from your own
-   crew or from outside), and how they answer shows how they'd run it (#7).
+**The numbers are a light layer between shifts.** Corporate's order becomes the plant's output
+target, and each line's target follows from the chain. You split the plant's budget across lines
+and move robots between them. That takes a minute between shifts, and it isn't where the game is.
+Repairs stay each line's business (Mike).
 
-My pick: 1, 2 and 3 together, as one between-shifts meeting with each foreman. They report, push
-back on the quota, and propose their plan; you answer in words, and the plan they run changes.
-4 to 6 can come later.
+**Cost.** Robots on lines you aren't looking at still run their compiled programs, which cost no
+model calls. Foremen think when something goes wrong on their line, like any worker. Whether a big
+floor needs a cheaper simulation for far-away lines is an implementation question for later.
 
-#### Open questions for Plant manager
+#### What's still open
 
-- Which of the six ideas, and in what combination.
-- How abstract the line sim is: does a line's plan still become real robot instructions, run
-  quickly off screen, or is output just a formula of crew and plan?
-- Can you still drop in on a line during a shift, or is that gone at this rank?
+- **Going around a foreman.** If you tell a crew robot something directly, does the foreman mind
+  (morale, #5), or is it free?
+- **What the stages make.** Boxes into crates is the easy first chain. What comes after, and does
+  each new stage bring a new machine you try by hand first, the way Line lead does?
+- **Which of the earlier ideas still fit:** quota pushback from foremen and coaching a foreman's
+  standing instructions both work on this floor, between shifts.
+- **Director** (several plants) has the same problem one level higher. Probably the game stops at
+  Plant manager for now.
+
+(Earlier versions of this section: a plant view of rows and bars, then shared resources with
+conflicts at your desk, then foremen meetings between shifts only. All replaced by this, because
+they turned the rank into a different, more managerial game.)
 
 ### Rank 3: Director (top of the core ladder)
 - **You:** several plants, each run by a plant manager. You're your old boss now.
@@ -214,11 +218,25 @@ back on the quota, and propose their plan; you answer in words, and the plan the
 - **Endgame:** the business side (#8: investors, competitors) would hang off this rank. Out of scope
   for the core game.
 
+### Symmetry: what the boss does to you, you later do to your foremen
+
+Mike's principle (2026-11-17): "it would be cleaner if anything that you do to your subordinates
+at some level is something that your superior did to you when you were at that level", unless it
+would be silly. It also teaches each tool from the receiving end before you use it.
+
+| What | Line lead: done to you | Plant manager: you do it |
+|---|---|---|
+| Quota for the quarter | the boss gives you one | you give each foreman one, from the plant's order |
+| Budget for the quarter | the boss gives you one | you split yours across lines |
+| Transfers | corporate moves your robots | you move robots between lines |
+| A briefing in words | the boss's briefing card | your briefing to each foreman |
+| Standing rules for how to work | not for you: you have a brain | a foreman's standing instructions |
+
 ### When you're promoted, someone takes your old job
 
 This is the thread that ties the ladder together. Promotion day asks who runs the line you're
-leaving. If you've developed a worker who can, they take it, and that line becomes the first row of
-your new view. If you haven't, the boss puts in a stock hire, cheaper and worse. So developing your
+leaving. If you've developed a worker who can, they take it, and that line becomes the first stage of
+your new floor. If you haven't, the boss puts in a stock hire, cheaper and worse. So developing your
 people pays off at the exact moment you rise, and the crew from your first quarter can still be
 working for you at the top.
 
@@ -239,7 +257,7 @@ working for you at the top.
 
 ## 7. How difficulty ramps
 
-Five dials. Each rank turns some of them, one new thing at a time:
+Six dials. Each rank turns some of them, one new thing at a time:
 
 | Dial | Line lead | Plant manager |
 |---|---|---|
@@ -247,6 +265,7 @@ Five dials. Each rank turns some of them, one new thing at a time:
 | Order mix | one color, then two or three | several products |
 | New machines | one per quarter | a new line type, then the line types you choose |
 | Budget | generous | tight, split by you |
+| Stages (lines feeding lines) | 1 | 2 at first, 3 to 5 by the end |
 | Span (robots you're responsible for) | 2 to 5 | 8 at first, 15 to 30 by the end |
 
 Within a rank, each quarter's quota grows a bit over the last (unless you're on notice). Budget grows
