@@ -46,13 +46,13 @@ one thinking word (no dots or bubbles), Start waits for scheduled robots, compac
 starting apart at the desk.
 
 Still open, by how much they get in the way:
-1. **The floor doesn't say whether you're on pace.** Pace only shows on the shift card, after it's
-   too late. Put "on pace / 2 short" next to the contract ticket during the shift.
-2. **Recruit and machine buttons don't say why they're grey.** Training now says "$N short";
-   "Recruit $120" and "Buy $170" should too.
-3. **The quarter card doesn't say the quarter ended early** (quota met in shift 2, shift 3
-   skipped), and the header behind it shows a stale budget.
-4. **No recap of the last quarter on the board,** and the floor behind it is the last shift.
+1. **Recruit and machine buttons don't say why they're grey.** Training now says "$N short";
+   "Recruit $120" and "Buy $170" should too. With the build thread.
+
+Proposals, held for now (coordinator, 2026-11-17):
+- **On pace during the shift:** "on pace / 2 short" next to the contract ticket, instead of only
+  on the shift card afterwards.
+- **A recap of the last quarter on the board,** instead of the stale last shift behind it.
 
 Smaller: pause icon doesn't change while paused and chips still say "Working"; the cards use the
 lender's face when you never borrowed; the ticket chip says "20" beside "15 of 20 shipped"; no way
@@ -78,3 +78,6 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   thinking word). Crew-cost plan is now the standard; mocks and screenshots need a title and description.
 - 2026-11-17: general UI rules moved to the quasarbright plugin (v0.6.0); this brief now keeps only the clanker-only ones.
 - 2026-11-17: take refreshed: the six approved changes are built; open items renumbered.
+- 2026-11-17: verified 0038a72 in the browser: an early quarter says "Quarter over early", names the
+  skipped shift, and the header budget matches the card. Read plugin v0.6.0 (Design personas,
+  use pass, periodic review, which Pam owns).
