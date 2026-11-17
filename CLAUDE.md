@@ -150,8 +150,17 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 
 - Run: `node server.mjs`, open http://localhost:8473. Model calls go through `claude -p` on Mike's
   plan; `src/llm.js` also has an OpenRouter path for a future web build.
-- Every model call is appended to `logs/llm.jsonl` (gitignored). Read it when Mike reports a worker
-  doing something odd.
+- **Play logs:** every shift Mike plays is logged to `logs/play/<date>.jsonl` (gitignored): each line
+  has `shift` (`<page session>/<attempt>`), game time `t`, and a `type`: `shift` (level opened, with
+  the crew carried over), `hire`/`fire`, `chat` (everything said in a worker's conversation,
+  both ways), `instructions` (what a worker wrote down), `start`, `you` (your moves), `sim` (every
+  sim event: pickups, ships, fails, waits that gave up, unexpected, desk visits, wear), a
+  `snapshot` every 5 s (where everyone is, holding, doing, station contents, order), and `end`.
+  When Mike mentions something that happened in play ("Blip just stood there"), find the shift in
+  the newest play log first and read what happened, before asking him.
+- Every model call is appended to `logs/llm.jsonl` (gitignored), tagged with the same `shift` id
+  (`test: true` for automated browsers, which don't write play logs unless the URL has
+  `?playlog`). Read it to see what a worker was told and decided.
 - A tab left open across an update shows a "game was updated, Reload" banner (`/api/version`).
   When Mike reports something that doesn't match the current code, suspect a stale tab first.
 - `tools/player-check.mjs` and `tools/balance.mjs` play levels headless to check timings and shift lengths.

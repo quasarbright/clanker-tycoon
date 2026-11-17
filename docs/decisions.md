@@ -310,3 +310,15 @@ waiting".
 **Picked:** wait() shows no meter. Waiting on something (a widget at the belt, room at Pack) still
 has its meter until Mike picks a replacement from the three mocked (a bubble showing the wanted
 item, a dashed outline in their hands, or the robot watching the station).
+
+### 31. A play log of every shift (2026-11-17)
+
+**Question:** Mike: "I want you to be able to know what I'm referring to and deep dive the play log
+when I talk about something that happened." Only model calls were logged, with no way to tell
+which shift they came from.
+**Picked:** the game posts a line for everything that happens in a shift to the local server,
+which appends it to `logs/play/<date>.jsonl`: the level and crew, every line of every
+conversation, instructions as workers wrote them, your moves, every sim event, a snapshot every
+5 s, and the result. Lines and model calls share a shift id. Automated test browsers don't log
+unless asked, and their lines are marked `test`. The repo's CLAUDE.md says to check the play log
+first when Mike mentions something from a playthrough.

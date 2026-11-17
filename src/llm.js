@@ -1,7 +1,10 @@
 // Every model call in the game goes through llm(), so the game doesn't care where the model runs.
 //   local       POST /api/llm on server.mjs, which runs `claude -p` (bills to your Claude plan)
 //   openrouter  straight from the browser with the shared OpenRouter key (for a web build)
+// Calls are tagged with the current shift from the play log, so the two logs line up.
 // Default: local on localhost, openrouter anywhere else. Override with ?llm=local|openrouter.
+
+import { shiftId, isTest } from "./playlog.js";
 
 const params = new URLSearchParams(location.search);
 const onLocalhost = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
@@ -35,7 +38,7 @@ async function viaLocal(system, prompt, schema) {
   const res = await fetch("/api/llm", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ system, prompt, schema }),
+    body: JSON.stringify({ system, prompt, schema, shift: shiftId, test: isTest || undefined }),
   });
   const j = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(j.error || `server ${res.status}`);

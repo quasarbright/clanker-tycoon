@@ -9,6 +9,7 @@ import {
 import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond } from "./brains.js";
 import { LEVELS } from "./levels.js";
 import { backendLabel } from "./llm.js";
+import { startShift, logEvent } from "./playlog.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const floor = $("#floor");
@@ -175,6 +176,7 @@ floor.addEventListener("click", (e) => {
   }
   if (st) {
     const then = pick ? (pick.dataset.pick === "box" ? { action: "pickUp" } : { action: "pickUp", color: pick.dataset.pick }) : null;
+    logEvent(game.t, "you", { go: st.dataset.key, then });
     playerGo(game, st.dataset.key, then);
     return;
   }
@@ -216,6 +218,8 @@ function begin() {
   if (game.workers.some((w) => w.compiling)) { nudgeStart(); return; }
   started = true;
   setPhase("run");
+  lastSnap = -1e9;
+  logEvent(0, "start", { crew: crewSummary() });
   keepTyped();
   buildCrew(); // drop the Let go buttons and the Hire row
 }
@@ -245,6 +249,7 @@ function nudgeStart() {
 }
 
 function doAct(act) {
+  logEvent(game.t, "you", { action: act.a });
   playerDo(game, act.a);
   if (act.a.action === "pack") packPick.clear();
   lastVersion = -1;
@@ -319,6 +324,7 @@ function hire(id) {
   if (started) return;
   keepTyped();
   const w = addWorker(game, c);
+  logEvent(null, "hire", { worker: id });
   rebuildCrew();
   openChat(w.id);
 }
@@ -326,6 +332,7 @@ function fire(id) {
   if (started) return;
   keepTyped();
   removeWorker(game, id);
+  logEvent(null, "fire", { worker: id });
   ui.open = null;
   rebuildCrew();
 }
@@ -476,6 +483,7 @@ function focusCard(w) {
 //   who: "you" | "them" | "sys"; kind: "yell" | "problem" | "desk" | a label
 function logLine(w, who, text, kind = "") {
   (w.log ??= []).push({ who, text, kind });
+  logEvent(clockT(), "chat", { worker: w.id, who, text, kind: kind || undefined });
   if (w.log.length > 40) { w.log.shift(); w.seen = Math.max(0, (w.seen ?? 0) - 1); }
 }
 function renderLog(w, box) {
@@ -622,6 +630,7 @@ async function giveInstructions(w, text) {
   } else {
     logLine(w, "them", r.reply);
     w.orders = r.instructions;
+    logEvent(clockT(), "instructions", { worker: w.id, text: r.instructions });
     setProgram(g, w, r.ast);
     w.lastThought = null;
   }
@@ -672,6 +681,7 @@ async function wake(w, trigger, mark) {
     setNow(g, w, r.nowAst);
   } else if (r.kind === "change") {
     w.orders = r.instructions;
+    logEvent(clockT(), "instructions", { worker: w.id, text: r.instructions, changedThemselves: true });
     w.draft = null;
     w.compileError = null;
     w.now = null;
@@ -782,6 +792,7 @@ const lastSaid = {};
 
 function handleEvents() {
   for (const ev of game.events.splice(0)) {
+    if (ev.type !== "say") { const { type, t, ...rest } = ev; logEvent(t, "sim", { event: type, ...rest }); }
     const w = ev.worker && worker(ev.worker);
     switch (ev.type) {
       case "say":
@@ -814,6 +825,23 @@ function handleEvents() {
 }
 
 // ---------- the loop ----------
+
+// Game time for the play log: null until the clock starts.
+const clockT = () => (started ? game.t : null);
+const crewSummary = () => game.workers.map((w) => ({ worker: w.id, instructions: w.ast ? w.orders : null, problem: w.compileError || undefined }));
+// Every few seconds of play, where everyone is and what they're doing.
+let lastSnap = -1e9;
+function snapshot() {
+  if (game.t - lastSnap < 5) return;
+  lastSnap = game.t;
+  const who = (w) => ({ id: w.id, x: Math.round(w.x), y: Math.round(w.y), at: w.station, holding: w.holding ? (w.holding.kind === "box" ? `box:${w.holding.colors.join("")}` : w.holding.color) : null,
+    doing: w.act ? (w.act.limit ? `waiting(${w.act.a?.action})` : w.act.kind ?? w.act.a?.action) : null, desk: atDesk(w) || undefined });
+  logEvent(game.t, "snapshot", {
+    you: who(game.player), workers: game.workers.map(who),
+    stations: Object.fromEntries(Object.entries(game.stations).map(([k, items]) => [k, items.map((i) => (i.kind === "box" ? `box:${i.colors.join("")}` : i.color))])),
+    wear: game.wear.PAINT, order: game.order.map((l) => `${l.color} ${l.done}/${l.count}`).join(", "),
+  });
+}
 
 const fmtTime = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
 
@@ -920,7 +948,7 @@ function renderCoach() {
 function frame(now) {
   const dt = Math.min(0.1, (now - lastFrame) / 1000);
   lastFrame = now;
-  if (game && phase === "run" && started && !paused && !game.over) { step(game, dt); handleEvents(); }
+  if (game && phase === "run" && started && !paused && !game.over) { step(game, dt); handleEvents(); snapshot(); }
   if (game) render();
   requestAnimationFrame(frame);
 }
@@ -941,6 +969,7 @@ function openLevel(L, { again = false } = {}) {
     if (old.ast && !old.compileError) setProgram(game, w, old.ast);
     if (old.orders) logLine(w, "sys", "New shift, same instructions.");
   }
+  startShift(L, { again, crew: crewSummary() });
   started = false;
   lastVersion = -1; lastStat = null; lastClock = null; lastOrder = ""; lastHands = ""; lastList = ""; lastReady = "";
   ui.thinking = {};
@@ -964,6 +993,7 @@ function endLevel() {
   const won = game.won;
   if (won && (!best[level.id] || t < best[level.id].time)) best[level.id] = { time: t };
   const total = game.order.reduce((a, l) => a + l.count, 0), done = game.order.reduce((a, l) => a + l.done, 0);
+  logEvent(t, "end", { won, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), crew: crewSummary() });
   $("#endTitle").textContent = won ? "Order filled" : "Shift over";
   $("#endNote").textContent = won ? "" : "The order didn't ship before the shift ended. Try again keeps your crew and their instructions.";
   $("#endStats").innerHTML = [[won ? "Time" : "Shipped", won ? fmtTime(t) : `${done}/${total}`], ["Labor cost", `$${Math.round(game.laborCost)}`], ["Crew", game.workers.length]]

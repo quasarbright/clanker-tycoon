@@ -16,7 +16,8 @@ const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = +process.argv[2] || 8473;
 const MAX_CLAUDE = 4; // concurrent `claude -p` processes
 const LOG = path.join(ROOT, "logs", "llm.jsonl");
-await mkdir(path.dirname(LOG), { recursive: true });
+const PLAY = path.join(ROOT, "logs", "play"); // one file per day of play, see src/playlog.js
+await mkdir(PLAY, { recursive: true });
 
 const MIME = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
@@ -56,7 +57,7 @@ async function handleLlm(req, res) {
   for await (const chunk of req) body += chunk;
   let input;
   try { input = JSON.parse(body); } catch { return send(res, 400, { error: "bad JSON" }); }
-  const { system, prompt, schema } = input;
+  const { system, prompt, schema, shift, test } = input;
   if (typeof system !== "string" || typeof prompt !== "string") return send(res, 400, { error: "need system and prompt" });
 
   const started = Date.now();
@@ -77,14 +78,27 @@ async function handleLlm(req, res) {
   const data = s.structured ?? parseLoose(s.text) ?? { reply: s.text };
   console.log(`llm ${Date.now() - started}ms in=${s.input_tokens} out=${s.output_tokens} (thinking ${s.thinking_tokens})`);
   // Every call, so a worker doing something odd can be traced back to what it was told and decided.
-  appendFile(LOG, JSON.stringify({ at: new Date().toISOString(), ms: Date.now() - started, system, prompt, data }) + "\n").catch(() => {});
+  appendFile(LOG, JSON.stringify({ at: new Date().toISOString(), shift, test, ms: Date.now() - started, system, prompt, data }) + "\n").catch(() => {});
   send(res, 200, { data, ms: Date.now() - started, tokens: { input: s.input_tokens, output: s.output_tokens } });
+}
+
+// The play log: the game posts batches of lines, appended to that day's file.
+async function handlePlay(req, res) {
+  let body = "";
+  for await (const chunk of req) body += chunk;
+  let lines;
+  try { lines = JSON.parse(body).lines; } catch { return send(res, 400, { error: "bad JSON" }); }
+  if (!Array.isArray(lines)) return send(res, 400, { error: "need lines" });
+  const day = new Date().toISOString().slice(0, 10);
+  await appendFile(path.join(PLAY, `${day}.jsonl`), lines.map((l) => JSON.stringify(l) + "\n").join(""));
+  send(res, 200, { ok: true });
 }
 
 http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, "http://localhost");
     if (url.pathname === "/api/llm" && req.method === "POST") return await handleLlm(req, res);
+    if (url.pathname === "/api/play" && req.method === "POST") return await handlePlay(req, res);
     if (url.pathname === "/api/version") return send(res, 200, { version: await gameVersion() });
     let p = decodeURIComponent(url.pathname);
     if (p.endsWith("/")) p += "index.html";
