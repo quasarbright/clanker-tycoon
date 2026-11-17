@@ -107,6 +107,11 @@ Ideas worth keeping that aren't planned yet.
   persists between runs and lets you pick policies instead of typing them again. Mike: "Maybe we
   could allow people to have like a bank of policies so they could easily just select from them
   rather than having to type their own every time."
+- **Long-term storage for meta progression.** A single run can live in the browser's
+  localStorage, but anything kept across runs (unlockable skins, challenges, trophies, the policy
+  bank) needs storage that lasts, and localStorage doesn't last forever. Options: localStorage for
+  now, then cloud saves, or a standalone app, maybe on Steam. Long-term; Mike: "We don't have to
+  worry about that right now."
 - **Temperaments.** Independence and confidence decide whether a robot asks before changing its own
   instructions (issue #1).
 - **The Strong attribute.** Carries two at once. Agreed, not built.
