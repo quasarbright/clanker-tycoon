@@ -12,6 +12,7 @@
 // recruit and three machines. The boards are written by hand; numbers from tools/balance.mjs.
 
 import { wageOf } from "./wages.js";
+import { WORDS } from "./words.js";
 
 /** What you start with, free (decision #61: no investor). */
 export const START_MONEY = 100;
@@ -214,7 +215,7 @@ export function quarterLevel(base, biz, contracts, candidates = []) {
     order: contracts.map((c) => ({ color: c.color, count: c.count })),
     quarter: { shifts: QUARTER_SHIFTS, budget: biz.money },
     contracts,
-    start: `Ship ${list(contracts)} boxes by the end of the quarter, ${QUARTER_SHIFTS} shifts. Each contract pays when all its boxes have shipped (up to $${pay}). Crew pay comes out of your money at <b>Start</b>.`,
+    start: `Ship ${list(contracts)} boxes by the end of the quarter, ${QUARTER_SHIFTS} shifts. Each contract pays when all its boxes have shipped (up to $${pay}). ${WORDS.crewPay} comes out of your budget at <b>Start</b>.`,
   };
 }
 

@@ -16,6 +16,7 @@
 //   quarter: { shifts, budget } makes the level a quarter (docs/decisions.md #35): the order is a
 //          quota to ship over that many shifts, and budget pays each shift's crew (#47). Your
 //          crew, their instructions and the conversations carry over; the floor resets.
+import { WORDS } from "./words.js";
 const SHIFT_CREW = 45, SHIFT_FLOOR = 120;
 export const LEVELS = [
   {
@@ -41,7 +42,7 @@ export const LEVELS = [
     ship: "boxes", colors: ["red"], order: [{ color: "red", count: 4 }],
     pool: ["blip", "pip", "gary"],
     shift: SHIFT_CREW,
-    start: "One robot can't fill this order before the shift ends. Schedule a crew, give each one their part of the work, then press <b>Start</b>.",
+    start: `One robot can't fill this order before the shift ends. ${WORDS.schedule} a crew, give each one their part of the work, then press <b>Start</b>.`,
   },
   {
     id: 4, name: "Paint",
@@ -59,7 +60,7 @@ export const LEVELS = [
     ship: "boxes", order: [{ color: "green", count: 3 }, { color: "red", count: 2 }],
     pool: ["blip", "gary", "rusty", "pip", "vex"],
     shift: SHIFT_FLOOR,
-    start: "The order wants green and red, and the supply only gives out red, so someone has to paint. Schedule your crew, write their instructions, then press <b>Start</b>. Bins are spare storage.",
+    start: `The order wants green and red, and the supply only gives out red, so someone has to paint. ${WORDS.schedule} your crew, write their instructions, then press <b>Start</b>. Bins are spare storage.`,
   },
   {
     // The first quarter: a sandbox for money against crew. The supply never runs out, so a

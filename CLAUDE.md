@@ -206,6 +206,15 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   `?playlog`). Read it to see what a worker was told and decided.
 - A tab left open across an update shows a "game was updated, Reload" banner (`/api/version`).
   When Mike reports something that doesn't match the current code, suspect a stale tab first.
+- **One place for each thing** (Mike, 2026-11-17: "you should be using abstractions so that you don't
+  have to make the same change in multiple places ... whenever I tell you to do something, you
+  should have some process to make sure it's done everywhere, and we should also have tests"):
+  - Player-facing terms live in `src/words.js` (static labels use `data-word`); one renderer per
+    repeated thing (`ticketHTML` for order tickets). Add to these instead of writing a copy.
+  - For every request: search the whole repo (code, levels, index.html, docs) for every place it
+    touches, change all of them, and list the places in the report to Mike.
+  - Every request gets a test that fails if it regresses (`test/words.test.mjs` fails if a term is
+    spelled out outside `words.js` or "hire" reaches the player).
 - **Tests** (Mike, 2026-11-17: "I generally want to have test coverage so we don't end up introducing
   bugs or regressing"): `npm test` runs everything; `npm run test:unit` is the fast part.
   - `test/*.test.mjs` (node:test): level 7's money logic, the sim, the usage log, and compiling and

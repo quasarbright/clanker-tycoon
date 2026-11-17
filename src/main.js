@@ -10,6 +10,7 @@ import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond } from "./brains.js";
 import { LEVELS } from "./levels.js";
 import { backendLabel, useFakeLlm, BACKEND } from "./llm.js";
 import { getKey, setKey, signIn, finishSignIn } from "./openrouter-auth.js";
+import { WORDS, applyWords } from "./words.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money } from "./quarter.js";
@@ -41,6 +42,18 @@ let quarter = null; // the quarter being played (quarter.js), when the level is 
 let biz = null; // your business (business.js), once you've opened level 7; lives in memory like the rest
 
 $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
+
+/**
+ * An order ticket: three dots of the color (one for loose widgets) and a count, the same
+ * everywhere (the floor, the end cards, the board). Options: `cls`, `tip` (a tooltip), `pay` (a
+ * contract's pay, shown after the count; `paid` checks it), `loose` (widgets, not boxes).
+ */
+function ticketHTML(color, count, { cls = "", tip = "", pay = null, paid = false, loose = false } = {}) {
+  const dot = `<span class="ct-dot ${color === "any" ? "c-any" : `c-${color}`}"></span>`;
+  const icon = loose ? dot : `<span class="ct-ticket-dots">${dot.repeat(3)}</span>`;
+  const money = pay == null ? "" : `<span class="ct-ticket-money">${paid ? CHECK : ""}$${pay}</span>`;
+  return `<span class="ct-ticket ${cls}" ${tip ? `data-tooltip="${tip}"` : ""}>${icon}<span class="ct-ticket-pay">${count}</span>${money}</span>`;
+}
 
 // ---------- the web build: an OpenRouter key (decision #65) ----------
 // On the web the robots think with Claude Haiku through OpenRouter, on the player's own key: sign
@@ -281,14 +294,14 @@ function renderReady() {
   lastReady = sig;
   $("#goBtn").disabled = reading || short;
   $("#goBtn").dataset.tooltip = reading ? "Waiting for everyone to finish reading their instructions."
-    : short ? `This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. Take someone off the shift.` : "";
+    : short ? `This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. ${WORDS.takeSomeoneOff}.` : "";
   const el = $("#crewReady");
   if (short) {
-    el.innerHTML = `<span class="ct-planbar-note is-bad">This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. Take someone off the shift to start.</span>`;
+    el.innerHTML = `<span class="ct-planbar-note is-bad">This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. ${WORDS.takeSomeoneOff} to start.</span>`;
     return;
   }
   if (!game.workers.length) {
-    el.innerHTML = level.pool.length ? `<span class="ct-planbar-note">Schedule your crew for this shift and give them instructions first. Start begins the clock; the schedule is set then.</span>` : "";
+    el.innerHTML = level.pool.length ? `<span class="ct-planbar-note">${WORDS.schedule} your crew for this shift and give them instructions first. Start begins the clock; the schedule is set then.</span>` : "";
     return;
   }
   el.innerHTML = game.workers.map((w) => {
@@ -405,9 +418,8 @@ const BACK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-
 
 const openCandidates = () => level.pool.map(candidate).filter((c) => !game.workers.some((w) => w.id === c.id));
 const canHire = () => !started && level.pool.length > 0;
-// You put robots on a shift ("Schedule") and take them off it ("Off shift"), never hire or fire
-// (Mike, decision #58): they're paid by the shift.
-const words = () => ({ hire: "Schedule", fire: "Off shift" });
+// You put robots on a shift and take them off it, never hire or fire (words.js, decision #58).
+const words = () => ({ hire: WORDS.schedule, fire: WORDS.offShift });
 
 // Called after hiring, firing, a new shift or Start: pick what's open and draw everything fresh.
 function buildCrew() {
@@ -1010,13 +1022,10 @@ function render() {
   if (order !== lastOrder) {
     lastOrder = order;
     $("#orders").innerHTML = game.order.map((l, i) => {
-      const icon = level.ship === "boxes"
-        ? `<span class="ct-ticket-dots">${(l.color === "any" ? `<span class="ct-dot c-any"></span>` : `<span class="ct-dot c-${l.color}"></span>`).repeat(3)}</span>`
-        : `<span class="ct-dot ${l.color === "any" ? "c-any" : `c-${l.color}`}"></span>`;
       // A contract's ticket also says what it pays; once it's all shipped, that money is coming.
       const c = level.contracts?.[i], full = l.done >= l.count;
-      if (c) return `<span class="ct-ticket ${full ? "is-shipped" : ""}" data-tooltip="${c.count} ${c.color} boxes. Pays $${c.pay} at the end of the quarter if they've all shipped.">${icon}<span class="ct-ticket-pay">${l.done}/${l.count}</span><span class="ct-ticket-money">${full ? CHECK : ""}$${c.pay}</span></span>`;
-      return `<span class="ct-ticket ${full ? "is-done" : ""}" title="${orderLineText(level, l)}">${icon}<span class="ct-ticket-pay">${l.done}/${l.count}</span></span>`;
+      return c ? ticketHTML(l.color, `${l.done}/${l.count}`, { cls: full ? "is-shipped" : "", tip: `${c.count} ${c.color} boxes. Pays $${c.pay} at the end of the quarter if they've all shipped.`, pay: c.pay, paid: full })
+        : ticketHTML(l.color, `${l.done}/${l.count}`, { cls: full ? "is-done" : "", tip: orderLineText(level, l), loose: level.ship !== "boxes" });
     }).join("");
   }
   renderHands();
@@ -1098,7 +1107,7 @@ function openLevel(L, { again = false, shift = "restart", keepCrew = false } = {
   $("#levelName").innerHTML = quarter ? `<span class="ct-shift-of">Shift ${quarter.shift} of ${L.quarter.shifts}<span class="ct-shift-pips">${
     Array.from({ length: L.quarter.shifts }, (_, k) => `<i class="${k + 1 < quarter.shift ? "is-past" : k + 1 === quarter.shift ? "is-now" : ""}"></i>`).join("")}</span></span>` : `Level ${L.id}: ${L.name}`;
   $("#goalLabel").textContent = L.contracts ? "Contracts" : quarter ? "This quarter" : "Today's order";
-  $("#laborLabel").textContent = L.contracts ? "money" : quarter ? "budget" : "labor";
+  $("#laborLabel").textContent = quarter ? WORDS.budget.toLowerCase() : WORDS.labor;
   $("#startScreen").classList.add("is-hidden");
   $("#boardScreen").classList.add("is-hidden");
   $("#endScreen").classList.add("is-hidden");
@@ -1147,7 +1156,7 @@ function endQuarterShift() {
   if (won && (!best[level.id] || quarter.money > best[level.id].left)) best[level.id] = { left: quarter.money };
   // The quarter ends as soon as the quota ships; what's left of the budget is saved.
   const stats = won ? [["Shifts", `${n} of ${Q.shifts}`], ["Spent", spent], ["Saved", left]]
-    : !last ? [["Shipped", `${done - shippedBefore}`], ["Crew pay", `$${Math.round(game.laborCost)}`], ["Budget left", left]]
+    : !last ? [["Shipped", `${done - shippedBefore}`], [WORDS.crewPay, `$${Math.round(game.laborCost)}`], [`${WORDS.budget} left`, left]]
     : [["Shipped", `${done}/${total}`], ["Spent", spent], ["Left", left]];
   $("#endTitle").textContent = won ? "Quota met" : !last ? `Shift ${n} done` : "Quota missed";
   const shiftsLeft = Q.shifts - n;
@@ -1157,7 +1166,7 @@ function endQuarterShift() {
   // What's still to ship, as the same tickets the floor shows.
   const togo = won ? "" : `<div class="ct-end-togo"><span class="ct-label">Still to ship</span>${level.order.map((l, i) => {
     const n = l.count - quarter.done[i];
-    return n > 0 ? `<span class="ct-ticket"><span class="ct-ticket-dots">${`<span class="ct-dot c-${l.color}"></span>`.repeat(3)}</span><span class="ct-ticket-pay">${n}</span></span>` : "";
+    return n > 0 ? ticketHTML(l.color, n) : "";
   }).join("")}</div>`;
   $("#endStats").innerHTML = togo + stats.map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
   const btns = won || last
@@ -1174,7 +1183,6 @@ function endQuarterShift() {
 
 // ---------- your business: the contract board ----------
 
-const ticketHTML = (color, count) => `<span class="ct-ticket"><span class="ct-ticket-dots">${`<span class="ct-dot c-${color}"></span>`.repeat(3)}</span><span class="ct-ticket-pay">${count}</span></span>`;
 const BUSINESS = LEVELS.find((L) => L.business);
 let picked = []; // contracts picked on the board for the coming quarter
 
@@ -1243,7 +1251,7 @@ function renderBoard() {
   }));
   const total = picked.reduce((a, c) => a + c.count, 0);
   $("#boardGo").disabled = !picked.length;
-  $("#boardGo").textContent = "Start the quarter";
+  $("#boardGo").textContent = WORDS.startQuarter;
   $("#boardNote").textContent = !picked.length ? "Pick at least one contract."
     : `${total} boxes in ${QUARTER_SHIFTS} shifts. A contract only pays if all its boxes ship.`;
   // The quarter at a glance: your money is the budget wages come out of (you don't know them until
@@ -1251,7 +1259,7 @@ function renderBoard() {
   const f = forecast(biz, picked);
   const row = (label, v, cls = "", tip = "") => `<span class="${cls}" ${tip ? `data-tooltip="${tip}"` : ""}>${label}</span><b class="${cls}">${v}</b>`;
   $("#forecast").innerHTML = !picked.length ? "" : row("Contracts pay, if they all ship", `+$${f.pay}`, "is-in")
-    + (n ? row(`To the lender (${now})`, `−$${f.repay}`, "is-out", `After this quarter you'd owe $${f.debtAfter}.`) : "")
+    + (n ? row(`${WORDS.toLender} (${now})`, `−$${f.repay}`, "is-out", `After this quarter you'd owe $${f.debtAfter}.`) : "")
     + row("You get at the end of the quarter", `+$${f.gain}`, "is-total")
     + `<span class="ct-forecast-note">Wages come out of your ${money(f.budget)} budget as the shifts run, so they're not counted here.</span>`;
 
@@ -1260,7 +1268,7 @@ function renderBoard() {
     const r = robotOf(biz, CANDIDATES.find((c) => c.id === id)), done = biz.crew.includes(id), price = recruitPrice(biz, id);
     return `<div class="ct-biz-bot ${done ? "is-done" : ""}" style="--c:${r.color}">
       ${faceHTML(r)}<div><div><b>${r.name}</b> <span class="ct-wage">$${r.wage}/shift</span></div>${skillBadges(r)}<div class="ct-biz-blurb">${r.blurb}</div></div>
-      <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} Recruited</span>` : `<button class="ct-btn is-gold" data-recruit="${id}" ${short(price)}>Recruit $${price}</button>`}</div>
+      <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} ${WORDS.recruited}</span>` : `<button class="ct-btn is-gold" data-recruit="${id}" ${short(price)}>${WORDS.recruit} $${price}</button>`}</div>
     </div>`;
   }).join("") || `<p class="ct-offer-note">Everyone's already on your crew.</p>`;
 
@@ -1287,7 +1295,7 @@ function renderBoard() {
     const replaces = m.kind === "paint" && biz.owned && !owns(biz, m.id) ? " Replaces your paint machine." : "";
     return `<div class="ct-biz-bot ct-machine ${done ? "is-done" : ""}">
       <div><div><b>${m.name}</b></div><div class="ct-biz-blurb">${m.blurb}${replaces}</div></div>
-      <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} Bought</span>` : `<button class="ct-btn is-gold" data-buy="${m.id}" ${short(m.price)}>Buy $${m.price}</button>`}</div>
+      <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} ${WORDS.bought}</span>` : `<button class="ct-btn is-gold" data-buy="${m.id}" ${short(m.price)}>Buy $${m.price}</button>`}</div>
     </div>`;
   }).join("") + `<p class="ct-offer-note">On your floor: ${mine.length ? mine.map((m) => m.name.toLowerCase()).join(", ") : "nothing yet"}.</p>`;
 
@@ -1325,8 +1333,8 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
   const rows = `<div class="ct-end-contracts">${pays.map((p, i) => `<div class="ct-end-contract ${p.won ? "is-done" : over ? "is-missed" : ""}">
       ${ticketHTML(p.c.color, p.c.count)}<span>${Math.min(quarter.done[i], p.c.count)} of ${p.c.count} shipped</span>
       <b>${p.won ? `$${p.c.pay}` : over ? "$0" : `pays $${p.c.pay}`}</b></div>`).join("")}</div>`;
-  const stats = over ? [["Paid", `$${paid}`], ...(cut ? [["To the lender", `$${cut}`]] : [["Crew pay", `$${Math.round(game.laborCost)}`]]), ["Your money", money(quarter.money + paid - cut)]]
-    : [["Shipped", `${done - shippedBefore}`], ["Crew pay", `$${Math.round(game.laborCost)}`], ["Your money", money(quarter.money)]];
+  const stats = over ? [["Paid", `$${paid}`], ...(cut ? [[WORDS.toLender, `$${cut}`]] : [[WORDS.crewPay, `$${Math.round(game.laborCost)}`]]), [WORDS.budget, money(quarter.money + paid - cut)]]
+    : [["Shipped", `${done - shippedBefore}`], [WORDS.crewPay, `$${Math.round(game.laborCost)}`], [WORDS.budget, money(quarter.money)]];
   $("#endStats").innerHTML = rows + stats.map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
   const btns = won ? [["board", "Next quarter", true]]
     : last ? [["board", "Next quarter", true], ["restart", "Replay this shift"]]
@@ -1353,6 +1361,7 @@ $("#pauseScreen").addEventListener("click", (e) => e.stopPropagation());
 $("#restartBtn").addEventListener("click", () => openLevel(level, { again: true }));
 $("#menuBtn").addEventListener("click", () => showMenu());
 
+applyWords();
 renderLevels();
 initAccess();
 requestAnimationFrame(frame);
