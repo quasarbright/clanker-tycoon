@@ -46,12 +46,11 @@ one thinking word (no dots or bubbles), Start waits for scheduled robots, compac
 starting apart at the desk.
 
 Still open, by how much they get in the way:
-1. **Recruit and machine buttons don't say why they're grey.** Training now says "$N short";
-   "Recruit $120" and "Buy $170" should too. With the build thread.
+1. **Recruit and machine buttons don't say why they're grey.** Built in e104099 ("$N short");
+   follow-ups sent: grey the Train button when nothing's affordable, keep "+$5 a shift" beside
+   "$N short".
 
 Proposals, held for now (coordinator, 2026-11-17):
-- **On pace during the shift:** "on pace / 2 short" next to the contract ticket, instead of only
-  on the shift card afterwards.
 - **A recap of the last quarter on the board,** instead of the stale last shift behind it.
 
 Smaller: pause icon doesn't change while paused and chips still say "Working"; the cards use the
@@ -81,3 +80,6 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
 - 2026-11-17: verified 0038a72 in the browser: an early quarter says "Quarter over early", names the
   skipped shift, and the header budget matches the card. Read plugin v0.6.0 (Design personas,
   use pass, periodic review, which Pam owns).
+- 2026-11-17: Mike dropped the live on-pace label: "they can see the fraction in the top left", and
+  pace assumes orders fill evenly and in parallel, which isn't always true. Lesson: don't propose
+  projections that assume how the player splits work; show what's true (counts) instead.

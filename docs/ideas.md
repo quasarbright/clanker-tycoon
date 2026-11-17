@@ -156,6 +156,9 @@ Ideas worth keeping that aren't planned yet.
 
 Each with the reason.
 
+- **A live "on pace / 2 short" label during the shift:** the ticket's fraction already shows
+  progress, and a pace assumes orders get filled evenly and in parallel, which often isn't true
+  (Mike, 2026-11-17).
 - **An investor who takes a cut of everything:** a lender you choose to borrow from instead; you
   start with your own money (decision 61).
 - **The ending: buy out the investor, and a post-game as owner:** "We could just drop the buyout
