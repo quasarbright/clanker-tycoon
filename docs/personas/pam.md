@@ -43,24 +43,63 @@ Machines). Shift and quarter cards are modals over the floor. Source: `index.htm
 
 ## Pam's current take
 
-1. **The money question isn't answerable on the board.** "Can I afford this quarter?" needs crew
-   pay for three shifts, and the board shows only contract pay and the budget; the crew rate sits
-   in the corner of the crew panel on the floor. Show the crew's cost for the quarter next to the
-   budget and in the forecast (yes to the pending call). This is the decision the board exists for.
-2. **Disabled buttons don't say why.** "Recruit $120", "Buy $80" and "Buy $170" just go grey.
-   Say "$25 short" (the side contract already does this well: "Needs a paint machine").
-3. **Start lets you begin with robots who can't work,** and the floor says "needs instructions"
-   three times (crew chip, status bar, coach). Block Start while a scheduled robot has no working
-   instructions, with the status bar naming who (one place), and drop the coach's repeat.
-4. **Training is a wall of chips.** Every robot lists every skill and trait it could learn. A
-   compact row per robot (current skills, then one "Train" picker) reads at a glance.
-5. **The floor doesn't say whether you're on pace.** Pace only appears on the shift card, after
-   it's too late to fix. Put "on pace / 2 short" next to the contract ticket during the shift.
+All five held up in real play (2026-11-17, level 7 quarter 1 with the real model). Order is by
+how much they get in the way.
 
-Smaller: scheduled robots spawn on top of You at the desk, with Pip's name over your face; the
-shift and quarter cards use the lender's dollar-eyed face even when you never borrowed; "Replay
-this shift" on the quarter card doesn't say it replays only shift 3; ideas.md says training is $50
-a skill, the game says $20.
+1. **The money question isn't answerable on the board.** "Can I afford this quarter?" needs crew
+   pay for three shifts. The board shows contract pay and the budget, and the forecast says outright
+   that wages are "not counted here". Each robot's rate is only in the Training column, never
+   totaled. Show the crew's cost for the quarter next to the budget and in the forecast (yes to the
+   pending call). This is the decision the board exists for.
+2. **The player can't tell what a message did.** Told "Do whatever Pip needs, and keep the floor
+   tidy", Blip answered "I'll help Pip and keep things tidy! Sorry, I'll keep carrying red widgets
+   to Pack for now" and kept his old routine. Nothing said it was just talk. When a message does
+   change instructions, the only sign is a small grey "(changed their instructions)" after the
+   reply. Every reply to a message should end in one clear, same-styled marker: "changed
+   instructions", "one-off" or "no change". The principle that "players shouldn't have to guess
+   which one a message did" isn't met yet.
+3. **Start is inconsistent about robots who can't work.** Start is lit with nobody scheduled, and
+   with scheduled robots who have no instructions. It's grey while a new robot reads (good: the
+   status bar says "Pip reading"). But between shifts it stays lit while a robot is still thinking
+   over new instructions. "Needs instructions" is said three times (crew chip, status bar, coach).
+   One rule: Start waits for everyone scheduled to be ready, the status bar names who (one place),
+   and the coach drops the repeat.
+4. **Thinking looks like talking.** While a robot reads or thinks there's a "…" speech bubble over
+   it on the floor and a "…" bubble in the chat (it even shows over the paused floor). Animated
+   dots also appear in the crew chip and the status bar. And the thinking-budget pips in the chat
+   header are three dots that read as "typing…". That's five sets of dots, two of them speech
+   bubbles, which breaks the rule. One words-only indicator ("thinking") in the chip and status
+   bar. On the floor, a non-bubble mark over the robot. Budget pips drawn as something other than
+   dots.
+5. **The floor doesn't say whether you're on pace.** The shift card says "At this pace you'll
+   finish" after the shift is over. Put "on pace / 2 short" next to the contract ticket during the
+   shift.
+6. **Disabled buttons don't say why.** "Recruit $120" and "Buy $170" just go grey. Say "$20 short".
+   The side contract already does this well: "Needs a paint machine".
+7. **Training is a wall of chips.** A compact row per robot (current skills, then one "Train"
+   picker) reads at a glance.
+
+Smaller, seen in play:
+- Confirmed: the second robot you schedule spawns on top of You at the desk, with "Pip" written
+  over your face. It happens again at every new shift. The first robot stands beside you.
+- The shift and quarter cards use the lender's dollar-eyed face even when you never borrowed.
+- The pause button keeps its pause icon while paused, and crew chips still say "Working".
+- The quarter ended partway through shift 2 (quota met). The card says "Every contract shipped"
+  but not that the quarter is over early or that shift 3 is skipped. The header behind it still
+  says budget $70 while the card says $220.
+- The ticket chip on the shift and quarter cards reads "20" right next to "15 of 20 shipped".
+- The forecast says +$150 twice ("Contracts pay" and "You get") when there's no loan.
+- The board doesn't recap the last quarter, and the floor behind it is the stale last shift.
+- The title shows dead floor chrome behind the menu ("LEVEL 0:00", an empty order panel). On a
+  level there's no way back to the title before Start except reloading.
+- Waits: a new robot read instructions for about 15 s (two model calls), Blip took about 4 s.
+  A reply to a mid-shift message took about 10 s. These are fine with the indicator, but they're
+  why item 4 matters.
+- Balance, not UX: the small Q1 contract (20 boxes) finished with Blip and Pip at the start of shift 2.
+  It never asked the money question.
+- ideas.md still says training is $50 a skill; the game says $20.
+- Not seen this run: desk visits and the "?"/"!" thinking marks. The shift had no unexpected
+  events. A test with vague instructions that stay in the routine is still needed.
 
 ## Open calls waiting on Mike
 
@@ -68,8 +107,16 @@ a skill, the game says $20.
 - Block Start for scheduled robots without instructions (Pam: yes, one message, in the status bar).
 - Compact Training (Pam: yes, picker per robot).
 - Dedupe "needs instructions" (Pam: status bar only).
+- A marker on every reply saying what the message did (Pam: yes; changed / one-off / no change).
+- Thinking indicator in words, no speech bubbles or dots (Pam: yes).
 
 ## Log
 
 - 2026-11-17: brief written from CLAUDE.md, ideas.md, decision 67 and screenshots of the title,
   levels 1 and 4, and level 7's board, floor (scheduled, ready, running) and shift and quarter cards.
+- 2026-11-17: played the real game (`node server.mjs`, real model) at 1440x900: the title, level 3
+  (schedule Pip, instruct), and level 7 quarter 1 (small contract, Blip and Pip, instructions, Start,
+  pause, a message to Pip mid-shift that changed his instructions, a vague message to Blip
+  between shifts, quarter done, back to the board for Q2). All five concerns confirmed, and the
+  spawn-on-You bug is confirmed. New from real play: what a message did isn't clear (now #2), and
+  thinking looks like talking (#4). Start is inconsistent and the cards have small mismatches.
