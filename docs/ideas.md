@@ -93,6 +93,10 @@ Ideas worth keeping that aren't planned yet.
   instructions (issue #1).
 - **The Strong attribute.** Carries two at once. Agreed, not built.
 - **Worker personalities.** Late polish only; mechanics first.
+- **Looks that hint at personality.** Instead of a bio, a robot's appearance shows its quirks. A
+  library of parts and accessories (little articles of clothing and the like); the model generates
+  a personality and picks parts to match. Open: skills already show as tools, so it could get
+  crowded.
 - **Make Smart matter.** Robots rarely think, so the Smart attribute (a bigger thinking budget)
   barely changes anything yet. Maybe it matters late, for foremen; maybe early contracts need more
   surprises to think about.
