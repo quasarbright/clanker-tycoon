@@ -381,3 +381,44 @@ $37/min), and the middle makes it: painter + hauler + packer meets it in 3 shift
 haulers for a shift then painter + repair in 2 with $36; servicing the machine yourself with
 painter + hauler + packer in 2 with $46. In a browser with real model-written instructions, Blip,
 Pip and Vex (no one servicing) shipped 19, then 11, then missed by 3.
+
+### 36. Thinking can't widen a worker's instructions (2026-11-17)
+
+**Question:** in play, Pip (told "pack red boxes and ship them") got the "nothing has moved for 15
+seconds" nudge, and his thought answered with *new instructions* that added fetching from the belt.
+Thoughts were allowed to change instructions (auto-approved), and the stray-station check compared
+the new program against the instructions Pip had just written for himself, so it passed. Mike's
+goal for this step: "success or failure should clearly trace back to the player's instructions."
+**Options:** keep auto-approving thought changes but check them against the old instructions; let
+thoughts only do one-offs; or one-offs only inside the instructions, everything else to the desk.
+**Picked:** the last. A thought of the worker's own can talk, do a one-off inside the instructions,
+or come to your desk; "change" isn't one of its choices. Only a message or yell from you changes
+instructions. Every program (compile, one-off, change) is checked against what you actually said
+(`scope`: the instructions as you gave them, plus messages that changed them), not the worker's
+rewording on the card. A one-off from thinking that strays gets one repair ("choose boss instead"),
+and if it still strays the worker comes to the desk.
+**Evidence** (`tools/thinking-check.mjs`, real model, 4 runs): Pip stalled with nobody hauling came
+to the desk 4/4 ("fetching from the belt isn't in my instructions, so should I start doing
+that?"), never changed his instructions or walked to the belt. Told "fetch them from the belt
+yourself", he changed them 4/4.
+
+### 37. A dry run before a worker takes a program (2026-11-17)
+
+**Question:** about 1 compiled program in 10 never makes progress (the language experiment's "only
+ships boxes nobody packs"). Catch it before the shift, in the worker's own words, chip red.
+**Options:** run the whole crew together (a packer with no hauler hired yet would fail, which is
+the crew's fault, not their program's); run the worker alone (same problem); or run the worker
+alone with a **stage hand** that keeps their inputs in reach.
+**Picked:** alone with a stage hand: widgets of the wanted color on the belt and at Pack, room left
+at Pack, and a finished box at Pack unless the instructions ask this worker to pack (so "pack and
+ship" that only ships still fails). Progress means putting something down, packing, painting or
+servicing; picking up alone isn't enough. 40 game seconds, plus a second try with the paint machine
+worn for repair-only workers. Failure gets the same one repair as other model mistakes; the repair
+may say the boss really asked for no work ("run around in circles"), which is then done, since
+clear instructions get done. Otherwise the worker explains in their own words. Mid-shift changes
+from you get the same check.
+**Evidence:** `tools/dryrun-test.mjs` (hand-written programs: haulers, packers, a shipper, a
+painter, a repair worker pass; only-ships, ends-early and a tight loop fail). Of 102 programs in
+`logs/llm.jsonl`, it flagged one: "run around in circles", which the repair now accepts. In the
+game, "pack, but only while Gary-7 is at the dock" with no Gary hired came back red: "I keep
+waiting at PACK and never get to packing because Gary-7 isn't standing at the dock."

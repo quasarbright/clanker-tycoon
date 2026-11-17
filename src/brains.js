@@ -7,10 +7,15 @@
 // Every answer is checked: the program has to parse, stay in the subset, use only tools the
 // worker has, and not wander to stations the instructions never mention. A model mistake gets one
 // repair attempt with the problem spelled out; a skill the worker lacks is the instructions' fault
-// and comes back as a compile error for the player. Nothing here is specific to one model.
+// and comes back as a compile error for the player. A program that passes the checks also gets a
+// dry run (dryrun.js): one that never gets any work done goes back for the same one repair, and
+// then the worker tells you about it. Thinking never widens a worker's instructions: only the boss
+// can change them, and a thought's one-off stays inside them (or the worker comes to your desk).
+// Nothing here is specific to one model.
 import { llm } from "./llm.js";
 import { COLORS, viewFor, toolNamesFor, programStationName } from "./sim.js";
 import { parseProgram, checkProgram } from "./lang.js";
+import { dryRun } from "./dryrun.js";
 
 // ---------- who you can hire ----------
 
@@ -179,6 +184,25 @@ const COMPILE_SCHEMA = {
   required: ["reply", "problem", "instructions", "program"],
   additionalProperties: false,
 };
+const THINK_SCHEMA = {
+  type: "object",
+  properties: {
+    reply: { type: "string" },
+    kind: { type: "string", enum: ["talk", "once", "boss"] },
+    summary: { type: "string" },
+    now: { type: "string" },
+  },
+  required: ["reply", "kind", "summary", "now"],
+  additionalProperties: false,
+};
+// The repair after a failed dry run can say the boss really did ask for work that gets nothing
+// done ("walk in circles"): clear instructions get done, even silly ones.
+const RETRY_SCHEMA = {
+  ...COMPILE_SCHEMA,
+  properties: { ...COMPILE_SCHEMA.properties, onPurpose: { type: "boolean" } },
+  required: [...COMPILE_SCHEMA.required, "onPurpose"],
+};
+const ON_PURPOSE = `If the boss's instructions themselves really ask for something that gets no work done (like "walk in circles"), that's fine: keep the program and set "onPurpose" to true. Otherwise fix the program and set "onPurpose" to false.`;
 const EXPLAIN_SCHEMA = { type: "object", properties: { problem: { type: "string" } }, required: ["problem"], additionalProperties: false };
 const RESPOND_SCHEMA = {
   type: "object",
@@ -202,6 +226,17 @@ const CHOICES = `Reply as JSON with these fields (leave the ones you don't use a
     "change": your ongoing work changes for good. Put your complete new instructions in "instructions": everything you're now meant to do, the old instructions merged with the change, as one short sentence in the boss's own words (no step-by-step), and the full new program for them in "program".
     "boss": you need the boss: information you don't have, instructions that conflict, or something only the boss can do. Say what you need in "reply".
 Prefer "talk" or "once". Use "change" only when your regular work really has to change.`;
+
+// When the worker is thinking on their own (nobody said anything), they can't rewrite their own
+// instructions: the player's words are what they do. A one-off has to stay inside those
+// instructions; anything beyond them is a question for the boss.
+const THINK_CHOICES = `Reply as JSON with these fields (leave the ones you don't use as ""):
+- "reply": what you say out loud.
+- "kind": one of
+    "talk": nothing needs doing, or you're waiting on something that's someone else's part; keep doing what you were doing.
+    "once": something to do now, one time, that's part of your own instructions. Put a short program for just that in "now" (it runs once, then you go back to your regular program), and a few words describing it in "summary".
+    "boss": you need the boss: information you don't have, instructions that conflict, or work that's outside your instructions (even if it looks like nobody is doing it). Say what you need in "reply".
+Only the boss can change your instructions, so never take on work they don't mention, not even once: if it seems needed, choose "boss" and say so. Prefer "talk" or "once".`;
 
 // ---------- checking an answer ----------
 
@@ -254,6 +289,14 @@ function checkCode(src, h, L, instructionsText) {
   return { ast };
 }
 
+/** checkCode, then a dry run on the floor in `s` (with the crew hired there). Same answer shape. */
+function tryProgram(s, src, h, L, instructionsText) {
+  const res = checkCode(src, h, L, instructionsText);
+  if (!res.ast) return res;
+  const run = dryRun(L, h, s.workers.map((x) => x.hire), res.ast, instructionsText);
+  return run.ok ? res : { problem: run.why, kind: "model", dry: true, dryAst: res.ast };
+}
+
 const clean = (t) => String(t ?? "").replace(/\*[^*]*\*/g, "").replace(/\s+/g, " ").trim();
 function remember(w, line) {
   (w.memory ??= []).push(line);
@@ -282,25 +325,38 @@ You don't have working instructions yet, so this (together with anything earlier
   let out = await llm({ system, prompt: base, schema: COMPILE_SCHEMA });
   const said = () => clean(out?.reply) || "On it.";
   if (clean(out?.problem) && !String(out?.program ?? "").trim()) return done(w, text, clean(out.problem), { problem: clean(out.problem) });
-  let res = checkCode(out?.program, h, L, text);
+  let res = tryProgram(s, out?.program, h, L, text);
   if (res.kind === "model") {
-    out = await llm({ system, schema: COMPILE_SCHEMA, prompt: `${base}\n\nYour last program had a problem: ${res.problem}\nYour last program:\n${out?.program ?? ""}\nWrite it again, fixed.` });
+    const dry = res.dry;
+    out = await llm({ system, schema: dry ? RETRY_SCHEMA : COMPILE_SCHEMA, prompt: `${base}\n\nYour last program had a problem: ${res.problem}\nYour last program:\n${out?.program ?? ""}\nWrite it again, fixed.${dry ? `\n${ON_PURPOSE}` : ""}` });
     if (clean(out?.problem) && !String(out?.program ?? "").trim()) return done(w, text, clean(out.problem), { problem: clean(out.problem) });
-    res = checkCode(out?.program, h, L, text);
+    res = tryProgram(s, out?.program, h, L, text);
+    if (res.dry && out?.onPurpose === true) res = { ast: res.dryAst };
   }
   if (res.ast) return done(w, text, said(), { ast: res.ast, instructions: clean(out?.instructions) || text });
   // It didn't work out. The worker says why, in their own words, instead of a canned error.
+  const problem = await explain(s, w, system, text, res);
+  return done(w, text, problem, { problem });
+}
+
+/** The worker says, in their own words, why they couldn't turn `text` into work (`res.problem`). */
+async function explain(s, w, system, text, res) {
   let problem = "";
+  const what = res.dry
+    ? `You worked out a routine, then pictured doing it with everything you'd need on hand, and it never got anything done. ${res.problem}`
+    : `You couldn't turn them into work. What went wrong: ${res.problem}.`;
   try {
     const why = await llm({ system, schema: EXPLAIN_SCHEMA, prompt: `${context(s, w)}
 
 The boss gave you these instructions: "${text}"
-You couldn't turn them into work. What went wrong: ${res.problem}.
-Tell the boss out loud, in your own voice, in one or two short sentences, what about these instructions you can't do or don't understand, and what would help. Use plain words: don't mention programs, code, or actions like pack(). Reply as JSON: {"problem": what you say}.` });
+${what}
+Tell the boss out loud, in your own voice, in one or two short sentences, what about these instructions you can't do or don't understand, and what would help. Use plain words: don't mention programs, code, practice runs, or actions like pack(). Reply as JSON: {"problem": what you say}.` });
     problem = clean(why?.problem);
   } catch { /* fall back below */ }
-  if (!problem) problem = res.kind === "skill" ? `I can't do that: ${res.problem}.` : "I'm not sure how to do that. Could you break it into steps for me?";
-  return done(w, text, problem, { problem });
+  if (!problem) problem = res.kind === "skill" ? `I can't do that: ${res.problem}.`
+    : res.dry ? "I tried to picture doing that and I'd just stand around. Could you tell me the steps another way?"
+    : "I'm not sure how to do that. Could you break it into steps for me?";
+  return problem;
 }
 function done(w, text, reply, r) {
   remember(w, `Boss: ${text}`);
@@ -317,6 +373,12 @@ function done(w, text, reply, r) {
 export async function respond(s, w, trigger) {
   const h = w.hire, L = s.level;
   const system = systemPrompt(h, L);
+  const fromBoss = trigger.kind === "message" || trigger.kind === "yell";
+  // What the boss has actually asked of this worker, in the boss's own words: the instructions as
+  // given (w.scope; the card's wording is the worker's restatement), plus what was just said.
+  // Programs are checked against this, never against the worker's own rewording, so a thought
+  // can't talk its way into new work.
+  const asked = [w.scope ?? w.orders ?? "", fromBoss ? trigger.text : ""].join(" ").trim();
   const what = trigger.kind === "message" ? `The boss says to you: "${trigger.text}"`
     : trigger.kind === "yell" ? `The boss yells to the whole floor: "${trigger.text}"`
     : trigger.kind === "think" ? `Your program stopped to think: "${trigger.text}"`
@@ -325,27 +387,41 @@ export async function respond(s, w, trigger) {
 
 ${what}
 
-${CHOICES}`;
-  let out = await llm({ system, prompt: base, schema: RESPOND_SCHEMA });
+${fromBoss ? CHOICES : THINK_CHOICES}`;
+  const schema = fromBoss ? RESPOND_SCHEMA : THINK_SCHEMA;
+  let out = await llm({ system, prompt: base, schema });
   const checkAnswer = (o) => {
-    if (o?.kind === "once") return checkCode(o.now, h, L, null);
-    if (o?.kind === "change") return checkCode(o.program, h, L, o.instructions || "");
+    if (o?.kind === "once") {
+      const res = checkCode(o.now, h, L, asked || null);
+      return res.problem && !fromBoss ? { ...res, problem: `${res.problem}. If you think it needs doing, choose "boss" and tell the boss instead` } : res;
+    }
+    if (o?.kind === "change") {
+      if (!fromBoss) return { problem: `only the boss can change your instructions. Choose "talk", a "once" inside your instructions, or "boss"`, kind: "model" };
+      return tryProgram(s, o.program, h, L, asked);
+    }
     return { ast: null };
   };
   let res = checkAnswer(out);
   if (res.kind === "model") {
     const field = out.kind === "once" ? "now" : "program";
-    out = await llm({ system, schema: RESPOND_SCHEMA, prompt: `${base}\n\nYour last answer's "${field}" program had a problem: ${res.problem}\nIt was:\n${out[field]}\nAnswer again, fixed.` });
+    out = await llm({ system, schema, prompt: `${base}\n\nYour last answer had a problem: ${res.problem}\nIts "${field}" program was:\n${out[field] ?? ""}\nAnswer again, fixed.` });
     res = checkAnswer(out);
   }
-  const reply = clean(out?.reply) || "…";
+  let reply = clean(out?.reply) || "…";
   remember(w, trigger.kind === "message" ? `Boss (to you): ${trigger.text}` : trigger.kind === "yell" ? `Boss (yelling to everyone): ${trigger.text}` : `(You thought about: ${trigger.text})`);
+  if (res.problem) {
+    if (res.dry) reply = await explain(s, w, system, trigger.text, res);
+    else if (!fromBoss) reply = "Boss, I think something needs doing that isn't in my instructions. What do you want me to do?";
+    remember(w, `You: ${reply}`);
+    // A change the worker can't make (a skill they lack, a routine that would get nothing done) or
+    // a thought that wants to step outside its instructions: both are for the boss.
+    return { reply, kind: res.kind === "skill" && out.kind === "change" || res.dry || !fromBoss ? "boss" : "talk" };
+  }
   remember(w, `You: ${reply}`);
-  if (res.problem) return { reply, kind: res.kind === "skill" && out.kind === "change" ? "boss" : "talk" };
   if (out.kind === "once") return { reply, kind: "once", summary: clean(out.summary) || "a one-off", nowAst: res.ast };
-  if (out.kind === "change") {
+  if (out.kind === "change" && fromBoss) {
     remember(w, `(Your instructions are now: ${clean(out.instructions)})`);
-    return { reply, kind: "change", instructions: clean(out.instructions), ast: res.ast };
+    return { reply, kind: "change", instructions: clean(out.instructions), ast: res.ast, scope: asked };
   }
   return { reply, kind: out.kind === "boss" ? "boss" : "talk" };
 }

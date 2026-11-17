@@ -500,7 +500,7 @@ function pack(s, w, a, act) {
 
 function service(s, w, a) {
   if (w.station !== "PAINT") return fail(s, w, a, "I'm not at the paint machine");
-  if (s.wear.PAINT > 0) { s.wear.PAINT = 0; s.version++; s.lastProgress = s.t; emit(s, { type: "serviced", worker: w.id }); }
+  if (s.wear.PAINT > 0) { s.wear.PAINT = 0; s.version++; s.lastProgress = s.t; w.worked = (w.worked ?? 0) + 1; emit(s, { type: "serviced", worker: w.id }); }
   ok(s, w, a);
 }
 
@@ -525,6 +525,8 @@ function ok(s, w, a) {
   w.lastOk = true;
   if (a?.action && a.action !== "moveTo") w.fails = 0;
   if (["pickUp", "putDown", "pack", "paint"].includes(a?.action)) s.lastProgress = s.t;
+  // Work that leaves something done (the pre-shift dry run counts these; picking up alone isn't).
+  if (["putDown", "pack", "paint"].includes(a?.action)) w.worked = (w.worked ?? 0) + 1;
 }
 
 function fail(s, w, a, why) {

@@ -658,6 +658,7 @@ async function giveInstructions(w, text) {
   } else {
     logLine(w, "them", r.reply);
     w.orders = r.instructions;
+    w.scope = text; // your own words: what thinking is checked against (brains.js)
     logEvent(clockT(), "instructions", { worker: w.id, text: r.instructions });
     setProgram(g, w, r.ast);
     w.lastThought = null;
@@ -709,7 +710,8 @@ async function wake(w, trigger, mark) {
     setNow(g, w, r.nowAst);
   } else if (r.kind === "change") {
     w.orders = r.instructions;
-    logEvent(clockT(), "instructions", { worker: w.id, text: r.instructions, changedThemselves: true });
+    w.scope = r.scope;
+    logEvent(clockT(), "instructions", { worker: w.id, text: r.instructions, changed: true });
     w.draft = null;
     w.compileError = null;
     w.now = null;
@@ -1026,7 +1028,7 @@ function openLevel(L, { again = false, shift = "restart" } = {}) {
   game = newGame(L, [], undefined, { done: quarter?.done });
   for (const old of crew) {
     const w = addWorker(game, old.hire);
-    Object.assign(w, { orders: old.orders, compileError: old.compileError, memory: old.memory, draft: null });
+    Object.assign(w, { orders: old.orders, scope: old.scope, compileError: old.compileError, memory: old.memory, draft: null });
     if (old.ast && !old.compileError) setProgram(game, w, old.ast);
     if (old.orders) logLine(w, "sys", "New shift, same instructions.");
     // A quarter started over hires the same crew again, fees and all. Restarting a shift that

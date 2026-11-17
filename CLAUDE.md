@@ -54,8 +54,12 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   (Strong isn't built yet.)
 - Workers come to your desk when thinking can't solve it: when a thought decides it needs you
   (missing info, conflicting instructions, something only you can do), or when they've thought
-  about the same problem twice and it came back. Whether they check with you before changing their
-  own instructions is a later temperament thing.
+  about the same problem twice and it came back.
+- **Your words are the job.** Success or failure should trace back to what you told them. Only you
+  change a worker's instructions; thinking never widens them, not even for a one-off. A worker who
+  thinks something outside their instructions needs doing comes to your desk and asks. (Mike: Pip,
+  told to pack and ship, "rewrote his own instructions" mid-shift to fetch from the belt too.) The
+  stray-station check compares against your own words, not the worker's restatement on the card.
 - Workers cost money (wages), even while the bigger money system is parked.
 
 **Feel**
@@ -107,8 +111,11 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - The compile prompt includes the writing rules from that experiment (`RULES` in
   `tools/lang-experiment/run.mjs`): do your part only, choices in variables and the work once,
   numbers from the questions, no extra steps, trace one pass. They took clean programs from 29/40
-  to 38/40 at no cost in time. The leftover failure (a program that never makes progress) is for
-  the runtime to catch, by a dry run or by thinking.
+  to 38/40 at no cost in time. The leftover failure (a program that never makes progress) is
+  caught by a **dry run** (`src/dryrun.js`): before a worker takes a program, it plays for 40
+  seconds on a private copy of the floor with a stage hand supplying what coworkers would hand them.
+  No work done means one repair, then the worker says what's wrong in their own words and their chip
+  stays red. Instructions that really ask for no work ("walk in circles") still get done.
 - Workers compile instructions once into a routine the sim runs without the model. Haiku isn't fast
   enough for a real-time loop, so make what it compiles smarter instead of calling it more.
 - Programs have conditionals and full vision (questions read every station, the order, wear, and
@@ -122,9 +129,9 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - Workers think (call the model) when something unexpected happens. Thinking draws on a budget
   that refills slowly; talking to them is free (they always answer you). Show it: a "?" pops up over a worker thinking about something unexpected, a
   "!" when a yell or a direct message got them thinking, alongside the thinking bubble.
-- Workers keep working while they think. A thought can change their instructions; that's fine and
-  auto-approved for now (the card shows the new instructions). Later, temperaments like
-  independence and confidence could decide whether they check with you first (issue #1).
+- Workers keep working while they think. A thought can't change their instructions (only a
+  message or yell from you can, and that change is auto-approved and shows on the card). Later,
+  temperaments like independence could let some workers act on their own judgment (issue #1).
 - A direct message or a `think` can inject a **one-time** sequence ("grab that box first"), after
   which the worker goes back to their routine. Changing the routine for good is a separate, visible
   thing: it rewrites the worker's instructions on their card. One-off is the default; players

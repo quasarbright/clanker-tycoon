@@ -173,3 +173,19 @@ crew size matters (14 boxes with two, 25 with three). The level ended up as 24 r
 boxes in three shifts on $120, where the cheap crews miss the blue, the big ones go broke by the
 second shift, and the best runs come from changing the crew between shifts or servicing the paint
 machine yourself.
+
+## Making your words matter (2026-11-17)
+
+Before money, the first item on the plan was that a shift's result should trace back to what you
+told the crew. Two things broke that. Pip, told only to pack and ship, got nudged when the floor
+stalled and rewrote his own instructions to fetch from the belt too; the check meant to stop that
+compared his new program against his own new wording. Now only you change instructions, a worker
+thinking on their own can only do one-offs inside them, and anything more sends them to your desk
+to ask. In the test he did exactly that every time: "fetching from the belt isn't in my
+instructions, so should I start doing that?"
+
+The other was the leftover 1 in 10 programs that never get anything done. They now get a dry run
+before the shift: 40 seconds on a private copy of the floor with a stage hand handing them what
+coworkers would. Run over the 102 programs in the model log, it flagged exactly one, which turned
+out to be Mike's joke order "run around in circles doing absolutely nothing", so the repair now
+gets to say "yes, really" and the worker goes and runs in circles.

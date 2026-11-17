@@ -1,7 +1,7 @@
 # Worker agents: the design
 
-Status: **built** (2026-11-16), except the Strong attribute (carrying two) and the dry run (step 6
-below), which aren't. Choices made while building: talking to a worker is free (only their own
+Status: **built** (2026-11-16), except the Strong attribute (carrying two). The dry run (step 6)
+and "thinking stays inside your instructions" were built 2026-11-17. Choices made while building: talking to a worker is free (only their own
 thinking spends the budget, 3 thoughts refilling one per 20 s, Smart 5 per 12 s); a problem that
 comes back within 45 s of thinking about it sends them to your desk; and a floor where nothing has
 moved for 15 s counts as unexpected for everyone, which is how the runtime catches a program that
@@ -41,8 +41,14 @@ loop. Personality only shows in what workers say; it never changes how they act.
   steps the instructions don't ask for; trace one pass of the loop before answering.
 - **Checks before the shift:** it parses, it stays inside the subset, and it only uses skills the
   worker has (see below).
-- Possibly later: a short **dry run** in the headless sim before accepting a program, to catch one
-  that never makes progress (about 1 compile in 10 with the rules).
+- A **dry run** (`src/dryrun.js`, built): the program plays for 40 game seconds on a private copy
+  of the floor, alone, with a stage hand keeping what coworkers would supply in reach (widgets of
+  the wanted color on the belt and at Pack, and a finished box at Pack unless the instructions ask
+  this worker to pack). If it never puts anything down, packs, paints or services, it fails; a
+  second try with the paint machine worn out covers a worker who only services. A failure gets one
+  repair; then the worker says what's wrong in their own words and the chip stays red. The repair
+  may answer that the instructions really ask for no work, and then it's accepted. A few ms, no
+  model calls. It also checks changes the boss makes mid-shift.
 
 ## Skills and attributes
 
@@ -64,10 +70,16 @@ loop. Personality only shows in what workers say; it never changes how they act.
   - you send them a direct message, or yell to everyone: a **!** pops up;
   - their program calls `think()`.
 - Thinking draws on a **budget that refills slowly**. Workers **keep working while they think**.
-- A thought returns a spoken **reply**, and either **one-time steps** (the default: "grab that box
-  first") or **new instructions** (when the work really changes). New instructions are
-  auto-approved and show on the card, so the card never disagrees with the robot. Later,
-  temperaments like independence and confidence could make some workers check with you first.
+- An answer to **you** (a message or yell) is a spoken **reply**, and either **one-time steps**
+  (the default: "grab that box first") or **new instructions** (when the work really changes).
+  New instructions are auto-approved and show on the card, so the card never disagrees with the
+  robot.
+- A thought of their **own** (something unexpected, or `think()`) can't change their instructions:
+  it can talk, do one-time steps that stay inside the instructions, or come to your desk. A one-off
+  that walks to a station your own words never mention goes back for a repair, and then to your
+  desk. Later, temperaments like independence could let some workers act on their own judgment.
+- Programs are checked against what you actually said (the worker's `scope`: your instructions plus
+  any message that changed them), never against the worker's restatement on the card.
 - A worker **comes to your desk** when a thought decides it needs you (missing information,
   conflicting instructions, something only you can do), or when the same problem comes back after
   they've thought about it.
@@ -99,7 +111,7 @@ you're still typing.
    primary skills.
 5. **Machine wear.** Wear meter, servicing, Steady, and the manual level that introduces it.
    Random jams go.
-6. **Maybe the dry run**, if the remaining "never makes progress" bug shows up in play.
+6. **The dry run** (built 2026-11-17), and thinking that stays inside your instructions.
 
 ## Open questions
 
