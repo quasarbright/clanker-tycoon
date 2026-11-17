@@ -123,5 +123,5 @@ Smaller, seen in play:
   between shifts, quarter done, back to the board for Q2). All five concerns confirmed, and the
   spawn-on-You bug is confirmed. New from real play: what a message did isn't clear (now #2), and
   thinking looks like talking (#4). Start is inconsistent and the cards have small mismatches.
-- 2026-11-17: Mike answered the open calls. Block Start: yes; mocks wanted for thinking indicator
-  and reply marker (the build thread mocks, Pam reviews). Crew cost: rethought per his point above.
+- 2026-11-17: Mike answered the open calls; the build thread is doing the agreed fixes and the
+  mocks, which Pam reviews. Crew cost rethought per his point (item 1).
