@@ -897,3 +897,27 @@ among an allow-list by cost tier, but there's no "free and fast" setting. Detail
 `tools/model-experiment/REPORT.md`. A free mode on Nemotron, or DeepSeek as a fallback, are
 options for later.
 
+### 67. Overnight: playtests, a dry-run gap, a UX pass (2026-11-17)
+
+**Playtests** (`tools/business-playtest.mjs`): three scripted players (careful, greedy, middle) played
+up to six quarters of level 7 with real instructions compiled by Haiku through OpenRouter (about
+$0.09 in all). Robots don't think mid-shift there, so it's a little harsher than real play.
+- Red Large contracts shipped 3 times in 4 with two or three haulers: a gamble, not a trap.
+  Painted Large ones shipped about half every time with one painter, so they got a little smaller
+  (green 20 to 18 for $510, blue 25 to 22 for $620). They still want a second painter.
+- The careful player bought a machine and recruited, then couldn't pay its four-robot crew and sat
+  at $40 for the rest of the run. In the game you could schedule fewer robots or borrow, but it
+  shows how easily spending strands you.
+- **A real gap:** a packer's routine packed and walked to the dock empty-handed, never shipping,
+  and passed the dry run (packing counted as work). It jammed whole quarters. Instructions that say
+  to ship now have to ship something in the dry run (`src/dryrun.js`, `tools/dryrun-test.mjs`).
+**UX review** (a fresh reviewer on every screen): fixed the clear ones. Shift cards say whether the
+quarter is on pace ("about 18 of 20: 2 short"); end-of-quarter crew pay covers all three shifts and
+per-shift numbers say "this shift"; robots line up by the dock instead of stacking; the board keeps
+its height and sits centered; "Take off shift"; Schedule buttons are secondary; chips say "Shift
+over" after a shift; level 7's shift card has Levels; "Finished in" on level 3's card; the lender no
+longer points at a pay-off button that doesn't exist; "No skills" only when a robot has no traits
+either. Left for Mike: showing crew cost against the budget on the board, blocking Start when a
+scheduled robot has no instructions, a more compact training layout, and the coach line repeating
+the status bar.
+
