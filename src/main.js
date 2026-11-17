@@ -1162,9 +1162,9 @@ function renderBoard() {
   // The lender: no interest; each loan takes 10% of every contract you finish until it's paid back.
   const n = biz.loans.length;
   $("#investorLine").innerHTML = n >= LENDER.max
-    ? `"I'm not lending you any more money until you pay up, deadbeat! You owe me <b class="is-debt">$${debtOf(biz)}</b> on ${n} loans, and I take <b class="is-debt">${now}</b> of every contract you finish."`
+    ? `"I'm not lending you any more money until you pay up, deadbeat! You owe me <b class="is-debt">$${debtOf(biz)}</b> on ${n} loans, and I take <b class="is-debt">${now}</b> of every contract you finish until you're paid up."`
     : n
-    ? `"You owe me <b class="is-debt">$${debtOf(biz)}</b>${n > 1 ? ` on ${n} loans` : ""}, and I take <b class="is-debt">${now}</b> of every contract you finish until you pay up."`
+    ? `"You owe me <b class="is-debt">$${debtOf(biz)}</b>${n > 1 ? ` on ${n} loans` : ""}, and I take <b class="is-debt">${now}</b> of every contract you finish until you're paid up."`
     : `"Short on cash? Borrow from me, no interest. Each loan takes ${pct} of every contract you finish until it's paid off; two loans take ${Math.round(LENDER.share * 200)}%."`;
   $("#loans").innerHTML = LENDER.amounts.map((a, i) => `<button class="ct-btn" data-loan="${i}" ${n >= LENDER.max ? "disabled" : ""} data-tooltip="${n >= LENDER.max ? `You have ${LENDER.max} loans, the most he'll give. Pay one off first.`
     : `You'd owe $${a}, paid back by ${pct} of every contract you finish${n ? `, on top of the ${now} you already pay` : ""}.`}">Borrow $${a}</button>`).join("");
