@@ -164,6 +164,34 @@ cut it: "this kind of feels like it shouldn't exist.")
 
 ![Plant view](mocks/progression/5-plant-view.svg)
 
+#### Open: what is Plant manager's gameplay?
+
+Mike: "we need to think about what this gameplay is even going to be." The bullets above say what
+you're responsible for, not what you do minute to minute. At Line lead your actions are hire,
+write instructions, watch and step in. Plant manager needs its own actions, and they should still
+be about talking to robots, since that's the game. Options, not decided:
+
+- **A. Escalations, live.** All lines run at once. Foremen handle what they can and come to your
+  desk with the rest ("Line B's paint machine is down and nobody there has Repair"). You answer,
+  lend a worker from another line, or drop into a line and sort it out yourself. It plays like a
+  dispatcher juggling calls. Busy and tense; more model calls, and it can get chaotic.
+- **B. Plan between shifts, watch during.** Shifts run on their own, at a speed you choose. The
+  game is between shifts: split the budget, move workers between lines, pick foremen, decide which
+  orders each line takes, set each foreman's goal. Like a sports-manager game. Cheap and thoughtful,
+  but you're mostly watching during shifts.
+- **C. Instructions one level up.** The same core action as Line lead, writing instructions, but
+  to foremen, who turn your goal into instructions for their crew. You can read what they wrote on
+  their robots' cards, so the puzzle is noticing where a foreman misread you and correcting them.
+  Debugging second-hand. This is the "multi-agent orchestration" feel Mike noticed in the worker
+  design.
+- **D. Design the plant.** You choose each line's machines and connect lines (Line A paints, Line B
+  packs what A painted), and robots staff what you build. A factory-builder layer. The most new
+  gameplay, the most to build, and it drifts away from managing people.
+
+My pick: C as the core, with B's rhythm (plan between shifts) and a light dose of A (foremen still
+come to your desk when they're stuck). C keeps the one verb the whole game is built on and makes it
+harder in a new way at each rank, which is what a ladder should do.
+
 ### Rank 3: Director (top of the core ladder)
 - **You:** several plants, each run by a plant manager. You're your old boss now.
 - **New:** you set quotas and budgets for your plant managers, the way the boss set them for you.
