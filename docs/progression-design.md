@@ -25,8 +25,9 @@ You run your own small factory business. The dollar-eyed robot from the favicon 
 "Numbers must go up."
 
 **The loop:**
-1. **Take contracts** from a board: "18 blue boxes in 3 shifts, pays $240, needs a paint machine."
-   Some can't be done in time with what you have.
+1. **Take contracts** for the quarter from a board: "12 blue boxes, pays $320, needs a paint
+   machine." All of a quarter's contracts are due at its end, and no two ask for the same thing, so
+   every box counts for exactly one contract. Take too many and some won't ship in time.
 2. **Run shifts** on the floor: hire, give instructions, watch, fix. Wages tick.
 3. **Get paid** when a contract ships.
 4. **Buy equipment:** a better machine (a pricier paint machine that wears half as fast saves

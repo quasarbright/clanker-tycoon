@@ -79,7 +79,7 @@ export const LEVELS = [
   },
   {
     // Your business (src/business.js): the contract loop on level 6's floor. Opens on the
-    // contract board; each contract you take plays as a quarter with its own order and deadline.
+    // contract board; the contracts you pick for a quarter play as one quarter, all due at its end.
     id: 7, name: "Your business",
     blurb: "Take contracts, buy equipment, pay the investor.",
     stations: ["BELT_A", "PAINT", "PACK", "DOCK", "BIN_1", "BIN_2"],

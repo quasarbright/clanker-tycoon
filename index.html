@@ -231,7 +231,19 @@
     .ct-investor p { margin: 0; line-height: 1.4; }
     .ct-investor b { color: var(--success); }
     .ct-board-sec { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 4px 0 8px; }
-    .ct-offers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 18px; }
+    .ct-offers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .ct-board-go { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin: 12px 0 18px; }
+    .ct-board-go .ct-btn:disabled { opacity: 1; background: var(--panel-2); color: var(--faint); cursor: not-allowed; }
+    .ct-end-contract .ct-ticket { min-width: 4.6em; }
+    .ct-offer.is-picked { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+    .ct-offer-on { display: flex; align-items: center; gap: 6px; background: var(--accent); color: var(--on-accent); --lip: #8f6d0c; }
+    .ct-offer-on svg { width: 1.1em; height: 1.1em; display: block; }
+    .ct-end-contracts { grid-column: 1 / -1; display: grid; gap: 6px; margin-bottom: 8px; }
+    .ct-end-contract { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border-radius: 10px; padding: 6px 10px; text-align: left; }
+    .ct-end-contract span:not(.ct-ticket):not(.ct-ticket-dots):not(.ct-ticket-pay):not(.ct-dot) { flex: 1; color: var(--muted); }
+    .ct-end-contract b { font-family: var(--font-mono); }
+    .ct-end-contract.is-done b { color: var(--success); }
+    .ct-end-contract.is-missed b { color: #ffb4ae; }
     .ct-shop { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
     .ct-offer { display: flex; flex-direction: column; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
     .ct-offer-order { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -244,8 +256,11 @@
     .ct-offer.is-owned { border-color: var(--success); }
     .ct-owned { color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 6px; }
     .ct-owned svg { width: 1.1em; height: 1.1em; display: block; flex: none; }
+    @media (max-width: 900px) { .ct-offers { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 700px) {
       .ct-offers, .ct-shop { grid-template-columns: 1fr; }
+      /* the Start button stays in reach while you scroll the offers */
+      .ct-board-go { position: sticky; bottom: -20px; z-index: 1; background: var(--panel); padding: 10px 0 20px; margin-bottom: 4px; }
       .ct-board { padding: 14px; }
     }
 
@@ -580,12 +595,16 @@
   <div class="ct-overlay is-hidden" id="boardScreen">
     <div class="ct-card-big ct-board">
       <div class="ct-board-head">
-        <div class="ct-title">Contract board</div>
+        <div class="ct-title" id="boardTitle">Quarter 1</div>
         <div class="ct-board-money"><span class="ct-cash-label">Your money</span><span class="ct-cash-value" id="bizMoney"></span></div>
       </div>
       <div class="ct-investor"><img src="favicon.svg" alt=""><p id="investorLine"></p></div>
-      <div class="ct-board-sec">Contracts</div>
+      <div class="ct-board-sec">Contracts for this quarter</div>
       <div class="ct-offers" id="offers"></div>
+      <div class="ct-board-go">
+        <button class="ct-btn is-gold ct-big" id="boardGo" disabled>Start the quarter</button>
+        <div class="ct-planbar-note" id="boardNote"></div>
+      </div>
       <div class="ct-board-sec">Shop</div>
       <div class="ct-shop" id="shop"></div>
       <div class="ct-btns" style="margin-top:16px"><button class="ct-btn" id="boardMenuBtn">Levels</button></div>

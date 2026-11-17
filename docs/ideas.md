@@ -22,9 +22,10 @@ What's being built.
   speed-up controls (thinking can't speed up, so the same shift would play out differently), a
   limited number of pauses (one more thing to keep in mind), slower shifts (boring).
 
-- **A first contract loop.** Level 7, "Your business", on level 6's floor: a board of three
-  contracts, money that carries over, a shop with two paint machines (cheap, or sturdy and wearing
-  half as fast), and the investor's flat 10% of every contract (decision 53). Prototype, to see if
+- **A first contract loop.** Level 7, "Your business", on level 6's floor. Each quarter you pick
+  several contracts from a board, one per color, all due at the end of the quarter's 3 shifts.
+  Money carries over, a shop sells two paint machines (cheap, or sturdy and wearing half as fast),
+  and the investor takes a flat 10% of every contract (decisions 53, 54). Prototype, to see if
   choosing contracts and buying machines is fun before building more.
 
 ## Next
@@ -37,13 +38,6 @@ Agreed direction, not built yet. Roughly in roadmap order.
 - **Contracts.** A board of offers: what, how many, deadline in shifts, pay, machines needed. You
   pick which to take; some can't be done in time with what you have. You choose your difficulty.
   First version built (decision 53). Later: several at once, late pay, how often the board refreshes.
-- **Several contracts at once (open question).** Mike: "Which contract should an output go to?"
-  Different deadlines and overlapping orders (two contracts both wanting red boxes) make it
-  ambiguous. His options: limit how many you take per quarter so they share a deadline, and make
-  their orders never overlap. Suggested: each active contract gets its own shipping dock, and you
-  tell robots which dock to deliver to, so routing is done by talking, like everything else.
-  Fallback if that's too much: a shipped box fills the contract with the earliest deadline first.
-  Not decided.
 - **Money comes in.** Contracts pay. Wages, hiring, equipment, training and the investor's cut go
   out. You can't start a shift you can't pay for.
 - **The investor.** The dollar-eyed robot fronted your starting money and wants a cut every quarter
@@ -128,4 +122,8 @@ Each with the reason.
 - **Apple's on-device model or a decision model:** couldn't plan, or couldn't talk (decision 1).
 - **Freezing game time while a robot thinks:** "really awkward, and really bad for the pacing";
   a plain pause instead.
+- **A dock per contract, with robots told which dock to use** (and the fallback, earliest deadline
+  first): several contracts are now picked per quarter with one deadline and no overlap, so a box
+  only ever counts for one contract. Mike: "The fewer decisions that workers have to make ... the
+  better right now" (decision 54).
 - **One idea per GitHub issue:** issues went stale as the design moved; this file replaces them.

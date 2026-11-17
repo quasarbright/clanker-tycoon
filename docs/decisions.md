@@ -653,3 +653,30 @@ you attention, which is the trade-off we want.
 **Open:** late contracts (nothing, or partial pay?), whether the board should change after a miss,
 and what happens when you can't pay the investor (he only takes a cut of pay for now, so you
 always can).
+
+### 54. Several contracts per quarter, one deadline, no overlap (2026-11-17)
+
+**Question:** Mike: "what if you take multiple contracts with different deadlines? Or multiple
+contracts with overlapping orders? Which contract should an output go to?" Options: a dock per
+contract with robots told which dock to deliver to (routing by talking); a shipped box filling the
+earliest deadline first; or Mike's: "just have a quarter and then you pick what contracts you want
+to take this quarter and they all have the same deadline and no overlap in what they are asking
+for."
+**Picked:** Mike's. "It simplifies everything so much. The fewer decisions that workers have to
+make and the fewer options they have, I think the better right now." Replaces the
+one-contract-at-a-time board from #53.
+- Each quarter (3 shifts) opens on a board of four contracts, each boxes of one color with a pay.
+  You pick any number, one per color: picking a red one rules out the other red one. Blue and green
+  need a paint machine (the belt only brings red).
+- The picked contracts' orders together are the quarter's quota; all your money is its budget.
+- At the end of the quarter, each contract whose boxes all shipped pays (minus the investor's
+  10%); the rest pay nothing. A contract doesn't pay early.
+- The next quarter always gets the next board, whatever you shipped. The note under Start warns
+  when your picks ask for more boxes than the belt brings in a quarter (75).
+**Evidence (`tools/balance.mjs`, every pick on every board, hand-written programs):** on board 1
+everything fits in 3 shifts, so the limit is money: $100 buys the cheap paint machine with $20 left
+for wages. On board 2, 55 red plus anything else misses with one hauler; picking all three colors
+pays $720 if someone services the cheap machine, and only $495 with the sturdy one and nobody
+servicing (green comes up short). On board 3, blue 18 plus green 20 is 38 painted boxes, more than
+one painter makes in a quarter, so one of them misses whatever the machine.
+
