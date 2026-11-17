@@ -18,8 +18,8 @@ let phase = "menu";
 let paused = false;
 let started = false; // the clock starts on your first move
 let lastFrame = performance.now();
-let lastVersion = -1, lastStat = null, lastClock = null, lastOrder = "", lastHands = "", lastHiring = "", lastReady = "";
-const ui = { bots: {}, cards: {}, stations: {}, thinking: {}, bubbleTimers: {}, oopsTimers: {} };
+let lastVersion = -1, lastStat = null, lastClock = null, lastOrder = "", lastHands = "", lastList = "", lastReady = "";
+const ui = { bots: {}, stations: {}, thinking: {}, bubbleTimers: {}, oopsTimers: {}, open: null };
 
 // The thinking budget: how many thoughts a worker can spend on their own (something unexpected, or
 // think() in their program). It refills slowly while the shift runs; Smart workers hold more and
@@ -217,8 +217,7 @@ function begin() {
   started = true;
   setPhase("run");
   keepTyped();
-  buildCrew(); // drop the Let go buttons
-  lastHiring = "";
+  buildCrew(); // drop the Let go buttons and the Hire row
 }
 $("#goBtn").addEventListener("click", begin);
 // Next to Start: who's ready, who's still reading, who can't do theirs. Start waits for the readers.
@@ -315,89 +314,129 @@ const skillBadges = (h) => `<div class="ct-skills">${h.skills.length
   : `<span class="ct-skill is-none" data-tooltip="No skills: carries things between stations, but can't pack, paint or repair.">No skills</span>`}${
   (h.attributes ?? []).map((k) => `<span class="ct-skill is-attr" data-tooltip="${ATTRIBUTES[k].label}: ${ATTRIBUTES[k].tip}">${ATTRIBUTES[k].label}</span>`).join("")}</div>`;
 
-function renderHiring() {
-  const box = $("#hiring");
-  const hired = new Set(game.workers.map((w) => w.id));
-  const open = level.pool.map((id) => CANDIDATES.find((c) => c.id === id)).filter((c) => !hired.has(c.id));
-  const sig = `${started}|${open.map((c) => c.id).join()}`;
-  if (sig === lastHiring) return;
-  lastHiring = sig;
-  if (!level.pool.length && !game.workers.length) { box.innerHTML = ""; return; }
-  const payroll = game.workers.reduce((a, w) => a + w.hire.wage, 0);
-  const head = `<div class="ct-row"><span class="ct-label">Hire</span><span class="ct-wage" style="margin-left:auto">payroll $${payroll}/min</span></div>`;
-  if (started) { box.innerHTML = head + `<p class="ct-blurb">Hiring's closed while the shift runs. You can hire before the next one.</p>`; return; }
-  box.innerHTML = head + (open.length ? open.map((c) => `
-    <div class="ct-candidate" style="--c:${c.color}">
-      <span class="ct-face"></span>
-      <div class="ct-candidate-info"><b>${c.name}</b> <span class="ct-wage">$${c.wage}/min</span><br><span class="ct-blurb">${c.blurb}</span>${skillBadges(c)}</div>
-      <button class="ct-btn is-gold" type="button" data-hire="${c.id}">Hire</button>
-    </div>`).join("") : `<p class="ct-blurb">${level.pool.length ? "You've hired everyone available." : "Nobody's looking for work here."}</p>`);
-  box.querySelectorAll("[data-hire]").forEach((b) => b.addEventListener("click", () => hire(b.dataset.hire)));
-}
-
-// Hiring or letting someone go rebuilds the floor and the cards; keep what's typed in the cards.
-function keepTyped() {
-  for (const w of game.workers) {
-    if (!ui.cards[w.id]) continue;
-    w.draft = $("textarea", ui.cards[w.id]).value || null;
-  }
-}
 function hire(id) {
   const c = CANDIDATES.find((h) => h.id === id);
   if (started) return;
   keepTyped();
   const w = addWorker(game, c);
   rebuildCrew();
-  focusCard(w);
+  openChat(w.id);
 }
 function fire(id) {
   if (started) return;
   keepTyped();
-  const w = worker(id);
   removeWorker(game, id);
-
+  ui.open = null;
   rebuildCrew();
 }
 function rebuildCrew() {
   buildFloor();
   buildCrew();
-  lastHiring = "";
-  renderHiring();
 }
 
-// ---------- crew cards ----------
+// ---------- the crew list and the open chat ----------
+// Like a messages app: one row per worker (face, name, status, their last line, a dot for anything
+// unread) and the open conversation under it. Clicking a row or a robot on the floor opens theirs.
+// Hiring is the list's last row while the shift hasn't started. On a phone the sidebar shows the
+// list or one chat, with a Back button.
 
+const CHEVRON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const BACK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const PLUS = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>`;
+
+const openCandidates = () => level.pool.map((id) => CANDIDATES.find((c) => c.id === id)).filter((c) => !game.workers.some((w) => w.id === c.id));
+const canHire = () => !started && level.pool.length > 0;
+
+// Called after hiring, firing, a new shift or Start: pick what's open and draw everything fresh.
 function buildCrew() {
-  const crew = $("#crew");
-  crew.innerHTML = "";
-  ui.cards = {};
-  for (const w of game.workers) {
+  const open = ui.open === "hire" ? (canHire() ? "hire" : null) : worker(ui.open) && ui.open !== "you" ? ui.open : null;
+  ui.open = open ?? game.workers[0]?.id ?? (canHire() ? "hire" : null);
+  lastList = "";
+  buildChat();
+  $(".ct-side").hidden = !game.workers.length && !level.pool.length;
+}
+
+/** Open a worker's conversation (or "hire"), saving what you'd typed in the one you leave. */
+function openChat(id, { focus = true } = {}) {
+  keepTyped();
+  ui.open = id;
+  lastList = "";
+  buildChat();
+  $(".ct-side").classList.add("is-chat");
+  const w = worker(id);
+  if (w) highlight(w);
+  if (focus) $("#chat textarea")?.focus({ preventScroll: true });
+}
+// Hiring or letting someone go rebuilds the floor and the chat; keep what's typed.
+function keepTyped() {
+  const w = ui.open && worker(ui.open);
+  const ta = $("#chat textarea");
+  if (w && ta) w.draft = ta.value || null;
+}
+
+function renderList() {
+  const rows = game.workers.map((w) => {
+    const [st, cls] = cardState(w);
+    const last = (w.log ?? []).filter((l) => l.who !== "sys").at(-1);
+    const prev = last ? (last.who === "you" ? `You: ${last.text}` : last.text) : w.hire.blurb;
+    const unread = ui.open !== w.id && (w.log ?? []).slice(w.seen ?? 0).some((l) => l.who === "them");
+    const edge = started ? "" : cls === "is-ok" ? "ok" : cls === "is-busy" ? "busy" : "bad";
+    return { w, st, cls, prev, bad: last?.kind === "problem", unread, edge };
+  });
+  const sig = JSON.stringify([ui.open, started, canHire(), rows.map((r) => [r.w.id, r.st, r.prev, r.unread, r.edge, atDesk(r.w)])]);
+  if (sig === lastList) return;
+  lastList = sig;
+  const payroll = game.workers.reduce((a, w) => a + w.hire.wage, 0);
+  const list = $("#crew");
+  list.innerHTML = `<div class="ct-list-head"><span class="ct-label">Crew</span>${game.workers.length ? `<span class="ct-wage">payroll $${payroll}/min</span>` : ""}</div>`
+    + rows.map((r) => `<button type="button" class="ct-convo ${ui.open === r.w.id ? "is-open" : ""} ${atDesk(r.w) ? "is-waiting" : ""}" data-open="${r.w.id}" data-ready="${r.edge}" style="--c:${r.w.hire.color}">
+        ${r.unread ? `<span class="ct-unread" aria-label="unread"></span>` : ""}
+        <span class="ct-face"></span><b>${r.w.hire.name}</b>
+        <span class="ct-chip ${r.cls}">${r.cls === "is-ok" ? CHECK : r.cls === "is-bad" ? ALERT : ""}${r.st}${r.cls === "is-busy" ? DOTS : ""}</span>
+        <span class="ct-convo-prev ${r.bad ? "is-bad" : ""}">${escapeHTML(r.prev)}</span>
+      </button>`).join("")
+    + (canHire() ? `<button type="button" class="ct-hire-row ${ui.open === "hire" ? "is-open" : ""}" data-open="hire">${PLUS}Hire</button>`
+      : started && level.pool.length ? `<p class="ct-blurb ct-list-note">Hiring's closed while the shift runs.</p>` : "");
+  list.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openChat(b.dataset.open)));
+}
+
+// The open panel: one worker's conversation, or the people you can hire.
+function buildChat() {
+  const box = $("#chat");
+  const w = ui.open && ui.open !== "hire" ? worker(ui.open) : null;
+  const back = `<button class="ct-back" type="button" data-back>${BACK}Crew</button>`;
+  if (ui.open === "hire") {
+    const open = openCandidates();
+    box.innerHTML = `<div class="ct-chat-head">${back}<span class="ct-label">Hire</span></div>`
+      + (open.length ? open.map((c) => `
+        <div class="ct-candidate" style="--c:${c.color}">
+          <span class="ct-face"></span>
+          <div class="ct-candidate-info"><b>${c.name}</b> <span class="ct-wage">$${c.wage}/min</span><br><span class="ct-blurb">${c.blurb}</span>${skillBadges(c)}</div>
+          <button class="ct-btn is-gold" type="button" data-hire="${c.id}">Hire</button>
+        </div>`).join("") : `<p class="ct-blurb">You've hired everyone available.</p>`);
+    box.querySelectorAll("[data-hire]").forEach((b) => b.addEventListener("click", () => hire(b.dataset.hire)));
+  } else if (w) {
     const h = w.hire;
-    const card = document.createElement("div");
-    card.className = "ct-card";
-    card.style.setProperty("--c", h.color);
-    card.innerHTML = `
-      <div class="ct-card-head">
-        <span class="ct-face"></span><span class="ct-card-name">${h.name}</span><span class="ct-wage">$${h.wage}/min</span>
-        <span class="ct-chip"></span>
+    box.style.setProperty("--c", h.color);
+    box.innerHTML = `
+      <div class="ct-chat-head">
+        ${back}<span class="ct-face"></span>
+        <div class="ct-chat-who"><b>${h.name}</b><span class="ct-wage">$${h.wage}/min</span></div>
+        <span class="ct-pips"></span>
         ${started ? "" : `<button class="ct-btn ct-small-btn" type="button" data-fire>Let go</button>`}
       </div>
       <p class="ct-blurb">${h.blurb}</p>
-      <div class="ct-row ct-skillrow">${skillBadges(h)}<span class="ct-pips"></span></div>
-      <div class="ct-card-body">
-        <div class="ct-now" hidden></div>
-        <details class="ct-pin" hidden><summary><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="ct-label">Instructions</span><span class="ct-pin-peek"></span></summary><div class="ct-pin-text"></div></details>
-        <div class="ct-log"></div>
-        <form class="ct-compose">
-          <textarea class="ct-textarea" rows="2"></textarea>
-          <button class="ct-btn is-gold" type="submit">Send</button>
-        </form>
-      </div>`;
-    const ta = $("textarea", card);
+      ${skillBadges(h)}
+      <div class="ct-now" hidden></div>
+      <details class="ct-pin" hidden><summary>${CHEVRON}<span class="ct-label">Instructions</span><span class="ct-pin-peek"></span></summary><div class="ct-pin-text"></div></details>
+      <div class="ct-log"></div>
+      <form class="ct-compose">
+        <textarea class="ct-textarea" rows="2"></textarea>
+        <button class="ct-btn is-gold" type="submit">Send</button>
+      </form>`;
+    const ta = $("textarea", box);
     ta.value = w.draft ?? "";
-    $("[data-fire]", card)?.addEventListener("click", (e) => { e.stopPropagation(); fire(w.id); });
-    for (const el of [$(".ct-card-head", card), $(".ct-blurb", card)]) el.addEventListener("click", () => focusCard(w));
-    card.addEventListener("focusin", () => highlight(w));
+    $("[data-fire]", box)?.addEventListener("click", () => fire(w.id));
     // One conversation. Before a worker has working instructions, what you say becomes them; after
     // that, they decide whether a message changes their instructions, is a one-off, or is just talk.
     const send = () => {
@@ -408,45 +447,43 @@ function buildCrew() {
       if (!w.ast || w.compileError) giveInstructions(w, text);
       else message(w, "message", text);
     };
-    $(".ct-compose", card).addEventListener("submit", (e) => { e.preventDefault(); send(); });
+    $(".ct-compose", box).addEventListener("submit", (e) => { e.preventDefault(); send(); });
     // Enter sends; Shift+Enter is a new line.
     ta.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" || e.shiftKey) return;
       e.preventDefault();
       send();
     });
-    crew.append(card);
-    ui.cards[w.id] = card;
     w._cardSig = null;
     w._logSig = null;
+  } else {
+    box.innerHTML = "";
   }
+  box.hidden = !box.innerHTML;
+  $("[data-back]", box)?.addEventListener("click", () => { keepTyped(); $(".ct-side").classList.remove("is-chat"); });
 }
 
-// Clicking a robot or its card's name/description: highlight both, and put the cursor in their
-// card's text box.
+// Clicking a robot: highlight it, and open its conversation.
 function highlight(w) {
-  for (const [id, c] of Object.entries(ui.cards)) c.classList.toggle("is-focused", id === w.id);
   for (const [id, b] of Object.entries(ui.bots)) b.classList.toggle("is-selected", id === w.id);
 }
 function focusCard(w) {
-  const card = ui.cards[w.id];
-  highlight(w);
-  card.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  $("textarea", card)?.focus({ preventScroll: true });
+  openChat(w.id);
+  $(".ct-side").scrollIntoView({ block: "nearest", behavior: "smooth" });
 }
 
-// The conversation on a worker's card: what you told them, what they said back, and what happened.
-//   who: "you" | "them" | "sys"; kind: "instructions" | "yell" | "problem" | "desk" | a label
+// The conversation: what you said, what they said back, and what happened.
+//   who: "you" | "them" | "sys"; kind: "yell" | "problem" | "desk" | a label
 function logLine(w, who, text, kind = "") {
   (w.log ??= []).push({ who, text, kind });
-  if (w.log.length > 40) w.log.shift();
+  if (w.log.length > 40) { w.log.shift(); w.seen = Math.max(0, (w.seen ?? 0) - 1); }
 }
-function renderLog(w, card) {
+function renderLog(w, box) {
   const busy = w.compiling || ui.thinking[w.id];
   const sig = `${w.log?.length ?? 0}|${busy}`;
   if (sig === w._logSig) return;
   w._logSig = sig;
-  const box = $(".ct-log", card);
+  const el = $(".ct-log", box);
   const lines = (w.log ?? []).map((l) => {
     if (l.who === "sys") return `<div class="ct-msg is-sys">${escapeHTML(l.text)}</div>`;
     if (l.who === "you") {
@@ -458,12 +495,12 @@ function renderLog(w, card) {
     return `<div class="ct-msg is-them ${l.kind === "problem" ? "is-bad" : ""} ${l.kind === "desk" ? "is-desk" : ""}">${tag}${escapeHTML(l.text)}${note}</div>`;
   });
   if (busy) lines.push(`<div class="ct-msg is-them is-typing" aria-label="${w.compiling ? "reading" : "thinking"}"><span class="ct-dots"><i></i><i></i><i></i></span></div>`);
-  box.innerHTML = lines.join("");
-  box.hidden = !lines.length;
-  box.scrollTop = box.scrollHeight;
+  el.innerHTML = lines.join("");
+  el.hidden = !lines.length;
+  el.scrollTop = el.scrollHeight;
 }
 
-// The chip in the card's header: where this worker stands right now.
+// The chip on a worker's row: where they stand right now.
 function cardState(w) {
   if (w.compiling) return ["Reading", "is-busy"];
   if (ui.thinking[w.id]) return ["Thinking", "is-busy"];
@@ -478,36 +515,34 @@ function cardState(w) {
 const CHECK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const ALERT = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 7.5v5.5M12 16.5h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
 const DOTS = `<span class="ct-dots"><i></i><i></i><i></i></span>`;
-function renderCard(w) {
-  const card = ui.cards[w.id];
-  if (!card) return;
-  renderLog(w, card);
+function renderChat() {
+  const w = ui.open && ui.open !== "hire" ? worker(ui.open) : null;
+  const box = $("#chat");
+  if (!w || box.hidden) return;
+  w.seen = w.log?.length ?? 0;
+  renderLog(w, box);
   const b = budgetOf(w);
-  const [st, cls] = cardState(w);
-  const sig = `${st}|${b.n}/${b.max}|${w.now?.summary}|${w.orders}`;
+  const sig = `${b.n}/${b.max}|${w.now?.summary}|${w.orders}|${!!w.ast}|${w.compileError}|${atDesk(w)}`;
   if (sig === w._cardSig) return;
   w._cardSig = sig;
-  const chip = $(".ct-chip", card);
-  chip.innerHTML = (cls === "is-ok" ? CHECK : cls === "is-bad" ? ALERT : "") + st + (cls === "is-busy" ? DOTS : "");
-  chip.className = `ct-chip ${cls}`;
-  card.classList.toggle("is-waiting", atDesk(w));
-  // Before the shift the whole card says whether this worker is good to go: red until they have
-  // instructions they can do, green once they do.
-  card.dataset.ready = started ? "" : cls === "is-ok" ? "ok" : cls === "is-busy" ? "busy" : "bad";
-  const pips = $(".ct-pips", card);
+  const pips = $(".ct-pips", box);
   pips.innerHTML = Array.from({ length: b.max }, (_, i) => `<i class="${i < b.n ? "is-on" : ""}"></i>`).join("");
   pips.dataset.tooltip = `Thinking budget: ${b.n} of ${b.max}. ${w.hire.name} spends one to think through something unexpected; it refills by one every ${b.every}s while the shift runs. Talking to them is free.`;
-  // The current instructions, pinned. The edge says how they stand: reading, ready, or a problem.
-  const pin = $(".ct-pin", card);
-  // Their working instructions, as they wrote them down. Hidden until they have some.
-  pin.hidden = !w.ast || !w.orders;
-  $(".ct-pin-text", card).textContent = w.orders ?? "";
-  $(".ct-pin-peek", card).textContent = w.orders ?? "";
-  const now = $(".ct-now", card);
+  // Their working instructions, as they wrote them down, collapsed to one line. Hidden until they
+  // have some.
+  $(".ct-pin", box).hidden = !w.ast || !w.orders;
+  $(".ct-pin-text", box).textContent = w.orders ?? "";
+  $(".ct-pin-peek", box).textContent = w.orders ?? "";
+  const now = $(".ct-now", box);
   now.hidden = !w.now;
   if (w.now) now.innerHTML = `<span class="ct-label">Doing now, then back to the instructions</span> ${escapeHTML(w.now.summary)}`;
-  $("textarea", card).placeholder = atDesk(w) ? `Answer ${w.hire.name}…`
+  $("textarea", box).placeholder = atDesk(w) ? `Answer ${w.hire.name}…`
     : !w.ast || w.compileError ? `Tell ${w.hire.name} what to do, in your own words.` : `Talk to ${w.hire.name}…`;
+}
+// A worker changed their own instructions: their row flashes.
+function flashRow(w) {
+  const row = $(`#crew [data-open="${w.id}"]`);
+  row?.classList.remove("is-changed"); void row?.offsetWidth; row?.classList.add("is-changed");
 }
 
 function budgetOf(w) {
@@ -641,8 +676,7 @@ async function wake(w, trigger, mark) {
     w.compileError = null;
     w.now = null;
     setProgram(g, w, r.ast);
-    ui.cards[w.id]?.classList.remove("is-changed"); void ui.cards[w.id]?.offsetWidth;
-    ui.cards[w.id]?.classList.add("is-changed");
+    flashRow(w);
   }
   clearDesk(w);
   resume(g, w);
@@ -813,7 +847,6 @@ function render() {
     if (!atDesk(w) && w._wasAtDesk) clearBubble(w);
     w._wasAtDesk = atDesk(w);
     if (started && !game.over) refill(w);
-    renderCard(w);
   }
   if (game.version !== lastVersion) {
     lastVersion = game.version;
@@ -861,7 +894,8 @@ function render() {
     }).join("");
   }
   renderHands();
-  renderHiring();
+  renderList();
+  renderChat();
   renderCoach();
 }
 
@@ -872,13 +906,13 @@ function renderCoach() {
   const idle = game.workers.find((w) => !w.ast && !w.compiling && !w.compileError);
   const cantDo = game.workers.find((w) => w.compileError);
   const worn = level.worn && game.wear.PAINT >= 100;
-  if (phase === "plan") text = idle ? `${level.start} ${idle.hire.name} still needs instructions: tell them what to do in their card.`
-    : cantDo ? `${cantDo.hire.name} can't do their instructions; their card says why. Change them, or let ${cantDo.hire.name} go.`
+  if (phase === "plan") text = idle ? `${level.start} ${idle.hire.name} still needs instructions: tell them what to do in their chat.`
+    : cantDo ? `${cantDo.hire.name} can't do their instructions; their chat says why. Change them, or let ${cantDo.hire.name} go.`
     : level.start + (level.pool.length ? "" : " Press <b>Start</b> when you're ready.");
   else if (worn) text = level.worn;
-  else if (deskVisitor) text = `${deskVisitor.hire.name} came to your desk. Answer in their card.`;
-  else if (idle) text = `${idle.hire.name} is waiting for instructions. Tell them what to do in their card.`;
-  else if (cantDo) text = `${cantDo.hire.name} can't do their instructions; their card says why.`;
+  else if (deskVisitor) text = `${deskVisitor.hire.name} came to your desk. Answer in their chat.`;
+  else if (idle) text = `${idle.hire.name} is waiting for instructions. Tell them what to do in their chat.`;
+  else if (cantDo) text = `${cantDo.hire.name} can't do their instructions; their chat says why.`;
   const el = $("#coach");
   if (el._text !== text) { el.innerHTML = text; el._text = text; }
 }
@@ -908,12 +942,13 @@ function openLevel(L, { again = false } = {}) {
     if (old.orders) logLine(w, "sys", "New shift, same instructions.");
   }
   started = false;
-  lastVersion = -1; lastStat = null; lastClock = null; lastOrder = ""; lastHands = ""; lastHiring = ""; lastReady = "";
+  lastVersion = -1; lastStat = null; lastClock = null; lastOrder = ""; lastHands = ""; lastList = ""; lastReady = "";
   ui.thinking = {};
   keysDown.clear();
+  ui.open = null;
+  $(".ct-side").classList.remove("is-chat");
   buildFloor();
   buildCrew();
-  renderHiring();
   $("#levelName").textContent = `Level ${L.id}: ${L.name}`;
   packPick.clear();
   $("#startScreen").classList.add("is-hidden");

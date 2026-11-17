@@ -227,8 +227,6 @@
 
 
     /* hiring: candidates while planning, skill badges everywhere */
-    .ct-hiring { display: flex; flex-direction: column; gap: 8px; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 12px; }
-    .ct-hiring:empty { display: none; }
     .ct-candidate { display: grid; grid-template-columns: auto 1fr auto; gap: 10px; align-items: center; background: var(--panel-2); border-radius: 10px; padding: 8px 10px; }
     .ct-candidate .ct-blurb { margin: 0; }
     .ct-skills { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
@@ -295,9 +293,51 @@
     /* a worker's card is a short conversation with them */
     .ct-chip { margin-left: auto; font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
     .ct-chip svg { width: 13px; height: 13px; display: block; }
-    .ct-card[data-ready="bad"] { border-color: #ff8a80; box-shadow: inset 4px 0 0 #ff8a80; }
-    .ct-card[data-ready="busy"] { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
-    .ct-card[data-ready="ok"] { border-color: var(--success); box-shadow: inset 4px 0 0 var(--success); }
+    /* the crew list: one row per conversation */
+    .ct-side[hidden] { display: none; }
+    .ct-crew, .ct-chat { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; }
+    .ct-crew { padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+    .ct-list-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 4px; }
+    .ct-list-note { padding: 4px 8px 6px; margin: 0; }
+    .ct-convo { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1px 10px; align-items: center; text-align: left;
+      padding: 7px 8px 7px 10px; border: 0; border-radius: 10px; background: none; color: var(--text); cursor: pointer; }
+    .ct-convo:hover { background: var(--panel-2); }
+    .ct-convo.is-open { background: #f2c2301a; }
+    .ct-convo[data-ready="bad"] { box-shadow: inset 3px 0 0 #ff8a80; }
+    .ct-convo[data-ready="busy"] { box-shadow: inset 3px 0 0 var(--accent); }
+    .ct-convo[data-ready="ok"] { box-shadow: inset 3px 0 0 var(--success); }
+    .ct-convo.is-waiting { background: #f2c23026; }
+    .ct-convo .ct-face { grid-row: span 2; width: 34px; height: 32px; border-radius: 10px; }
+    .ct-convo .ct-face::after { left: 8px; right: 8px; top: 11px; height: 6px; }
+    .ct-convo b { font-size: 1rem; }
+    .ct-convo .ct-chip { margin-left: 0; }
+    .ct-convo-prev { grid-column: 2 / 4; color: var(--muted); font-size: .84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .ct-convo-prev.is-bad { color: #ffb4ae; }
+    .ct-convo:has(.ct-unread) .ct-convo-prev { padding-right: 14px; color: var(--text); }
+    .ct-unread { position: absolute; right: 8px; bottom: 12px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+    .ct-convo.is-changed { animation: changed 1.2s ease-out; }
+    .ct-hire-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 4px; padding: 8px; border-radius: 10px; border: 1px dashed var(--border);
+      background: none; color: var(--accent-hi); font-weight: 700; cursor: pointer; }
+    .ct-hire-row:hover, .ct-hire-row.is-open { border-color: var(--accent); background: #f2c2301a; }
+    .ct-hire-row svg { width: 16px; height: 16px; }
+    /* the open conversation */
+    .ct-chat { padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+    .ct-chat[hidden] { display: none; }
+    .ct-chat-head { display: flex; align-items: center; gap: 10px; }
+    .ct-chat-head .ct-face { width: 30px; height: 28px; }
+    .ct-chat-who { display: flex; align-items: baseline; gap: 8px; }
+    .ct-chat-who b { font-size: 1.05rem; }
+    .ct-chat-head .ct-pips { margin-left: auto; padding: 0; align-self: center; }
+    .ct-chat .ct-blurb { margin: 0; }
+    .ct-chat .ct-skills { margin-top: 0; }
+    .ct-back { display: none; border: 0; background: none; color: var(--accent-hi); font-weight: 700; align-items: center; gap: 2px; padding: 0 4px 0 0; cursor: pointer; }
+    .ct-back svg { width: 18px; height: 18px; }
+    /* phones: the list or one chat, not both */
+    @media (max-width: 900px) {
+      .ct-side:not(.is-chat) .ct-chat { display: none; }
+      .ct-side.is-chat .ct-crew { display: none; }
+      .ct-back { display: inline-flex; }
+    }
     .ct-chip.is-need { color: var(--muted); border: 1px dashed var(--border); padding: 2px 9px; }
     .ct-chip.is-busy { color: var(--on-accent); background: var(--accent); }
     .ct-chip.is-desk { color: var(--on-accent); background: var(--accent); }
@@ -389,8 +429,8 @@
       </form>
     </section>
     <aside class="ct-side">
-      <div id="hiring" class="ct-hiring"></div>
-      <div id="crew" class="ct-side"></div>
+      <div id="crew" class="ct-crew"></div>
+      <div id="chat" class="ct-chat"></div>
     </aside>
   </main>
 

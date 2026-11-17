@@ -601,6 +601,7 @@ export function orderLineText(L, l) {
 export function actProgress(s, w) {
   const act = w.act;
   if (!act || act.to) return null; // walking shows itself
+  if (act.kind === "wait") return null; // a program's own pause (wait(1) between checks) is just standing by
   if (act.limit) return { p: Math.min(1, (act.waited ?? 0) / act.limit), waiting: true };
   if (act.until > act.start) return { p: Math.min(1, (s.t - act.start) / (act.until - act.start)), waiting: false };
   return null;

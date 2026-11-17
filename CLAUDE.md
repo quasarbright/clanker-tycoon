@@ -59,6 +59,9 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - Workers cost money (wages), even while the bigger money system is parked.
 
 **Feel**
+- A worker's own pause (wait() between checks) shows no meter; standing by is just standing.
+  Mike doesn't like a filling meter as the sign for waiting at all; what replaces it for waiting on
+  an item is being decided.
 - Nothing just waits without moving. Anything that takes time shows its progress: packing fills a
   box in, painting, servicing a machine, a worker waiting for something. A still screen reads as broken.
 - Simple actions are instant: picking up and putting down take no time.
@@ -127,13 +130,15 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - Model calls run with thinking off where the backend allows it. No compiling while you type.
 
 **Talking to workers**
-- Each worker's card is a conversation with them: instructions, replies, problems, desk visits and
-  yells all show up there, never in a separate log. A chip on the card always says where they stand
-  (reading, ready, can't do it, working, thinking, at your desk), and Start says who's still reading.
+- Talking to workers works like a messages app: a crew list with one row per worker (face, name,
+  status chip, their last line, an unread dot) and the open conversation under it; on phones, the
+  list or one chat. Clicking a row or a robot on the floor opens their chat. Instructions, replies,
+  problems, desk visits and yells all show up in that conversation, never in a separate log, and
+  Start says who's still reading.
 - It's one conversation: no separate "instructions" and "messages". Until a worker has working
   instructions, what you say becomes them; after that, the worker decides whether a message changes
   their instructions, is a one-off, or is just talk.
-- Before a shift each worker's card is red until they have instructions they can do, and green
+- Before a shift each worker's row is red until they have instructions they can do, and green
   once they do.
 - When a worker can't do their instructions, they say what's wrong in their own words: which part
   and why, and what would help. Never a canned error.

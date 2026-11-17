@@ -289,3 +289,24 @@ whether it's talk, a one-off or a change to their instructions. The worker write
 down as one short sentence in your words, pinned under the conversation. Before the shift each card
 is outlined red until the worker has instructions they can do, yellow while reading, green when
 ready. Replaces the two buttons and the Edit link from #23.
+
+### 29. A crew list and one open chat, like a messages app (2026-11-17)
+
+**Problem:** Mike: "having all of these chats one above the other" is awkward; make it "more like
+iMessage ... where you see their icon, their name, and their status ... And clicking an agent in
+the game can expand their chat window."
+**Options (mocked):** A, the list on top of the sidebar with the open chat under it; B, the list or
+one chat with a Back button, like iMessage on a phone.
+**Picked:** A ("I like A"), with B's behavior on phones where there isn't room for both. Each row
+has the face, name, status chip, the last line said, an unread dot, and before the shift the red
+or green edge. Hiring moved into the list as its last row. Replaces the stacked cards from #23.
+
+### 30. No meter for a worker's own pauses (2026-11-17)
+
+**Problem:** a repairman told to service the machine when it needed it stood still with a bar
+filling over and over. His routine was "check, wait a second, check again", and the bar was the
+countdown on each wait(). Mike: not a bug, but "I don't think that's the best way to indicate
+waiting".
+**Picked:** wait() shows no meter. Waiting on something (a widget at the belt, room at Pack) still
+has its meter until Mike picks a replacement from the three mocked (a bubble showing the wanted
+item, a dashed outline in their hands, or the robot watching the station).
