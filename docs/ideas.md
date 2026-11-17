@@ -107,6 +107,12 @@ Ideas worth keeping that aren't planned yet.
   persists between runs and lets you pick policies instead of typing them again. Mike: "Maybe we
   could allow people to have like a bank of policies so they could easily just select from them
   rather than having to type their own every time."
+  Pam's UX take: policies are short lines in your own words on a notice board that sits on the
+  floor (a factory board, and one per line later), never a settings screen. Any line you've typed,
+  in a chat or on the board, gets a one-click "Save to bank"; at the start of a run, or any time,
+  the bank opens as a plain checklist of saved lines, and ticking one pins it. Keep it a flat list
+  you edit in place (no folders, categories or forms), and when a robot acts on a policy its chat
+  says so, so you can see a policy working.
 - **Long-term storage for meta progression.** A single run can live in the browser's
   localStorage, but anything kept across runs (unlockable skins, challenges, trophies, the policy
   bank) needs storage that lasts, and localStorage doesn't last forever. Options: localStorage for
