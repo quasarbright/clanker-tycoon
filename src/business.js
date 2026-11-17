@@ -34,7 +34,11 @@ export const SHOP = [
 // quarters you can recruit more (a one-time fee) and train the ones you have in a new skill. A
 // trained skill raises the wage like any skill, and a third skill jumps it a tier (wages.js).
 export const START_CREW = ["blip", "pip"];
-export const RECRUITS = { dot: 20, gary: 40, rusty: 40, vex: 60, doris: 80, bolt: 120 };
+export const RECRUITS = { dot: 10, nib: 10, cog: 10, tock: 10, gary: 40, rusty: 40, vex: 60, doris: 80, bolt: 120 };
+// Every visit offers one of each tier (Mike: "at least one low-skill worker and one high skill
+// expensive worker and then maybe something in between"): a blank robot to train up yourself, one
+// with a skill or two, and one who can do everything. A tier with nobody left is skipped.
+const TIERS_OF_RECRUITS = [["dot", "nib", "cog", "tock"], ["gary", "rusty", "vex"], ["doris", "bolt"]];
 export const TRAIN_PRICE = 20;
 export const TRAINABLE = ["packing", "painting", "repair"];
 // Attributes can be trained too, at the same price, and count the same way toward the wage.
@@ -62,8 +66,9 @@ function pickFew(list, n, seed) {
 // same three on show (marked done) instead of dealing a new one.
 
 /** The three robots you can recruit this visit (fewer once most of them work for you). */
-export const recruitOffers = (biz) => pickFew(Object.keys(RECRUITS).filter((id) => !biz.crew.includes(id) || biz.recruitedNow.includes(id)), 3, biz.quarters + 1)
-  .sort((x, y) => RECRUITS[x] - RECRUITS[y]);
+export const recruitOffers = (biz) => TIERS_OF_RECRUITS
+  .map((ids, t) => pickFew(ids.filter((id) => !biz.crew.includes(id) || biz.recruitedNow.includes(id)), 1, biz.quarters * 3 + t + 1)[0])
+  .filter(Boolean);
 
 /** The three machines this visit. A paint machine is always among them until you own one. */
 export function machineOffers(biz) {

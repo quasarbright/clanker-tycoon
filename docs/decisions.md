@@ -765,3 +765,16 @@ also be able to buy attributes like fast and smart, similar pricing model, and w
 crew; from board 2 the large size or the large plus the side contract can lose money with a thin
 crew (55 red with one hauler: $-45), and pays most with a full one.
 
+### 59. Recruits come in three tiers, and you can train them right away (2026-11-17)
+
+**Feedback:** Mike: "buying or recruiting cheap people that don't have skills and then building up
+exactly the skills that you want them to have. So in the shop we should have at least one low-skill
+worker and one high skill expensive worker and then maybe something in between ... It should also be
+possible to train someone right after recruiting them."
+**Picked:** the three recruits each visit are always one of each tier: a blank robot with no skills
+or traits for $10 (Dot, or three new ones: Nib, Cog and Tock), one with a skill or two (Gary-7,
+Rusty, Vex, $40 to $60), and one who can do everything (Doris $80, Bolt $120, and pricey every
+shift). A tier with nobody left is skipped. A robot you recruit joins the Training column at once,
+so you can recruit Cog and teach painting and repair in the same visit ($10 + $40, then $15 a
+shift). Replaces the random three from #58.
+

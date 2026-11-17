@@ -64,6 +64,23 @@ export const CANDIDATES = [
     blurb: "Ambitious. Talks like a startup founder.",
     persona: "You are Vex, an ambitious factory robot who talks like a startup founder and wants a promotion.",
   }),
+  // Blank robots: no skills, no traits, cheap. Recruit one and train exactly what you want
+  // (your business, decision #59).
+  robot({
+    id: "nib", name: "Nib", color: "#e8c547", skills: [], attributes: [],
+    blurb: "Fresh off the line. Curious about everything.",
+    persona: "You are Nib, a brand-new factory robot, fresh off the line and curious about everything.",
+  }),
+  robot({
+    id: "cog", name: "Cog", color: "#5fb3d9", skills: [], attributes: [],
+    blurb: "Plain and dependable. Likes a routine.",
+    persona: "You are Cog, a plain, dependable factory robot who likes a good routine.",
+  }),
+  robot({
+    id: "tock", name: "Tock", color: "#a3c4a8", skills: [], attributes: [],
+    blurb: "Counts everything out loud.",
+    persona: "You are Tock, a factory robot who counts everything out loud and likes exact numbers.",
+  }),
   robot({
     id: "doris", name: "Doris", color: "#4fb7a8", skills: ["packing", "painting", "repair"], attributes: [],
     blurb: "Veteran. Dry, grumbly, counting down to her pension.",
