@@ -281,14 +281,14 @@ function renderReady() {
   lastReady = sig;
   $("#goBtn").disabled = reading || short;
   $("#goBtn").dataset.tooltip = reading ? "Waiting for everyone to finish reading their instructions."
-    : short ? `This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. ${level.roster ? "Take someone off the shift." : "Let someone go."}` : "";
+    : short ? `This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. Take someone off the shift.` : "";
   const el = $("#crewReady");
   if (short) {
-    el.innerHTML = `<span class="ct-planbar-note is-bad">This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. ${level.roster ? "Take someone off the shift" : "Let someone go"} to start.</span>`;
+    el.innerHTML = `<span class="ct-planbar-note is-bad">This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. Take someone off the shift to start.</span>`;
     return;
   }
   if (!game.workers.length) {
-    el.innerHTML = level.pool.length ? `<span class="ct-planbar-note">${level.roster ? "Schedule your crew for this shift and give instructions first. Start begins the clock." : "Hire and give instructions first. Start begins the clock; hiring closes then."}</span>` : "";
+    el.innerHTML = level.pool.length ? `<span class="ct-planbar-note">Schedule your crew for this shift and give them instructions first. Start begins the clock; the schedule is set then.</span>` : "";
     return;
   }
   el.innerHTML = game.workers.map((w) => {
@@ -405,8 +405,9 @@ const BACK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-
 
 const openCandidates = () => level.pool.map(candidate).filter((c) => !game.workers.some((w) => w.id === c.id));
 const canHire = () => !started && level.pool.length > 0;
-// In your business the robots are already your crew: you schedule them for a shift, not hire them.
-const words = () => (level.roster ? { hire: "Schedule", fire: "Off shift" } : { hire: "Hire", fire: "Let go" });
+// You put robots on a shift ("Schedule") and take them off it ("Off shift"), never hire or fire
+// (Mike, decision #58): they're paid by the shift.
+const words = () => ({ hire: "Schedule", fire: "Off shift" });
 
 // Called after hiring, firing, a new shift or Start: pick what's open and draw everything fresh.
 function buildCrew() {
@@ -1033,7 +1034,7 @@ function renderCoach() {
   const worn = level.worn && game.wear.PAINT >= 100;
   // A quarter's later shifts say where you stand instead of the level's opening line.
   const start = quarter && quarter.shift > 1
-    ? `Shift ${quarter.shift} of ${level.quarter.shifts}. What's shipped counts toward the ${level.contracts ? "contracts" : "quota"}, and your crew is still here. Hire, let people go or change instructions, then press <b>Start</b>.`
+    ? `Shift ${quarter.shift} of ${level.quarter.shifts}. What's shipped counts toward the ${level.contracts ? "contracts" : "quota"}, and your crew is still here. Change who's on the shift or their instructions, then press <b>Start</b>.`
     : level.start;
   if (phase === "plan") text = idle ? `${start} ${idle.hire.name} still needs instructions: tell them what to do in their chat.`
     : cantDo ? `${cantDo.hire.name} can't do their instructions; their chat says why. Change them, or let ${cantDo.hire.name} go.`
@@ -1151,7 +1152,7 @@ function endQuarterShift() {
   $("#endTitle").textContent = won ? "Quota met" : !last ? `Shift ${n} done` : "Quota missed";
   const shiftsLeft = Q.shifts - n;
   $("#endNote").textContent = won ? `You shipped the quarter's quota in ${n === 1 ? "one shift" : `${n} shifts`} and saved ${left} of your $${Q.budget} budget.`
-    : !last ? `${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left. Your crew and their instructions stay; hire or let people go before the next one.`
+    : !last ? `${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left. Your crew and their instructions stay; change who's on the shift before the next one if you like.`
     : "The quarter ended short of the quota.";
   // What's still to ship, as the same tickets the floor shows.
   const togo = won ? "" : `<div class="ct-end-togo"><span class="ct-label">Still to ship</span>${level.order.map((l, i) => {

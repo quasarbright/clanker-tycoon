@@ -36,12 +36,12 @@ export const LEVELS = [
   },
   {
     id: 3, name: "Crew",
-    blurb: "A bigger order. Hire robots to help.",
+    blurb: "A bigger order. Put robots on the shift to help.",
     stations: ["SUPPLY", "PACK", "DOCK"],
     ship: "boxes", colors: ["red"], order: [{ color: "red", count: 4 }],
     pool: ["blip", "pip", "gary"],
     shift: SHIFT_CREW,
-    start: "One robot can't fill this order before the shift ends. Hire a crew, give each one their part of the work, then press <b>Start</b>.",
+    start: "One robot can't fill this order before the shift ends. Schedule a crew, give each one their part of the work, then press <b>Start</b>.",
   },
   {
     id: 4, name: "Paint",
@@ -54,12 +54,12 @@ export const LEVELS = [
   },
   {
     id: 5, name: "Full floor",
-    blurb: "Everything, and anyone you want to hire.",
+    blurb: "Everything, and any robot you want on the shift.",
     stations: ["SUPPLY", "PAINT", "PACK", "DOCK", "BIN_1", "BIN_2"],
     ship: "boxes", order: [{ color: "green", count: 3 }, { color: "red", count: 2 }],
     pool: ["blip", "gary", "rusty", "pip", "vex"],
     shift: SHIFT_FLOOR,
-    start: "The order wants green and red, and the supply only gives out red, so someone has to paint. Hire your crew, write their instructions, then press <b>Start</b>. Bins are spare storage.",
+    start: "The order wants green and red, and the supply only gives out red, so someone has to paint. Schedule your crew, write their instructions, then press <b>Start</b>. Bins are spare storage.",
   },
   {
     // The first quarter: a sandbox for money against crew. The supply never runs out, so a
