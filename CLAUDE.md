@@ -165,4 +165,4 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   When Mike reports something that doesn't match the current code, suspect a stale tab first.
 - `tools/player-check.mjs` and `tools/balance.mjs` play levels headless to check timings and shift lengths.
 - Ideas go in this repo's issues, one topic each; check for an existing issue first.
-- Commit every change; push only when asked.
+- Commit every change and push it to master right away (Mike, 2026-11-17: "you can be pushing stuff as we go"). Push with `git -C /Users/mdelmonaco/GitHub/clanker-tycoon push`, which the local settings allow.
