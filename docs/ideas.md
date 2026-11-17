@@ -48,6 +48,9 @@ Agreed direction, not built yet. Roughly in roadmap order.
   donut shop (plain rings, glaze flavors, boxes of three); sneakers (blanks, dyed colorways, pairs
   boxed); skateboards (decks, printed graphics, complete boards); coffee (beans, roasts, gift sets);
   potted plants (pots, glazes, planters). Not decided.
+  Mike's favorite so far: you start out making small odd gadgets that don't obviously look robotic,
+  and as the factory grows the parts become recognizable, until it's clear you're building the same
+  robots that work in your factory. "it's just one big pyramid scheme or something."
 - **Crew variety through mechanics.** Robots differ by skills and attributes, not personality.
 - **Contracts.** A board of offers: what, how many, deadline in shifts, pay, machines needed. You
   pick which to take; some can't be done in time with what you have. You choose your difficulty.
