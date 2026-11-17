@@ -87,6 +87,14 @@ Ideas worth keeping that aren't planned yet.
 - **Make Smart matter.** Robots rarely think, so the Smart attribute (a bigger thinking budget)
   barely changes anything yet. Maybe it matters late, for foremen; maybe early contracts need more
   surprises to think about.
+- **A fast decision model for acting, Haiku for talking** (issue #13). A model like JEV picks
+  each robot's next actions from the floor state; Haiku only talks. Not now: the compiled program
+  already picks actions instantly and for free, and it's what makes a shift traceable to your words
+  and testable in the dry run (decisions 36, 37). A decision model can't read your instructions, so
+  it would act on something other than what you said. Thinking is rare because little surprising
+  happens, not because it's slow, so a faster brain wouldn't make Smart matter. Worth revisiting if
+  robots end up needing to react in real time to lots of surprises; first cheap step then is the
+  API backend with thinking off (about 2 s a call instead of 4 to 5).
 - **Recovering from problems.** Time controls, clear alerts, buffers, one-click cleanup (issue #10).
 - **Challenge mode.** Write the robots' programs yourself, no model during the shift (issue #11).
 - **The business side.** Competitors, stock (issue #8). Probably post-game at most.
@@ -120,6 +128,7 @@ Each with the reason.
 - **Grinding money in the tutorial levels:** the tutorial teaches mechanics; money is long-term (decision 7).
 - **JSON rules, or a Lisp, as the worker language:** JavaScript subset was more correct (decision 16).
 - **Apple's on-device model or a decision model:** couldn't plan, or couldn't talk (decision 1).
+  The hybrid (decision model acts, Haiku talks) is under Maybe.
 - **Freezing game time while a robot thinks:** "really awkward, and really bad for the pacing";
   a plain pause instead.
 - **A dock per contract, with robots told which dock to use** (and the fallback, earliest deadline
