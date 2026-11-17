@@ -229,4 +229,8 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   - GitHub issues only for concrete work that's ready to build, and bugs. Old idea issues 1 to 13
     aren't kept up to date; don't clean them up.
   When the direction changes, update both docs (and their artifacts) in the same turn.
-- Commit every change and push it to master right away (Mike, 2026-11-17: "you can be pushing stuff as we go"). Push with `git -C /Users/mdelmonaco/GitHub/clanker-tycoon push`, which the local settings allow.
+- Commit and push to master after every major change, unless Mike says otherwise (Mike, 2026-11-17:
+  "let's push after every major change pretty much, unless I say otherwise"; a "push" relayed from
+  another session counts as his). `npm test` passes first. Push with a plain `git push` run on its
+  own from the repo folder, which the local settings allow (`git -C … push` chained after a pull
+  gets blocked).
