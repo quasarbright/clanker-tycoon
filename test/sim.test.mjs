@@ -1,7 +1,7 @@
 // The floor (src/sim.js): the supply, station capacity, and what a stuck worker raises.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { newGame, step, setProgram, capOf, RULES } from "../src/sim.js";
+import { newGame, step, setProgram, capOf, RULES, SPAWN_GAP, addWorker, removeWorker, FLOOR } from "../src/sim.js";
 import { parseProgram } from "../src/lang.js";
 import { LEVELS } from "../src/levels.js";
 
@@ -56,4 +56,19 @@ test("a level 6 quarter: two haulers and a packer ship red boxes", () => {
   [haul, haul, pack].forEach((src, i) => setProgram(g, g.workers[i], parseProgram(src)));
   run(g, L.shift);
   assert.ok(g.order[0].done >= 15, `shipped ${g.order[0].done} red boxes`);
+});
+
+test("robots put on the floor never start on top of you or each other, on any level (Pam's playtest)", () => {
+  for (const L of LEVELS) {
+    const g = newGame(L, ["a", "b", "c", "d", "e", "f"].map((id) => hire(id)), 1);
+    // Taking one off and putting another on fills the gap without landing on anyone.
+    removeWorker(g, "b"); addWorker(g, hire("g"));
+    const all = [g.player, ...g.workers];
+    for (const [i, p] of all.entries()) {
+      assert.ok(p.x >= 0 && p.x <= FLOOR.w, `${L.name}: ${p.id} is on the floor`);
+      for (const q of all.slice(i + 1)) {
+        assert.ok(Math.hypot(p.x - q.x, p.y - q.y) >= SPAWN_GAP - 1e-9, `${L.name}: ${p.id} and ${q.id} start ${Math.hypot(p.x - q.x, p.y - q.y).toFixed(1)} apart`);
+      }
+    }
+  }
 });

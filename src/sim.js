@@ -117,17 +117,31 @@ export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0, { 
 
 /** Hire someone onto the floor. They start at the dock with no program. */
 export function addWorker(s, hire) {
-  // They line up by the dock, one robot-width apart, so nobody starts on top of anyone.
   const at = standPoint("DOCK", { x: DESK.x + 8, y: DESK.y }), i = s.workers.length;
+  const { x, y } = spawnSpot(s, at);
   const w = {
     id: hire.id, hire, index: i,
-    x: Math.max(4, at.x - 7 * i), y: at.y, station: i === 0 ? "DOCK" : null, holding: null,
+    x, y, station: i === 0 ? "DOCK" : null, holding: null,
     gen: null, nowGen: null, lastOk: undefined, programEnded: false,
     act: null, waiting: null, returnTo: null,
     fails: 0, failLog: [], lastStuck: -1e9,
   };
   s.workers.push(w);
   return w;
+}
+
+/** Where a new robot starts: by the dock, the first spot along the row that's at least a
+ *  robot-width (SPAWN_GAP) from you (at the desk) and from every robot already there. */
+export const SPAWN_GAP = 7;
+function spawnSpot(s, at) {
+  const others = [s.player, ...s.workers].filter(Boolean);
+  const free = (x) => others.every((o) => Math.hypot(o.x - x, o.y - at.y) >= SPAWN_GAP);
+  for (let k = 0; k < 40; k++) {
+    const step = k % 2 ? -Math.ceil(k / 2) : k / 2; // 0, -1, 1, -2, 2, ...
+    const x = at.x + SPAWN_GAP * step;
+    if (x >= 4 && x <= FLOOR.w - 4 && free(x)) return { x, y: at.y };
+  }
+  return { x: Math.max(4, at.x - SPAWN_GAP * s.workers.length), y: at.y };
 }
 
 export function removeWorker(s, id) {

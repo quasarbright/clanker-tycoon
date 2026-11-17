@@ -226,7 +226,8 @@
     .ct-title { font: 400 1.8rem var(--font-display); color: var(--accent); margin: 0 0 10px; }
     .ct-end-note { color: var(--muted); margin: 0 0 16px; }
     .ct-end-note:empty { display: none; }
-    .ct-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .ct-stats { display: grid; grid-template-columns: repeat(var(--n, 3), 1fr); gap: 10px; margin-bottom: 20px; }
+    .ct-stats > div:has(> .ct-stat-value) { display: flex; flex-direction: column; justify-content: space-between; gap: 2px; } /* values line up when a label wraps */
     .ct-end-togo { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; margin-bottom: 4px; }
     .ct-stat-value { font: 400 1.4rem var(--font-display); }
     .ct-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }

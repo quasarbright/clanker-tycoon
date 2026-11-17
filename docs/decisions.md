@@ -921,3 +921,26 @@ either. Left for Mike: showing crew cost against the budget on the board, blocki
 scheduled robot has no instructions, a more compact training layout, and the coach line repeating
 the status bar.
 
+
+### 68. Fixes from Pam's real playtest (2026-11-17)
+
+Pam played a full level 7 quarter with the real model and found three plain bugs. The coordinator
+asked for them fixed without waiting on Mike.
+
+- **Robots spawned on top of you.** New robots lined up leftward from the dock, and the second one
+  landed about 3.6 units from you at the desk, every shift. Now each new robot takes the first spot
+  along the dock row that's at least a robot-width (7) from you and every robot already there
+  (`spawnSpot` in `src/sim.js`). A unit test checks every level with six robots, plus one taken off
+  and replaced.
+- **Start was lit inconsistently.** It was grey only while a robot read its instructions or the
+  budget was short; it stayed lit with nobody scheduled, with robots who had no instructions or
+  couldn't do theirs, and with a robot still thinking over a message. Now there's one rule
+  (`startBlocker` in `src/main.js`): on a crew level someone has to be scheduled, everyone scheduled
+  has to be Ready, and the budget has to cover them. The tooltip on Start says who isn't ready. This
+  settles the open call "block Start when a scheduled robot has no instructions" (yes). The other
+  "needs instructions" repeats (chip, status bar, coach) are still Mike's call.
+- **An early quarter didn't say it ended early.** When everything ships before the last shift, the
+  card is titled "Quarter over early" and says which shifts are skipped, and the header budget
+  shows the same total as the card (it showed the budget before the clients paid). The card's
+  numbers now stay in one row with values lined up, however many there are (one `setEndStats`
+  renderer for all three cards).

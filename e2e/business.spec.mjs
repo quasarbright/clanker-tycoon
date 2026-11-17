@@ -165,13 +165,64 @@ test("a shift card says whether the quarter is on pace; the quarter card adds up
   await expect(page.locator("#endStats")).toContainText("$45"); // 3 shifts of $15
 });
 
-test("robots put on the shift don't start on top of each other", async ({ page }) => {
+test("robots put on the shift don't start on top of you or each other, next shift too", async ({ page }) => {
   await openBoard(page);
   await page.locator("[data-contract]").first().click();
   await page.click("#boardGo");
-  await page.evaluate(() => { ct.hire("blip"); ct.hire("pip"); });
-  const xs = await page.evaluate(() => ct.game.workers.map((w) => w.x));
-  expect(Math.abs(xs[0] - xs[1])).toBeGreaterThanOrEqual(6);
+  await page.evaluate(() => { ct.hire("blip"); ct.hire("pip"); ct.hire("dot"); });
+  const gaps = () => page.evaluate(() => {
+    const all = [ct.game.player, ...ct.game.workers];
+    return Math.min(...all.flatMap((p, i) => all.slice(i + 1).map((q) => Math.hypot(p.x - q.x, p.y - q.y))));
+  });
+  expect(await gaps()).toBeGreaterThanOrEqual(6.9);
+  await endShift(page, [1]);
+  await page.click('[data-go="next"]');
+  expect(await page.evaluate(() => ct.game.workers.length)).toBe(3);
+  expect(await gaps()).toBeGreaterThanOrEqual(6.9);
+});
+
+test("Start waits until everyone scheduled is ready, and says who isn't", async ({ page }) => {
+  await openBoard(page);
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  const go = page.locator("#goBtn");
+  await expect(go).toBeDisabled(); // nobody scheduled
+  await page.evaluate(() => {
+    ct.useFakeLlm(async () => ({ reply: "On it.", instructions: "ship", problem: "",
+      program: `while (needsAny() > 0) { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); }` }));
+    ct.hire("blip"); ct.hire("pip");
+  });
+  await expect(go).toBeDisabled();
+  await expect(go).toHaveAttribute("data-tooltip", /Blip needs instructions, Pip needs instructions/);
+  await page.evaluate(() => ct.give("blip", "Carry red widgets from the supply to Pack."));
+  await expect(go).toHaveAttribute("data-tooltip", /^Not everyone is ready: Pip needs instructions\.$/);
+  await page.evaluate(() => ct.give("pip", "Carry red widgets from the supply to Pack."));
+  await expect(go).toBeEnabled();
+  await expect(go).toHaveAttribute("data-tooltip", "");
+  // Thinking over a message before the shift holds Start too.
+  await page.evaluate(() => ct.thinking("pip", 1));
+  await expect(go).toBeDisabled();
+  await expect(go).toHaveAttribute("data-tooltip", "Waiting for Pip to finish thinking.");
+  await page.evaluate(() => ct.thinking("pip", -1));
+  await expect(go).toBeEnabled();
+  await go.click();
+  await expect(page.locator("#levelName")).toContainText("Shift 1 of 3");
+});
+
+test("a quarter that ships everything early says so, and the header budget matches the card", async ({ page }) => {
+  await openBoard(page);
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  await endShift(page); // everything ships in shift 1
+  await expect(page.locator("#endTitle")).toHaveText("Quarter over early");
+  await expect(page.locator("#endNote")).toContainText("Everything shipped in shift 1 of 3, so the quarter ends early and shifts 2 and 3 are skipped.");
+  // The stats sit in one row, however many there are.
+  const tops = await page.locator("#endStats > div:has(.ct-stat-value)").evaluateAll((els) => new Set(els.map((e) => e.getBoundingClientRect().top)).size);
+  expect(tops).toBe(1);
+  const budget = await page.locator("#endStats > div", { hasText: "Budget" }).locator(".ct-stat-value").textContent();
+  await expect(page.locator("#labor")).toHaveText(budget);
+  await page.click('[data-go="board"]');
+  await expect(page.locator("#bizMoney")).toHaveText(budget);
 });
 
 test("a robot with a trait but no skills shows the trait, not 'No skills'", async ({ page }) => {
