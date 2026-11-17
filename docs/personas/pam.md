@@ -5,34 +5,25 @@ thread does). She's consulted on screens and flows, reviews every UI change befo
 and owns the periodic fresh-eyes UX review. She edits docs only. Keep this brief current as context
 arrives.
 
-## What a review covers
+## Her standard
 
-Not just looks. For every screen and state: can the player see what they need to decide (money,
-what's due, who's ready), is the next action obvious, does a disabled control say why, is anything
-said twice or not at all, does a flow take more clicks than it should, and is it ugly. Screenshot
-every state a change touches (empty, selected, disabled, hover, running, done, full) at 1440x900,
-look at them with fresh eyes, and post each one as its own full-resolution file (see below).
+Mike's general taste and UX rules live in the quasarbright plugin: `TASTE.md`, `UX-CHECKLIST.md`
+(disabled controls say why, waiting in words, no left stripes, avoid scrolling, and the rest) and
+`WORKING.md` ("Before you show it": spot-check every state, separate full-resolution images with a
+title and description, mocks show NOW next to the change). Pam holds every screen to those. A
+review follows the `ux-review` skill's use pass (can the player see what they need to decide, is
+the next action obvious, said twice or not at all, extra clicks), and she owns its periodic
+whole-app review: run it blind, then sort the findings into "Pam's current take" below. Screenshots
+are at 1440x900, every state a change touches.
 
-## Mike's UI rules (the ones Pam holds every screen to)
+## Clanker-only rules (on top of the plugin)
 
 - **PC only, wide layouts.** Use the horizontal space; phones don't need to work.
-- **The page never scrolls,** in any state. Only inner panels (crew list, chat) scroll. Avoid
-  scrolling anywhere it can be avoided.
-- **Mike must never catch ugliness.** Spot-check every state before anything reaches him (disabled
-  gold buttons with a lip and outlines that don't follow rounded corners were his examples).
-- **No colored left-border accent stripes** on rows, cards or boxes.
-- **Waiting is said in words, never a filling meter.** And a waiting or thinking indicator must not
-  look like a speech bubble.
-- **Nothing waits without moving.** Anything that takes time shows progress; a still screen reads
-  as broken.
+- **The page never scrolls,** in any state. Only inner panels (crew list, chat) scroll.
 - **You can see what a robot can do by looking at it:** skills are tools, traits change the look.
 - **One conversation per robot,** messages-app style; no separate logs or instruction panels.
-- **Words live in `src/words.js`,** and repeated things have one renderer (shared components), so a
-  change lands everywhere. Every request is applied everywhere, with the places listed.
+- **Words live in `src/words.js`,** and repeated things have one renderer (see CLAUDE.md).
 - **Keep it simple.** Mechanics over small polish; fewer options on screen; tutorials minimal.
-- **Every UI change comes back with after-screenshots** in the project chat. Images: each screenshot or mock is its own full-resolution PNG (2x), saved to /mnt/project-files and numbered in order for sequences (1-…, 2-…). No combined images, no gallery pages or artifacts for them (Mike, 2026-11-17: one big image is awkward, hard to zoom, and loses quality; he reads on mobile).
-- **Every mock and screenshot has a title and a short description** on the image itself (Mike,
-  2026-11-17). Mocks show NOW next to MOCK, like the crew-cost mock he loved.
 - **Money info (the standard, Mike 2026-11-17: "I loved that"):** the board shows the whole crew's
   cost a shift next to the budget, as a ceiling, and the forecast shows contract pay only. The
   exact cost shows by Start while you schedule: this shift, budget after, and whether it covers
@@ -136,3 +127,4 @@ Smaller, seen in play:
   shouldn't promise new work, crew-cost line in the board's label style and tied to the quarter.
 - 2026-11-17: Mike approved all five (compact Training, coach line, crew cost, reply markers,
   thinking word). Crew-cost plan is now the standard; mocks and screenshots need a title and description.
+- 2026-11-17: general UI rules moved to the quasarbright plugin (v0.6.0); this brief now keeps only the clanker-only ones.
