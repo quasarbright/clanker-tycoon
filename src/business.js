@@ -8,6 +8,8 @@
 //
 // The boards are written by hand, one per quarter. Numbers from tools/balance.mjs.
 
+import { wageOf } from "./wages.js";
+
 /** The dollar-eyed robot fronted your starting money and takes a cut of every contract. */
 export const INVESTOR = { fronted: 100, cut: 0.1 };
 
@@ -19,6 +21,40 @@ export const SHOP = [
   { id: "paint", name: "Paint machine", price: 80, wear: 10, blurb: "Wears 10% a job. Cheap, but someone with Repair has to service it every 10 jobs." },
   { id: "sturdy", name: "Sturdy paint machine", price: 170, wear: 5, blurb: "Wears 5% a job. Costs more, and needs half the servicing." },
 ];
+
+// Your crew (decision #56): the robots you can hire for a shift. You start with two; between
+// quarters you can take on more (a one-time fee) and train the ones you have in a new skill. A
+// trained skill raises the wage like any skill, and a third skill jumps it a tier (brains.js).
+export const START_CREW = ["blip", "pip"];
+export const RECRUITS = { dot: 20, gary: 40, rusty: 40, vex: 60 };
+export const TRAIN_PRICE = 50;
+export const TRAINABLE = ["packing", "painting", "repair"];
+
+/** A robot (`c`, from brains.js CANDIDATES) as your business has them: their own skills plus what
+ *  you've trained. */
+export function robotOf(biz, c) {
+  const id = c.id;
+  const skills = [...c.skills, ...(biz.trained[id] ?? [])];
+  return { ...c, skills, wage: wageOf(skills, c.attributes) };
+}
+
+/** Take a robot onto your crew for its fee. */
+export function recruit(biz, id) {
+  const price = RECRUITS[id];
+  if (price == null || biz.crew.includes(id) || biz.money < price) return false;
+  biz.money -= price;
+  biz.crew.push(id);
+  return true;
+}
+
+/** Teach one of your robots a skill. */
+export function train(biz, c, skill) {
+  const id = c.id;
+  if (!biz.crew.includes(id) || biz.money < TRAIN_PRICE || robotOf(biz, c).skills.includes(skill)) return false;
+  biz.money -= TRAIN_PRICE;
+  (biz.trained[id] ??= []).push(skill);
+  return true;
+}
 
 // One board per quarter. Each contract is boxes of one color (boxes of 3) and what the client pays
 // when they've all shipped. The belt only brings red, so blue and green need a paint machine.
@@ -44,7 +80,7 @@ const TIERS = [
 ];
 
 export function newBusiness() {
-  return { money: INVESTOR.fronted, quarters: 0, wins: 0, paidOut: 0, owned: null };
+  return { money: INVESTOR.fronted, quarters: 0, wins: 0, paidOut: 0, owned: null, crew: [...START_CREW], trained: {} };
 }
 
 /** This quarter's board; past the last one, the last again at 15% more pay per quarter. */
@@ -76,12 +112,15 @@ export const clashes = (picked, c) => picked.some((p) => p.id !== c.id && p.colo
 const list = (cs) => cs.map((c) => `${c.count} ${c.color}`).join(", ").replace(/, ([^,]*)$/, " and $1");
 
 /** The level a quarter plays as: level 6's floor, with a paint station only if you own one. */
-export function quarterLevel(base, biz, contracts) {
+// `candidates` (brains.js CANDIDATES) gives the floor your crew with their trained skills.
+export function quarterLevel(base, biz, contracts, candidates = []) {
   const m = machine(biz);
   const pay = contracts.reduce((a, c) => a + c.pay, 0);
   return {
     ...base, name: "Quarter",
     stations: base.stations.filter((k) => k !== "PAINT" || m),
+    pool: [...biz.crew],
+    roster: Object.fromEntries(candidates.filter((c) => biz.crew.includes(c.id)).map((c) => [c.id, robotOf(biz, c)])),
     wear: m?.wear,
     order: contracts.map((c) => ({ color: c.color, count: c.count })),
     quarter: { shifts: QUARTER_SHIFTS, budget: biz.money },

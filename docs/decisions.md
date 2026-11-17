@@ -691,3 +691,23 @@ that every contract is due at the end of the last one. Each contract's ticket on
 its pay after the shipped count; once all its boxes have shipped the pay turns green with a check,
 because that money is now coming at the end of the quarter.
 
+### 56. Train your crew and take on more robots between quarters (2026-11-17)
+
+**Question:** Mike: "the roguelike element of getting more people on the crew and also upgrading
+their skills and stuff. Like training. But if you train too many things or somebody has too many
+skills, they start costing more ... Maybe just after some threshold, not like a continuous thing."
+Then: "Let's just do it now."
+**Picked:** in level 7, the board has a Your crew section.
+- You start with two robots, Blip (no skills, $5 a shift) and Pip (packing, $10). Only your crew
+  can be hired on the floor.
+- Take on more for a one-time fee: Dot $20, Gary-7 $40, Rusty $40, Vex $60.
+- Train any of your robots in packing, painting or repair for $50 a skill. Trained skills work like
+  their own (tools in hand, compile checks), and carry over to the next quarter, already-hired robots
+  included.
+- Wages: $5, plus $5 per skill and attribute, as before, and a robot's third skill adds $20 more.
+  So Pip with packing, painting and repair costs $40 a shift, where Pip, a trained Blip and Rusty
+  cost $45 together and work three times as fast. The rule lives in `src/wages.js` and applies
+  everywhere; only Doris and Bolt already had three skills, and no level hires them.
+**Why a jump, not a creep:** Mike asked for a threshold, and a jump keeps the first two skills an
+easy call while making a do-everything robot a real decision.
+

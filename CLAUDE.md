@@ -60,7 +60,9 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   told to pack and ship, "rewrote his own instructions" mid-shift to fetch from the belt too.) The
   stray-station check compares against your own words, not the worker's restatement on the card.
 - Workers cost money: a flat rate per shift (shifts are a fixed length, so per-minute pay meant
-  nothing), paid at Start.
+  nothing), paid at Start. A robot's third skill jumps their wage a tier instead of creeping it up
+  (Mike: "just after some threshold, not like a continuous thing"), so one robot who can do
+  everything costs more than a crew.
 
 **Feel**
 - Waiting is said in words, never a filling meter: a worker holding on at a station gets a

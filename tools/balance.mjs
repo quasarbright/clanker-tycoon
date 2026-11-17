@@ -147,7 +147,7 @@ for (let quarters = 0; quarters < 3; quarters++) {
     const paint = pick.some((c) => c.needs), red = pick.some((c) => !c.needs);
     console.log(`  ${pick.map((c) => `${c.count} ${c.color} $${c.pay}`).join(" + ")}`);
     for (const m of paint ? SHOP : [null]) {
-      const L = quarterLevel(Q, { money: 9999, owned: m?.id ?? null }, pick);
+      const L = quarterLevel(Q, { money: 9999, owned: m?.id ?? null, crew: [], trained: {} }, pick);
       for (const [name, plan] of CREWS[paint && red ? "both" : paint ? "paint" : "red"]) {
         console.log(`    ${(m ? m.id + ": " : "") + name}`.padEnd(52), businessQuarter(L, plan, 1));
       }

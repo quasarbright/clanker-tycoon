@@ -12,7 +12,9 @@ import { backendLabel } from "./llm.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money } from "./quarter.js";
-import { INVESTOR, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, clashes, cutOf, buy, beltBoxes, quarterLevel, payouts, settle } from "./business.js";
+import { INVESTOR, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, clashes, cutOf, buy, beltBoxes, quarterLevel, payouts, settle,
+  RECRUITS, TRAIN_PRICE, TRAINABLE, robotOf, recruit, train } from "./business.js";
+import { SKILL_TIER, wageOf } from "./wages.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const floor = $("#floor");
@@ -339,8 +341,10 @@ const skillBadges = (h) => `<div class="ct-skills">${h.skills.length
   : `<span class="ct-skill is-none" data-tooltip="No skills: carries things between stations, but can't pack, paint or repair.">No skills</span>`}${
   (h.attributes ?? []).map((k) => `<span class="ct-skill is-attr" data-tooltip="${ATTRIBUTES[k].label}: ${ATTRIBUTES[k].tip}">${ATTRIBUTES[k].label}</span>`).join("")}</div>`;
 
+// A robot as this level has them: your business's crew can have trained skills (business.js).
+const candidate = (id) => level.roster?.[id] ?? CANDIDATES.find((c) => c.id === id);
 function hire(id) {
-  const c = CANDIDATES.find((h) => h.id === id);
+  const c = candidate(id);
   if (started) return;
   if (cantAfford(c)) return;
   keepTyped();
@@ -371,7 +375,7 @@ function rebuildCrew() {
 const CHEVRON = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const BACK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 
-const openCandidates = () => level.pool.map((id) => CANDIDATES.find((c) => c.id === id)).filter((c) => !game.workers.some((w) => w.id === c.id));
+const openCandidates = () => level.pool.map(candidate).filter((c) => !game.workers.some((w) => w.id === c.id));
 const canHire = () => !started && level.pool.length > 0;
 
 // Called after hiring, firing, a new shift or Start: pick what's open and draw everything fresh.
@@ -1035,7 +1039,8 @@ function openLevel(L, { again = false, shift = "restart", keepCrew = false } = {
   level = L;
   game = newGame(L, [], undefined, { done: quarter?.done });
   for (const old of crew) {
-    const w = addWorker(game, old.hire);
+    // Skills trained between quarters come with them.
+    const w = addWorker(game, L.roster?.[old.id] ?? old.hire);
     Object.assign(w, { orders: old.orders, scope: old.scope, compileError: old.compileError, memory: old.memory, draft: null });
     if (old.ast && !old.compileError) setProgram(game, w, old.ast);
     // The conversation carries on from shift to shift, with a divider where the new one starts.
@@ -1202,13 +1207,43 @@ function renderBoard() {
     </div>`;
   }).join("");
   $("#shop").querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { if (buy(biz, b.dataset.buy)) renderBoard(); }));
+  renderBoardCrew();
+}
+
+// Your crew on the board: train the robots you have, take on new ones.
+function renderBoardCrew() {
+  const short = (n) => biz.money < n ? `disabled data-tooltip="You have ${money(biz.money)}."` : "";
+  $("#crewNote").textContent = `Training costs $${TRAIN_PRICE} a skill, and every skill adds $5 to a robot's pay. A robot's ${["", "first", "second", "third", "fourth"][SKILL_TIER.at]} skill adds $${SKILL_TIER.extra} more.`;
+  $("#bizCrew").innerHTML = biz.crew.map((id) => {
+    const r = robotOf(biz, CANDIDATES.find((c) => c.id === id));
+    const can = TRAINABLE.filter((k) => !r.skills.includes(k));
+    return `<div class="ct-biz-bot" style="--c:${r.color}">
+      ${faceHTML(r)}<div><div><b>${r.name}</b> <span class="ct-wage">$${r.wage}/shift</span></div>${skillBadges(r)}</div>
+      <div class="ct-train">${can.length ? `<span class="ct-label">Train</span>` : ""}${can.map((k) => {
+        const after = wageOf([...r.skills, k], r.attributes);
+        return `<button class="ct-btn" data-train="${id}:${k}" ${biz.money < TRAIN_PRICE ? `disabled data-tooltip="You have ${money(biz.money)}."`
+          : `data-tooltip="${r.name} would then cost $${after} a shift."`}>${SKILLS[k].label} $${TRAIN_PRICE}</button>`;
+      }).join("")}</div>
+    </div>`;
+  }).join("") + Object.entries(RECRUITS).filter(([id]) => !biz.crew.includes(id)).map(([id, price]) => {
+    const r = robotOf(biz, CANDIDATES.find((c) => c.id === id));
+    return `<div class="ct-biz-bot is-recruit" style="--c:${r.color}">
+      ${faceHTML(r)}<div><div><b>${r.name}</b> <span class="ct-wage">$${r.wage}/shift</span></div>${skillBadges(r)}<div class="ct-biz-blurb">${r.blurb}</div></div>
+      <div class="ct-train"><button class="ct-btn is-gold" data-recruit="${id}" ${short(price)}>Take on $${price}</button></div>
+    </div>`;
+  }).join("");
+  $("#bizCrew").querySelectorAll("[data-train]").forEach((b) => b.addEventListener("click", () => {
+    const [id, k] = b.dataset.train.split(":");
+    if (train(biz, CANDIDATES.find((c) => c.id === id), k)) renderBoard();
+  }));
+  $("#bizCrew").querySelectorAll("[data-recruit]").forEach((b) => b.addEventListener("click", () => { if (recruit(biz, b.dataset.recruit)) renderBoard(); }));
 }
 $("#boardMenuBtn").addEventListener("click", () => showMenu());
 $("#boardGo").addEventListener("click", () => {
   if (!picked.length) return;
   // In the order the board lists them, so the tickets on the floor match the board.
   const offers = board(biz).filter((c) => picked.some((p) => p.id === c.id));
-  openLevel(quarterLevel(BUSINESS, biz, offers), { keepCrew: true });
+  openLevel(quarterLevel(BUSINESS, biz, offers, CANDIDATES), { keepCrew: true });
 });
 
 // A shift of the quarter ended: everything shipped, there's another shift, or the quarter's over.

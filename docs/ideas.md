@@ -28,6 +28,12 @@ What's being built.
   and the investor takes a flat 10% of every contract (decisions 53, 54). Prototype, to see if
   choosing contracts and buying machines is fun before building more.
 
+- **Training and a growing crew.** Built in level 7 (decision 56). Your business starts with Blip
+  and Pip; between quarters you take on more robots for a one-time fee and train skills for $50
+  each. Every skill adds $5 a shift, and a robot's third skill adds $20 more, so one robot who can do
+  everything costs more than a crew (the "Bolt does everything" problem). Later: experience making
+  training cheaper (issue #4), a hiring pool that changes between quarters.
+
 ## Next
 
 Agreed direction, not built yet. Roughly in roadmap order.
@@ -57,12 +63,6 @@ Agreed direction, not built yet. Roughly in roadmap order.
   forces it (you can only talk to one robot at a time), not a rule.
 - **Foremen's standing instructions.** How a foreman manages ("tell me early when a deadline's at
   risk"). Your corrections can become new lines, so a mistake doesn't come back.
-- **Training and a growing crew.** Between quarters you take on more robots and train them in new
-  skills, a roguelike-style build-up. Past a threshold (say a third skill) a robot's wage jumps a
-  tier, rather than rising a little with every skill. Mike: "if you train too many things or
-  somebody has too many skills, they start costing more ... Maybe just after some threshold, not
-  like a continuous thing." It also keeps one all-skill robot from beating a crew, the "Bolt does
-  everything" problem. Experience could make training cheaper (issue #4).
 - **Experience.** Shifts worked, shown on the card (issue #4).
 
 ## Maybe

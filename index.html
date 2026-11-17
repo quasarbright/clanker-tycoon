@@ -257,6 +257,12 @@
     .ct-end-contract.is-done b { color: var(--success); }
     .ct-end-contract.is-missed b { color: #ffb4ae; }
     .ct-shop { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+    .ct-biz-crew { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+    .ct-biz-bot { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: start; background: var(--panel-2); border-radius: 12px; padding: 10px 12px; text-align: left; }
+    .ct-biz-bot.is-recruit { background: transparent; border: 1px dashed var(--border); }
+    .ct-biz-blurb { color: var(--muted); font-size: .85rem; margin-top: 4px; }
+    .ct-biz-bot .ct-train { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+    .ct-biz-bot .ct-train .ct-btn { padding: 6px 12px; font-size: .88rem; }
     .ct-offer { display: flex; flex-direction: column; gap: 8px; background: var(--panel-2); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
     .ct-offer-order { display: flex; flex-wrap: wrap; gap: 6px; }
     .ct-offer-pay { font: 400 1.6rem/1 var(--font-display); color: var(--accent); }
@@ -270,7 +276,7 @@
     .ct-owned svg { width: 1.1em; height: 1.1em; display: block; flex: none; }
     @media (max-width: 900px) { .ct-offers { grid-template-columns: repeat(2, 1fr); } }
     @media (max-width: 700px) {
-      .ct-offers, .ct-shop { grid-template-columns: 1fr; }
+      .ct-offers, .ct-shop, .ct-biz-crew { grid-template-columns: 1fr; }
       /* the Start button stays in reach while you scroll the offers */
       .ct-board-go { position: sticky; bottom: -20px; z-index: 1; background: var(--panel); padding: 10px 0 20px; margin-bottom: 4px; }
       .ct-board { padding: 14px; }
@@ -617,7 +623,10 @@
         <button class="ct-btn is-gold ct-big" id="boardGo" disabled>Start the quarter</button>
         <div class="ct-planbar-note" id="boardNote"></div>
       </div>
-      <div class="ct-board-sec">Shop</div>
+      <div class="ct-board-sec">Your crew</div>
+      <p class="ct-offer-note" id="crewNote" style="margin:0 0 8px"></p>
+      <div class="ct-biz-crew" id="bizCrew"></div>
+      <div class="ct-board-sec" style="margin-top:18px">Shop</div>
       <div class="ct-shop" id="shop"></div>
       <div class="ct-btns" style="margin-top:16px"><button class="ct-btn" id="boardMenuBtn">Levels</button></div>
     </div>

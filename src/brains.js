@@ -16,6 +16,7 @@ import { llm } from "./llm.js";
 import { COLORS, viewFor, toolNamesFor, programStationName } from "./sim.js";
 import { parseProgram, checkProgram } from "./lang.js";
 import { dryRun } from "./dryrun.js";
+import { wageOf } from "./wages.js";
 
 // ---------- who you can hire ----------
 
@@ -30,10 +31,8 @@ export const ATTRIBUTES = {
   steady: { label: "Steady", tip: "Machines wear half as fast in their hands." },
   smart: { label: "Smart", tip: "Can think things through more often (a bigger thinking budget that refills faster)." },
 };
-// Wage: $3/min, plus $2 for every skill and every attribute.
-// Wage: a flat rate for a shift (shifts are a fixed length, so a per-minute wage was just a
-// multiplier): $5, plus $5 for every skill and every attribute.
-const robot = (r) => ({ ...r, wage: 5 + 5 * (r.skills.length + r.attributes.length) });
+// Wage: a flat rate for a shift, from their skills and attributes (wages.js).
+const robot = (r) => ({ ...r, wage: wageOf(r.skills, r.attributes) });
 export const CANDIDATES = [
   robot({
     id: "blip", name: "Blip", color: "#d97bd1", skills: [], attributes: [],
