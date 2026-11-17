@@ -173,3 +173,11 @@ test("robots put on the shift don't start on top of each other", async ({ page }
   const xs = await page.evaluate(() => ct.game.workers.map((w) => w.x));
   expect(Math.abs(xs[0] - xs[1])).toBeGreaterThanOrEqual(6);
 });
+
+test("a robot with a trait but no skills shows the trait, not 'No skills'", async ({ page }) => {
+  await openBoard(page);
+  await page.evaluate(() => { ct.biz.trained.blip = ["fast"]; ct.openBoard(); });
+  const blip = page.locator("#bizCrew .ct-robot", { hasText: "Blip" });
+  await expect(blip).toContainText("Fast");
+  await expect(blip).not.toContainText("No skills");
+});

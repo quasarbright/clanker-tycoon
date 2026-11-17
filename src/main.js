@@ -400,9 +400,10 @@ function renderHands() {
 
 // ---------- hiring ----------
 
+// "No skills" only when there's nothing else to show: a robot with a trait shows the trait.
 const skillBadges = (h) => `<div class="ct-skills">${h.skills.length
   ? h.skills.map((k) => `<span class="ct-skill" data-tooltip="${SKILLS[k].label}: ${SKILLS[k].tip}">${SKILLS[k].label}</span>`).join("")
-  : `<span class="ct-skill is-none" data-tooltip="No skills: carries things between stations, but can't pack, paint or repair.">No skills</span>`}${
+  : h.attributes?.length ? "" : `<span class="ct-skill is-none" data-tooltip="No skills: carries things between stations, but can't pack, paint or repair.">No skills</span>`}${
   (h.attributes ?? []).map((k) => `<span class="ct-skill is-attr" data-tooltip="${ATTRIBUTES[k].label}: ${ATTRIBUTES[k].tip}">${ATTRIBUTES[k].label}</span>`).join("")}</div>`;
 
 // A robot as this level has them: your business's crew can have trained skills (business.js).
