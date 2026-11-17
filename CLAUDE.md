@@ -130,6 +130,11 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - Each worker's card is a conversation with them: instructions, replies, problems, desk visits and
   yells all show up there, never in a separate log. A chip on the card always says where they stand
   (reading, ready, can't do it, working, thinking, at your desk), and Start says who's still reading.
+- It's one conversation: no separate "instructions" and "messages". Until a worker has working
+  instructions, what you say becomes them; after that, the worker decides whether a message changes
+  their instructions, is a one-off, or is just talk.
+- Before a shift each worker's card is red until they have instructions they can do, and green
+  once they do.
 - When a worker can't do their instructions, they say what's wrong in their own words: which part
   and why, and what would help. Never a canned error.
 

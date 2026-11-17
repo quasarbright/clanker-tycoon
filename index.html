@@ -294,6 +294,9 @@
     /* a worker's card is a short conversation with them */
     .ct-chip { margin-left: auto; font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
     .ct-chip svg { width: 13px; height: 13px; display: block; }
+    .ct-card[data-ready="bad"] { border-color: #ff8a80; box-shadow: inset 4px 0 0 #ff8a80; }
+    .ct-card[data-ready="busy"] { border-color: var(--accent); box-shadow: inset 4px 0 0 var(--accent); }
+    .ct-card[data-ready="ok"] { border-color: var(--success); box-shadow: inset 4px 0 0 var(--success); }
     .ct-chip.is-need { color: var(--muted); border: 1px dashed var(--border); padding: 2px 9px; }
     .ct-chip.is-busy { color: var(--on-accent); background: var(--accent); }
     .ct-chip.is-desk { color: var(--on-accent); background: var(--accent); }
@@ -307,17 +310,12 @@
     .ct-pin[hidden] { display: none; }
     .ct-pin.is-busy { border-left-color: var(--accent); }
     .ct-pin.is-bad { border-left-color: var(--danger); }
-    .ct-pin .ct-row { justify-content: space-between; }
     .ct-pin .ct-label { font-size: .62rem; }
-    .ct-link { border: 0; background: none; padding: 0; color: var(--accent-hi); font-size: .78rem; font-weight: 700; cursor: pointer; }
-    .ct-link:hover { text-decoration: underline; }
-    .ct-link[hidden] { display: none; }
     .ct-log { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; padding-right: 2px; }
     .ct-log[hidden] { display: none; }
     .ct-msg { max-width: 88%; padding: 6px 10px; font-size: .9rem; line-height: 1.3; overflow-wrap: anywhere; }
     .ct-msg .ct-label { display: block; font-size: .6rem; }
     .ct-msg.is-you { align-self: flex-end; background: #f2c2301f; border: 1px solid #f2c23055; color: var(--accent-hi); border-radius: 12px 12px 4px 12px; }
-    .ct-msg.is-you.is-ins { background: var(--panel-2); border-color: var(--accent); color: var(--text); }
     .ct-msg.is-you .ct-label { color: var(--accent); }
     .ct-msg.is-them { align-self: flex-start; background: #f4f1e8; color: #1d1a12; border-radius: 12px 12px 12px 4px; font-weight: 500; }
     .ct-msg.is-them.is-bad { background: #ffd9d5; }
@@ -327,8 +325,8 @@
     .ct-msg.is-sys { align-self: center; max-width: 100%; font: 500 .74rem var(--font-mono); color: var(--muted); padding: 0; text-align: center; }
     .ct-compose { display: flex; flex-direction: column; gap: 8px; }
     .ct-compose .ct-textarea { min-height: 0; }
-    .ct-split { display: flex; gap: 8px; }
-    .ct-split .ct-btn { flex: 1; padding-inline: 8px; }
+    .ct-compose { flex-direction: row; align-items: flex-end; }
+    .ct-compose .ct-textarea { flex: 1; }
 
     /* next to Start: how each worker stands */
     .ct-crew-ready { display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; flex: 1; min-width: 200px; font-size: .88rem; color: var(--muted); }

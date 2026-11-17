@@ -385,15 +385,12 @@ function buildCrew() {
       <p class="ct-blurb">${h.blurb}</p>
       <div class="ct-row ct-skillrow">${skillBadges(h)}<span class="ct-pips"></span></div>
       <div class="ct-card-body">
-        <div class="ct-pin" hidden><div class="ct-row"><span class="ct-label">Instructions</span><button class="ct-link" type="button" data-edit>Edit</button></div><div class="ct-pin-text"></div></div>
         <div class="ct-now" hidden></div>
         <div class="ct-log"></div>
+        <div class="ct-pin" hidden><span class="ct-label">Instructions</span><div class="ct-pin-text"></div></div>
         <form class="ct-compose">
           <textarea class="ct-textarea" rows="2"></textarea>
-          <div class="ct-split">
-            <button class="ct-btn" type="button" data-send="instructions">Give as instructions</button>
-            <button class="ct-btn" type="button" data-send="say">Just say it</button>
-          </div>
+          <button class="ct-btn is-gold" type="submit">Send</button>
         </form>
       </div>`;
     const ta = $("textarea", card);
@@ -401,29 +398,22 @@ function buildCrew() {
     $("[data-fire]", card)?.addEventListener("click", (e) => { e.stopPropagation(); fire(w.id); });
     for (const el of [$(".ct-card-head", card), $(".ct-blurb", card)]) el.addEventListener("click", () => focusCard(w));
     card.addEventListener("focusin", () => highlight(w));
-    // Edit puts the current instructions in the box, ready to change and give again.
-    $("[data-edit]", card).addEventListener("click", () => {
-      ta.value = w.orders ?? "";
-      w.editing = true;
-      w._cardSig = null;
-      ta.focus();
-      ta.setSelectionRange(ta.value.length, ta.value.length);
-    });
-    const send = (how) => {
+    // One conversation. Before a worker has working instructions, what you say becomes them; after
+    // that, they decide whether a message changes their instructions, is a one-off, or is just talk.
+    const send = () => {
       const text = ta.value.trim();
       if (!text) { ta.focus(); return; }
       ta.value = "";
       w.draft = null;
-      w.editing = false;
-      if (how === "instructions") giveInstructions(w, text);
+      if (!w.ast || w.compileError) giveInstructions(w, text);
       else message(w, "message", text);
     };
-    card.querySelectorAll("[data-send]").forEach((b) => b.addEventListener("click", () => send(b.dataset.send)));
-    // Enter sends with the highlighted button; Shift+Enter is a new line.
+    $(".ct-compose", card).addEventListener("submit", (e) => { e.preventDefault(); send(); });
+    // Enter sends; Shift+Enter is a new line.
     ta.addEventListener("keydown", (e) => {
       if (e.key !== "Enter" || e.shiftKey) return;
       e.preventDefault();
-      send(primarySend(w));
+      send();
     });
     crew.append(card);
     ui.cards[w.id] = card;
@@ -431,10 +421,6 @@ function buildCrew() {
     w._logSig = null;
   }
 }
-
-// Which of the two buttons is the main one: instructions when they have none (or can't do theirs,
-// or you pressed Edit), otherwise talking.
-const primarySend = (w) => (!w.orders || w.compileError || w.editing) && !atDesk(w) ? "instructions" : "say";
 
 // Clicking a robot or its card's name/description: highlight both, and put the cursor in their
 // card's text box.
@@ -464,8 +450,8 @@ function renderLog(w, card) {
   const lines = (w.log ?? []).map((l) => {
     if (l.who === "sys") return `<div class="ct-msg is-sys">${escapeHTML(l.text)}</div>`;
     if (l.who === "you") {
-      const tag = l.kind === "instructions" ? "Instructions" : l.kind === "yell" ? "To everyone" : "";
-      return `<div class="ct-msg is-you ${l.kind === "instructions" ? "is-ins" : ""}">${tag ? `<span class="ct-label">${tag}</span>` : ""}${escapeHTML(l.text)}</div>`;
+      const tag = l.kind === "yell" ? "To everyone" : "";
+      return `<div class="ct-msg is-you">${tag ? `<span class="ct-label">${tag}</span>` : ""}${escapeHTML(l.text)}</div>`;
     }
     const tag = l.kind === "desk" ? `<span class="ct-label">At your desk</span>` : "";
     const note = l.kind && !["problem", "desk"].includes(l.kind) ? ` <span class="ct-kind">(${escapeHTML(l.kind)})</span>` : "";
@@ -483,7 +469,7 @@ function cardState(w) {
   if (ui.thinking[w.id]) return ["Thinking", "is-busy"];
   if (atDesk(w)) return ["At your desk", "is-desk"];
   if (w.compileError) return ["Can't do this", "is-bad"];
-  if (!w.orders) return ["Needs instructions", "is-need"];
+  if (!w.ast) return ["Needs instructions", started ? "is-need" : "is-bad"];
   if (!started) return ["Ready", "is-ok"];
   if (w.now) return ["Doing a one-off", "is-ok"];
   if (w.gen && !w.programEnded) return ["Working", "is-ok"];
@@ -498,29 +484,30 @@ function renderCard(w) {
   renderLog(w, card);
   const b = budgetOf(w);
   const [st, cls] = cardState(w);
-  const primary = primarySend(w);
-  const sig = `${st}|${b.n}/${b.max}|${w.now?.summary}|${w.orders}|${primary}`;
+  const sig = `${st}|${b.n}/${b.max}|${w.now?.summary}|${w.orders}`;
   if (sig === w._cardSig) return;
   w._cardSig = sig;
   const chip = $(".ct-chip", card);
   chip.innerHTML = (cls === "is-ok" ? CHECK : cls === "is-bad" ? ALERT : "") + st + (cls === "is-busy" ? DOTS : "");
   chip.className = `ct-chip ${cls}`;
   card.classList.toggle("is-waiting", atDesk(w));
+  // Before the shift the whole card says whether this worker is good to go: red until they have
+  // instructions they can do, green once they do.
+  card.dataset.ready = started ? "" : cls === "is-ok" ? "ok" : cls === "is-busy" ? "busy" : "bad";
   const pips = $(".ct-pips", card);
   pips.innerHTML = Array.from({ length: b.max }, (_, i) => `<i class="${i < b.n ? "is-on" : ""}"></i>`).join("");
   pips.dataset.tooltip = `Thinking budget: ${b.n} of ${b.max}. ${w.hire.name} spends one to think through something unexpected; it refills by one every ${b.every}s while the shift runs. Talking to them is free.`;
   // The current instructions, pinned. The edge says how they stand: reading, ready, or a problem.
   const pin = $(".ct-pin", card);
-  pin.hidden = !w.orders;
-  pin.className = `ct-pin ${w.compiling ? "is-busy" : w.compileError ? "is-bad" : "is-ok"}`;
+  // Their working instructions, as they wrote them down. Hidden until they have some.
+  pin.hidden = !w.ast || !w.orders;
+  pin.className = "ct-pin";
   $(".ct-pin-text", card).textContent = w.orders ?? "";
-  $("[data-edit]", card).hidden = !!w.compiling;
   const now = $(".ct-now", card);
   now.hidden = !w.now;
   if (w.now) now.innerHTML = `<span class="ct-label">Doing now, then back to the instructions</span> ${escapeHTML(w.now.summary)}`;
-  for (const btn of card.querySelectorAll("[data-send]")) btn.classList.toggle("is-gold", btn.dataset.send === primary);
   $("textarea", card).placeholder = atDesk(w) ? `Answer ${w.hire.name}…`
-    : primary === "instructions" ? `Tell ${w.hire.name} what to do, in your own words.` : `Talk to ${w.hire.name}…`;
+    : !w.ast || w.compileError ? `Tell ${w.hire.name} what to do, in your own words.` : `Talk to ${w.hire.name}…`;
 }
 
 function budgetOf(w) {
@@ -570,11 +557,11 @@ async function giveInstructions(w, text) {
   // Record the instructions now, before the model answers, so coworkers who get theirs at the same
   // time see them. (Without this Pip, told to pack and ship, saw nobody hauling and fetched widgets
   // too.)
-  if (w.orders) logLine(w, "sys", "New instructions");
   w.orders = text;
   w.draft = null;
   w.compileError = null;
   w.compiling = (w.compiling || 0) + 1;
+  logLine(w, "you", text);
   bubble(w, "…", { thinking: true, hold: true });
   let r;
   try {
@@ -591,14 +578,15 @@ async function giveInstructions(w, text) {
     // The model itself couldn't be reached: that's not the worker's fault, so say what happened.
     bubble(w, "(static)");
     w.compileError = "couldn't reach the model";
-    w.gen = null;
+    w.gen = null; w.ast = null;
     logLine(w, "sys", `Couldn't reach the model (${r.error.message}). Give the instructions again.`);
   } else if (r.problem) {
     w.compileError = r.problem;
-    w.gen = null;
+    w.gen = null; w.ast = null;
     logLine(w, "them", r.problem, "problem");
   } else {
     logLine(w, "them", r.reply);
+    w.orders = r.instructions;
     setProgram(g, w, r.ast);
     w.lastThought = null;
   }
@@ -881,15 +869,15 @@ function render() {
 function renderCoach() {
   let text = "";
   const deskVisitor = game.workers.find((w) => atDesk(w));
-  const idle = game.workers.find((w) => !w.orders && !w.compiling);
+  const idle = game.workers.find((w) => !w.ast && !w.compiling && !w.compileError);
   const cantDo = game.workers.find((w) => w.compileError);
   const worn = level.worn && game.wear.PAINT >= 100;
-  if (phase === "plan") text = idle ? `${level.start} ${idle.hire.name} still needs instructions: type them in their card and press <b>Give as instructions</b>.`
+  if (phase === "plan") text = idle ? `${level.start} ${idle.hire.name} still needs instructions: tell them what to do in their card.`
     : cantDo ? `${cantDo.hire.name} can't do their instructions; their card says why. Change them, or let ${cantDo.hire.name} go.`
     : level.start + (level.pool.length ? "" : " Press <b>Start</b> when you're ready.");
   else if (worn) text = level.worn;
   else if (deskVisitor) text = `${deskVisitor.hire.name} came to your desk. Answer in their card.`;
-  else if (idle) text = `${idle.hire.name} is waiting for instructions. Type them in their card and press <b>Give as instructions</b>.`;
+  else if (idle) text = `${idle.hire.name} is waiting for instructions. Tell them what to do in their card.`;
   else if (cantDo) text = `${cantDo.hire.name} can't do their instructions; their card says why.`;
   const el = $("#coach");
   if (el._text !== text) { el.innerHTML = text; el._text = text; }

@@ -273,3 +273,19 @@ instructions ready to edit."
 **Picked:** Try again (and Restart shift in the pause menu) starts a fresh shift with the same
 hires, their current instructions and the routines they already worked out, so you can press Start
 right away or edit first. Opening a level from the level list still starts empty.
+
+### 28. One conversation, no instructions-versus-message split (2026-11-17)
+
+**Problem:** Mike, on the chat card from #23: "I don't like the concept of initially writing
+instructions versus messages. I think the whole thing should just be a conversation, and the first
+message is instructions, and then subsequent messages, the agent decides whether to update their
+instructions or not." Then: "before a shift, we still have to make sure that there is an indication
+if the worker is not going to be able to perform that task. So like they should turn green once
+everything is good, but be red until then."
+**Picked:** the card has one text box and one Send. Until a worker has working instructions, what
+you say is read as instructions (with the earlier conversation, so an answer to their question
+counts); after that every message goes to the same respond call as before, and the worker decides
+whether it's talk, a one-off or a change to their instructions. The worker writes the instructions
+down as one short sentence in your words, pinned under the conversation. Before the shift each card
+is outlined red until the worker has instructions they can do, yellow while reading, green when
+ready. Replaces the two buttons and the Edit link from #23.

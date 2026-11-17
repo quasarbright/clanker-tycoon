@@ -170,8 +170,8 @@ Recent problems: ${w.failLog.length ? w.failLog.slice(-4).map((f) => f.why).join
 
 const COMPILE_SCHEMA = {
   type: "object",
-  properties: { reply: { type: "string" }, problem: { type: "string" }, program: { type: "string" } },
-  required: ["reply", "problem", "program"],
+  properties: { reply: { type: "string" }, problem: { type: "string" }, instructions: { type: "string" }, program: { type: "string" } },
+  required: ["reply", "problem", "instructions", "program"],
   additionalProperties: false,
 };
 const EXPLAIN_SCHEMA = { type: "object", properties: { problem: { type: "string" } }, required: ["problem"], additionalProperties: false };
@@ -267,10 +267,11 @@ export async function compile(s, w, text) {
   const system = systemPrompt(h, L);
   const base = `${context(s, w)}
 
-The boss gives you new instructions: "${text}"
+The boss says: "${text}"
 
-Write your program for these instructions. Reply as JSON with:
+You don't have working instructions yet, so this (together with anything earlier in the conversation that still applies) is what the boss wants you to do. Write your program for it. Reply as JSON with:
 - "reply": what you say back out loud. If you'll do it, say in a few words what you'll do.
+- "instructions": what you've been told to do, as one short sentence in the boss's own words (fold in any earlier answers, but don't spell out steps; for "pack red boxes and ship them", write just that). "" if there's a problem.
 - "problem": "" if you can do it. Otherwise say out loud, in your own voice and plain words (never name actions like pack() or mention code), exactly what's wrong: which part asks for work you lack the skill for, or which part is unclear and the question that would clear it up. Then leave "program" as "". Only use this for real problems; clear instructions just get done.
 - "program": the program.`;
   let out = await llm({ system, prompt: base, schema: COMPILE_SCHEMA });
@@ -282,7 +283,7 @@ Write your program for these instructions. Reply as JSON with:
     if (clean(out?.problem) && !String(out?.program ?? "").trim()) return done(w, text, clean(out.problem), { problem: clean(out.problem) });
     res = checkCode(out?.program, h, L, text);
   }
-  if (res.ast) return done(w, text, said(), { ast: res.ast });
+  if (res.ast) return done(w, text, said(), { ast: res.ast, instructions: clean(out?.instructions) || text });
   // It didn't work out. The worker says why, in their own words, instead of a canned error.
   let problem = "";
   try {
@@ -297,7 +298,7 @@ Tell the boss out loud, in your own voice, in one or two short sentences, what a
   return done(w, text, problem, { problem });
 }
 function done(w, text, reply, r) {
-  remember(w, `Boss (new instructions): ${text}`);
+  remember(w, `Boss: ${text}`);
   remember(w, `You: ${reply}`);
   return { reply, ...r };
 }
