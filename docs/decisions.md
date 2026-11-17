@@ -880,5 +880,7 @@ well. ... this is going to be the first time we're doing that [OAuth]."
 **Evidence:** unit tests (the RFC 7636 challenge vector), Playwright tests with OpenRouter faked
 (sign-in round trip, a failed sign-in, ?api-key=, paste and remove, a compile sent to Haiku with the
 key), and a live run with Mike's key from a gitignored .env (`tools/openrouter-check.mjs`): two
-workers compiled through OpenRouter in 4.3 s, 3 calls, $0.001.
+workers compiled through OpenRouter in 4.3 s, 3 calls, $0.001. Live on GitHub Pages
+(quasarbright.github.io/clanker-tycoon): Mike signed in with OpenRouter there, "Sign-in worked,
+everything was very nice."
 
