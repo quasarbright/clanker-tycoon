@@ -17,12 +17,10 @@ What's being built.
 - **The quarter sandbox.** A quota, a few shifts and a budget on one floor, to prove the
   money-against-crew tension (decision 35). Built as level 6.
 
-- **Time to recover from mistakes.** Shifts feel too short to fix things, partly because typing a
-  message takes a person a while. Proposed: game time freezes while a robot thinks (same result no
-  matter how slow the model is, and it makes speed controls safe later), plus a plain pause button
-  you can use as often as you like. Not doing: speed-up controls (thinking can't speed up, so the
-  same shift would play out differently), a limited number of pauses (one more thing to keep in
-  mind), slower shifts (boring).
+- **A pause button.** Shifts feel too short to fix mistakes, partly because typing a message takes
+  a person a while. A plain pause you can use as often as you like. Being built. Not doing:
+  speed-up controls (thinking can't speed up, so the same shift would play out differently), a
+  limited number of pauses (one more thing to keep in mind), slower shifts (boring).
 
 ## Next
 
@@ -110,4 +108,6 @@ Each with the reason.
 - **Grinding money in the tutorial levels:** the tutorial teaches mechanics; money is long-term (decision 7).
 - **JSON rules, or a Lisp, as the worker language:** JavaScript subset was more correct (decision 16).
 - **Apple's on-device model or a decision model:** couldn't plan, or couldn't talk (decision 1).
+- **Freezing game time while a robot thinks:** "really awkward, and really bad for the pacing";
+  a plain pause instead.
 - **One idea per GitHub issue:** issues went stale as the design moved; this file replaces them.
