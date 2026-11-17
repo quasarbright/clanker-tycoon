@@ -197,6 +197,8 @@
     .ct-overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: rgba(8, 9, 11, .78); padding: 20px; }
     .ct-overlay.is-hidden { display: none; }
     .ct-card-big { width: min(520px, 100%); background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 26px; text-align: center; box-shadow: 0 20px 60px #000a; }
+    .ct-mascot { display: block; width: 96px; height: 96px; margin: 0 auto 6px; }
+    .ct-mascot.is-small { width: 64px; height: 64px; margin-bottom: 4px; }
     .ct-logo { font: 400 clamp(2.2rem, 7vw, 3.4rem)/1 var(--font-display); color: var(--accent); text-shadow: 0 4px 0 #8f6d0c; transform: rotate(-2deg); margin: 4px 0 18px; }
     .ct-howto { color: var(--text); line-height: 1.5; margin: 0 0 18px; }
     .ct-small { font-size: .82rem; color: var(--muted); margin-top: 14px; }
@@ -440,6 +442,7 @@
 
   <div class="ct-overlay" id="startScreen">
     <div class="ct-card-big">
+      <img class="ct-mascot" src="favicon.svg" alt="">
       <div class="ct-logo">Clanker Tycoon</div>
       <p class="ct-howto">You run a tiny factory. You start broke and do the work yourself. Fill each order as fast as you can, first by hand, then with robots you hire and tell, in plain English, what to do.</p>
       <div class="ct-levels" id="levels"></div>
@@ -460,6 +463,7 @@
 
   <div class="ct-overlay is-hidden" id="endScreen">
     <div class="ct-card-big">
+      <img class="ct-mascot is-small" src="favicon.svg" alt="">
       <div class="ct-title" id="endTitle">Shift over</div>
       <p class="ct-end-note" id="endNote"></p>
       <div class="ct-stats" id="endStats"></div>
