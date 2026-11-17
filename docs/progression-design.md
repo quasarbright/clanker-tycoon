@@ -107,6 +107,20 @@ The order is the plant's final product (crates, say), and each line's target fol
 chain. Because lines are joined, a mistake travels: Line A paints too much blue, and twenty seconds
 later Line B is starved of red, with blue boxes piling up on the belt between them.
 
+### No factory building: pre-wired bays, routing by talking
+
+Mike: once there are several lines "we're gonna get kind of factory gamey there ... I don't really
+love the idea of that though." Lines need supplies in, belts between them and output belts, and a
+classic factory game would have you lay all of that out. We don't:
+
+- **Pre-wired bays.** The plant has a fixed layout with empty bays. Buying a line drops it into the
+  next bay already connected: its supply bins, the belt from the line before it, its output belt.
+  There's nothing to place or wire.
+- **Routing by talking.** Anything flexible (which line gets a shared supply first, where overflow
+  goes, whether Line B takes red boxes from A or from the supply bin) is something you tell a
+  foreman in words. It's never drawn on a map.
+- **The only thing you build is instructions.** Growth is a purchase; how it runs is what you say.
+
 ![Never leave the floor](mocks/progression/8-never-leave-the-floor.svg)
 
 ### Foremen

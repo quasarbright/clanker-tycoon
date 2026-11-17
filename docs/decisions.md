@@ -514,3 +514,13 @@ The tycoon fantasy is the story's ending, not the gameplay: your savings eventua
 out from under the boss, and the last scene is you as the dollar-eyed robot saying "Numbers must go
 up." Mike: "I really love that final scene." Post-game, you keep running the company as owner.
 Issue #14.
+
+### 46. No factory building: pre-wired bays, routing by talking (2026-11-17)
+
+**Question:** with lines feeding lines, you need supply bins, belts between lines and output belts.
+Mike: "once you're a factory manager, you're going to want to be like creating multiple lines and
+wiring things up and then we're gonna get kind of factory gamey there. I don't really love the idea
+of that though."
+**Picked:** the plant has a fixed layout of bays; a bought line arrives in the next bay already
+wired. Flexible routing (shared supplies, overflow, which source a line pulls from) is told to a
+foreman in words, never drawn. The only thing the player builds is instructions. Added to CLAUDE.md.

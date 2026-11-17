@@ -163,6 +163,9 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   robots instructions and watch what they do with them. Mike: "When it gets too managerial, it
   becomes a spreadsheet simulator." Budgets and quotas are a light layer between shifts.
   Design: `docs/progression-design.md`.
+- No factory building. New lines drop into pre-wired bays (supply bins, belts between lines,
+  output belts already connected); anything flexible about routing is told to a foreman in words.
+  The only thing the player builds is instructions.
 - Symmetry: what you do to the robots under you, the boss did to you first (quotas, budgets,
   transfers, briefings), unless that would be silly (no robot-style rules for the player).
 
