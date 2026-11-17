@@ -52,6 +52,12 @@ pay. Source: `src/business.js`, decisions 53 to 67.
 5. **Smart is a dead trait in the shop.** Robots rarely think, so paying for it is a trap. Either
    cut it from training until thinking matters, or make contracts with surprises.
 
+6. **Escalate along axes we already have.** Crazier contracts stack existing things: more boxes,
+   more colors at once, mixed crates, fewer shifts, machines you don't own yet. New verbs come from
+   new machines and lines, not new systems.
+7. **Scale by nesting one concept, not adding more.** A foreman is a robot who instructs robots.
+   Let a foreman instruct foremen and the same idea covers any size, with no "plant manager" tier.
+
 ## Open questions Mark is watching
 
 - How a run ends (above), what a late contract does, what the lender does when you can't pay.
