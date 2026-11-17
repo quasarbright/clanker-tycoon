@@ -25,7 +25,7 @@ with detail and open questions, is an entry in [ideas.md](ideas.md). Reasons and
 
 You run your own small factory business. You start with a little money of your own. The
 dollar-eyed robot from the favicon is a **lender**: borrow from him at the board, and he takes 10%
-of every contract you finish until you've paid it back with interest. "Numbers must go up."
+of every contract you finish until you've paid it back with interest.
 
 **The loop (built in level 7):**
 1. **Pick contracts** for the quarter from the board: one color in a Small or Large size, and a side

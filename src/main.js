@@ -1161,7 +1161,7 @@ function renderBoard() {
   $("#boardShifts").textContent = `${QUARTER_SHIFTS} shifts. Every contract is due at the end of the last one.`;
   // The lender: borrow now, and ${pct} of every contract you finish goes to him until it's paid back.
   $("#investorLine").innerHTML = biz.debt
-    ? `"You owe me <b class="is-debt">$${biz.debt}</b>. I take ${pct} of every contract you finish until it's paid. Numbers must go up."`
+    ? `"You owe me <b class="is-debt">$${biz.debt}</b>. I take ${pct} of every contract you finish until it's paid."`
     : `"Short on cash? Borrow from me, and I take ${pct} of every contract you finish until you've paid it back, with interest."`;
   $("#loans").innerHTML = LENDER.loans.map((l, i) => `<button class="ct-btn" data-loan="${i}" data-tooltip="You'd owe $${l.owe}: $${l.amount} plus $${l.owe - l.amount} interest.">Borrow $${l.amount}</button>`).join("");
   $("#loans").querySelectorAll("[data-loan]").forEach((b) => b.addEventListener("click", () => { if (borrow(biz, +b.dataset.loan)) renderBoard(); }));
