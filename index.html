@@ -392,6 +392,7 @@
     .ct-ready.is-ok b { color: var(--success); }
     .ct-ready.is-busy b, .ct-ready.is-desk b { color: var(--accent); }
     .ct-ready.is-bad b { color: #ff8a80; }
+    .ct-planbar-note.is-bad { color: #ffb4ae; }
     .ct-ready.is-need b { color: var(--text); }
     .ct-planbar .ct-btn:disabled { opacity: 1; background: var(--panel-2); color: var(--faint); cursor: not-allowed; }
     .ct-clock-value.is-low { color: var(--danger); }
@@ -419,7 +420,7 @@
       <svg width="16" height="18" viewBox="0 0 16 18" style="display:block"><rect x="1" y="1" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="10" y="1" width="5" height="16" rx="1.5" fill="currentColor"/></svg>
     </button>
     <div class="ct-cash"><span class="ct-cash-label" id="statLabel">Shipped</span><span class="ct-cash-value" id="stat">0/0</span></div>
-    <div class="ct-clock"><span class="ct-clock-label" id="levelName">Level</span><span class="ct-clock-value" id="clock">0:00</span><span class="ct-clock-label">labor <span id="labor">$0</span></span></div>
+    <div class="ct-clock"><span class="ct-clock-label" id="levelName">Level</span><span class="ct-clock-value" id="clock">0:00</span><span class="ct-clock-label"><span id="laborLabel">labor</span> <span id="labor">$0</span></span></div>
   </header>
 
   <main class="ct-main">

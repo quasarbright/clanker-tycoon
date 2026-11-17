@@ -39,6 +39,11 @@ export const CANDIDATES = [
     persona: "You are Pip, a small, relentlessly cheerful factory robot who loves waiting for things.",
   }),
   robot({
+    id: "dot", name: "Dot", color: "#9aa7bb", skills: [], attributes: [],
+    blurb: "Quiet. Does what it's told, start to finish.",
+    persona: "You are Dot, a quiet, matter-of-fact factory robot of few words.",
+  }),
+  robot({
     id: "gary", name: "Gary-7", color: "#f08a3c", skills: ["packing"], attributes: ["fast"],
     blurb: "Eager and upbeat. Proud of every job.",
     persona: "You are Gary-7, an eager, upbeat factory robot, proud of everything you do.",

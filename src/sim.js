@@ -92,15 +92,18 @@ const label = (st) => STATIONS[st]?.label ?? st;
 const widget = (s) => ({ id: ++s.ids, kind: "widget", color: randColor(s) });
 const itemName = (it) => (it.kind === "box" ? "box" : `${it.color} widget`);
 
-/** A new game of `level` (see levels.js) with these hires, in level order. */
-export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0) {
+/**
+ * A new game of `level` (see levels.js) with these hires, in level order. `done` (one count per
+ * order line) starts the order part-shipped: a quarter's later shifts carry its quota forward.
+ */
+export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0, { done } = {}) {
   const s = {
     t: 0, seed, rng: mulberry32(seed), ids: 0, version: 0, level,
     shipped: 0, counted: 0, wasted: 0, laborCost: 0,
     stations: Object.fromEntries(level.stations.map((k) => [k, []])),
     wear: level.stations.includes("PAINT") ? { PAINT: 0 } : {},
     workers: [], events: [],
-    order: level.order.map((l) => ({ ...l, done: 0 })),
+    order: level.order.map((l, i) => ({ ...l, done: done?.[i] ?? 0 })),
     nextBelt: 1, over: false, won: false, lastProgress: 0,
     // You. Starts by the desk; same shape as a worker so the same action code runs for both.
     // You know every skill.
@@ -151,7 +154,7 @@ export function step(s, dt) {
     return;
   }
   while (s.t >= s.nextBelt) {
-    s.nextBelt += RULES.beltEvery;
+    s.nextBelt += s.level.beltEvery ?? RULES.beltEvery;
     // A full belt drops its oldest widget off the end, so new ones keep coming.
     if (s.stations.BELT_A.length >= RULES.beltCap) s.stations.BELT_A.shift();
     s.stations.BELT_A.push(widget(s));

@@ -10,6 +10,7 @@ import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond } from "./brains.js";
 import { LEVELS } from "./levels.js";
 import { backendLabel } from "./llm.js";
 import { startShift, logEvent } from "./playlog.js";
+import { newQuarter, hireFee, shiftPayroll, moneyNow, closeShift, nextShift, restartShift, money } from "./quarter.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const floor = $("#floor");
@@ -30,7 +31,8 @@ const BUDGET = { max: 3, every: 20, smartMax: 5, smartEvery: 12 };
 const REPEAT_WINDOW = 45;
 // Progress lives in memory only for now (no localStorage while iterating). Every level is open.
 let unlocked = LEVELS.length;
-const best = {}; // best[levelId] = { time }: your fastest filled order
+const best = {}; // best[levelId] = { time }: your fastest filled order; { left } for a quarter: the most money left
+let quarter = null; // the quarter being played (quarter.js), when the level is one
 
 $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
 
@@ -57,7 +59,7 @@ function renderLevels() {
     return `<button class="ct-level" data-level="${L.id}" ${open ? "" : "disabled"}>
       <span class="ct-level-num">${L.id}</span>
       <span><span class="ct-level-name">${open ? L.name : "???"}</span><br><span class="ct-level-blurb">${open ? L.blurb : "Finish the level before."}</span></span>
-      ${b ? `<span class="ct-level-done">${CHECK} ${fmtTime(b.time)}</span>` : ""}
+      ${b ? `<span class="ct-level-done">${CHECK} ${b.left != null ? `${money(b.left)} left` : fmtTime(b.time)}</span>` : ""}
     </button>`;
   }).join("");
   document.querySelectorAll(".ct-level").forEach((b) => b.addEventListener("click", () => openLevel(LEVELS.find((L) => L.id === +b.dataset.level))));
@@ -215,25 +217,36 @@ window.addEventListener("blur", () => { keysDown.clear(); steerFromKeys(); });
 /** The Start button: the clock starts, you and your crew start moving, hiring closes. */
 function begin() {
   if (started || phase !== "plan") return;
-  if (game.workers.some((w) => w.compiling)) { nudgeStart(); return; }
+  if (game.workers.some((w) => w.compiling) || cantPay()) { nudgeStart(); return; }
   started = true;
   setPhase("run");
+  // What Replay this shift goes back to: the money and quota as the shift starts, fees paid.
+  if (quarter) quarter.start = { money: quarter.money, done: [...quarter.done] };
   lastSnap = -1e9;
   logEvent(0, "start", { crew: crewSummary() });
   keepTyped();
   buildCrew(); // drop the Let go buttons and the Hire row
 }
 $("#goBtn").addEventListener("click", begin);
+// In a quarter, the budget has to cover the whole shift's wages before it starts.
+const payroll = () => shiftPayroll(level, game.workers.map((w) => w.hire));
+const cantPay = () => !!quarter && payroll() > quarter.money;
 // Next to Start: who's ready, who's still reading, who can't do theirs. Start waits for the readers.
 function renderReady() {
   if (phase !== "plan") return;
   const reading = game.workers.some((w) => w.compiling);
-  const sig = game.workers.map((w) => `${w.id}:${cardState(w)[0]}`).join() + reading;
+  const short = cantPay();
+  const sig = game.workers.map((w) => `${w.id}:${cardState(w)[0]}`).join() + reading + short;
   if (sig === lastReady) return;
   lastReady = sig;
-  $("#goBtn").disabled = reading;
-  $("#goBtn").dataset.tooltip = reading ? "Waiting for everyone to finish reading their instructions." : "";
+  $("#goBtn").disabled = reading || short;
+  $("#goBtn").dataset.tooltip = reading ? "Waiting for everyone to finish reading their instructions."
+    : short ? `This crew's wages for the shift come to $${payroll()}, and you have ${money(quarter.money)}. Let someone go.` : "";
   const el = $("#crewReady");
+  if (short) {
+    el.innerHTML = `<span class="ct-planbar-note is-bad">This shift's wages come to $${payroll()}, and you have ${money(quarter.money)}. Let someone go to start.</span>`;
+    return;
+  }
   if (!game.workers.length) {
     el.innerHTML = level.pool.length ? `<span class="ct-planbar-note">Hire and give instructions first. Start begins the clock; hiring closes then.</span>` : "";
     return;
@@ -322,17 +335,22 @@ const skillBadges = (h) => `<div class="ct-skills">${h.skills.length
 function hire(id) {
   const c = CANDIDATES.find((h) => h.id === id);
   if (started) return;
+  if (quarter && hireFee(c) > quarter.money) return;
   keepTyped();
   const w = addWorker(game, c);
-  logEvent(null, "hire", { worker: id });
+  if (quarter) { w.fee = hireFee(c); quarter.money -= w.fee; }
+  logEvent(null, "hire", { worker: id, fee: w.fee });
   rebuildCrew();
   openChat(w.id);
 }
 function fire(id) {
   if (started) return;
   keepTyped();
+  // Letting someone go before they've worked a shift gives the hiring fee back.
+  const refund = quarter ? worker(id)?.fee ?? 0 : 0;
+  if (quarter) quarter.money += refund;
   removeWorker(game, id);
-  logEvent(null, "fire", { worker: id });
+  logEvent(null, "fire", { worker: id, refund: refund || undefined });
   ui.open = null;
   rebuildCrew();
 }
@@ -388,7 +406,7 @@ function renderList() {
     const unread = ui.open !== w.id && (w.log ?? []).slice(w.seen ?? 0).some((l) => l.who === "them");
     return { w, st, cls, prev, bad: last?.kind === "problem", unread };
   });
-  const sig = JSON.stringify([ui.open, started, canHire(), openCandidates().map((c) => c.id), rows.map((r) => [r.w.id, r.st, r.prev, r.unread, atDesk(r.w)])]);
+  const sig = JSON.stringify([ui.open, started, canHire(), quarter && !started && quarter.money, openCandidates().map((c) => c.id), rows.map((r) => [r.w.id, r.st, r.prev, r.unread, atDesk(r.w)])]);
   if (sig === lastList) return;
   lastList = sig;
   const payroll = game.workers.reduce((a, w) => a + w.hire.wage, 0);
@@ -397,7 +415,7 @@ function renderList() {
   // button on their row. Hiring moves them up and opens their chat. The hire part goes once the
   // shift starts.
   const cands = canHire() ? openCandidates() : [];
-  list.innerHTML = (rows.length ? `<div class="ct-list-head"><span class="ct-label">Crew</span><span class="ct-wage">payroll $${payroll}/min</span></div>` : "")
+  list.innerHTML = (rows.length ? `<div class="ct-list-head"><span class="ct-label">Crew</span><span class="ct-wage">payroll $${payroll}/min${quarter ? `, $${shiftPayroll(level, game.workers.map((w) => w.hire))} a shift` : ""}</span></div>` : "")
     + rows.map((r) => `<button type="button" class="ct-convo ${ui.open === r.w.id ? "is-open" : ""} ${atDesk(r.w) ? "is-waiting" : ""}" data-open="${r.w.id}" style="--c:${r.w.hire.color}">
         ${r.unread ? `<span class="ct-unread" aria-label="unread"></span>` : ""}
         <span class="ct-face"></span><b>${r.w.hire.name}</b>
@@ -405,11 +423,16 @@ function renderList() {
         <span class="ct-convo-prev ${r.bad ? "is-bad" : ""}">${escapeHTML(r.prev)}</span>
       </button>`).join("")
     + (cands.length ? `<div class="ct-list-head ${rows.length ? "is-sep" : ""}"><span class="ct-label">Hire</span>${rows.length ? "" : `<span class="ct-wage">before the shift starts</span>`}</div>`
-      + cands.map((c) => `<div class="ct-cand" style="--c:${c.color}">
+      + cands.map((c) => {
+        // In a quarter hiring costs a minute's wage up front.
+        const fee = quarter ? hireFee(c) : 0, broke = quarter && fee > quarter.money;
+        const tip = quarter ? (broke ? `Hiring ${c.name} costs $${fee}, and you have ${money(quarter.money)}.` : `Hiring costs $${fee} now, then $${c.wage} a minute while shifts run.`) : "";
+        return `<div class="ct-cand" style="--c:${c.color}">
           <span class="ct-face"></span><span><b>${c.name}</b> <span class="ct-wage">$${c.wage}/min</span></span>
-          <button class="ct-btn is-gold ct-small-btn" type="button" data-hire="${c.id}">Hire</button>
+          <button class="ct-btn is-gold ct-small-btn" type="button" data-hire="${c.id}" ${broke ? "disabled" : ""} ${tip ? `data-tooltip="${tip}"` : ""}>Hire${quarter ? ` $${fee}` : ""}</button>
           <span class="ct-cand-line">${skillBadges(c)}<span>${c.blurb}</span></span>
-        </div>`).join("") : "");
+        </div>`;
+      }).join("") : "");
   list.hidden = !list.innerHTML;
   list.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openChat(b.dataset.open)));
   list.querySelectorAll("[data-hire]").forEach((b) => b.addEventListener("click", () => hire(b.dataset.hire)));
@@ -921,7 +944,8 @@ function render() {
     const box = game.stations.PACK?.find((i) => i.id === id);
     if (box) fill.style.transform = `scaleX(${boxProgress(game, box)})`;
   }
-  const labor = `$${Math.floor(game.laborCost)}`;
+  // In a quarter: the money left, going down as wages are paid. Otherwise what labor has cost.
+  const labor = quarter ? money(moneyNow(quarter, game)) : `$${Math.floor(game.laborCost)}`;
   if ($("#labor").textContent !== labor) $("#labor").textContent = labor;
   if (game.player.station !== "PACK" && packPick.size) { packPick.clear(); lastVersion = -1; }
   // Center stat: how much of today's order has shipped.
@@ -960,9 +984,13 @@ function renderCoach() {
   const idle = game.workers.find((w) => !w.ast && !w.compiling && !w.compileError);
   const cantDo = game.workers.find((w) => w.compileError);
   const worn = level.worn && game.wear.PAINT >= 100;
-  if (phase === "plan") text = idle ? `${level.start} ${idle.hire.name} still needs instructions: tell them what to do in their chat.`
+  // A quarter's later shifts say where you stand instead of the level's opening line.
+  const start = quarter && quarter.shift > 1
+    ? `Shift ${quarter.shift} of ${level.quarter.shifts}. What's shipped counts toward the quota, and your crew is still here. Hire, let people go or change instructions, then press <b>Start</b>.`
+    : level.start;
+  if (phase === "plan") text = idle ? `${start} ${idle.hire.name} still needs instructions: tell them what to do in their chat.`
     : cantDo ? `${cantDo.hire.name} can't do their instructions; their chat says why. Change them, or let ${cantDo.hire.name} go.`
-    : level.start + (level.pool.length ? "" : " Press <b>Start</b> when you're ready.");
+    : start + (level.pool.length ? "" : " Press <b>Start</b> when you're ready.");
   else if (worn) text = level.worn;
   else if (deskVisitor) text = `${deskVisitor.hire.name} came to your desk. Answer in their chat.`;
   else if (idle) text = `${idle.hire.name} is waiting for instructions. Tell them what to do in their chat.`;
@@ -984,18 +1012,29 @@ function frame(now) {
 /**
  * Open a level at the start of its shift. With `again`, the same crew comes back with the same
  * instructions (and the routines they already worked out), ready to edit before you press Start.
+ * In a quarter, `shift` says which shift that is: "restart" plays this one again (undoing what it
+ * spent and shipped, if it ran), "next" moves on to the next one, and "new" starts the quarter over.
  */
-function openLevel(L, { again = false } = {}) {
+function openLevel(L, { again = false, shift = "restart" } = {}) {
   const crew = again && game?.level === L ? game.workers : [];
+  const ran = started || phase === "end";
+  if (!L.quarter) quarter = null;
+  else if (!again || shift === "new") quarter = newQuarter(L);
+  else if (shift === "next") nextShift(quarter);
+  else if (ran) restartShift(quarter);
   level = L;
-  game = newGame(L, []);
+  game = newGame(L, [], undefined, { done: quarter?.done });
   for (const old of crew) {
     const w = addWorker(game, old.hire);
     Object.assign(w, { orders: old.orders, compileError: old.compileError, memory: old.memory, draft: null });
     if (old.ast && !old.compileError) setProgram(game, w, old.ast);
     if (old.orders) logLine(w, "sys", "New shift, same instructions.");
+    // A quarter started over hires the same crew again, fees and all. Restarting a shift that
+    // hasn't run keeps the fees they came with, so letting them go still gives it back.
+    if (quarter && shift === "new") { w.fee = hireFee(w.hire); quarter.money -= w.fee; }
+    else if (quarter && !ran) w.fee = old.fee;
   }
-  startShift(L, { again, crew: crewSummary() });
+  startShift(L, { again, crew: crewSummary(), quarter: quarter ? { shift: quarter.shift, money: Math.floor(quarter.money), done: quarter.done } : undefined });
   started = false;
   lastVersion = -1; lastStat = null; lastClock = null; lastOrder = ""; lastHands = ""; lastList = ""; lastReady = "";
   ui.thinking = {};
@@ -1004,7 +1043,10 @@ function openLevel(L, { again = false } = {}) {
   $(".ct-side").classList.remove("is-chat");
   buildFloor();
   buildCrew();
-  $("#levelName").textContent = `Level ${L.id}: ${L.name}`;
+  $("#levelName").textContent = quarter ? `Shift ${quarter.shift} of ${L.quarter.shifts}` : `Level ${L.id}: ${L.name}`;
+  $("#statLabel").textContent = quarter ? "Quota" : "Shipped";
+  $("#goalLabel").textContent = quarter ? "This quarter" : "Today's order";
+  $("#laborLabel").textContent = quarter ? "budget" : "labor";
   packPick.clear();
   $("#startScreen").classList.add("is-hidden");
   $("#endScreen").classList.add("is-hidden");
@@ -1015,6 +1057,7 @@ function openLevel(L, { again = false } = {}) {
 
 function endLevel() {
   setPhase("end");
+  if (quarter) return endQuarterShift();
   const t = game.t;
   const won = game.won;
   if (won && (!best[level.id] || t < best[level.id].time)) best[level.id] = { time: t };
@@ -1034,6 +1077,38 @@ function endLevel() {
     if (b.dataset.go === "next") openLevel(next);
     else if (b.dataset.go === "again") openLevel(level, { again: true });
     else showMenu();
+  }));
+  $("#endScreen").classList.remove("is-hidden");
+}
+
+// A quarter's shift ended: the quota's met, there's another shift to go, or the quarter's over.
+function endQuarterShift() {
+  const Q = level.quarter, n = quarter.shift;
+  const sum = (a) => a.reduce((x, y) => x + y, 0);
+  const shippedBefore = sum(quarter.done);
+  closeShift(quarter, game);
+  const total = sum(level.order.map((l) => l.count)), done = sum(quarter.done);
+  const won = game.won, last = n >= Q.shifts;
+  const left = money(quarter.money), spent = money(Q.budget - quarter.money);
+  logEvent(game.t, "end", { won, quarter: { shift: n, of: Q.shifts }, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), money: Math.floor(quarter.money), crew: crewSummary() });
+  if (won && (!best[level.id] || quarter.money > best[level.id].left)) best[level.id] = { left: quarter.money };
+  const stats = won ? [["Shifts", `${n} of ${Q.shifts}`], ["Spent", spent], ["Left", left]]
+    : !last ? [["Shipped", `${done - shippedBefore}`], ["Wages", `$${Math.round(game.laborCost)}`], ["Budget left", left]]
+    : [["Shipped", `${done}/${total}`], ["Spent", spent], ["Left", left]];
+  $("#endTitle").textContent = won ? "Quota met" : !last ? `Shift ${n} done` : "Quota missed";
+  const togo = total - done, shiftsLeft = Q.shifts - n;
+  $("#endNote").textContent = won ? `You shipped the quarter's quota in ${n === 1 ? "one shift" : `${n} shifts`}, with ${left} of your $${Q.budget} budget left.`
+    : !last ? `${togo} ${togo === 1 ? "box" : "boxes"} to go and ${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left. Your crew and their instructions stay; hire or let people go before the next one.`
+    : `The quarter ended ${togo} ${togo === 1 ? "box" : "boxes"} short of the quota.`;
+  $("#endStats").innerHTML = stats.map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
+  const btns = won || last
+    ? [["new", "Try again", true], ...(won ? [] : [["restart", "Replay this shift"]])]
+    : [["next", "Next shift", true], ["restart", "Replay this shift"]];
+  $("#endBtns").innerHTML = btns.map(([go, text, gold]) => `<button class="ct-btn ${gold ? "is-gold" : ""}" data-go="${go}">${text}</button>`).join("")
+    + `<button class="ct-btn" data-go="menu">Levels</button>`;
+  $("#endBtns").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+    if (b.dataset.go === "menu") showMenu();
+    else openLevel(level, { again: true, shift: b.dataset.go });
   }));
   $("#endScreen").classList.remove("is-hidden");
 }
@@ -1075,7 +1150,7 @@ requestAnimationFrame(frame);
 
 // Test hook: drive the game from Playwright or the console.
 window.ct = {
-  get game() { return game; }, get phase() { return phase; }, get started() { return started; },
+  get game() { return game; }, get phase() { return phase; }, get started() { return started; }, get quarter() { return quarter; },
   openLevel: (n) => openLevel(LEVELS[n - 1]), unlockAll: () => { unlocked = LEVELS.length; renderLevels(); },
   step: (dt) => { if (started) step(game, dt); handleEvents(); render(); },
   give: (id, text) => giveInstructions(worker(id), text), say: (id, text) => message(worker(id), "message", text),

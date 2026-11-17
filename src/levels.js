@@ -13,6 +13,10 @@
 //          Set so one robot can't fill it alone: the point of a crew level is a crew.
 // No robot in these pools can do everything: every early level needs two or more people working
 // together (Doris and Bolt, who have every skill, are kept for later).
+//   quarter: { shifts, budget } makes the level a quarter (docs/decisions.md #35): the order is a
+//          quota to ship over that many shifts, and budget is the money for wages and hiring
+//          fees. Your crew and their instructions carry from shift to shift; the floor resets.
+//   beltEvery: seconds between widgets on the belt (default RULES.beltEvery)
 const SHIFT_CREW = 45, SHIFT_FLOOR = 120;
 export const LEVELS = [
   {
@@ -57,5 +61,20 @@ export const LEVELS = [
     pool: ["blip", "gary", "rusty", "pip", "vex"],
     shift: SHIFT_FLOOR,
     start: "Three colors now, and green is rare. Hire your crew, write their instructions, then press <b>Start</b>. Bins are spare storage.",
+  },
+  {
+    // The first quarter: a sandbox for money against crew. The belt runs twice as fast as on
+    // the other levels, so a bigger crew really ships more (at the normal speed two workers
+    // already empty the belt). It only brings red, so every blue box is three paint jobs, and
+    // the paint machine wears. Numbers from tools/balance.mjs: see docs/decisions.md #35.
+    id: 6, name: "First quarter",
+    blurb: "A quota, three shifts and a budget.",
+    stations: ["BELT_A", "PAINT", "PACK", "DOCK", "BIN_1", "BIN_2"],
+    ship: "boxes", colors: ["red"], beltEvery: 1.6,
+    order: [{ color: "red", count: 24 }, { color: "blue", count: 9 }],
+    pool: ["blip", "dot", "pip", "gary", "rusty", "vex"],
+    shift: SHIFT_FLOOR,
+    quarter: { shifts: 3, budget: 120 },
+    start: "Ship the quota within three shifts. Wages come out of your budget while a shift runs, and hiring costs a minute's wage. Your crew stays from shift to shift.",
   },
 ];

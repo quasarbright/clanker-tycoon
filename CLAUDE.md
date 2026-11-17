@@ -84,6 +84,12 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   coordinate. Set shift lengths so one robot can't fill the order alone.
 - Try again puts you back at the start of the shift with your crew and their instructions, ready
   to edit.
+- The bigger unit is a **quarter** (Mike: a quota, "some amount shifts ... to accomplish the quota,
+  and a budget"). Shifts stay as they are inside it. Money is a planning problem, never a surprise:
+  Start waits until the budget covers the whole shift's wages, so you can't go broke mid-shift.
+- Roadmap order (Mike, 2026-11-17): make your words matter, the quarter sandbox, then progression
+  (core) before disruptions (a later "pinch of chaos"). Personalities are late polish, not a
+  mechanic.
 
 **The model backend**
 - The LLM backend must stay swappable. Nothing Claude- or Haiku-specific in the design, the

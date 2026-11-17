@@ -157,3 +157,19 @@ Smaller ones: errors now come from the robot in its own words ("I can carry widg
 pack them, so I need a worker with Packing to do it"), the paint machine breaks after the first job
 so the paint level teaches servicing, and Try again puts you back at the start of the shift with
 your crew and their instructions.
+
+## The first quarter (2026-11-17)
+
+After a night of interface fixes Mike turned to the game itself: "let's start doing more game
+mechanics and design stuff." The plan was to prove one shift is fun before building progression
+around it, starting with money. Mike kept shifts and wrapped them in a bigger unit: "a 'cycle' has
+a quota, and you have some amount shifts in a cycle to accomplish the quota, and a budget." It got
+named a quarter.
+
+The first measurement killed the obvious version. On the normal belt every crew of two or more
+shipped exactly 13 boxes a shift: the belt was the bottleneck, so hiring a third robot bought
+nothing and there was no money decision to make. The quarter's belt runs twice as fast, and then
+crew size matters (14 boxes with two, 25 with three). The level ended up as 24 red and 9 blue
+boxes in three shifts on $120, where the cheap crews miss the blue, the big ones go broke by the
+second shift, and the best runs come from changing the crew between shifts or servicing the paint
+machine yourself.

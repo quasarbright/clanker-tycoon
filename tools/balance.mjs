@@ -48,3 +48,57 @@ const CASES = [
 for (const [name, L, crew] of CASES) {
   console.log(name.padEnd(46), [1, 2, 3].map((seed) => run(L, crew, seed)).join("   "));
 }
+
+// ---------- the quarter ----------
+// A plan is the crew for each shift (the last one repeats). Money: wages while the shift runs, a
+// hiring fee of one minute's wage when someone joins. Each shift starts from what's shipped so far,
+// on a fresh floor, as in the game. Prints the quota progress and the money left.
+const Q = level("First quarter");
+const QB = { blip: [[], []], dot: [[], []], pip: [["packing"], []], gary: [["packing"], ["fast"]], rusty: [["repair"], ["steady"]], vex: [["painting"], ["fast", "smart"]] };
+// "you" stands in for the player servicing the paint machine yourself: a free repair worker.
+QB.you = [["repair"], []];
+const qr = (id) => (id === "you" ? { ...robot(id, ...QB[id]), wage: 0 } : robot(id, ...QB[id]));
+const Q_HAUL = `while (needs("red") > 0) { move("BELT"); pickUp("red"); move("PACK"); putDown(); }`;
+const Q_PACK = `while (needsAny() > 0) { move("PACK"); let c = "none"; for (const k of ["blue", "red"]) { if (c == "none" && needs(k) > 0 && count("PACK", k) >= 3) c = k; } if (c != "none") pack(c); if (boxes("PACK") > 0) { pickUpBox(); move("DOCK"); putDown(); } else wait(1); }`;
+const Q_PAINT = `while (needs("blue") > 0) { if (wear("PAINT") >= 100) { wait(1); } else { move("BELT"); pickUp("red"); move("PAINT"); paint("blue"); move("PACK"); putDown(); } }`;
+const Q_FIX = `while (needsAny() > 0) { if (wear("PAINT") >= 80) { move("PAINT"); service(); } else wait(1); }`;
+const Q_PROG = { blip: Q_HAUL, dot: Q_HAUL, pip: Q_PACK, gary: Q_PACK, vex: Q_PAINT, rusty: Q_FIX, you: Q_FIX };
+
+function quarter(plan, seed) {
+  let money = Q.quarter.budget, done = Q.order.map(() => 0), had = new Set();
+  const log = []; // what's shipped after each shift
+  for (let shift = 1; shift <= Q.quarter.shifts; shift++) {
+    const ids = plan[Math.min(shift, plan.length) - 1];
+    const hires = ids.map(qr);
+    for (const h of hires) if (!had.has(h.id)) money -= h.wage;
+    had = new Set(ids);
+    const payroll = hires.reduce((a, h) => a + h.wage, 0) * Q.shift / 60;
+    if (payroll > money) return `${log.join(" ")} can't pay shift ${shift}`;
+    const g = newGame(Q, hires, seed * 10 + shift, { done });
+    g.workers.forEach((w, i) => setProgram(g, w, program(hires[i], Q, Q_PROG[hires[i].id])));
+    while (!g.over) { step(g, 1 / 30); g.events.length = 0; }
+    money -= g.laborCost;
+    done = g.order.map((l) => l.done);
+    log.push(done.join("+"));
+    if (g.won) return `${log.join(" ")} met, $${Math.round(money)} left`;
+  }
+  return `${log.join(" ")} missed, $${Math.round(money)} left`;
+}
+
+const PLANS = [
+  ["hauler + packer", [["blip", "pip"]]],
+  ["2 haulers + packer", [["blip", "dot", "pip"]]],
+  ["painter + packer", [["vex", "pip"]]],
+  ["painter + hauler + packer", [["vex", "blip", "pip"]]],
+  ["painter + 2 haulers + packer", [["vex", "blip", "dot", "pip"]]],
+  ["everyone", [["vex", "blip", "dot", "pip", "rusty"]]],
+  ["painter + repair + hauler + packer", [["vex", "rusty", "blip", "pip"]]],
+  ["big shift 1, then painter + packer", [["vex", "blip", "dot", "pip"], ["vex", "pip"]]],
+  ["haulers first, then painter", [["blip", "dot", "pip"], ["vex", "pip"]]],
+  ["haulers first, then painter + repair", [["blip", "dot", "pip"], ["vex", "rusty", "pip"]]],
+  ["you service; painter + packer", [["you", "vex", "pip"]]],
+  ["you service; painter + hauler + packer", [["you", "vex", "blip", "pip"]]],
+  ["you service; painter + 2 haulers + packer", [["you", "vex", "blip", "dot", "pip"]]],
+];
+console.log(`\n${Q.name}: quota ${Q.order.map((l) => `${l.count} ${l.color}`).join(" + ")}, ${Q.quarter.shifts} shifts of ${Q.shift}s, budget $${Q.quarter.budget}`);
+for (const [name, plan] of PLANS) console.log(name.padEnd(38), [1, 2].map((seed) => quarter(plan, seed).padEnd(34)).join(" "));

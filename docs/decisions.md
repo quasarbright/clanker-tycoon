@@ -348,3 +348,36 @@ useless when the crew window is open".
 Hire button on their row. Hiring moves them up into Crew and opens their chat; the rest stay
 under Hire until the shift starts, then that part goes away. Replaces the Hire row and panel from
 #29.
+
+### 35. The quarter: a quota, a few shifts and a budget (2026-11-17)
+
+**Question:** before building progression, prove the money-against-crew tension in one sandbox.
+Mike: "a 'cycle' has a quota, and you have some amount shifts in a cycle to accomplish the quota,
+and a budget/starting amount of money ... maybe deadline or quarter or something?" Keep shifts as
+they are; no personalities or disruptions yet.
+**Name:** a **quarter**. It fits the corporate satire and the dollar-eyed boss.
+**Picked:** level 6, "First quarter", on the full floor:
+- **Quota:** 24 red boxes and 9 blue over **3 shifts of 2 minutes**. The belt brings only red, so
+  every blue box is three paint jobs and the paint machine wears (10% a job).
+- **Budget: $120.** Wages come out by the second while a shift runs. Hiring costs **one minute of
+  the wage** up front; letting someone go before they've worked a shift gives it back, so a
+  misclick is free. You, on the floor, are free labor.
+- **Start waits until the budget covers the whole shift's payroll.** Options were letting money go
+  negative, stopping the robots when it runs out, or this. Running dry mid-shift would be bad luck
+  after your decisions; this keeps it a planning problem (the same reason as predictable wear).
+- **No revenue per box.** The budget is a labor budget, and money left when the quota's met is the
+  score. Income from shipping is the obvious next step once progression needs money to flow (#9).
+- **Between shifts** the crew and their instructions stay, what's shipped carries over, and the
+  floor starts fresh. You can hire, let people go and change instructions. The quarter ends as soon
+  as the quota ships. End cards: "Shift N done" (Next shift / Replay this shift), "Quota met" or
+  "Quota missed" (Try again starts the quarter over with the same crew, fees charged again).
+- **Belt twice as fast here (1.6 s).** At the normal 3.2 s two workers already empty the belt, so a
+  third hire ships nothing more (measured: 13 boxes a shift for every crew of two or more). At
+  1.6 s a hauler and a packer ship 14 a shift and two haulers and a packer ship 25.
+- **Dot,** a second cheap hauler ($3), so crew size is a real choice.
+**Evidence** (`tools/balance.mjs`, hand-written programs): small crews miss (two haulers and a
+packer ship all the red and no blue), big crews run out of money by shift 2 (everyone at once is
+$37/min), and the middle makes it: painter + hauler + packer meets it in 3 shifts with $25 left;
+haulers for a shift then painter + repair in 2 with $36; servicing the machine yourself with
+painter + hauler + packer in 2 with $46. In a browser with real model-written instructions, Blip,
+Pip and Vex (no one servicing) shipped 19, then 11, then missed by 3.
