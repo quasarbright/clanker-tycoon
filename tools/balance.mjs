@@ -5,7 +5,7 @@ import { newGame, step, setProgram, toolNamesFor } from "../src/sim.js";
 import { parseProgram, checkProgram } from "../src/lang.js";
 import { LEVELS } from "../src/levels.js";
 
-const robot = (id, skills, attributes = []) => ({ id, name: id, skills, attributes, wage: 3 + 2 * (skills.length + attributes.length) });
+const robot = (id, skills, attributes = []) => ({ id, name: id, skills, attributes, wage: 5 + 5 * (skills.length + attributes.length) });
 const level = (name) => LEVELS.find((l) => l.name === name);
 
 function program(hire, L, src) {
@@ -50,9 +50,9 @@ for (const [name, L, crew] of CASES) {
 }
 
 // ---------- the quarter ----------
-// A plan is the crew for each shift (the last one repeats). Money: wages while the shift runs, a
-// hiring fee of one minute's wage when someone joins. Each shift starts from what's shipped so far,
-// on a fresh floor, as in the game. Prints the quota progress and the money left.
+// A plan is the crew for each shift (the last one repeats). Money: each robot's flat rate for the
+// shift, paid at Start. Each shift starts from what's shipped so far, on a fresh floor, as in the
+// game. Prints the quota progress after each shift and the money left.
 const Q = level("First quarter");
 const QB = { blip: [[], []], dot: [[], []], pip: [["packing"], []], gary: [["packing"], ["fast"]], rusty: [["repair"], ["steady"]], vex: [["painting"], ["fast", "smart"]] };
 // "you" stands in for the player servicing the paint machine yourself: a free repair worker.
@@ -65,19 +65,17 @@ const Q_FIX = `while (needsAny() > 0) { if (wear("PAINT") >= 80) { move("PAINT")
 const Q_PROG = { blip: Q_HAUL, dot: Q_HAUL, pip: Q_PACK, gary: Q_PACK, vex: Q_PAINT, rusty: Q_FIX, you: Q_FIX };
 
 function quarter(plan, seed) {
-  let money = Q.quarter.budget, done = Q.order.map(() => 0), had = new Set();
+  let money = Q.quarter.budget, done = Q.order.map(() => 0);
   const log = []; // what's shipped after each shift
   for (let shift = 1; shift <= Q.quarter.shifts; shift++) {
     const ids = plan[Math.min(shift, plan.length) - 1];
     const hires = ids.map(qr);
-    for (const h of hires) if (!had.has(h.id)) money -= h.wage;
-    had = new Set(ids);
-    const payroll = hires.reduce((a, h) => a + h.wage, 0) * Q.shift / 60;
+    const payroll = hires.reduce((a, h) => a + h.wage, 0);
     if (payroll > money) return `${log.join(" ")} can't pay shift ${shift}`;
+    money -= payroll;
     const g = newGame(Q, hires, seed * 10 + shift, { done });
     g.workers.forEach((w, i) => setProgram(g, w, program(hires[i], Q, Q_PROG[hires[i].id])));
     while (!g.over) { step(g, 1 / 30); g.events.length = 0; }
-    money -= g.laborCost;
     done = g.order.map((l) => l.done);
     log.push(done.join("+"));
     if (g.won) return `${log.join(" ")} met, $${Math.round(money)} left`;

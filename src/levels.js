@@ -1,7 +1,7 @@
 // The levels, for now a tutorial. Each one is a fixed order to fill as fast as you can, and each
 // new machine shows up first in a level where you use it yourself, before anyone else does.
 // Tutorials stay minimal: just enough to get one idea across. Hiring is free (the money system is
-// parked in clanker-tycoon#9) but robots cost wages while the shift runs. You hire and write
+// parked in clanker-tycoon#9) but each robot is paid a flat rate for the shift. You hire and write
 // instructions before pressing Start; Start closes hiring.
 //   ship: "widgets" (loose widgets ship) or "boxes" (only boxes of 3 ship)
 //   colors: widget colors the belt brings (default: red, blue and green, green rarest)
@@ -14,8 +14,8 @@
 // No robot in these pools can do everything: every early level needs two or more people working
 // together (Doris and Bolt, who have every skill, are kept for later).
 //   quarter: { shifts, budget } makes the level a quarter (docs/decisions.md #35): the order is a
-//          quota to ship over that many shifts, and budget is the money for wages and hiring
-//          fees. Your crew and their instructions carry from shift to shift; the floor resets.
+//          quota to ship over that many shifts, and budget pays each shift's crew (#47). Your
+//          crew, their instructions and the conversations carry over; the floor resets.
 //   beltEvery: seconds between widgets on the belt (default RULES.beltEvery)
 const SHIFT_CREW = 45, SHIFT_FLOOR = 120;
 export const LEVELS = [
@@ -74,7 +74,7 @@ export const LEVELS = [
     order: [{ color: "red", count: 24 }, { color: "blue", count: 9 }],
     pool: ["blip", "dot", "pip", "gary", "rusty", "vex"],
     shift: SHIFT_FLOOR,
-    quarter: { shifts: 3, budget: 120 },
-    start: "Ship the quota within three shifts. Wages come out of your budget while a shift runs, and hiring costs a minute's wage. Your crew stays from shift to shift.",
+    quarter: { shifts: 3, budget: 110 },
+    start: "Ship the quota within three shifts. Each robot's pay for the shift comes out of your budget when you press <b>Start</b>. Your crew stays from shift to shift.",
   },
 ];

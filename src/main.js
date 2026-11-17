@@ -10,7 +10,8 @@ import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond } from "./brains.js";
 import { LEVELS } from "./levels.js";
 import { backendLabel } from "./llm.js";
 import { startShift, logEvent } from "./playlog.js";
-import { newQuarter, hireFee, shiftPayroll, moneyNow, closeShift, nextShift, restartShift, money } from "./quarter.js";
+import { headLooks, toolLooks, faceHTML } from "./looks.js";
+import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money } from "./quarter.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const floor = $("#floor");
@@ -20,7 +21,7 @@ let phase = "menu";
 let paused = false;
 let started = false; // the clock starts on your first move
 let lastFrame = performance.now();
-let lastVersion = -1, lastStat = null, lastClock = null, lastOrder = "", lastHands = "", lastList = "", lastReady = "";
+let lastVersion = -1, lastClock = null, lastOrder = "", lastHands = "", lastList = "", lastReady = "";
 const ui = { bots: {}, stations: {}, thinking: {}, bubbleTimers: {}, oopsTimers: {}, open: null };
 
 // The thinking budget: how many thoughts a worker can spend on their own (something unexpected, or
@@ -78,14 +79,24 @@ function showMenu() {
 
 const PLAYER = { id: "you", name: "You", color: "#f4f1e8" };
 
-function makeBot(id, name, color, isYou) {
+function makeBot(id, name, color, isYou, hire) {
   const bot = document.createElement("div");
   bot.className = "ct-bot" + (isYou ? " is-you" : "");
   bot.style.setProperty("--c", color);
-  bot.innerHTML = `<div class="ct-bot-head"><div class="ct-bot-eyes"><i></i><i></i></div><div class="ct-bot-held"></div></div><div class="ct-bot-bar"><i></i></div><div class="ct-bot-name">${name}</div>`;
+  // A robot's skills and attributes show on them (looks.js): tools in hand, glasses, a bolt.
+  const looks = hire ? headLooks(hire) + toolLooks(hire) : "";
+  bot.innerHTML = `<div class="ct-bot-head"><div class="ct-bot-eyes"><i></i><i></i></div>${looks}<div class="ct-bot-held"></div></div><div class="ct-bot-bar"><i></i></div><div class="ct-bot-name">${name}</div>`;
   floor.append(bot);
   ui.bots[id] = bot;
   return bot;
+}
+
+// What the belt brings, said plainly with the colors: "brings ● red only", or the mix.
+function beltHint() {
+  const cs = level.colors ?? COLORS;
+  const dot = (c) => `<span class="ct-dot c-${c}"></span>`;
+  if (cs.length === 1) return `brings ${dot(cs[0])} ${cs[0]} only`;
+  return `brings ${cs.map((c) => `${dot(c)} ${c}`).join(", ")}${cs.includes("green") ? " (green is rare)" : ""}`;
 }
 
 function buildFloor() {
@@ -104,7 +115,8 @@ function buildFloor() {
     el.dataset.key = key;
     el.style.left = `${st.x}%`; el.style.top = `${(st.y / 64) * 100}%`;
     const cap = key.startsWith("BIN_") ? RULES.binCap : key === "PACK" ? RULES.packCap : key === "PAINT" ? RULES.paintCap : key === "BELT_A" ? RULES.beltCap : null;
-    const hint = key === "DOCK" ? (level.ship === "widgets" ? "ship widgets here" : "ship boxes here") : STATION_HINTS[key];
+    const hint = key === "DOCK" ? (level.ship === "widgets" ? "ship widgets here" : "ship boxes here") : key === "BELT_A" ? beltHint() : STATION_HINTS[key];
+    if (key === "BELT_A") el.dataset.tooltip = `A new widget every ${level.beltEvery ?? RULES.beltEvery} seconds. It holds ${RULES.beltCap}; when it's full the oldest falls off the end.`;
     el.innerHTML = `<div class="ct-st-label"><span>${st.label}</span><span class="ct-st-cap"></span></div><div class="ct-st-hint">${hint}</div><div class="ct-st-items"></div>`
       + (key === "PAINT" ? `<div class="ct-wear" data-tooltip="Wear. At 100% the machine stops until someone with Repair services it."><i></i></div>` : "");
     el.dataset.cap = cap ?? "";
@@ -147,7 +159,7 @@ function buildFloor() {
   floor.append(bay);
   floor.append(desk);
   makeBot("you", PLAYER.name, PLAYER.color, true);
-  for (const w of game.workers) makeBot(w.id, w.hire.name, w.hire.color).addEventListener("click", (e) => { e.stopPropagation(); focusCard(w); });
+  for (const w of game.workers) makeBot(w.id, w.hire.name, w.hire.color, false, w.hire).addEventListener("click", (e) => { e.stopPropagation(); focusCard(w); });
   lastVersion = -1;
 }
 
@@ -220,17 +232,19 @@ function begin() {
   if (game.workers.some((w) => w.compiling) || cantPay()) { nudgeStart(); return; }
   started = true;
   setPhase("run");
-  // What Replay this shift goes back to: the money and quota as the shift starts, fees paid.
-  if (quarter) quarter.start = { money: quarter.money, done: [...quarter.done] };
+  // The crew is paid their flat rate for the shift as it starts.
+  if (quarter) payShift(quarter, game);
+  else game.laborCost = payroll();
   lastSnap = -1e9;
   logEvent(0, "start", { crew: crewSummary() });
   keepTyped();
   buildCrew(); // drop the Let go buttons and the Hire row
 }
 $("#goBtn").addEventListener("click", begin);
-// In a quarter, the budget has to cover the whole shift's wages before it starts.
-const payroll = () => shiftPayroll(level, game.workers.map((w) => w.hire));
+// In a quarter, the budget has to cover the crew's pay for the shift before it starts.
+const payroll = () => shiftPayroll(game.workers.map((w) => w.hire));
 const cantPay = () => !!quarter && payroll() > quarter.money;
+const cantAfford = (c) => !!quarter && payroll() + c.wage > quarter.money;
 // Next to Start: who's ready, who's still reading, who can't do theirs. Start waits for the readers.
 function renderReady() {
   if (phase !== "plan") return;
@@ -241,10 +255,10 @@ function renderReady() {
   lastReady = sig;
   $("#goBtn").disabled = reading || short;
   $("#goBtn").dataset.tooltip = reading ? "Waiting for everyone to finish reading their instructions."
-    : short ? `This crew's wages for the shift come to $${payroll()}, and you have ${money(quarter.money)}. Let someone go.` : "";
+    : short ? `This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. Let someone go.` : "";
   const el = $("#crewReady");
   if (short) {
-    el.innerHTML = `<span class="ct-planbar-note is-bad">This shift's wages come to $${payroll()}, and you have ${money(quarter.money)}. Let someone go to start.</span>`;
+    el.innerHTML = `<span class="ct-planbar-note is-bad">This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. Let someone go to start.</span>`;
     return;
   }
   if (!game.workers.length) {
@@ -335,22 +349,18 @@ const skillBadges = (h) => `<div class="ct-skills">${h.skills.length
 function hire(id) {
   const c = CANDIDATES.find((h) => h.id === id);
   if (started) return;
-  if (quarter && hireFee(c) > quarter.money) return;
+  if (cantAfford(c)) return;
   keepTyped();
   const w = addWorker(game, c);
-  if (quarter) { w.fee = hireFee(c); quarter.money -= w.fee; }
-  logEvent(null, "hire", { worker: id, fee: w.fee });
+  logEvent(null, "hire", { worker: id });
   rebuildCrew();
   openChat(w.id);
 }
 function fire(id) {
   if (started) return;
   keepTyped();
-  // Letting someone go before they've worked a shift gives the hiring fee back.
-  const refund = quarter ? worker(id)?.fee ?? 0 : 0;
-  if (quarter) quarter.money += refund;
   removeWorker(game, id);
-  logEvent(null, "fire", { worker: id, refund: refund || undefined });
+  logEvent(null, "fire", { worker: id });
   ui.open = null;
   rebuildCrew();
 }
@@ -406,30 +416,29 @@ function renderList() {
     const unread = ui.open !== w.id && (w.log ?? []).slice(w.seen ?? 0).some((l) => l.who === "them");
     return { w, st, cls, prev, bad: last?.kind === "problem", unread };
   });
-  const sig = JSON.stringify([ui.open, started, canHire(), quarter && !started && quarter.money, openCandidates().map((c) => c.id), rows.map((r) => [r.w.id, r.st, r.prev, r.unread, atDesk(r.w)])]);
+  const sig = JSON.stringify([ui.open, started, canHire(), quarter && !started && quarter.money - payroll(), openCandidates().map((c) => c.id), rows.map((r) => [r.w.id, r.st, r.prev, r.unread, atDesk(r.w)])]);
   if (sig === lastList) return;
   lastList = sig;
-  const payroll = game.workers.reduce((a, w) => a + w.hire.wage, 0);
   const list = $("#crew");
   // The crew first (only once there is one), then whoever you can still hire, each with a Hire
   // button on their row. Hiring moves them up and opens their chat. The hire part goes once the
   // shift starts.
   const cands = canHire() ? openCandidates() : [];
-  list.innerHTML = (rows.length ? `<div class="ct-list-head"><span class="ct-label">Crew</span><span class="ct-wage">payroll $${payroll}/min${quarter ? `, $${shiftPayroll(level, game.workers.map((w) => w.hire))} a shift` : ""}</span></div>` : "")
+  list.innerHTML = (rows.length ? `<div class="ct-list-head"><span class="ct-label">Crew</span><span class="ct-wage">$${payroll()} a shift</span></div>` : "")
     + rows.map((r) => `<button type="button" class="ct-convo ${ui.open === r.w.id ? "is-open" : ""} ${atDesk(r.w) ? "is-waiting" : ""}" data-open="${r.w.id}" style="--c:${r.w.hire.color}">
         ${r.unread ? `<span class="ct-unread" aria-label="unread"></span>` : ""}
-        <span class="ct-face"></span><b>${r.w.hire.name}</b>
+        ${faceHTML(r.w.hire)}<b>${r.w.hire.name}</b>
         <span class="ct-chip ${r.cls}">${r.cls === "is-ok" ? CHECK : r.cls === "is-bad" ? ALERT : ""}${r.st}${r.cls === "is-busy" ? DOTS : ""}</span>
         <span class="ct-convo-prev ${r.bad ? "is-bad" : ""}">${escapeHTML(r.prev)}</span>
       </button>`).join("")
     + (cands.length ? `<div class="ct-list-head ${rows.length ? "is-sep" : ""}"><span class="ct-label">Hire</span>${rows.length ? "" : `<span class="ct-wage">before the shift starts</span>`}</div>`
       + cands.map((c) => {
-        // In a quarter hiring costs a minute's wage up front.
-        const fee = quarter ? hireFee(c) : 0, broke = quarter && fee > quarter.money;
-        const tip = quarter ? (broke ? `Hiring ${c.name} costs $${fee}, and you have ${money(quarter.money)}.` : `Hiring costs $${fee} now, then $${c.wage} a minute while shifts run.`) : "";
+        // In a quarter you can't hire past what the budget covers for this shift.
+        const broke = cantAfford(c);
+        const tip = broke ? `With ${c.name} the crew would cost $${payroll() + c.wage} for the shift, and you have ${money(quarter.money)}.` : "";
         return `<div class="ct-cand" style="--c:${c.color}">
-          <span class="ct-face"></span><span><b>${c.name}</b> <span class="ct-wage">$${c.wage}/min</span></span>
-          <button class="ct-btn is-gold ct-small-btn" type="button" data-hire="${c.id}" ${broke ? "disabled" : ""} ${tip ? `data-tooltip="${tip}"` : ""}>Hire${quarter ? ` $${fee}` : ""}</button>
+          ${faceHTML(c)}<span><b>${c.name}</b> <span class="ct-wage">$${c.wage}/shift</span></span>
+          <button class="ct-btn is-gold ct-small-btn" type="button" data-hire="${c.id}" ${broke ? "disabled" : ""} ${tip ? `data-tooltip="${tip}"` : ""}>Hire</button>
           <span class="ct-cand-line">${skillBadges(c)}<span>${c.blurb}</span></span>
         </div>`;
       }).join("") : "");
@@ -448,8 +457,8 @@ function buildChat() {
     box.style.setProperty("--c", h.color);
     box.innerHTML = `
       <div class="ct-chat-head">
-        ${back}<span class="ct-face"></span>
-        <div class="ct-chat-who"><b>${h.name}</b><span class="ct-wage">$${h.wage}/min</span></div>
+        ${back}${faceHTML(h)}
+        <div class="ct-chat-who"><b>${h.name}</b><span class="ct-wage">$${h.wage}/shift</span></div>
         <span class="ct-pips"></span>
         ${started ? "" : `<button class="ct-btn ct-small-btn" type="button" data-fire>Let go</button>`}
       </div>
@@ -509,7 +518,7 @@ function focusCard(w) {
 function logLine(w, who, text, kind = "") {
   (w.log ??= []).push({ who, text, kind });
   logEvent(clockT(), "chat", { worker: w.id, who, text, kind: kind || undefined });
-  if (w.log.length > 40) { w.log.shift(); w.seen = Math.max(0, (w.seen ?? 0) - 1); }
+  if (w.log.length > 150) { w.log.shift(); w.seen = Math.max(0, (w.seen ?? 0) - 1); }
 }
 function renderLog(w, box) {
   const busy = w.compiling || ui.thinking[w.id];
@@ -518,6 +527,7 @@ function renderLog(w, box) {
   w._logSig = sig;
   const el = $(".ct-log", box);
   const lines = (w.log ?? []).map((l) => {
+    if (l.kind === "divider") return `<div class="ct-divider"><span>${escapeHTML(l.text)}</span></div>`;
     if (l.who === "sys") return `<div class="ct-msg is-sys">${escapeHTML(l.text)}</div>`;
     if (l.who === "you") {
       const tag = l.kind === "yell" ? "To everyone" : "";
@@ -946,14 +956,10 @@ function render() {
     const box = game.stations.PACK?.find((i) => i.id === id);
     if (box) fill.style.transform = `scaleX(${boxProgress(game, box)})`;
   }
-  // In a quarter: the money left, going down as wages are paid. Otherwise what labor has cost.
-  const labor = quarter ? money(moneyNow(quarter, game)) : `$${Math.floor(game.laborCost)}`;
+  // In a quarter: the money left (the crew's pay comes out at Start). Otherwise what the crew costs.
+  const labor = quarter ? money(quarter.money) : `$${started ? game.laborCost : payroll()}`;
   if ($("#labor").textContent !== labor) $("#labor").textContent = labor;
   if (game.player.station !== "PACK" && packPick.size) { packPick.clear(); lastVersion = -1; }
-  // Center stat: how much of today's order has shipped.
-  const total = game.order.reduce((a, l) => a + l.count, 0), done = game.order.reduce((a, l) => a + l.done, 0);
-  const stat = `${done}/${total}`;
-  if (stat !== lastStat) { lastStat = stat; $("#stat").textContent = stat; }
   // With a shift length the clock counts down what's left of it.
   const left = level.shift ? Math.max(0, level.shift - game.t) : null;
   const clock = left == null ? fmtTime(game.t) : `${fmtTime(Math.ceil(left))} left`;
@@ -1030,15 +1036,14 @@ function openLevel(L, { again = false, shift = "restart" } = {}) {
     const w = addWorker(game, old.hire);
     Object.assign(w, { orders: old.orders, scope: old.scope, compileError: old.compileError, memory: old.memory, draft: null });
     if (old.ast && !old.compileError) setProgram(game, w, old.ast);
-    if (old.orders) logLine(w, "sys", "New shift, same instructions.");
-    // A quarter started over hires the same crew again, fees and all. Restarting a shift that
-    // hasn't run keeps the fees they came with, so letting them go still gives it back.
-    if (quarter && shift === "new") { w.fee = hireFee(w.hire); quarter.money -= w.fee; }
-    else if (quarter && !ran) w.fee = old.fee;
+    // The conversation carries on from shift to shift, with a divider where the new one starts.
+    w.log = old.log ?? [];
+    w.seen = old.seen;
+    if (ran) logLine(w, "sys", quarter && shift !== "new" ? `Shift ${quarter.shift}${shift === "restart" ? ", again" : ""}` : "New shift", "divider");
   }
   startShift(L, { again, crew: crewSummary(), quarter: quarter ? { shift: quarter.shift, money: Math.floor(quarter.money), done: quarter.done } : undefined });
   started = false;
-  lastVersion = -1; lastStat = null; lastClock = null; lastOrder = ""; lastHands = ""; lastList = ""; lastReady = "";
+  lastVersion = -1; lastClock = null; lastOrder = ""; lastHands = ""; lastList = ""; lastReady = "";
   ui.thinking = {};
   keysDown.clear();
   ui.open = null;
@@ -1046,7 +1051,6 @@ function openLevel(L, { again = false, shift = "restart" } = {}) {
   buildFloor();
   buildCrew();
   $("#levelName").textContent = quarter ? `Shift ${quarter.shift} of ${L.quarter.shifts}` : `Level ${L.id}: ${L.name}`;
-  $("#statLabel").textContent = quarter ? "Quota" : "Shipped";
   $("#goalLabel").textContent = quarter ? "This quarter" : "Today's order";
   $("#laborLabel").textContent = quarter ? "budget" : "labor";
   packPick.clear();
@@ -1094,15 +1098,21 @@ function endQuarterShift() {
   const left = money(quarter.money), spent = money(Q.budget - quarter.money);
   logEvent(game.t, "end", { won, quarter: { shift: n, of: Q.shifts }, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), money: Math.floor(quarter.money), crew: crewSummary() });
   if (won && (!best[level.id] || quarter.money > best[level.id].left)) best[level.id] = { left: quarter.money };
-  const stats = won ? [["Shifts", `${n} of ${Q.shifts}`], ["Spent", spent], ["Left", left]]
-    : !last ? [["Shipped", `${done - shippedBefore}`], ["Wages", `$${Math.round(game.laborCost)}`], ["Budget left", left]]
+  // The quarter ends as soon as the quota ships; what's left of the budget is saved.
+  const stats = won ? [["Shifts", `${n} of ${Q.shifts}`], ["Spent", spent], ["Saved", left]]
+    : !last ? [["Shipped", `${done - shippedBefore}`], ["Crew pay", `$${Math.round(game.laborCost)}`], ["Budget left", left]]
     : [["Shipped", `${done}/${total}`], ["Spent", spent], ["Left", left]];
   $("#endTitle").textContent = won ? "Quota met" : !last ? `Shift ${n} done` : "Quota missed";
-  const togo = total - done, shiftsLeft = Q.shifts - n;
-  $("#endNote").textContent = won ? `You shipped the quarter's quota in ${n === 1 ? "one shift" : `${n} shifts`}, with ${left} of your $${Q.budget} budget left.`
-    : !last ? `${togo} ${togo === 1 ? "box" : "boxes"} to go and ${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left. Your crew and their instructions stay; hire or let people go before the next one.`
-    : `The quarter ended ${togo} ${togo === 1 ? "box" : "boxes"} short of the quota.`;
-  $("#endStats").innerHTML = stats.map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
+  const shiftsLeft = Q.shifts - n;
+  $("#endNote").textContent = won ? `You shipped the quarter's quota in ${n === 1 ? "one shift" : `${n} shifts`} and saved ${left} of your $${Q.budget} budget.`
+    : !last ? `${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left. Your crew and their instructions stay; hire or let people go before the next one.`
+    : "The quarter ended short of the quota.";
+  // What's still to ship, as the same tickets the floor shows.
+  const togo = won ? "" : `<div class="ct-end-togo"><span class="ct-label">Still to ship</span>${level.order.map((l, i) => {
+    const n = l.count - quarter.done[i];
+    return n > 0 ? `<span class="ct-ticket"><span class="ct-ticket-dots">${`<span class="ct-dot c-${l.color}"></span>`.repeat(3)}</span><span class="ct-ticket-pay">${n}</span></span>` : "";
+  }).join("")}</div>`;
+  $("#endStats").innerHTML = togo + stats.map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
   const btns = won || last
     ? [["new", "Try again", true], ...(won ? [] : [["restart", "Replay this shift"]])]
     : [["next", "Next shift", true], ["restart", "Replay this shift"]];

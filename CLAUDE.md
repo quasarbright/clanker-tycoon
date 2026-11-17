@@ -60,7 +60,8 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   thinks something outside their instructions needs doing comes to your desk and asks. (Mike: Pip,
   told to pack and ship, "rewrote his own instructions" mid-shift to fetch from the belt too.) The
   stray-station check compares against your own words, not the worker's restatement on the card.
-- Workers cost money (wages), even while the bigger money system is parked.
+- Workers cost money: a flat rate per shift (shifts are a fixed length, so per-minute pay meant
+  nothing), paid at Start.
 
 **Feel**
 - Waiting is said in words, never a filling meter: a worker holding on at a station gets a
@@ -75,6 +76,10 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   after you've made your decisions isn't fun; the challenge is planning. (Issue #12.)
 - You can use a station from any side.
 - The factory floor stays in view; scrolling the crew list doesn't scroll the floor away.
+- The page never scrolls, in any state (Mike: "the main page shouldn't scroll at all"). Everything
+  fits the window; only inner panels (the crew list, the chat) scroll.
+- You can see what a robot can do by looking at it: skills are tools they carry, attributes change
+  their look (glasses for Smart, a bolt for Fast). New skills and attributes get a look too.
 
 **Levels and tutorials**
 - Tutorials are minimal: just enough to get the idea across, nothing more (level 2 is one box;
@@ -90,7 +95,8 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
   to edit.
 - The bigger unit is a **quarter** (Mike: a quota, "some amount shifts ... to accomplish the quota,
   and a budget"). Shifts stay as they are inside it. Money is a planning problem, never a surprise:
-  Start waits until the budget covers the whole shift's wages, so you can't go broke mid-shift.
+  Start waits until the budget covers the whole shift's pay, so you can't go broke mid-shift. The
+  quarter ends when the quota's met; what's left of the budget is saved, no surplus production.
 - Roadmap order (Mike, 2026-11-17): make your words matter, the quarter sandbox, then progression
   (core) before disruptions (a later "pinch of chaos"). Personalities are late polish, not a
   mechanic.

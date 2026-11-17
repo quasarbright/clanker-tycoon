@@ -1,11 +1,10 @@
-// A quarter (docs/decisions.md #35): a quota to ship over a few shifts, with a budget. The level
-// (levels.js) gives the quota as its order, plus `quarter: { shifts, budget }`.
+// A quarter (docs/decisions.md #35, #47): a quota to ship over a few shifts, with a budget. The
+// level (levels.js) gives the quota as its order, plus `quarter: { shifts, budget }`.
 //
-// Money goes out two ways: wages, by the second while a shift runs (the sim counts them as
-// laborCost), and a hiring fee of one minute's wage when someone joins. Letting someone go before
-// they've worked a shift gives the fee back, so a misclick costs nothing. Start waits until the
-// budget covers the whole shift's payroll, so you never run out of money in the middle of one.
-// What's shipped and the money carry from shift to shift; the floor itself starts fresh.
+// Each robot has a flat rate for a shift (their wage, brains.js). The crew's rates come out of the
+// budget when you press Start, so Start waits until the budget covers them: you can never run out
+// of money in the middle of a shift. What's shipped and the money carry from shift to shift; the
+// floor itself starts fresh.
 
 /** A fresh quarter for level `L`. */
 export function newQuarter(L) {
@@ -14,29 +13,27 @@ export function newQuarter(L) {
   return q;
 }
 
-/** The fee for hiring someone: one minute of their wage. */
-export const hireFee = (hire) => hire.wage;
+/** What this crew costs for one shift. */
+export const shiftPayroll = (hires) => hires.reduce((a, h) => a + h.wage, 0);
 
-/** What a whole shift of this crew costs in wages. */
-export const shiftPayroll = (L, hires) => Math.ceil(hires.reduce((a, h) => a + h.wage, 0) * L.shift / 60);
-
-/** Money left right now: the budget minus this shift's wages so far. */
-export const moneyNow = (q, game) => q.money - (game.paid ? 0 : game.laborCost);
-
-/** A shift ended: pay its wages and carry what shipped. */
-export function closeShift(q, game) {
+/** Start: pay the crew for the shift. Replay this shift goes back to just before this. */
+export function payShift(q, game) {
+  q.start = { money: q.money, done: [...q.done] };
+  game.laborCost = shiftPayroll(game.workers.map((w) => w.hire));
   q.money -= game.laborCost;
-  game.paid = true;
+}
+
+/** A shift ended: carry what shipped. */
+export function closeShift(q, game) {
   q.done = game.order.map((l) => l.done);
 }
 
-/** The next shift: remember where it starts, for Restart shift. */
+/** The next shift. */
 export function nextShift(q) {
   q.shift++;
-  q.start = { money: q.money, done: [...q.done] };
 }
 
-/** Restart shift: back to how this shift started. */
+/** Replay this shift: back to how it started, before the crew was paid. */
 export function restartShift(q) {
   q.money = q.start.money;
   q.done = [...q.start.done];

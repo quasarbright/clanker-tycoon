@@ -524,3 +524,46 @@ of that though."
 **Picked:** the plant has a fixed layout of bays; a bought line arrives in the next bay already
 wired. Flexible routing (shared supplies, overflow, which source a line pulls from) is told to a
 foreman in words, never drawn. The only thing the player builds is instructions. Added to CLAUDE.md.
+
+### 47. A flat rate per shift, not wages per minute (2026-11-17)
+
+**Problem:** Mike, after playing the quarter: "Having charge per minute doesn't really make sense
+when a shift is a fixed time limit, so we should just have a flat rate to hire someone for this
+shift." He also confirmed the quarter ends when the quota's met ("yeah end on quota met"), with
+what's left of the budget kept as savings, as #39 assumes.
+**Picked:** each robot has a price per shift: $5, plus $5 for every skill and attribute (Blip and
+Dot $5, Pip $10, Gary and Rusty $15, Vex $20). The crew's pay comes out of the budget when you press
+Start, and Start waits until the budget covers it. No hiring fee, so there's nothing to refund.
+Hire buttons turn off when adding that robot would put the shift over budget. The budget readout
+no longer ticks down; it changes at Start. On the other levels "labor" shows the crew's cost for
+the shift. Replaces the per-minute wage and the hiring fee from #35.
+**Rebalanced** (`tools/balance.mjs`) to **$110**: hauler + packer and two haulers + packer still
+miss the blue; painter + hauler + packer makes it with $5 saved; haulers for a shift and then a
+painter with Rusty saves $45; servicing the machine yourself saves $40; everyone at once can't pay
+for shift 3.
+**Also from that playtest:** the conversation with each robot carries across shifts with a
+"Shift 2" divider; the shift-end card shows what's still to ship as tickets; the belt says what it
+brings ("brings ● red only", tooltip with its rate). Mike asked whether raw inputs should come from
+fixed sources instead (and that belts will still link lines later). Not yet: the quarter's balance
+leans on the belt's rate (it's the limit that makes a fourth hire useless), so sources wait until
+lines feed each other and the supply question comes up for real.
+
+### 48. Robots wear their skills; the page never scrolls (2026-11-17)
+
+**Problem:** Mike: "let's make it so skills have visual indications that change the character's
+appearance. like a paint brush or a box, and for smart we'll give glasses and for fast maybe a
+lightning bolt. repairman can have a wrench." And "I should never have to scroll the whole page. rn
+i have to scroll down to pick actions when i'm doing manual control ... the main page shouldn't
+scroll at all." And "the stuff on the top right is actually the most important stuff. replace the
+big quota indicator with that stuff, since the quota shows as orders."
+**Picked:**
+- Skills are tools carried at the robot's side (cardboard box, paintbrush dipped blue, wrench);
+  Smart wears round glasses, Fast has a yellow bolt on its head. The same looks on the small faces
+  in the crew list and chat (`src/looks.js`). Nimble and Steady have no look yet.
+- The page is exactly the window's height and never scrolls. The floor shrinks to fit the height
+  it's given; only the crew list and the chat scroll, inside their panels. The bar under the floor
+  keeps the same height before and after Start so the floor doesn't jump. On phones the floor sits
+  on top and the list or chat takes the rest. Checked at 1920×1080, 1440×900, 1280×720, 375×812
+  and 390×664, in the menu, planning, running, by hand and at shift end.
+- The top bar's center is the shift ("Shift 1 of 3"), its clock in big type, and the budget. The
+  big shipped/quota count is gone; the tickets above the floor already show it.

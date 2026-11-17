@@ -31,7 +31,9 @@ export const ATTRIBUTES = {
   smart: { label: "Smart", tip: "Can think things through more often (a bigger thinking budget that refills faster)." },
 };
 // Wage: $3/min, plus $2 for every skill and every attribute.
-const robot = (r) => ({ ...r, wage: 3 + 2 * (r.skills.length + r.attributes.length) });
+// Wage: a flat rate for a shift (shifts are a fixed length, so a per-minute wage was just a
+// multiplier): $5, plus $5 for every skill and every attribute.
+const robot = (r) => ({ ...r, wage: 5 + 5 * (r.skills.length + r.attributes.length) });
 export const CANDIDATES = [
   robot({
     id: "blip", name: "Blip", color: "#d97bd1", skills: [], attributes: [],

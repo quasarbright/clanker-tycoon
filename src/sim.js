@@ -160,8 +160,6 @@ export function step(s, dt) {
     s.stations.BELT_A.push(widget(s));
     s.version++;
   }
-  // Wages, by the second, while the shift runs.
-  s.laborCost += s.workers.reduce((a, w) => a + w.hire.wage, 0) * dt / 60;
   stepPlayer(s, s.player, dt);
   for (const w of s.workers) stepWorker(s, w);
   // A line can jam with nobody failing: a packer waiting for a condition that never comes true, a

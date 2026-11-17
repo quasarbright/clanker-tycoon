@@ -44,6 +44,8 @@
     .ct-cash-label, .ct-clock-label { display: block; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
     .ct-cash-value { font: 400 2rem/1.05 var(--font-display); color: var(--accent); }
     .ct-cash-value.is-neg { color: var(--danger); }
+    .ct-cash .ct-clock-value { font: 400 2rem/1.05 var(--font-display); white-space: nowrap; }
+    .ct-cash #labor { color: var(--text); font: 700 .95rem var(--font-mono); letter-spacing: 0; }
     .ct-clock { text-align: right; }
     .ct-clock-value { font: 600 1.3rem var(--font-mono); }
 
@@ -194,7 +196,7 @@
 
 
     /* ---------- overlays ---------- */
-    .ct-overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; background: rgba(8, 9, 11, .78); padding: 20px; }
+    .ct-overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; overflow-y: auto; background: rgba(8, 9, 11, .78); padding: 20px; }
     .ct-overlay.is-hidden { display: none; }
     .ct-card-big { width: min(520px, 100%); background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 26px; text-align: center; box-shadow: 0 20px 60px #000a; }
     .ct-mascot { display: block; width: 96px; height: 96px; margin: 0 auto 6px; }
@@ -206,6 +208,7 @@
     .ct-end-note { color: var(--muted); margin: 0 0 16px; }
     .ct-end-note:empty { display: none; }
     .ct-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 20px; }
+    .ct-end-togo { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; margin-bottom: 4px; }
     .ct-stat-value { font: 400 1.4rem var(--font-display); }
     .ct-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 
@@ -267,6 +270,7 @@
       padding: 1px 7px 1px 5px; border-radius: 999px; pointer-events: none; z-index: 3; }
     .ct-wait svg { width: 1.1em; height: 1.1em; display: block; animation: hourglass 2s ease-in-out infinite; }
     .ct-wait .ct-dot { width: 1em; height: 1em; }
+    .ct-st-hint .ct-dot { width: .85em; height: .85em; vertical-align: -.08em; box-shadow: none; }
     @keyframes hourglass { 0%, 40% { transform: rotate(0); } 50%, 90% { transform: rotate(180deg); } 100% { transform: rotate(360deg); } }
     .ct-box { position: relative; overflow: hidden; }
     .ct-box.is-building { background: #b88a5240; }
@@ -378,6 +382,8 @@
     .ct-msg.is-them.is-desk { background: var(--accent); color: var(--on-accent); }
     .ct-msg.is-them.is-desk .ct-label { color: var(--on-accent); opacity: .75; }
     .ct-msg.is-typing { padding: 9px 12px; }
+    .ct-divider { align-self: stretch; display: flex; align-items: center; gap: 10px; margin: 6px 0; font: 600 .7rem var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+    .ct-divider::before, .ct-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
     .ct-msg.is-sys { align-self: center; max-width: 100%; font: 500 .74rem var(--font-mono); color: var(--muted); padding: 0; text-align: center; }
     .ct-compose { display: flex; flex-direction: column; gap: 8px; }
     .ct-compose .ct-textarea { min-height: 0; }
@@ -410,6 +416,49 @@
       .ct-chat { flex: 1 1 auto; min-height: 0; }
       .ct-chat .ct-log { flex: 1 1 auto; min-height: 0; max-height: none; }
     }
+    /* what a robot's skills and attributes look like (looks.js): the same placement on the floor
+       and on the small faces, since both put the eyes in the same spot */
+    .ct-glasses { position: absolute; left: 12%; width: 76%; top: 27.5%; z-index: 1; pointer-events: none; display: block; }
+    .ct-bolt { position: absolute; left: 2%; top: 0; width: 36%; transform: rotate(-12deg); z-index: 1; display: block; }
+    .ct-tools { position: absolute; left: -40%; bottom: -10%; width: 62%; display: flex; flex-direction: column-reverse; z-index: 1; pointer-events: none; }
+    .ct-tool { width: 100%; display: block; filter: drop-shadow(0 1px 1px #000a); }
+    .ct-tools .ct-tool + .ct-tool { margin-bottom: -20%; }
+    .ct-face .ct-tools { left: auto; right: -22%; bottom: -22%; width: 52%; }
+    /* The page never scrolls (Mike: "the main page shouldn't scroll at all"). Everything fits the
+       window: the floor shrinks to the height it's given, and only the crew list and the chat
+       scroll, inside their panels. */
+    html, body { height: 100%; overflow: hidden; }
+    body { display: flex; flex-direction: column; height: 100dvh; }
+    .ct-top { flex: none; }
+    .ct-main { flex: 1 1 auto; min-height: 0; grid-template-rows: minmax(0, 1fr); align-items: stretch; }
+    .ct-main > section { display: flex; flex-direction: column; min-height: 0; }
+    .ct-orders, .ct-planbar, .ct-hands, .ct-yell { flex: none; }
+    /* the plan bar holds the same height as the action bar and yell box that replace it at Start,
+       so the floor doesn't jump in size when the shift begins */
+    .ct-planbar { min-height: 102px; align-content: flex-start; }
+    @media (max-width: 900px) {
+      .ct-planbar { min-height: 0; }
+      .ct-cash .ct-clock-value { font-size: 1.45rem; }
+    }
+    .ct-floor-wrap { flex: 1 1 auto; min-height: 0; container-type: size; display: flex; justify-content: center; }
+    .ct-floor { width: min(100cqw, 100cqh * 100 / 64); flex: none; }
+    .ct-side { min-height: 0; overflow: hidden; }
+    @media (min-width: 901px) {
+      .ct-main > section, .ct-side { position: static; height: auto; }
+      .ct-side { min-height: 0; }
+    }
+    /* phones and narrow windows: the floor on top at full width, the list or one chat under it
+       taking the rest of the height */
+    @media (max-width: 900px) {
+      .ct-main { grid-template-rows: auto minmax(0, 1fr); gap: 10px; }
+      .ct-floor-wrap { container-type: normal; flex: none; }
+      .ct-floor { width: 100%; }
+      .ct-side { display: flex; flex-direction: column; }
+      .ct-crew { flex: 0 1 auto; min-height: 0; overflow-y: auto; }
+      .ct-chat { flex: 1 1 auto; min-height: 0; }
+      .ct-chat .ct-log { flex: 1 1 auto; min-height: 0; max-height: none; }
+      .ct-planbar, .ct-hands, .ct-yell { margin-top: 8px; }
+    }
     .ct-stale { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 20; display: flex; gap: 12px; align-items: center;
       background: var(--panel); border: 1px solid var(--accent); border-radius: 12px; padding: 8px 10px 8px 16px; box-shadow: 0 10px 30px #000a; }
   </style>
@@ -419,20 +468,21 @@
     <button class="ct-btn ct-round" id="pauseBtn" aria-label="Pause">
       <svg width="16" height="18" viewBox="0 0 16 18" style="display:block"><rect x="1" y="1" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="10" y="1" width="5" height="16" rx="1.5" fill="currentColor"/></svg>
     </button>
-    <div class="ct-cash"><span class="ct-cash-label" id="statLabel">Shipped</span><span class="ct-cash-value" id="stat">0/0</span></div>
-    <div class="ct-clock"><span class="ct-clock-label" id="levelName">Level</span><span class="ct-clock-value" id="clock">0:00</span><span class="ct-clock-label"><span id="laborLabel">labor</span> <span id="labor">$0</span></span></div>
+    <!-- The shift, its clock and the money are what matter most, so they take the center; the
+         order (or quota) shows as tickets above the floor. -->
+    <div class="ct-cash"><span class="ct-cash-label" id="levelName">Level</span><span class="ct-cash-value ct-clock-value" id="clock">0:00</span><span class="ct-cash-label"><span id="laborLabel">labor</span> <span id="labor">$0</span></span></div>
   </header>
 
   <main class="ct-main">
     <section>
       <div class="ct-orders"><span class="ct-orders-label" id="goalLabel">Today's order</span><div id="orders" style="display:contents"></div></div>
-      <div class="ct-floor" id="floor">
+      <div class="ct-floor-wrap"><div class="ct-floor" id="floor">
         <svg class="ct-line-svg" viewBox="0 0 100 64" preserveAspectRatio="none" aria-hidden="true">
           <defs><marker id="arrowhead" viewBox="0 0 6 6" refX="0" refY="3" markerWidth="2.4" markerHeight="2.4" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0L6 3L0 6z" fill="#f2c23088"/></marker></defs>
           <g id="lineArrows"></g>
         </svg>
         <div class="ct-coach" id="coach"></div>
-      </div>
+      </div></div>
       <div class="ct-planbar ct-plan-only">
         <button class="ct-btn is-gold ct-big" id="goBtn">Start</button>
         <div class="ct-crew-ready" id="crewReady"></div>
