@@ -328,4 +328,4 @@ first when Mike mentions something from a playthrough.
 **Problem:** Mike: "i don't like this left border thing, idk why you use that so much", about the
 red/green stripe on crew rows (and the stripes on the instructions and one-off boxes).
 **Picked:** all left stripes are gone. The open conversation's whole row is lit; readiness before
-the shift is the status chip's red or green. Also added to the workspace TASTE.md.
+the shift is the status chip's red or green. Also added to the workspace UX-CHECKLIST.md.
