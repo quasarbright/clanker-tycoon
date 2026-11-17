@@ -340,7 +340,7 @@ function renderReady() {
   }
   el.innerHTML = game.workers.map((w) => {
     const [st, cls] = cardState(w);
-    return `<span class="ct-ready ${cls}" style="--c:${w.hire.color}"><i class="ct-face"></i><b>${w.hire.name}</b> ${st.toLowerCase()}${cls === "is-busy" ? DOTS : ""}</span>`;
+    return `<span class="ct-ready ${cls}" style="--c:${w.hire.color}"><i class="ct-face"></i><b>${w.hire.name}</b> ${cls === "is-busy" ? busyHTML(st.toLowerCase()) : st.toLowerCase()}</span>`;
   }).join("");
 }
 function nudgeStart() {
@@ -503,7 +503,7 @@ function renderList() {
     + rows.map((r) => `<button type="button" class="ct-convo ${ui.open === r.w.id ? "is-open" : ""} ${atDesk(r.w) ? "is-waiting" : ""}" data-open="${r.w.id}" style="--c:${r.w.hire.color}">
         ${r.unread ? `<span class="ct-unread" aria-label="unread"></span>` : ""}
         ${faceHTML(r.w.hire)}<b>${r.w.hire.name}</b>
-        <span class="ct-chip ${r.cls}">${r.cls === "is-ok" ? CHECK : r.cls === "is-bad" ? ALERT : ""}${r.st}${r.cls === "is-busy" ? DOTS : ""}</span>
+        <span class="ct-chip ${r.cls}">${r.cls === "is-ok" ? CHECK : r.cls === "is-bad" ? ALERT : ""}${r.cls === "is-busy" ? busyHTML(r.st) : r.st}</span>
         <span class="ct-convo-prev ${r.bad ? "is-bad" : ""}">${escapeHTML(r.prev)}</span>
       </button>`).join("")
     + (cands.length ? `<div class="ct-list-head ${rows.length ? "is-sep" : ""}"><span class="ct-label">${words().hire}</span>${rows.length ? "" : `<span class="ct-wage">before the shift starts</span>`}</div>`
@@ -585,12 +585,13 @@ function focusCard(w) {
 }
 
 // The conversation: what you said, what they said back, and what happened.
-//   who: "you" | "them" | "sys"; kind: "yell" | "problem" | "desk" | a label
-function logLine(w, who, text, kind = "") {
+//   who: "you" | "them" | "sys"; kind: "yell" | "problem" | "desk" | "divider"
+//   effect (a reply to you): what it did to their instructions, shown as one marker (EFFECTS)
+function logLine(w, who, text, kind = "", effect) {
   // A divider with nothing said after it is replaced, so empty shifts don't stack up dividers.
   if (kind === "divider" && w.log?.at(-1)?.kind === "divider") w.log.pop();
-  (w.log ??= []).push({ who, text, kind });
-  logEvent(clockT(), "chat", { worker: w.id, who, text, kind: kind || undefined });
+  (w.log ??= []).push({ who, text, kind, effect });
+  logEvent(clockT(), "chat", { worker: w.id, who, text, kind: kind || undefined, effect: effect?.type });
   if (w.log.length > 150) { w.log.shift(); w.seen = Math.max(0, (w.seen ?? 0) - 1); }
 }
 function renderLog(w, box) {
@@ -607,10 +608,9 @@ function renderLog(w, box) {
       return `<div class="ct-msg is-you">${tag ? `<span class="ct-label">${tag}</span>` : ""}${escapeHTML(l.text)}</div>`;
     }
     const tag = l.kind === "desk" ? `<span class="ct-label">At your desk</span>` : "";
-    const note = l.kind && !["problem", "desk"].includes(l.kind) ? ` <span class="ct-kind">(${escapeHTML(l.kind)})</span>` : "";
-    return `<div class="ct-msg is-them ${l.kind === "problem" ? "is-bad" : ""} ${l.kind === "desk" ? "is-desk" : ""}">${tag}${escapeHTML(l.text)}${note}</div>`;
+    return `<div class="ct-msg is-them ${l.kind === "problem" ? "is-bad" : ""} ${l.kind === "desk" ? "is-desk" : ""}">${tag}${escapeHTML(l.text)}${effectHTML(l.effect)}</div>`;
   });
-  if (busy) lines.push(`<div class="ct-msg is-them is-typing" aria-label="${w.compiling ? "reading" : "thinking"}"><span class="ct-dots"><i></i><i></i><i></i></span></div>`);
+  if (busy) lines.push(`<div class="ct-msg is-sys is-busyline">${busyHTML(`${w.hire.name} is ${busyWord(w)}`)}</div>`);
   el.innerHTML = lines.join("");
   el.hidden = !lines.length;
   // Every new message scrolls to the bottom, and so does anything that changes the log's size while
@@ -634,7 +634,27 @@ function cardState(w) {
 }
 const CHECK = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
 const ALERT = `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M12 7.5v5.5M12 16.5h.01" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`;
-const DOTS = `<span class="ct-dots"><i></i><i></i><i></i></span>`;
+// Reading or thinking looks the same everywhere (crew chip, status bar, chat, floor): the word,
+// pulsing. Never dots or a speech bubble, which read as someone talking.
+const busyWord = (w) => (w.compiling ? "reading" : "thinking");
+const busyHTML = (text) => `<span class="ct-busy">${escapeHTML(text)}</span>`;
+// What a reply did to the robot's instructions: every reply to you ends in exactly one of these.
+const EFFECTS = {
+  new: { label: () => "New instructions", icon: "check" },
+  change: { label: () => "Changed instructions", icon: "check" },
+  once: { label: (e) => `One-off: ${e.summary}`, icon: "once" },
+  none: { label: () => "No change to instructions", icon: "none" },
+};
+const EFFECT_ICONS = {
+  check: CHECK,
+  once: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  none: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>`,
+};
+function effectHTML(e) {
+  if (!e) return "";
+  const k = EFFECTS[e.type];
+  return `<span class="ct-effect is-${e.type}">${EFFECT_ICONS[k.icon]}${escapeHTML(k.label(e))}</span>`;
+}
 function renderChat() {
   const w = ui.open ? worker(ui.open) : null;
   const box = $("#chat");
@@ -646,7 +666,7 @@ function renderChat() {
   if (sig === w._cardSig) return;
   w._cardSig = sig;
   const pips = $(".ct-pips", box);
-  pips.innerHTML = Array.from({ length: b.max }, (_, i) => `<i class="${i < b.n ? "is-on" : ""}"></i>`).join("");
+  pips.innerHTML = `<span>thoughts</span>` + Array.from({ length: b.max }, (_, i) => `<i class="${i < b.n ? "is-on" : ""}"></i>`).join("");
   pips.dataset.tooltip = `Thinking budget: ${b.n} of ${b.max}. ${w.hire.name} spends one to think through something unexpected; it refills by one every ${b.every}s while the shift runs. Talking to them is free.`;
   // Their working instructions, as they wrote them down, collapsed to one line. Hidden until they
   // have some.
@@ -700,8 +720,17 @@ function setThinking(w, delta, mark) {
     bot?.append(m);
   }
   if (!on) bot?.querySelector(".ct-mark")?.remove();
-  if (on) { if (!atDesk(w)) bubble(w, "…", { thinking: true, hold: true }); }
-  else if (bot?.querySelector(".ct-bubble.is-thinking")) clearBubble(w);
+  showBusy(w);
+}
+/** Over a robot on the floor while it reads or thinks: the word, pulsing, no speech bubble. */
+function showBusy(w) {
+  const bot = ui.bots[w.id];
+  if (!bot) return;
+  const on = !!(w.compiling || ui.thinking[w.id]);
+  let tag = bot.querySelector(".ct-bot-busy");
+  if (!on) { tag?.remove(); return; }
+  if (!tag) { tag = document.createElement("div"); tag.className = "ct-bot-busy ct-busy"; bot.append(tag); }
+  tag.textContent = busyWord(w);
 }
 
 const alive = (g, w) => g === game && g.workers.includes(w);
@@ -717,7 +746,8 @@ async function giveInstructions(w, text) {
   w.compileError = null;
   w.compiling = (w.compiling || 0) + 1;
   logLine(w, "you", text);
-  bubble(w, "…", { thinking: true, hold: true });
+  clearBubble(w);
+  showBusy(w);
   let r;
   try {
     r = await compile(g, w, text);
@@ -726,8 +756,8 @@ async function giveInstructions(w, text) {
   }
   if (!alive(g, w)) return;
   w.compiling--;
+  showBusy(w);
   if (w.orders !== text) return; // newer instructions came in meanwhile
-  clearBubble(w);
   w.now = null;
   if (r.error) {
     // The model itself couldn't be reached: that's not the worker's fault, so say what happened.
@@ -740,7 +770,7 @@ async function giveInstructions(w, text) {
     w.gen = null; w.ast = null;
     logLine(w, "them", r.problem, "problem");
   } else {
-    logLine(w, "them", r.reply);
+    logLine(w, "them", r.reply, "", { type: "new" });
     w.orders = r.instructions;
     w.scope = text; // your own words: what thinking is checked against (brains.js)
     logEvent(clockT(), "instructions", { worker: w.id, text: r.instructions });
@@ -787,7 +817,7 @@ async function wake(w, trigger, mark) {
     deskMessage(w, r.reply);
     return true;
   }
-  logLine(w, "them", r.reply, r.kind === "once" ? `one-off: ${r.summary}` : r.kind === "change" ? "changed their instructions" : "");
+  logLine(w, "them", r.reply, "", r.kind === "once" ? { type: "once", summary: r.summary } : { type: r.kind === "change" ? "change" : "none" });
   bubble(w, r.reply);
   if (r.kind === "once") {
     w.now = { summary: r.summary };

@@ -145,14 +145,18 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   it needs to be. The card shows instructions and what they're doing, not code.
 - Workers think (call the model) when something unexpected happens. Thinking draws on a budget
   that refills slowly; talking to them is free (they always answer you). Show it: a "?" pops up over a worker thinking about something unexpected, a
-  "!" when a yell or a direct message got them thinking, alongside the thinking bubble.
+  "!" when a yell or a direct message got them thinking. Reading and thinking look the same
+  everywhere (crew chip, status bar, chat, a tag over the robot): the word, pulsing. Never dots or
+  a speech bubble, which read as talking (Mike, 2026-11-17, from Pam's playtest).
 - Workers keep working while they think. A thought can't change their instructions (only a
   message or yell from you can, and that change is auto-approved and shows on the card). Later,
   temperaments like independence could let some workers act on their own judgment (issue #1).
 - A direct message or a `think` can inject a **one-time** sequence ("grab that box first"), after
   which the worker goes back to their routine. Changing the routine for good is a separate, visible
   thing: it rewrites the worker's instructions on their card. One-off is the default; players
-  shouldn't have to guess which one a message did.
+  shouldn't have to guess which one a message did: every reply to you ends in exactly one marker,
+  "New instructions", "Changed instructions", "One-off: …" or "No change to instructions"
+  (`EFFECTS` in `src/main.js`).
 - Workers coordinating by talking to each other is for managers later, as model calls. Not
   deterministic messaging between scripts.
 - The overall shape: each worker is an agent that mostly runs deterministically and is "woken up"

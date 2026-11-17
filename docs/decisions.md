@@ -959,3 +959,24 @@ We may want to do something more flexible later somehow but we don't need to thi
 So escalation has to come mostly from combining what exists, not from a new concept per tier.
 **Story:** "not yet, maybe later. Story comes during the polish phase once mechanics are ironed
 out."
+
+### 70. A marker on every reply; one thinking indicator (2026-11-17)
+
+Pam's real playtest: Blip answered "I'll help Pip and keep things tidy!" and kept his old routine,
+and nothing said the message was just talk. A change showed only as a small grey
+"(changed their instructions)". And thinking showed five ways, two of them speech bubbles ("…"
+over the robot and in the chat), plus dots in the crew chip and status bar, and thinking-budget
+pips drawn as three dots that read as "typing". Mike: "yeah fix that somehow" and "yeah good".
+
+- Every reply to you ends in exactly one marker under the text, the same shape for every kind:
+  "New instructions" (the first set), "Changed instructions", "One-off: <what>" or
+  "No change to instructions". One table (`EFFECTS`) and one renderer (`effectHTML`).
+- Reading and thinking are one indicator: the word, pulsing (`busyHTML`), in the crew chip, the
+  status bar, the chat ("Pip is thinking", not a bubble) and a tag over the robot on the floor.
+  The "?" and "!" marks stay. The thinking budget is short segments labeled "thoughts".
+- Tests: `e2e/business.spec.mjs` checks every reply has one marker of the right kind, and that a
+  thinking robot shows no dots and no speech bubble anywhere.
+
+Mocks only, waiting on Mike: compact Training (one Train picker per robot), the coach dropping
+"needs instructions", and Pam's crew-cost plan (whole crew's cost a shift on the board, this
+shift's cost and what's left by Start).

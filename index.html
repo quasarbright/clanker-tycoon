@@ -139,7 +139,6 @@
       100% { transform: translateX(0); }
     }
     @keyframes cargo { 0%, 45% { opacity: 1; } 46%, 100% { opacity: 0; } }
-    .ct-bubble.is-thinking { font-weight: 700; letter-spacing: .15em; }
     .ct-bubble.is-problem { background: var(--accent); }
     .ct-oops { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: calc(var(--u) * 2.4); width: max-content; max-width: calc(var(--u) * 22); text-align: center; font-size: clamp(9px, calc(var(--u) * 1.35), 12px); line-height: 1.2; color: #ffb4ae; text-shadow: 0 1px 2px #000; pointer-events: none; }
     .ct-float { position: absolute; transform: translate(-50%, -50%); font: 400 1.1rem var(--font-display); color: var(--success); text-shadow: 0 2px 0 #0008; pointer-events: none; animation: floatUp 1.6s ease-out forwards; z-index: 6; }
@@ -403,13 +402,21 @@
     .ct-skill.is-attr { background: #8fc8ff1a; color: #b9dcff; border-color: #8fc8ff44; }
     .ct-pips { display: inline-flex; gap: 3px; margin-left: auto; align-self: flex-end; padding-bottom: 4px; }
     .ct-skillrow { align-items: flex-start; }
-    .ct-pips i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid #8fc8ff88; }
+    .ct-pips { align-items: center; }
+    .ct-pips span { font: 600 .62rem var(--font-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-right: 3px; }
+    .ct-pips i { width: 12px; height: 6px; border-radius: 2px; border: 1px solid #8fc8ff88; } /* segments, not dots: dots read as typing */
     .ct-pips i.is-on { background: #8fc8ff; border-color: #8fc8ff; }
     .ct-now { font-size: .9rem; background: var(--panel-2); border-radius: 8px; padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; }
     .ct-now[hidden] { display: none; }
     .ct-card.is-changed { animation: changed 1.2s ease-out; }
     @keyframes changed { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: 0 0 0 0 transparent; } }
-    .ct-kind { color: #6b6455; font-size: .78rem; font-weight: 500; }
+    /* what a reply did to the robot's instructions: one marker, the same shape for every kind */
+    .ct-effect { display: flex; align-items: center; gap: 5px; margin-top: 5px; padding-top: 5px; border-top: 1px solid #1d1a1220; font: 600 .72rem var(--font-mono); letter-spacing: .02em; }
+    .ct-effect svg { width: 12px; height: 12px; flex: none; }
+    .ct-effect.is-new, .ct-effect.is-change { color: #1d7a45; }
+    .ct-effect.is-once { color: #2c6aa8; }
+    .ct-effect.is-none { color: #7a7362; }
+    .ct-msg.is-desk .ct-effect { color: var(--on-accent); border-top-color: #0002; }
 
     /* a worker's card is a short conversation with them */
     .ct-chip { margin-left: auto; font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
@@ -473,10 +480,15 @@
     .ct-chip.is-desk { color: var(--on-accent); background: var(--accent); }
     .ct-chip.is-ok { color: #0d2416; background: var(--success); }
     .ct-chip.is-bad { color: #2a0d0b; background: #ff8a80; }
-    .ct-dots { display: inline-flex; gap: 2px; }
-    .ct-dots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: dot 1s infinite; }
-    .ct-dots i:nth-child(2) { animation-delay: .15s; } .ct-dots i:nth-child(3) { animation-delay: .3s; }
-    @keyframes dot { 50% { opacity: .2; } }
+    /* reading or thinking, everywhere: the word, pulsing */
+    .ct-busy { animation: busyPulse 1.4s ease-in-out infinite; }
+    @keyframes busyPulse { 50% { opacity: .45; } }
+    .ct-bot-busy {
+      position: absolute; bottom: calc(100% + var(--u) * 1.6); left: 50%; transform: translateX(-50%); width: max-content;
+      padding: 2px 8px; border-radius: 999px; background: #17140acc; border: 1px solid var(--accent); color: var(--accent);
+      font: 700 clamp(9px, calc(var(--u) * 1.3), 12px) var(--font-mono); letter-spacing: .06em; text-transform: uppercase; pointer-events: none; z-index: 5;
+    }
+    .ct-msg.is-busyline { color: var(--accent); }
     .ct-pin { font-size: .9rem; background: var(--panel-2); border-radius: 8px; padding: 6px 10px; line-height: 1.35; }
     .ct-pin[hidden] { display: none; }
     .ct-pin summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -499,7 +511,6 @@
     .ct-msg.is-them.is-bad { background: #ffd9d5; }
     .ct-msg.is-them.is-desk { background: var(--accent); color: var(--on-accent); }
     .ct-msg.is-them.is-desk .ct-label { color: var(--on-accent); opacity: .75; }
-    .ct-msg.is-typing { padding: 9px 12px; }
     .ct-divider { align-self: stretch; display: flex; align-items: center; gap: 10px; margin: 6px 0; font: 600 .7rem var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
     .ct-divider::before, .ct-divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
     .ct-msg.is-sys { align-self: center; max-width: 100%; font: 500 .74rem var(--font-mono); color: var(--muted); padding: 0; text-align: center; }

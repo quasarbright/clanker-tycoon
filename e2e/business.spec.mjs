@@ -232,3 +232,41 @@ test("a robot with a trait but no skills shows the trait, not 'No skills'", asyn
   await expect(blip).toContainText("Fast");
   await expect(blip).not.toContainText("No skills");
 });
+
+test("every reply to you ends in one marker saying what it did to the robot's instructions", async ({ page }) => {
+  await openBoard(page);
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  const loop = 'while (needsAny() > 0) { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); }';
+  await page.evaluate((loop) => {
+    window.__kind = "talk";
+    ct.useFakeLlm(async () => ({ reply: "Sure thing.", kind: window.__kind, summary: window.__kind === "once" ? "drop one red at Pack" : "",
+      now: window.__kind === "once" ? 'move("SUPPLY"); pickUp("red"); move("PACK"); putDown();' : "",
+      instructions: "Carry red widgets from the supply to Pack.", program: loop, problem: "", onPurpose: false }));
+    ct.hire("blip");
+  }, loop);
+  await page.evaluate(() => ct.give("blip", "Carry red widgets from the supply to Pack."));
+  const log = page.locator("#chat .ct-log");
+  await expect(log.locator(".ct-effect").last()).toHaveText("New instructions");
+  for (const [kind, text] of [["talk", "No change to instructions"], ["once", "One-off: drop one red at Pack"], ["change", "Changed instructions"]]) {
+    await page.evaluate(async (k) => { window.__kind = k; await ct.say("blip", "Carry red widgets from the supply to Pack, please."); }, kind);
+    await expect(log.locator(".ct-msg.is-them").last().locator(".ct-effect")).toHaveText(text);
+  }
+  // Every reply has exactly one marker.
+  expect(await log.locator(".ct-msg.is-them").evaluateAll((els) => els.map((e) => e.querySelectorAll(".ct-effect").length))).toEqual([1, 1, 1, 1]);
+});
+
+test("reading and thinking look the same everywhere: the word, no dots, no speech bubble", async ({ page }) => {
+  await openBoard(page);
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  await page.evaluate(() => { ct.hire("blip"); ct.openChat?.("blip"); ct.thinking("blip", 1); ct.step(0); });
+  await expect(page.locator(".ct-dots")).toHaveCount(0);
+  await expect(page.locator(".ct-bubble")).toHaveCount(0);
+  await expect(page.locator(".ct-bot-busy")).toHaveText("thinking");
+  await expect(page.locator("#crewReady .ct-busy")).toHaveText("thinking");
+  await expect(page.locator(".ct-chip .ct-busy").first()).toHaveText("Thinking");
+  await expect(page.locator("#chat .is-busyline")).toHaveText("Blip is thinking");
+  await page.evaluate(() => { ct.thinking("blip", -1); ct.step(0); });
+  await expect(page.locator(".ct-busy")).toHaveCount(0);
+});
