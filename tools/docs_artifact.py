@@ -108,6 +108,7 @@ def convert(md_path, title):
     src = os.path.relpath(md_path, REPO)
     navhtml = "".join(f'<a href="#{slug(h)}">{html.escape(h)}</a>' for h in nav)
     return f"""<title>{html.escape(title)}</title>
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400&display=swap">
 {STYLE}

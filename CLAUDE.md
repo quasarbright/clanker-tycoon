@@ -241,7 +241,10 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   - `docs/decisions.md` and `docs/history.md` as below.
   - GitHub issues only for concrete work that's ready to build, and bugs. Old idea issues 1 to 13
     aren't kept up to date; don't clean them up.
-  When the direction changes, update both docs (and their artifacts) in the same turn.
+  When the direction changes, update both docs (and their artifacts) in the same turn. Build each
+  artifact page from its doc with `python3 tools/docs_artifact.py <doc> <out.html> "<title>"` and
+  publish it to the same URL: Ideas https://claude.ai/artifact/6wwzBb7YT9cetPi5ieUoJG, Progression
+  https://claude.ai/artifact/9Xi6oVYWpbo8T9CWo3saHP.
 - Commit and push to master after every major change, unless Mike says otherwise (Mike, 2026-11-17:
   "let's push after every major change pretty much, unless I say otherwise"; a "push" relayed from
   another session counts as his). `npm test` passes first. Push with a plain `git push` run on its

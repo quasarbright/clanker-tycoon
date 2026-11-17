@@ -21,7 +21,7 @@ with detail and open questions, is an entry in [ideas.md](ideas.md). Reasons and
 
 ## The game
 
-![Contracts and equipment](mocks/progression/11-contracts.svg)
+![The board between quarters in level 7: contracts, the lender, recruit, training, machines](mocks/progression/12-board.png)
 
 You run your own small factory business. You start with a little money of your own. The
 dollar-eyed robot from the favicon is a **lender**: borrow from him at the board, no interest, and
