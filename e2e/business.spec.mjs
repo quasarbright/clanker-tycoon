@@ -341,3 +341,22 @@ test("before a shift the coach doesn't repeat who needs instructions; the chip a
   await expect(page.locator("#crewReady")).toContainText("needs instructions");
   await expect(page.locator("#coach")).not.toContainText("needs instructions");
 });
+
+test("everything on the board you can't afford says how much you're short, the same way (Recruit, Buy, Training)", async ({ page }) => {
+  await openBoard(page);
+  await page.evaluate(() => { ct.biz.money = 12; ct.openBoard(); });
+  const checks = await page.evaluate(() => [...document.querySelectorAll("[data-recruit], [data-buy]")].map((b) => {
+    const price = +b.textContent.match(/\$(\d+)/)[1];
+    return { price, disabled: b.disabled, note: b.parentElement.querySelector(".ct-short")?.textContent ?? null };
+  }));
+  expect(checks.length).toBeGreaterThan(0);
+  for (const c of checks) {
+    if (c.price > 12) expect(c).toEqual({ price: c.price, disabled: true, note: `$${c.price - 12} short` });
+    else expect(c).toEqual({ price: c.price, disabled: false, note: null });
+  }
+  await page.locator('#bizCrew [data-train-open="pip"]').click();
+  await expect(page.locator('[data-train="pip:fast"] .ct-short')).toHaveText("$8 short");
+  // One look for the note everywhere: same color and opacity as under Recruit and Buy.
+  const look = (sel) => page.locator(sel).first().evaluate((e) => { const st = getComputedStyle(e); let o = 1; for (let n = e; n; n = n.parentElement) o *= +getComputedStyle(n).opacity; return [st.color, st.fontFamily, o]; });
+  expect(await look(".ct-train-item .ct-short")).toEqual(await look(".ct-biz-act .ct-short, .ct-robot-act .ct-short"));
+});

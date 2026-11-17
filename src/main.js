@@ -1290,7 +1290,10 @@ const keepLine = (c) => (biz.loans.length ? `<span class="ct-offer-keep">you kee
 
 function renderBoard() {
   const pct = `${Math.round(LENDER.share * 100)}%`, now = `${Math.round(shareOf(biz) * 100)}%`;
-  const short = (n) => (biz.money < n ? `disabled data-tooltip="You have ${money(biz.money)}."` : "");
+  // Anything on the board you can't afford yet is greyed out and says how much you're short, the
+  // same way everywhere (Recruit, Buy, Training): `short` disables it, `shortNote` says by how much.
+  const short = (n) => (biz.money < n ? `disabled data-tooltip="It costs $${n}, and you have ${money(biz.money)}."` : "");
+  const shortNote = (n) => (biz.money < n ? `<span class="ct-short">$${n - Math.floor(biz.money)} short</span>` : "");
   $("#bizMoney").textContent = money(biz.money);
   // The most a shift can cost: everyone on it. The real cost shows by Start while you schedule.
   $("#bizCrewCost").textContent = biz.crew.length ? `Whole crew $${crewCost(biz, CANDIDATES)} a shift` : "";
@@ -1355,7 +1358,7 @@ function renderBoard() {
   // ----- recruit: three robots this visit
   $("#recruits").innerHTML = recruitOffers(biz).map((id) => {
     const r = robotOf(biz, CANDIDATES.find((c) => c.id === id)), done = biz.crew.includes(id), price = recruitPrice(biz, id);
-    return robotCard(r, { cls: `ct-biz-bot ${done ? "is-done" : ""}`, action: `${done ? `<span class="ct-owned">${CHECK} ${WORDS.recruited}</span>` : `<button class="ct-btn is-gold" data-recruit="${id}" ${short(price)}>${WORDS.recruit} $${price}</button>`}` });
+    return robotCard(r, { cls: `ct-biz-bot ${done ? "is-done" : ""}`, action: `${done ? `<span class="ct-owned">${CHECK} ${WORDS.recruited}</span>` : `<button class="ct-btn is-gold" data-recruit="${id}" ${short(price)}>${WORDS.recruit} $${price}</button>${shortNote(price)}`}` });
   }).join("") || `<p class="ct-offer-note">Everyone's already on your crew.</p>`;
 
   // ----- training: your crew
@@ -1366,8 +1369,7 @@ function renderBoard() {
     const item = (k, isSkill) => {
       const after = isSkill ? wageOf([...r.skills, k], r.attributes) : wageOf(r.skills, [...r.attributes, k]);
       const broke = biz.money < TRAIN_PRICE;
-      const tip = broke ? `data-tooltip="$${TRAIN_PRICE - Math.floor(biz.money)} short."` : `data-tooltip="${(isSkill ? SKILLS : ATTRIBUTES)[k].tip}"`;
-      return `<button class="ct-train-item" data-train="${id}:${k}" ${broke ? "disabled" : ""} ${tip}>${(isSkill ? SKILLS : ATTRIBUTES)[k].label}<span>${broke ? `$${TRAIN_PRICE - Math.floor(biz.money)} short` : `+$${after - r.wage} a shift`}</span></button>`;
+      return `<button class="ct-train-item" data-train="${id}:${k}" ${broke ? short(TRAIN_PRICE) : `data-tooltip="${(isSkill ? SKILLS : ATTRIBUTES)[k].tip}"`}>${(isSkill ? SKILLS : ATTRIBUTES)[k].label}${broke ? shortNote(TRAIN_PRICE) : `<span>+$${after - r.wage} a shift</span>`}</button>`;
     };
     const skills = TRAINABLE.filter((k) => !r.skills.includes(k)), traits = TRAINABLE_ATTRS.filter((k) => !r.attributes.includes(k));
     const open = trainOpen === id;
@@ -1386,7 +1388,7 @@ function renderBoard() {
     const replaces = m.kind === "paint" && biz.owned && !owns(biz, m.id) ? " Replaces your paint machine." : "";
     return `<div class="ct-biz-bot ct-machine ${done ? "is-done" : ""}">
       <div><div><b>${m.name}</b></div><div class="ct-biz-blurb">${m.blurb}${replaces}</div></div>
-      <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} ${WORDS.bought}</span>` : `<button class="ct-btn is-gold" data-buy="${m.id}" ${short(m.price)}>Buy $${m.price}</button>`}</div>
+      <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} ${WORDS.bought}</span>` : `<button class="ct-btn is-gold" data-buy="${m.id}" ${short(m.price)}>Buy $${m.price}</button>${shortNote(m.price)}`}</div>
     </div>`;
   }).join("") + `<p class="ct-offer-note">On your floor: ${mine.length ? mine.map((m) => m.name.toLowerCase()).join(", ") : "nothing yet"}.</p>`;
 
