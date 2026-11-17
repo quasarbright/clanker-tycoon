@@ -228,6 +228,11 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   The key is `localStorage["quasarbright:openrouter-key"]`, shared with every Mike site; never use
   another name. `node tools/openrouter-check.mjs` makes real calls with the key in `.env`
   (gitignored; never print, log or commit it).
+- **Blind playtest** (Mike, 2026-11-17: "the playtester should be blind every time"): after a
+  meaningful gameplay change, a fresh subagent gets only the game URL (the live Pages build, or
+  localhost) and what a new player knows, plays a run, and reports where it got confused, stuck or
+  bored. No docs, no repo, no memory between runs; it's a testing step, not a persona. See
+  `~/GitHub/WORKING.md`, "Before you show it".
 - **Model usage and cost:** every call's tokens, cost at API prices and source (`play` for Mike's
   games, `test` for automated browsers, `check` for thinking-check) go into `logs/llm.jsonl`.
   `npm run usage -- --since 2d` (or `--source play`, `--until <date>`) totals any window.
