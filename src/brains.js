@@ -194,7 +194,7 @@ const CHOICES = `Reply as JSON with these fields (leave the ones you don't use a
 - "kind": one of
     "talk": nothing needs doing; keep doing what you were doing.
     "once": something to do now, one time. Put a short program for just that in "now" (it runs once, then you go back to your regular program), and a few words describing it in "summary".
-    "change": your ongoing work changes for good. Put your complete new instructions, in plain English, in "instructions", and the full new program for them in "program".
+    "change": your ongoing work changes for good. Put your complete new instructions in "instructions": everything you're now meant to do, the old instructions merged with the change, as one short sentence in the boss's own words (no step-by-step), and the full new program for them in "program".
     "boss": you need the boss: information you don't have, instructions that conflict, or something only the boss can do. Say what you need in "reply".
 Prefer "talk" or "once". Use "change" only when your regular work really has to change.`;
 
