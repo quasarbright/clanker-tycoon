@@ -125,3 +125,6 @@ Smaller, seen in play:
   thinking looks like talking (#4). Start is inconsistent and the cards have small mismatches.
 - 2026-11-17: Mike answered the open calls; the build thread is doing the agreed fixes and the
   mocks, which Pam reviews. Crew cost rethought per his point (item 1).
+- 2026-11-17: reviewed 2e7c5de (reply markers, thinking word) and mocks (compact Training, coach line,
+  crew cost). All good to show; fixes: picker must show the third-item jump, no-change replies
+  shouldn't promise new work, crew-cost line in the board's label style and tied to the quarter.
