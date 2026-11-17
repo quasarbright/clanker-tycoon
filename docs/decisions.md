@@ -453,3 +453,19 @@ shouldn't exist. maybe straight from line to plant?"
 **Picked:** four ranks: Floor hand, Line lead, Plant manager, Director. Training and foremen move
 to late in Line lead, so you practice delegating while you're still on the floor. Plant manager
 starts with two lines (your old one under the foreman you left, plus a new one) and grows to 3 to 5.
+
+### 41. Plant manager: between shifts, splitting orders and budgets, no repairs (2026-11-17)
+
+**Question:** what a Plant manager controls. The draft proposed shared resources between lines (one
+supply belt, a floating repair robot) so foremen would bring conflicts to your desk mid-shift.
+**Mike:** likes headcount, moving people around, and allocating the plant's budget and corporate's
+big order into per-line budgets and quotas. Repairs stay a line's problem ("I don't think we should
+think about repairs when we're a factory manager"). Foremen talk to you between shifts only, and
+lines can be a deterministic simulation instead of the whole tree. Moving people should exist at
+Line lead too: "somebody that you've hired gets sent away and then maybe sometimes people get sent
+to you."
+**His worry:** "you're not really talking to anybody or giving instructions that much, you're kind
+of just setting quotas, which is like not that fun. It's kind of just a generic business game."
+**Picked:** the above, with transfers between quarters at Line lead. How to put talking and
+instructing back at the center of Plant manager is open; six ideas are in
+`docs/progression-design.md`. Replaces the shared-resources version.
