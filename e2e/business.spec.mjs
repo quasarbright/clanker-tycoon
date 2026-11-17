@@ -302,13 +302,21 @@ test("Training: one row per robot with one Train picker that lists what's left a
   await expect(page.locator(".ct-train-menu")).toHaveCount(0);
 });
 
-test("a Train item you can't afford is greyed out and says how much you're short", async ({ page }) => {
+test("a Train item you can't afford keeps its wage cost and says how much you're short", async ({ page }) => {
   await openBoard(page);
-  await page.evaluate(() => { ct.biz.money = 12; ct.openBoard(); });
-  await page.locator('#bizCrew [data-train-open="pip"]').click();
+  await page.locator('#bizCrew [data-train-open="pip"]').click(); // open while you can afford it
+  await page.evaluate(() => { ct.biz.money = 12; ct.renderBoard(); });
   const fast = page.locator('[data-train="pip:fast"]');
   await expect(fast).toBeDisabled();
-  await expect(fast).toContainText("$8 short");
+  await expect(fast).toContainText("+$5 a shift · $8 short");
+});
+
+test("when nothing in a robot's Train list is affordable, the Train button is greyed out with the short note", async ({ page }) => {
+  await openBoard(page);
+  await page.evaluate(() => { ct.biz.money = 12; ct.openBoard(); });
+  const open = page.locator('#bizCrew [data-train-open="pip"]');
+  await expect(open).toBeDisabled();
+  await expect(open.locator("xpath=..").locator(".ct-short")).toHaveText("$8 short");
 });
 
 test("crew cost: the whole crew's shift on the board, this shift's cost by Start (decision 71)", async ({ page }) => {
@@ -354,9 +362,14 @@ test("everything on the board you can't afford says how much you're short, the s
     if (c.price > 12) expect(c).toEqual({ price: c.price, disabled: true, note: `$${c.price - 12} short` });
     else expect(c).toEqual({ price: c.price, disabled: false, note: null });
   }
-  await page.locator('#bizCrew [data-train-open="pip"]').click();
-  await expect(page.locator('[data-train="pip:fast"] .ct-short')).toHaveText("$8 short");
+  await expect(page.locator('#bizCrew [data-train-open="pip"]')).toBeDisabled();
+  await expect(page.locator(".ct-train-pick .ct-short").first()).toHaveText("$8 short");
   // One look for the note everywhere: same color and opacity as under Recruit and Buy.
   const look = (sel) => page.locator(sel).first().evaluate((e) => { const st = getComputedStyle(e); let o = 1; for (let n = e; n; n = n.parentElement) o *= +getComputedStyle(n).opacity; return [st.color, st.fontFamily, o]; });
-  expect(await look(".ct-train-item .ct-short")).toEqual(await look(".ct-biz-act .ct-short, .ct-robot-act .ct-short"));
+  const recruitLook = await look("[data-recruit] ~ .ct-short, [data-buy] ~ .ct-short");
+  expect(await look(".ct-train-pick .ct-short")).toEqual(recruitLook);
+  await page.evaluate(() => { ct.biz.money = 25; ct.openBoard(); });
+  await page.locator('#bizCrew [data-train-open="pip"]').click();
+  await page.evaluate(() => { ct.biz.money = 12; ct.renderBoard(); });
+  expect(await look(".ct-train-item .ct-short")).toEqual(recruitLook);
 });

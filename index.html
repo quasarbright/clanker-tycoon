@@ -301,16 +301,16 @@
     .ct-biz-act .ct-btn { white-space: nowrap; }
     /* under (or beside) anything you can't afford yet: how much you're short */
     .ct-short { font: 600 .74rem var(--font-mono); color: #ffb4ae; text-align: center; white-space: nowrap; }
-    .ct-train-item .ct-short { text-align: right; font: 600 .74rem var(--font-mono); color: #ffb4ae; }
+    .ct-train-item .ct-short { font: 600 .74rem var(--font-mono); color: #ffb4ae; }
     /* one Train picker per robot */
-    .ct-train-pick { position: relative; }
+    .ct-train-pick { position: relative; display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
     .ct-train-open { display: inline-flex; align-items: center; gap: 4px; padding: 7px 12px; font-size: .9rem; }
     .ct-train-open svg { width: 14px; height: 14px; display: block; transition: transform .15s; }
     .ct-train-open.is-on svg { transform: rotate(180deg); }
-    .ct-train-menu { position: fixed; width: 220px; background: #2a3038; border: 1px solid var(--border); border-radius: 10px; padding: 6px; z-index: 20; box-shadow: 0 10px 30px #0008; }
+    .ct-train-menu { position: fixed; width: 290px; background: #2a3038; border: 1px solid var(--border); border-radius: 10px; padding: 6px; z-index: 20; box-shadow: 0 10px 30px #0008; }
     .ct-train-head { font: 600 .62rem var(--font-mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: 6px 8px 3px; }
     .ct-train-item { display: flex; width: 100%; justify-content: space-between; align-items: baseline; padding: 6px 8px; border: 0; border-radius: 6px; background: none; color: var(--text); font: 600 .9rem var(--font-ui); cursor: pointer; text-align: left; }
-    .ct-train-item span { font: 400 .75rem var(--font-mono); color: var(--muted); }
+    .ct-train-item span { font: 400 .75rem var(--font-mono); color: var(--muted); white-space: nowrap; margin-left: 12px; }
     .ct-train-item:hover:not(:disabled) { background: #f2c23022; }
     .ct-train-item:disabled { color: var(--faint); cursor: not-allowed; } /* the label dims; the "short" note stays readable */
     .ct-owned { color: var(--success); font-weight: 700; display: flex; align-items: center; gap: 6px; white-space: nowrap; }

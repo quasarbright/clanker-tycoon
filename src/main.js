@@ -1369,14 +1369,16 @@ function renderBoard() {
     const item = (k, isSkill) => {
       const after = isSkill ? wageOf([...r.skills, k], r.attributes) : wageOf(r.skills, [...r.attributes, k]);
       const broke = biz.money < TRAIN_PRICE;
-      return `<button class="ct-train-item" data-train="${id}:${k}" ${broke ? short(TRAIN_PRICE) : `data-tooltip="${(isSkill ? SKILLS : ATTRIBUTES)[k].tip}"`}>${(isSkill ? SKILLS : ATTRIBUTES)[k].label}${broke ? shortNote(TRAIN_PRICE) : `<span>+$${after - r.wage} a shift</span>`}</button>`;
+      return `<button class="ct-train-item" data-train="${id}:${k}" ${broke ? short(TRAIN_PRICE) : `data-tooltip="${(isSkill ? SKILLS : ATTRIBUTES)[k].tip}"`}>${(isSkill ? SKILLS : ATTRIBUTES)[k].label}<span>+$${after - r.wage} a shift${broke ? ` · ${shortNote(TRAIN_PRICE)}` : ""}</span></button>`;
     };
     const skills = TRAINABLE.filter((k) => !r.skills.includes(k)), traits = TRAINABLE_ATTRS.filter((k) => !r.attributes.includes(k));
     const open = trainOpen === id;
     const menu = !open ? "" : `<div class="ct-train-menu">${skills.length ? `<div class="ct-train-head">Skills · $${TRAIN_PRICE} each</div>${skills.map((k) => item(k, true)).join("")}` : ""}${
       traits.length ? `<div class="ct-train-head">Traits · $${TRAIN_PRICE} each</div>${traits.map((k) => item(k, false)).join("")}` : ""}</div>`;
+    // Nothing in the list affordable (everything costs the same): the Train button itself is
+    // greyed out with the same "short" note as Recruit and Buy.
     const picker = skills.length + traits.length
-      ? `<div class="ct-train-pick"><button class="ct-btn ct-train-open ${open ? "is-on" : ""}" data-train-open="${id}" aria-expanded="${open}">Train ${CHEVRON_DOWN}</button>${menu}</div>`
+      ? `<div class="ct-train-pick"><button class="ct-btn ct-train-open ${open ? "is-on" : ""}" data-train-open="${id}" aria-expanded="${open}" ${short(TRAIN_PRICE)}>Train ${CHEVRON_DOWN}</button>${shortNote(TRAIN_PRICE)}${menu}</div>`
       : `<span class="ct-owned">Knows everything</span>`;
     return robotCard(r, { cls: "ct-biz-bot ct-trainee", blurb: false, action: picker });
   }).join("");
@@ -1516,6 +1518,6 @@ window.ct = {
   openLevel: (n) => openLevel(LEVELS[n - 1]), unlockAll: () => { unlocked = LEVELS.length; renderLevels(); },
   step: (dt) => { if (started) step(game, dt); handleEvents(); render(); },
   give: (id, text) => giveInstructions(worker(id), text), say: (id, text) => message(worker(id), "message", text),
-  setPaused, begin: () => begin({ force: true }), startBlocker: () => startBlocker(), thinking: (id, d) => setThinking(worker(id), d), hire, playerActions, openBoard, get biz() { return biz; },
+  setPaused, begin: () => begin({ force: true }), startBlocker: () => startBlocker(), thinking: (id, d) => setThinking(worker(id), d), hire, playerActions, openBoard, renderBoard, get biz() { return biz; },
   useFakeLlm, // e2e: answer model calls without a model
 };
