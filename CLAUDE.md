@@ -138,8 +138,8 @@ GitHub issues on this repo, one topic per issue, and don't get built until Mike 
 - It's one conversation: no separate "instructions" and "messages". Until a worker has working
   instructions, what you say becomes them; after that, the worker decides whether a message changes
   their instructions, is a one-off, or is just talk.
-- Before a shift each worker's row is red until they have instructions they can do, and green
-  once they do.
+- Before a shift each worker's status chip is red until they have instructions they can do, and
+  green once they do. (No colored stripes down the side of rows or boxes; Mike dislikes them.)
 - When a worker can't do their instructions, they say what's wrong in their own words: which part
   and why, and what would help. Never a canned error.
 

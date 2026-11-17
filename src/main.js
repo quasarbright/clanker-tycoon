@@ -387,16 +387,15 @@ function renderList() {
     const last = (w.log ?? []).filter((l) => l.who !== "sys").at(-1);
     const prev = last ? (last.who === "you" ? `You: ${last.text}` : last.text) : w.hire.blurb;
     const unread = ui.open !== w.id && (w.log ?? []).slice(w.seen ?? 0).some((l) => l.who === "them");
-    const edge = started ? "" : cls === "is-ok" ? "ok" : cls === "is-busy" ? "busy" : "bad";
-    return { w, st, cls, prev, bad: last?.kind === "problem", unread, edge };
+    return { w, st, cls, prev, bad: last?.kind === "problem", unread };
   });
-  const sig = JSON.stringify([ui.open, started, canHire(), rows.map((r) => [r.w.id, r.st, r.prev, r.unread, r.edge, atDesk(r.w)])]);
+  const sig = JSON.stringify([ui.open, started, canHire(), rows.map((r) => [r.w.id, r.st, r.prev, r.unread, atDesk(r.w)])]);
   if (sig === lastList) return;
   lastList = sig;
   const payroll = game.workers.reduce((a, w) => a + w.hire.wage, 0);
   const list = $("#crew");
   list.innerHTML = `<div class="ct-list-head"><span class="ct-label">Crew</span>${game.workers.length ? `<span class="ct-wage">payroll $${payroll}/min</span>` : ""}</div>`
-    + rows.map((r) => `<button type="button" class="ct-convo ${ui.open === r.w.id ? "is-open" : ""} ${atDesk(r.w) ? "is-waiting" : ""}" data-open="${r.w.id}" data-ready="${r.edge}" style="--c:${r.w.hire.color}">
+    + rows.map((r) => `<button type="button" class="ct-convo ${ui.open === r.w.id ? "is-open" : ""} ${atDesk(r.w) ? "is-waiting" : ""}" data-open="${r.w.id}" style="--c:${r.w.hire.color}">
         ${r.unread ? `<span class="ct-unread" aria-label="unread"></span>` : ""}
         <span class="ct-face"></span><b>${r.w.hire.name}</b>
         <span class="ct-chip ${r.cls}">${r.cls === "is-ok" ? CHECK : r.cls === "is-bad" ? ALERT : ""}${r.st}${r.cls === "is-busy" ? DOTS : ""}</span>

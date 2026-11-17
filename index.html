@@ -284,7 +284,7 @@
     .ct-skillrow { align-items: flex-start; }
     .ct-pips i { width: 8px; height: 8px; border-radius: 50%; border: 1px solid #8fc8ff88; }
     .ct-pips i.is-on { background: #8fc8ff; border-color: #8fc8ff; }
-    .ct-now { font-size: .9rem; background: var(--panel-2); border-left: 3px solid var(--accent); border-radius: 6px; padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; }
+    .ct-now { font-size: .9rem; background: var(--panel-2); border-radius: 8px; padding: 6px 10px; display: flex; flex-direction: column; gap: 2px; }
     .ct-now[hidden] { display: none; }
     .ct-card.is-changed { animation: changed 1.2s ease-out; }
     @keyframes changed { from { box-shadow: 0 0 0 3px var(--accent); } to { box-shadow: 0 0 0 0 transparent; } }
@@ -302,10 +302,8 @@
     .ct-convo { position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1px 10px; align-items: center; text-align: left;
       padding: 7px 8px 7px 10px; border: 0; border-radius: 10px; background: none; color: var(--text); cursor: pointer; }
     .ct-convo:hover { background: var(--panel-2); }
-    .ct-convo.is-open { background: #f2c2301a; }
-    .ct-convo[data-ready="bad"] { box-shadow: inset 3px 0 0 #ff8a80; }
-    .ct-convo[data-ready="busy"] { box-shadow: inset 3px 0 0 var(--accent); }
-    .ct-convo[data-ready="ok"] { box-shadow: inset 3px 0 0 var(--success); }
+    /* the open conversation: the whole row lit, like a messages app */
+    .ct-convo.is-open, .ct-convo.is-open:hover { background: #38414d; }
     .ct-convo.is-waiting { background: #f2c23026; }
     .ct-convo .ct-face { grid-row: span 2; width: 34px; height: 32px; border-radius: 10px; }
     .ct-convo .ct-face::after { left: 8px; right: 8px; top: 11px; height: 6px; }
@@ -357,8 +355,6 @@
     .ct-pin[open] .ct-pin-peek { display: none; }
     .ct-pin-text { margin-top: 4px; }
     .ct-pin summary:hover .ct-label, .ct-pin summary:hover svg { color: var(--text); }
-    .ct-pin.is-busy { border-left-color: var(--accent); }
-    .ct-pin.is-bad { border-left-color: var(--danger); }
     .ct-pin .ct-label { font-size: .62rem; }
     .ct-log { display: flex; flex-direction: column; gap: 6px; max-height: 220px; overflow-y: auto; padding-right: 2px; }
     .ct-log[hidden] { display: none; }

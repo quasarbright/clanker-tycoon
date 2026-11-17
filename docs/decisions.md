@@ -322,3 +322,10 @@ conversation, instructions as workers wrote them, your moves, every sim event, a
 5 s, and the result. Lines and model calls share a shift id. Automated test browsers don't log
 unless asked, and their lines are marked `test`. The repo's CLAUDE.md says to check the play log
 first when Mike mentions something from a playthrough.
+
+### 32. No side stripes (2026-11-17)
+
+**Problem:** Mike: "i don't like this left border thing, idk why you use that so much", about the
+red/green stripe on crew rows (and the stripes on the instructions and one-off boxes).
+**Picked:** all left stripes are gone. The open conversation's whole row is lit; readiness before
+the shift is the status chip's red or green. Also added to the workspace TASTE.md.
