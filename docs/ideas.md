@@ -42,6 +42,12 @@ Agreed direction, not built yet. Roughly in roadmap order.
 
 - **Teach the pause.** Players need to learn they can pause and fix things. For example, a
   tutorial moment where something goes wrong and the coach says to pause and sort it out.
+- **Something better than widgets (open).** Mike: "widgets are stupid. Boxes of widgets are stupid."
+  The mechanics stay (a raw item, a machine that turns it into a variant, assembling three into
+  one); the thing changes. Candidates: robots building toy robots (heads, bodies, paint jobs); a
+  donut shop (plain rings, glaze flavors, boxes of three); sneakers (blanks, dyed colorways, pairs
+  boxed); skateboards (decks, printed graphics, complete boards); coffee (beans, roasts, gift sets);
+  potted plants (pots, glazes, planters). Not decided.
 - **Crew variety through mechanics.** Robots differ by skills and attributes, not personality.
 - **Contracts.** A board of offers: what, how many, deadline in shifts, pay, machines needed. You
   pick which to take; some can't be done in time with what you have. You choose your difficulty.
