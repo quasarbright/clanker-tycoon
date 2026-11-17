@@ -198,6 +198,15 @@
     /* ---------- overlays ---------- */
     .ct-overlay { position: fixed; inset: 0; z-index: 10; display: grid; place-items: center; overflow-y: auto; background: rgba(8, 9, 11, .78); padding: 20px; }
     .ct-overlay.is-hidden { display: none; }
+    .ct-pause { position: absolute; inset: 0; z-index: 6; display: grid; place-items: center; padding: 12px; border-radius: 14px; background: rgba(8, 9, 11, .62); }
+    .ct-pause.is-hidden { display: none; }
+    .ct-pause .ct-card-big { width: min(440px, 100%); padding: 20px; }
+    @media (max-width: 900px) {
+      .ct-pause .ct-card-big { padding: 12px; }
+      .ct-pause .ct-title { font-size: 1.3rem; margin-bottom: 8px; }
+      .ct-pause .ct-end-note { display: none; }
+      .ct-pause .ct-btn { padding: 7px 12px; font-size: .9rem; }
+    }
     .ct-card-big { width: min(520px, 100%); background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 26px; text-align: center; box-shadow: 0 20px 60px #000a; }
     .ct-mascot { display: block; width: 96px; height: 96px; margin: 0 auto 6px; }
     .ct-mascot.is-small { width: 64px; height: 64px; margin-bottom: 4px; }
@@ -488,6 +497,19 @@
           <g id="lineArrows"></g>
         </svg>
         <div class="ct-coach" id="coach"></div>
+        <!-- Pause stops the floor only: the crew list and chats stay usable, so you can talk and
+             change instructions while nothing moves. -->
+        <div class="ct-pause is-hidden" id="pauseScreen">
+          <div class="ct-card-big">
+            <div class="ct-title">Paused</div>
+            <p class="ct-end-note">The floor is stopped. You can still talk to your crew and change their instructions.</p>
+            <div class="ct-btns">
+              <button class="ct-btn is-gold" id="resumeBtn">Resume</button>
+              <button class="ct-btn" id="restartBtn">Restart shift</button>
+              <button class="ct-btn" id="menuBtn">Levels</button>
+            </div>
+          </div>
+        </div>
       </div></div>
       <div class="ct-planbar ct-plan-only">
         <button class="ct-btn is-gold ct-big" id="goBtn">Start</button>
@@ -515,16 +537,6 @@
     </div>
   </div>
 
-  <div class="ct-overlay is-hidden" id="pauseScreen">
-    <div class="ct-card-big">
-      <div class="ct-title">Paused</div>
-      <div class="ct-btns">
-        <button class="ct-btn is-gold" id="resumeBtn">Resume</button>
-        <button class="ct-btn" id="restartBtn">Restart shift</button>
-        <button class="ct-btn" id="menuBtn">Levels</button>
-      </div>
-    </div>
-  </div>
 
   <div class="ct-overlay is-hidden" id="endScreen">
     <div class="ct-card-big">

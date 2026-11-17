@@ -89,6 +89,8 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
 - A level is a fixed order. Crew levels have a shift length the order must ship within; no stars
   (they'll be subsumed by quotas and promotions). You press Start to begin; hiring happens before
   Start and closes once the shift runs. You can still change instructions and talk mid-shift.
+- Pause is plain and free: it stops the floor only, and you can keep talking and changing
+  instructions while paused. Thinking never freezes the floor (Mike: "really bad for the pacing").
 - Early levels never offer one robot who can do everything: the point is a crew that has to
   coordinate. Set shift lengths so one robot can't fill the order alone.
 - Try again puts you back at the start of the shift with your crew and their instructions, ready

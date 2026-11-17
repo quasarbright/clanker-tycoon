@@ -1125,6 +1125,8 @@ function setPaused(p) {
 
 $("#pauseBtn").addEventListener("click", () => { if ((phase === "run" && !game.over) || phase === "plan") setPaused(!paused); });
 $("#resumeBtn").addEventListener("click", () => setPaused(false));
+// The pause card sits on the floor; clicks on it aren't moves on the floor.
+$("#pauseScreen").addEventListener("click", (e) => e.stopPropagation());
 $("#restartBtn").addEventListener("click", () => openLevel(level, { again: true }));
 $("#menuBtn").addEventListener("click", () => showMenu());
 

@@ -612,3 +612,13 @@ lines while moving, D sneakers.
   first), never a mix. Clicking widgets at Pack to pick 3 is gone. Replaces the pick-3 control.
 - Fast is A, wheels under the head ("I like wheels. have them turn when he moves"). They turn while
   the robot moves, backwards when it heads left. Replaces the bolt from #48.
+
+### 52. A plain pause you can talk through (2026-11-17)
+
+**Question:** how do you get time to fix a mistake mid-shift? One idea was freezing the floor
+while a worker thinks. Mike: "Thinking freezing the floor is really awkward, and really bad for the
+pacing of the game. I think plain pause is the way to go for now."
+**Picked:** the pause button (or Escape) stops the floor for as long as you like, with no limit or
+cost. The Paused card sits on the floor only, so the crew list and chats stay usable: you can talk
+to robots and change their instructions while nothing moves. Resume, Restart shift and Levels are
+on the card. Thinking never freezes the floor, and there are no speed controls.
