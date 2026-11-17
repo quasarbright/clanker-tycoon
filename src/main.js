@@ -352,7 +352,7 @@ function renderShiftCost(short) {
   el.hidden = !quarter || short || !p;
   if (el.hidden) return;
   const c = shiftCost(quarter.money, p, quarter.shift, level.quarter.shifts);
-  el.innerHTML = `This shift <b>$${c.pay}</b> <i>·</i> budget after <b>${money(c.after)}</b> <i>·</i> `
+  el.innerHTML = `This shift <b>$${c.pay}</b> <i>·</i> budget after <b class="${c.covers ? "" : "is-plain"}">${money(c.after)}</b> <i>·</i> `
     + (c.covers ? (quarter.shift >= level.quarter.shifts ? "the last shift" : "covers the rest of the quarter") : `<span class="is-bad">short for shift ${c.shortAt}</span>`);
 }
 function nudgeStart() {
@@ -1367,7 +1367,7 @@ function renderBoard() {
       const after = isSkill ? wageOf([...r.skills, k], r.attributes) : wageOf(r.skills, [...r.attributes, k]);
       const broke = biz.money < TRAIN_PRICE;
       const tip = broke ? `data-tooltip="$${TRAIN_PRICE - Math.floor(biz.money)} short."` : `data-tooltip="${(isSkill ? SKILLS : ATTRIBUTES)[k].tip}"`;
-      return `<button class="ct-train-item" data-train="${id}:${k}" ${broke ? "disabled" : ""} ${tip}>${(isSkill ? SKILLS : ATTRIBUTES)[k].label}<span>+$${after - r.wage} a shift</span></button>`;
+      return `<button class="ct-train-item" data-train="${id}:${k}" ${broke ? "disabled" : ""} ${tip}>${(isSkill ? SKILLS : ATTRIBUTES)[k].label}<span>${broke ? `$${TRAIN_PRICE - Math.floor(biz.money)} short` : `+$${after - r.wage} a shift`}</span></button>`;
     };
     const skills = TRAINABLE.filter((k) => !r.skills.includes(k)), traits = TRAINABLE_ATTRS.filter((k) => !r.attributes.includes(k));
     const open = trainOpen === id;

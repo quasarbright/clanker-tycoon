@@ -132,7 +132,7 @@ export function addWorker(s, hire) {
 
 /** Where a new robot starts: by the dock, the first spot along the row that's at least a
  *  robot-width (SPAWN_GAP) from you (at the desk) and from every robot already there. */
-export const SPAWN_GAP = 7;
+export const SPAWN_GAP = 8.5; // a robot with a box in hand is about 8 wide
 function spawnSpot(s, at) {
   const others = [s.player, ...s.workers].filter(Boolean);
   const free = (x) => others.every((o) => Math.hypot(o.x - x, o.y - at.y) >= SPAWN_GAP);

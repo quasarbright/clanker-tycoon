@@ -175,11 +175,11 @@ test("robots put on the shift don't start on top of you or each other, next shif
     const all = [ct.game.player, ...ct.game.workers];
     return Math.min(...all.flatMap((p, i) => all.slice(i + 1).map((q) => Math.hypot(p.x - q.x, p.y - q.y))));
   });
-  expect(await gaps()).toBeGreaterThanOrEqual(6.9);
+  expect(await gaps()).toBeGreaterThanOrEqual(8.4);
   await endShift(page, [1]);
   await page.click('[data-go="next"]');
   expect(await page.evaluate(() => ct.game.workers.length)).toBe(3);
-  expect(await gaps()).toBeGreaterThanOrEqual(6.9);
+  expect(await gaps()).toBeGreaterThanOrEqual(8.4);
 });
 
 test("Start waits until everyone scheduled is ready, and says who isn't", async ({ page }) => {
@@ -302,6 +302,15 @@ test("Training: one row per robot with one Train picker that lists what's left a
   await expect(page.locator(".ct-train-menu")).toHaveCount(0);
 });
 
+test("a Train item you can't afford is greyed out and says how much you're short", async ({ page }) => {
+  await openBoard(page);
+  await page.evaluate(() => { ct.biz.money = 12; ct.openBoard(); });
+  await page.locator('#bizCrew [data-train-open="pip"]').click();
+  const fast = page.locator('[data-train="pip:fast"]');
+  await expect(fast).toBeDisabled();
+  await expect(fast).toContainText("$8 short");
+});
+
 test("crew cost: the whole crew's shift on the board, this shift's cost by Start (decision 71)", async ({ page }) => {
   await openBoard(page);
   await expect(page.locator("#bizCrewCost")).toHaveText(/^Whole crew \$\d+ a shift$/);
@@ -314,6 +323,11 @@ test("crew cost: the whole crew's shift on the board, this shift's cost by Start
   await expect(page.locator("#shiftCost")).toHaveText("This shift $5 · budget after $95 · covers the rest of the quarter");
   await page.evaluate(() => { ct.quarter.money = 20; ct.hire("pip"); });
   await expect(page.locator("#shiftCost")).toHaveText("This shift $15 · budget after $5 · short for shift 2");
+  // On the same row as the names by Start, and "budget after" isn't gold when it's short.
+  const [cost, names] = await page.evaluate(() => ["#shiftCost", "#crewReady"].map((q) => document.querySelector(q).getBoundingClientRect()));
+  expect(cost.top).toBeLessThan(names.bottom);
+  expect(cost.left).toBeGreaterThanOrEqual(names.left);
+  expect(await page.locator("#shiftCost b").nth(1).evaluate((b) => getComputedStyle(b).color)).not.toMatch(/242, 194, 48/);
   // The extra line by Start doesn't push the page past the window.
   expect(await page.evaluate(() => document.documentElement.scrollHeight <= innerHeight)).toBe(true);
   expect(await page.locator("#shiftCost").evaluate((e) => e.getBoundingClientRect().bottom <= innerHeight)).toBe(true);

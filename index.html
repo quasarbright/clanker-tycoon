@@ -256,10 +256,10 @@
     .ct-board-money { text-align: right; }
     .ct-board-money .ct-cash-value { display: block; }
     .ct-crew-cost { display: block; font-weight: 600; font-size: .9rem; color: var(--text); white-space: nowrap; margin-top: 2px; }
-    .ct-shift-cost { flex-basis: 100%; font-weight: 600; font-size: .95rem; color: var(--text); }
+    .ct-shift-cost { flex: none; margin-left: auto; font-weight: 600; font-size: .95rem; color: var(--text); }
     .ct-shift-cost[hidden] { display: none; }
     .ct-shift-cost b { color: var(--accent); } .ct-shift-cost i { font-style: normal; color: var(--muted); }
-    .ct-shift-cost .is-bad { color: #ff8a80; }
+    .ct-shift-cost .is-bad { color: #ff8a80; } .ct-shift-cost b.is-plain { color: var(--text); }
     .ct-board-sec { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
     .ct-board-top { display: grid; grid-template-columns: 1fr auto; gap: 16px; }
     .ct-offers { display: grid; grid-template-columns: 2fr 1.15fr; gap: 12px; align-items: start; }
