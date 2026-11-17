@@ -855,3 +855,30 @@ should say that."
   you pay up, deadbeat!"
 Amends #61. The "Numbers must go up" line is gone too ("getting a little cheesy").
 
+### 65. The web build: an OpenRouter key from sign-in, a pasted key, or ?api-key= (2026-11-17)
+
+**Ask:** Mike: "set up the open router thing ... a query string parameter or just OAuth, open router
+OAuth, or you could just paste your key and it stores it in local storage. My other websites have a
+specific local store key ... so that if you put your ... open router key in one of my websites, it
+works for all of them ... if you load from query string parameter, it saves it to local storage as
+well. ... this is going to be the first time we're doing that [OAuth]."
+**Picked:**
+- Off localhost (or with `?llm=openrouter`), the robots call Claude Haiku 5.5
+  (`anthropic/claude-haiku-5.5`) through OpenRouter straight from the browser, with structured JSON
+  output. On localhost the `claude -p` server stays the default for development.
+- The key lives in `localStorage["quasarbright:openrouter-key"]`, the same key the shared
+  `cohesion.js` uses, so one key works on every quasarbright.github.io project. `?api-key=` is
+  saved and removed from the address bar by cohesion.js, as on his other sites; pasting uses the
+  shared `<openrouter-key>` field.
+- **Sign in with OpenRouter** (`src/openrouter-auth.js`) is OAuth with PKCE, the first on any of his
+  sites: a random verifier kept in sessionStorage, its SHA-256 challenge sent to
+  openrouter.ai/auth, and the returned `?code` traded at /api/v1/auth/keys for a key, which is saved
+  under the same shared key. It lives in this repo for now; it could move into cohesion.js so every
+  site gets it.
+- The menu is now two columns (intro and model access on the left, levels on the right) so it fits
+  without scrolling.
+**Evidence:** unit tests (the RFC 7636 challenge vector), Playwright tests with OpenRouter faked
+(sign-in round trip, a failed sign-in, ?api-key=, paste and remove, a compile sent to Haiku with the
+key), and a live run with Mike's key from a gitignored .env (`tools/openrouter-check.mjs`): two
+workers compiled through OpenRouter in 4.3 s, 3 calls, $0.001.
+

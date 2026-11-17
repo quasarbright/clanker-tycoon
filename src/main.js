@@ -8,7 +8,8 @@ import {
 } from "./sim.js";
 import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond } from "./brains.js";
 import { LEVELS } from "./levels.js";
-import { backendLabel, useFakeLlm } from "./llm.js";
+import { backendLabel, useFakeLlm, BACKEND } from "./llm.js";
+import { getKey, setKey, signIn, finishSignIn } from "./openrouter-auth.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money } from "./quarter.js";
@@ -40,6 +41,41 @@ let quarter = null; // the quarter being played (quarter.js), when the level is 
 let biz = null; // your business (business.js), once you've opened level 7; lives in memory like the rest
 
 $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
+
+// ---------- the web build: an OpenRouter key (decision #65) ----------
+// On the web the robots think with Claude Haiku through OpenRouter, on the player's own key: sign
+// in with OpenRouter, or paste a key. The key is stored where all of Mike's sites look for it.
+let accessNote = "";
+function renderAccess() {
+  const el = $("#access");
+  el.hidden = BACKEND !== "openrouter";
+  if (el.hidden) return;
+  const key = getKey();
+  if (key) {
+    el.innerHTML = `<div class="ct-access-row"><span class="ct-key-ok">${CHECK} Connected to OpenRouter</span>
+      <span class="ct-or">key ending ${escapeHTML(key.slice(-4))}</span>
+      <button class="ct-btn" type="button" data-forget style="margin-left:auto">Remove key</button></div>
+      ${accessNote ? `<p>${accessNote}</p>` : ""}`;
+    el.querySelector("[data-forget]").addEventListener("click", () => { accessNote = ""; setKey(null); });
+    return;
+  }
+  el.innerHTML = `<p>The robots think with Claude Haiku through OpenRouter, on your own OpenRouter account. A level costs about a cent.</p>
+    ${accessNote ? `<p class="is-bad">${accessNote}</p>` : ""}
+    <div class="ct-access-row"><button class="ct-btn is-gold" type="button" data-signin>Sign in with OpenRouter</button>
+      <span class="ct-or">or paste a key</span></div>
+    <openrouter-key></openrouter-key>`;
+  el.querySelector("[data-signin]").addEventListener("click", () => signIn());
+}
+// Started at the bottom of this file, once everything it uses is defined.
+function initAccess() {
+  document.addEventListener("openrouter-key-change", () => renderAccess());
+  renderAccess();
+  finishSignIn().then((r) => {
+    if (!r) return;
+    accessNote = r.status === "signed-in" ? "You're signed in. The key is saved in this browser only." : `Sign-in didn't work: ${escapeHTML(r.error)}`;
+    renderAccess();
+  });
+}
 
 const STATION_HINTS = {
   SUPPLY: "raw widgets",
@@ -1317,6 +1353,7 @@ $("#restartBtn").addEventListener("click", () => openLevel(level, { again: true 
 $("#menuBtn").addEventListener("click", () => showMenu());
 
 renderLevels();
+initAccess();
 requestAnimationFrame(frame);
 
 // While iterating locally: if the game's files change after this tab loaded, say so, so an old tab

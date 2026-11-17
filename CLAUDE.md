@@ -215,6 +215,10 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
     model faked through `window.ct.useFakeLlm`. No real model calls in any of these.
   Every change comes with tests for what it changes, and `npm test` passes before every push. A bug
   gets a failing test first.
+- **The web build** talks to OpenRouter from the browser (`src/openrouter-auth.js`, decision #65).
+  The key is `localStorage["quasarbright:openrouter-key"]`, shared with every Mike site; never use
+  another name. `node tools/openrouter-check.mjs` makes real calls with the key in `.env`
+  (gitignored; never print, log or commit it).
 - **Model usage and cost:** every call's tokens, cost at API prices and source (`play` for Mike's
   games, `test` for automated browsers, `check` for thinking-check) go into `logs/llm.jsonl`.
   `npm run usage -- --since 2d` (or `--source play`, `--until <date>`) totals any window.

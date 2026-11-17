@@ -209,6 +209,19 @@
     .ct-logo { font: 400 clamp(2.2rem, 7vw, 3.4rem)/1 var(--font-display); color: var(--accent); text-shadow: 0 4px 0 #8f6d0c; transform: rotate(-2deg); margin: 4px 0 18px; }
     .ct-howto { color: var(--text); line-height: 1.5; margin: 0 0 18px; }
     .ct-small { font-size: .82rem; color: var(--muted); margin-top: 14px; }
+    /* the web build: how the robots get a model (an OpenRouter key: sign in, or paste one) */
+    .ct-access { margin-top: 16px; padding: 14px; border-radius: 12px; background: var(--panel-2); text-align: left; display: grid; gap: 10px; }
+    .ct-access[hidden] { display: none; }
+    /* the menu: the intro on the left, the levels on the right (PC only, wide) */
+    .ct-start { width: min(1100px, 100%); display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 28px; align-items: center; }
+    .ct-start-intro { display: flex; flex-direction: column; }
+    .ct-access p { margin: 0; line-height: 1.45; text-wrap: pretty; }
+    .ct-access-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .ct-access .ct-or { color: var(--muted); font-size: .85rem; }
+    .ct-access openrouter-key input { width: 100%; box-sizing: border-box; background: var(--panel); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font: 500 .9rem var(--font-mono); }
+    .ct-access openrouter-key .btn { font: inherit; }
+    .ct-access .is-bad { color: #ffb4ae; }
+    .ct-access .ct-key-ok { color: var(--success); font-weight: 700; }
     .ct-title { font: 400 1.8rem var(--font-display); color: var(--accent); margin: 0 0 10px; }
     .ct-end-note { color: var(--muted); margin: 0 0 16px; }
     .ct-end-note:empty { display: none; }
@@ -617,12 +630,15 @@
   </main>
 
   <div class="ct-overlay" id="startScreen">
-    <div class="ct-card-big">
-      <img class="ct-mascot" src="favicon.svg" alt="">
-      <div class="ct-logo">Clanker Tycoon</div>
-      <p class="ct-howto">You run a tiny factory. You start broke and do the work yourself. Fill each order as fast as you can, first by hand, then with robots you hire and tell, in plain English, what to do.</p>
+    <div class="ct-card-big ct-start">
+      <div class="ct-start-intro">
+        <img class="ct-mascot" src="favicon.svg" alt="">
+        <div class="ct-logo">Clanker Tycoon</div>
+        <p class="ct-howto">You run a tiny factory. You start broke and do the work yourself. Fill each order as fast as you can, first by hand, then with robots you hire and tell, in plain English, what to do.</p>
+        <div class="ct-access" id="access" hidden></div>
+        <div class="ct-small" id="backendNote"></div>
+      </div>
       <div class="ct-levels" id="levels"></div>
-      <div class="ct-small" id="backendNote"></div>
     </div>
   </div>
 
