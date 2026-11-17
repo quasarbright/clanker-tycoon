@@ -17,6 +17,8 @@ const cases = [
  // decision #63: a packer who fetches, then waits at a full Pack instead of packing first, jams it
  ["fetch-then-pack jams a full Pack", crew, r("g", ["packing"], ["fast"]), `while (needsAny() > 0) { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); if (count("PACK", "red") >= 3) { pack("red"); pickUpBox(); move("DOCK"); putDown(); } }`, "fetch red widgets, put them at pack, pack red boxes and ship them", false],
  ["pack-first does all of it", crew, r("g", ["packing"], ["fast"]), `while (needsAny() > 0) { move("PACK"); if (count("PACK", "red") >= 3) { pack("red"); pickUpBox(); move("DOCK"); putDown(); } else { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); } }`, "fetch red widgets, put them at pack, pack red boxes and ship them", true],
+ // decision #67: packs, then walks to the dock with nothing in hand
+ ["packs but never ships", crew, r("p", ["packing"]), `while (needsAny() > 0) { if (count("PACK", "red") >= 3) { move("PACK"); pack("red"); move("DOCK"); } else wait(1); }`, "Whenever Pack has 3 widgets of a color the order still needs, pack them into a box and ship it from the dock.", false],
  ["tight loop", crew, r("c", ["packing"]), `while (true) { if (boxes("PACK") > 5) { pack("red"); } }`, "pack red boxes", false],
 ];
 let bad = 0;

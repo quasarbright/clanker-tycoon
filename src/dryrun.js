@@ -44,6 +44,9 @@ export function dryRun(L, hire, crew, ast, instructions) {
   const hires = [hire, ...crew.filter((h) => h.id !== hire.id)];
   const color = wanted(L);
   const boxes = !(hire.skills.includes("packing") && ASKS_TO_PACK.test(instructions ?? ""));
+  // Instructions that say to ship have to actually ship something, not just pack (decision #67:
+  // a packer whose routine packed and walked to the dock empty-handed jammed a whole quarter).
+  const wantsShip = /\bship/i.test(instructions ?? "") && L.stations.includes("DOCK");
   let last;
   for (const worn of L.stations.includes("PAINT") ? [false, true] : [false]) {
     const g = newGame({ ...L, shift: null }, hires, 1);
@@ -61,13 +64,14 @@ export function dryRun(L, hire, crew, ast, instructions) {
         if (e.type === "fail") fails.push(e.why);
         if (e.type === "unexpected" && (e.reason === "loop" || e.reason === "error")) broke = e.detail;
       }
-      if (w.worked || broke) break;
+      if (broke || (w.worked && (!wantsShip || g.shipped > 0))) break;
       if (!w.gen && !w.act) break; // the program ended
     }
-    if (w.worked) { last = null; break; }
-    last = { broke, fails, visited, ended: !w.gen };
+    if (w.worked && (!wantsShip || g.shipped > 0)) { last = null; break; }
+    last = { broke, fails, visited, ended: !w.gen, noShip: w.worked && wantsShip };
   }
   if (!last) return boxes ? { ok: true } : fullPack(L, hires, ast, color);
+  if (last.noShip) return { ok: false, why: `In a ${SECONDS}-second practice run your program did some of the work but never shipped anything, and your instructions say to ship. To ship a box: pick it up at PACK (pickUpBox), carry it to DOCK and put it down there.` };
   const what = last.broke ? `it broke down (${last.broke})`
     : last.fails.length ? `everything it tried failed (${[...new Set(last.fails)].slice(-3).join("; ")})`
     : last.ended ? "it finished without doing anything"
