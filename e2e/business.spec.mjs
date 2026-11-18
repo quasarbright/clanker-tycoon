@@ -586,10 +586,10 @@ test("reputation on the board: pips under Funds, struck full numbers with the ho
   const large = page.locator("[data-contract]").nth(1);
   const tips = await large.locator(".ct-struck").evaluateAll((els) => els.map((e) => [e.textContent, e.dataset.tooltip]));
   expect(tips).toEqual([
-    ["40", "Clients ask for 80% of the boxes while Clank & Sons' reputation is questionable. Restore reputation for the full 40."],
-    ["$320", "Clients pay 80% while Clank & Sons' reputation is questionable. Restore reputation for the full $320."],
+    ["36", "Clients ask for 80% of the boxes while Clank & Sons' reputation is questionable. Restore reputation for the full 36."],
+    ["$290", "Clients pay 80% while Clank & Sons' reputation is questionable. Restore reputation for the full $290."],
   ]);
-  await expect(large.locator(".ct-size-count")).toContainText("32 boxes");
+  await expect(large.locator(".ct-size-count")).toContainText("29 boxes");
   await expect(page.locator("#bizRep")).not.toHaveClass(/is-danger/);
   // At one pip: red, and a warning by name.
   await page.evaluate(() => { ct.biz.rep = 4; ct.openBoard(); });
