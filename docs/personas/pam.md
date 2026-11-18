@@ -101,3 +101,8 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   name, front page) in the browser: matches the mocks; fixes sent: long names overflow the license
   and headline, lender's "Lovely name" shows before signing, zero-contracts front page, straight
   quotes, dead HUD ("LABOR $0") behind both screens.
+- 2026-11-18: Mike on round 2: kept "Paint Machine Outlasts Clank & Sons" and the lender's 10% of
+  nothing (reworded to "Lender Collects His 10% of Clank & Sons: $0"); 11 (desk gone) near miss;
+  the rest "aren't even headlines ... or just not funny or clever". Rule added to docs/humor.md:
+  real headline form (subject, active verb, newspaper phrasing) and a real twist, not a mechanic
+  described. No more rounds unless he asks.
