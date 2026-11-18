@@ -480,7 +480,7 @@ test("out of business: the front page lands on the floor, with the run's numbers
   await expect(page.locator("#gameoverScreen")).toBeVisible();
   await expect(page.locator("#boardScreen")).toBeHidden();
   const hl = await page.locator("#paperHeadline").textContent();
-  expect(['Clank & Sons Ships Its Last Box (It Was Empty)', 'Robots of Clank & Sons Finally Given Clear Instructions: "Leave"']).toContain(hl);
+  expect(['Clank & Sons Ships Its Last Box (It Was Empty)', 'Robots of Clank & Sons Finally Given Clear Instructions: “Leave”']).toContain(hl);
   await expect(page.locator("#gameoverWhy")).toContainText("lender won't lend");
   await expect(page.locator("#gameoverStats")).toContainText("Contracts shipped3 of 5");
   await expect(page.locator("#gameoverStats")).toContainText("Owed the lender$450");
@@ -491,4 +491,41 @@ test("out of business: the front page lands on the floor, with the run's numbers
   await page.click("#gameoverNew");
   await expect(page.locator("#licenseScreen")).toBeVisible();
   expect(await page.evaluate(() => [ct.biz.quarters, ct.biz.owner])).toEqual([0, ""]);
+});
+
+test("Pam's review of the license: long names fit, the lender waits for the stamp, the floor behind is quiet (decision 74)", async ({ page }) => {
+  await page.goto("/");
+  await page.click('[data-level="7"]');
+  await expect(page.locator("#licenseLender")).toHaveText('"Sign at the bottom."');
+  for (const sel of ["#pauseBtn", "#clock", "#coach"]) await expect(page.locator(sel)).toBeHidden();
+  await page.fill("#licenseName", "W".repeat(28));
+  await page.fill("#licenseOwner", "W".repeat(20));
+  for (const sel of ["#licenseName", "#licenseOwner"]) {
+    const fits = await page.locator(sel).evaluate((el) => {
+      const c = document.createElement("canvas").getContext("2d"), cs = getComputedStyle(el);
+      c.font = `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}`;
+      return c.measureText(el.value.toUpperCase()).width <= el.clientWidth;
+    });
+    expect(fits, sel).toBe(true);
+  }
+  await page.click("#licenseGo");
+  await expect(page.locator("#licenseLender")).toHaveText(`"Lovely name. I'll remember it."`);
+  await expect(page.locator("#boardScreen")).toBeVisible();
+  await expect(page.locator("#pauseBtn")).toBeVisible(); // the HUD comes back
+});
+
+test("Pam's review of the front page: a long name fits the paper, curly quotes, a zero case, a quiet floor (decision 74)", async ({ page }) => {
+  await openBoard(page);
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  await page.evaluate(() => { ct.hire("blip"); });
+  // Broke before anything shipped, with the longest name the license allows.
+  await page.evaluate(() => { const b = ct.biz; b.name = "Cogsworth Shipping & Sprocket"; b.loans = [100, 100, 250]; b.money = 0; b.quarters = 0; b.wins = 0; b.taken = 0; b.best = null; ct.openBoard(); });
+  await expect(page.locator("#paperColumn")).toHaveText("Cogsworth Shipping & Sprocket never shipped a contract. Robots on the floor declined to comment, citing their instructions.");
+  await expect(page.locator("#paperHeadline")).not.toContainText('"');
+  const fits = await page.evaluate(() => { const h = document.querySelector("#paperHeadline"), p = document.querySelector("#gameoverPaper"); return h.scrollWidth <= h.clientWidth + 1 && p.scrollHeight <= p.clientHeight + 1; });
+  expect(fits).toBe(true);
+  for (const sel of ["#pauseBtn", "#clock", "#coach", "#crewReady"]) await expect(page.locator(sel)).toBeHidden();
+  await expect(page.locator("#gameoverStats")).not.toContainText("Best quarter"); // no quarter finished
+  await expect(page.locator("#gameoverStats")).toContainText("Contracts shippedNone");
 });

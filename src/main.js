@@ -159,6 +159,7 @@ function showMenu() {
   $("#boardScreen").classList.add("is-hidden");
   $("#licenseScreen").classList.add("is-hidden");
   $("#gameoverScreen").classList.add("is-hidden");
+  document.body.classList.remove("is-quiet");
   $("#startScreen").classList.remove("is-hidden");
 }
 
@@ -1430,6 +1431,28 @@ const cap = (s) => s[0].toUpperCase() + s.slice(1);
 
 // ---------- a new business: the license (decision 74) ----------
 
+/** Shrink an input's font so its text (or placeholder) fits its width, between `max` and `min` px. */
+const measure = document.createElement("canvas").getContext("2d");
+function fitInput(el, max, min) {
+  el.style.fontSize = `${max}px`;
+  const cs = getComputedStyle(el);
+  measure.font = `${cs.fontStyle} ${cs.fontWeight} ${max}px ${cs.fontFamily}`;
+  const text = el.value || el.placeholder;
+  const room = el.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight) - 4;
+  const w = measure.measureText(cs.textTransform === "uppercase" ? text.toUpperCase() : text).width;
+  el.style.fontSize = `${Math.max(min, Math.min(max, Math.floor(max * room / Math.max(1, w))))}px`;
+}
+/** Shrink the headline until every word fits its column and the whole page fits the window. */
+function fitHeadline() {
+  const hl = $("#paperHeadline"), paper = $("#gameoverPaper");
+  for (let size = 46; size >= 24; size -= 2) {
+    hl.style.fontSize = `${size}px`;
+    if (hl.scrollWidth <= hl.clientWidth + 1 && paper.scrollHeight <= paper.clientHeight + 1) return;
+  }
+}
+const fitLicense = () => { fitInput($("#licenseName"), 38, 20); fitInput($("#licenseOwner"), 30, 14); };
+const LENDER_LINES = { before: "Sign at the bottom.", after: "Lovely name. I'll remember it." };
+
 function openLicense() {
   setPhase("menu");
   for (const id of ["startScreen", "endScreen", "pauseScreen", "boardScreen", "gameoverScreen"]) $(`#${id}`).classList.add("is-hidden");
@@ -1438,8 +1461,11 @@ function openLicense() {
   $("#licenseCapital").textContent = `capital: $${START_MONEY}`;
   $("#licenseStamp").classList.remove("is-stamped");
   for (const el of $$("#licenseScreen input, #licenseScreen button")) el.disabled = false;
+  $("#licenseLender").textContent = `"${LENDER_LINES.before}"`;
   checkLicense();
+  document.body.classList.add("is-quiet");
   $("#licenseScreen").classList.remove("is-hidden");
+  fitLicense();
   $("#licenseOwner").focus();
 }
 /** Open for business waits for both names, and says which one is missing. */
@@ -1450,9 +1476,9 @@ function checkLicense() {
   $("#licenseWhy").textContent = why;
   return !why;
 }
-$("#licenseName").addEventListener("input", checkLicense);
-$("#licenseOwner").addEventListener("input", checkLicense);
-$("#licenseDice").addEventListener("click", () => { $("#licenseName").value = randomBusinessName($("#licenseName").value); checkLicense(); });
+$("#licenseName").addEventListener("input", () => { checkLicense(); fitLicense(); });
+$("#licenseOwner").addEventListener("input", () => { checkLicense(); fitLicense(); });
+$("#licenseDice").addEventListener("click", () => { $("#licenseName").value = randomBusinessName($("#licenseName").value); checkLicense(); fitLicense(); });
 $("#licenseForm").addEventListener("submit", (e) => {
   e.preventDefault();
   if (!checkLicense() || $("#licenseStamp").classList.contains("is-stamped")) return;
@@ -1462,7 +1488,8 @@ $("#licenseForm").addEventListener("submit", (e) => {
   $("#licenseWhy").textContent = "";
   // The lender stamps it, then you're on the board.
   $("#licenseStamp").classList.add("is-stamped");
-  setTimeout(() => { $("#licenseScreen").classList.add("is-hidden"); openBoard(); }, LICENSE_STAMP_MS);
+  $("#licenseLender").textContent = `"${LENDER_LINES.after}"`;
+  setTimeout(() => { $("#licenseScreen").classList.add("is-hidden"); document.body.classList.remove("is-quiet"); openBoard(); }, LICENSE_STAMP_MS);
 });
 const LICENSE_STAMP_MS = 900;
 
@@ -1480,18 +1507,19 @@ function showGameOver(reason) {
   $("#paperQuarter").textContent = `Quarter ${b.quarters + 1}`;
   const hl = headline(reason, b.name, b.quarters + b.wins);
   $("#paperHeadline").textContent = hl;
-  $("#paperHeadline").classList.toggle("is-long", hl.length > 44);
   $("#paperCaption").textContent = `${b.owner}, owner, pictured on the floor of ${b.name}.`;
-  $("#paperColumn").textContent = `${b.name} shipped ${b.wins} of ${b.taken} contracts in ${b.quarters} ${b.quarters === 1 ? "quarter" : "quarters"} of business. `
-    + `Robots on the floor declined to comment, citing their instructions.`;
+  $("#paperColumn").textContent = (b.wins ? `${b.name} shipped ${b.wins} of ${b.taken} contracts in ${b.quarters} ${b.quarters === 1 ? "quarter" : "quarters"} of business. `
+    : `${b.name} never shipped a contract. `) + `Robots on the floor declined to comment, citing their instructions.`;
   $("#gameoverWhy").textContent = GAMEOVER_WHY[reason](b);
-  const rows = [["Quarters survived", b.quarters], ["Contracts shipped", `${b.wins} of ${b.taken}`],
+  const rows = [["Quarters survived", b.quarters], ["Contracts shipped", b.taken ? `${b.wins} of ${b.taken}` : "None"],
     ...(b.best != null ? [["Best quarter", signedText(b.best)]] : []), ["Owed the lender", `$${debtOf(b)}`]];
   $("#gameoverStats").innerHTML = rows.map(([l, v]) => `<div><span>${l}</span><b>${v}</b></div>`).join("");
+  document.body.classList.add("is-quiet");
   $("#gameoverScreen").classList.remove("is-hidden");
+  fitHeadline();
 }
-$("#gameoverNew").addEventListener("click", () => { biz = null; $("#gameoverScreen").classList.add("is-hidden"); openBoard(); });
-$("#gameoverMenu").addEventListener("click", () => { $("#gameoverScreen").classList.add("is-hidden"); showMenu(); });
+$("#gameoverNew").addEventListener("click", () => { biz = null; $("#gameoverScreen").classList.add("is-hidden"); document.body.classList.remove("is-quiet"); openBoard(); });
+$("#gameoverMenu").addEventListener("click", () => { $("#gameoverScreen").classList.add("is-hidden"); document.body.classList.remove("is-quiet"); showMenu(); });
 // The open Train picker (a robot id), if any. A click anywhere else or Escape closes it.
 let trainOpen = null;
 const CHEVRON_DOWN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;

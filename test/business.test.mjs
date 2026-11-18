@@ -209,6 +209,6 @@ test("headlines: the business's name in Mike's three, and only the ones that fit
   const { headline, HEADLINES } = await import("../src/headlines.js");
   assert.equal(HEADLINES.length, 3);
   const broke = new Set([0, 1, 2, 3].map((i) => headline("broke", "Clank & Sons", i)));
-  assert.deepEqual([...broke].sort(), ['Clank & Sons Ships Its Last Box (It Was Empty)', 'Robots of Clank & Sons Finally Given Clear Instructions: "Leave"'].sort());
+  assert.deepEqual([...broke].sort(), ['Clank & Sons Ships Its Last Box (It Was Empty)', 'Robots of Clank & Sons Finally Given Clear Instructions: “Leave”'].sort());
   assert.ok([0, 1, 2].some((i) => headline("reputation", "X", i) === "X Reputation Found at Bottom of Bin 2"));
 });

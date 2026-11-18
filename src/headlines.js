@@ -7,7 +7,7 @@
 export const HEADLINES = [
   { when: ["broke", "reputation"], text: (biz) => `${biz} Ships Its Last Box (It Was Empty)` },
   { when: ["reputation"], text: (biz) => `${biz} Reputation Found at Bottom of Bin 2` },
-  { when: ["broke", "reputation"], text: (biz) => `Robots of ${biz} Finally Given Clear Instructions: "Leave"` },
+  { when: ["broke", "reputation"], text: (biz) => `Robots of ${biz} Finally Given Clear Instructions: “Leave”` },
 ];
 
 /** A headline for this ending, the same one for the same `seed`. */
