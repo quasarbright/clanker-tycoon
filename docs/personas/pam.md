@@ -113,3 +113,6 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   Mark's watch item: at 3 pips a ship earns nothing, so risky Large contracts cost nothing extra.
 - 2026-11-18: Mike: Large contracts win back +2/3, misses stay -1 (decision 79). Board B re-mocked
   with the gain on each size button and the miss said once (8-mock-board-B-gain-by-size).
+- 2026-11-18: Mike on board A: "big contracts can give 2/3 reputation back but still -1 on miss"
+  (decision 79). The Large card's line becomes "Ship it +⅔ reputation · Miss it −1 reputation";
+  Small and side stay +⅓. The two sizes now differ in reputation as well as pay.
