@@ -106,3 +106,8 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   the rest "aren't even headlines ... or just not funny or clever". Rule added to docs/humor.md:
   real headline form (subject, active verb, newspaper phrasing) and a real twist, not a mechanic
   described. No more rounds unless he asks.
+- 2026-11-18: reputation mocks (Mike's model: 3 pips, miss -1, ship +1/3, offers 100/80/60% by whole
+  pips, per Mark). Board A (pies, struck-through numbers and +1/3 / -1 on every card) vs B (nine
+  ticks, one "clients are wary" sentence), a one-pip-left danger board, recap A (ledger) vs B
+  (SHIPPED/MISSED stamps). Recommended B board + stamps. In /mnt/project-files/mocks-reputation/.
+  Mark's watch item: at 3 pips a ship earns nothing, so risky Large contracts cost nothing extra.
