@@ -30,6 +30,7 @@ export const WORDS = {
   fundsNow: "Funds now",
   thisQuarter: "This quarter",
   lastQuarter: "Last quarter",
+  reputation: "Reputation",
   // the top bar's money line, per kind of level
   labor: "labor",
 };

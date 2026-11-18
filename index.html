@@ -349,7 +349,7 @@
     .ct-end-contract .ct-ticket-pay { min-width: 2ch; text-align: right; }
     .ct-end-contracts { grid-column: 1 / -1; display: grid; gap: 6px; margin-bottom: 8px; }
     .ct-end-contract { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border-radius: 10px; padding: 6px 10px; text-align: left; }
-    .ct-end-contract span:not(.ct-ticket):not(.ct-ticket-dots):not(.ct-ticket-pay):not(.ct-dot) { flex: 1; color: var(--muted); }
+    .ct-end-contract span:not(.ct-ticket):not(.ct-ticket-dots):not(.ct-ticket-pay):not(.ct-dot):not(.ct-stamp) { flex: 1; color: var(--muted); }
     .ct-end-contract b { font-family: var(--font-mono); }
     .ct-end-contract.is-done b { color: var(--success); }
     .ct-end-contract.is-missed b { color: #ffb4ae; }
@@ -682,6 +682,29 @@
     /* behind the license and the front page the floor is quiet: no HUD, no coach, no bubbles */
     body.is-quiet .ct-top, body.is-quiet .ct-orders, body.is-quiet #coach, body.is-quiet .ct-bubble, body.is-quiet .ct-mark,
     body.is-quiet .ct-bot-busy, body.is-quiet .ct-planbar, body.is-quiet .ct-hands, body.is-quiet .ct-yell, body.is-quiet .ct-side { visibility: hidden; }
+    /* reputation (decisions 78, 79): pie pips under Funds, struck offers, stamps on the recap */
+    .ct-rep { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; margin-top: 10px; }
+    .ct-rep-pies { display: flex; gap: 6px; }
+    .ct-pie { width: 22px; height: 22px; display: block; }
+    .ct-pie circle.bg { fill: var(--panel-2); stroke: #ffffff22; }
+    .ct-pie path, .ct-pie circle.full { fill: var(--accent); }
+    .ct-rep-text { font-size: .85rem; color: var(--muted); white-space: nowrap; }
+    .ct-rep.is-danger .ct-pie path, .ct-rep.is-danger .ct-pie circle.full { fill: var(--danger); }
+    .ct-rep.is-danger .ct-rep-text { color: #ff8a80; }
+    .ct-rep-warn { font-size: .8rem; color: #ff8a80; max-width: 240px; text-align: right; }
+    .ct-miss-line { margin-left: 14px; text-transform: none; letter-spacing: 0; font: 500 .9rem var(--font-ui); color: var(--muted); }
+    .ct-miss-line b { color: #ff8a80; }
+    .ct-struck { text-decoration: line-through; color: var(--faint); margin-left: 6px; font-size: .75em; cursor: help; }
+    .ct-rep-gain { justify-self: end; color: var(--success); font-size: .82rem; font-weight: 600; white-space: nowrap; }
+    .ct-stamp { flex: none; transform: rotate(-6deg); border: 3px solid currentColor; border-radius: 6px; padding: 1px 8px; font: 800 .8rem var(--font-ui); letter-spacing: 1.5px; text-transform: uppercase; white-space: nowrap; animation: stampIn .3s cubic-bezier(.2, .9, .3, 1.3) both; }
+    @keyframes stampIn { from { opacity: 0; transform: rotate(-14deg) scale(2); } to { opacity: 1; transform: rotate(-6deg) scale(1); } }
+    .ct-stamp.is-shipped { color: var(--success); } .ct-stamp.is-missed { color: #ff6b61; }
+    .ct-end-contract .ct-stamp + b { margin-left: 12px; }
+    .ct-recap-rep { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+    .ct-recap-rep .ct-rep-pies { align-items: center; }
+    .ct-recap-rep .arrow { color: var(--muted); margin: 0 4px; }
+    .ct-recap-next { grid-column: 1 / -1; font-size: .85rem; color: var(--muted); text-align: right; }
+    .ct-recap-next.is-out { color: #ff8a80; }
     .ct-board-biz { font: 600 .8rem var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
   </style>
 </head>
@@ -811,11 +834,11 @@
       <div class="ct-board-head">
         <div><div class="ct-board-biz" id="boardBiz"></div><div class="ct-title" id="boardTitle">Quarter 1</div><div class="ct-board-shifts" id="boardShifts"></div><div class="ct-board-last" id="boardLast" hidden></div></div>
         <div class="ct-investor"><img src="favicon.svg" alt=""><p><span class="ct-label" data-word="lender">The lender</span><br><span id="investorLine"></span></p><div class="ct-loans" id="loans"></div></div>
-        <div class="ct-board-money"><span class="ct-cash-label" data-word="funds">Funds</span><span class="ct-cash-value" id="bizMoney"></span><span class="ct-crew-cost" id="bizCrewCost"></span></div>
+        <div class="ct-board-money"><span class="ct-cash-label" data-word="funds">Funds</span><span class="ct-cash-value" id="bizMoney"></span><span class="ct-crew-cost" id="bizCrewCost"></span><div class="ct-rep" id="bizRep"></div></div>
         <button class="ct-btn" id="boardMenuBtn">Levels</button>
       </div>
       <div class="ct-board-top">
-        <div><div class="ct-board-sec">Contracts this quarter</div><div class="ct-offers" id="offers"></div></div>
+        <div><div class="ct-board-sec">Contracts this quarter <span class="ct-miss-line" id="missLine"></span></div><div class="ct-offers" id="offers"></div></div>
         <div class="ct-board-go">
           <div class="ct-forecast" id="forecast"></div>
           <button class="ct-btn is-gold ct-big" id="boardGo" disabled data-word="startQuarter">Start the quarter</button>

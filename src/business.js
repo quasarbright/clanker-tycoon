@@ -13,6 +13,7 @@
 
 import { wageOf } from "./wages.js";
 import { WORDS } from "./words.js";
+import { REP, scaleOffer, afterQuarter, ruined } from "./reputation.js";
 
 /** What you start with, free (decision #61: no investor). */
 export const START_MONEY = 100;
@@ -170,7 +171,8 @@ export function newBusiness() {
     // Named on the business license before the first quarter (decision 74).
     name: "", owner: "",
     // For the front page at the end: contracts taken, and the best quarter's result.
-    taken: 0, best: null };
+    taken: 0, best: null,
+    rep: REP.max }; // reputation, in thirds of a pip (reputation.js)
 }
 
 /** Names the license's dice offers. Plain, slightly old-fashioned firm names. */
@@ -182,15 +184,17 @@ export const randomBusinessName = (not = "") => {
 };
 
 /**
- * Whether the run is over, and why: "broke" when you can't pay even your cheapest robot for a
- * shift and the lender won't lend more (nothing can start a shift again). Reputation running out
- * will be another reason later; the front page takes any reason. `candidates` is brains.js
- * CANDIDATES.
+ * Whether the run is over, and why: "reputation" when it has run out and no client will sign
+ * (decision 78). Being broke isn't its own ending: with no crew you can afford, contracts get
+ * missed and reputation follows (Mark). `candidates` is unused, kept for callers.
  */
 export function outOfBusiness(biz, candidates) {
-  if (biz.loans.length < LENDER.max) return null;
-  const cheapest = Math.min(...biz.crew.map((id) => robotOf(biz, candidates.find((c) => c.id === id)).wage));
-  return biz.money < cheapest ? "broke" : null;
+  return ruined(biz.rep ?? REP.max) ? "reputation" : null;
+}
+
+/** The cheapest robot on your crew, per shift: below this, a shift can only be you alone. */
+export function cheapestWage(biz, candidates) {
+  return Math.min(...biz.crew.map((id) => robotOf(biz, candidates.find((c) => c.id === id)).wage));
 }
 
 /**
@@ -203,11 +207,12 @@ export function board(biz) {
   const pay = (p) => Math.round((p * 1.15 ** extra) / 10) * 10;
   const needs = (color) => (color === "red" ? null : "paint");
   const q = biz.quarters;
+  // Clients offer less of everything (size and pay) to a business with a worse reputation.
   return [
     { id: `${q}-s`, size: "small", color: T.main.color, count: T.main.small[0], pay: pay(T.main.small[1]), needs: needs(T.main.color) },
     { id: `${q}-l`, size: "large", color: T.main.color, count: T.main.large[0], pay: pay(T.main.large[1]), needs: needs(T.main.color) },
     { id: `${q}-x`, size: "side", color: T.side.color, count: T.side.count, pay: pay(T.side.pay), needs: needs(T.side.color) },
-  ];
+  ].map((c) => scaleOffer(c, biz.rep ?? REP.max));
 }
 
 export const owns = (biz, id) => biz.owned === id || biz.upgrades.includes(id);
@@ -279,12 +284,14 @@ export function settle(biz, contracts, done, left) {
   const before = biz.money;
   biz.money = left;
   let won = 0;
+  const repBefore = biz.rep ?? REP.max;
+  biz.rep = afterQuarter(repBefore, payouts(contracts, done));
   for (const p of payouts(contracts, done, biz.loans)) {
     biz.money += p.pay - p.cut;
     if (p.won) { biz.wins++; won++; }
   }
   // For the board's "Last quarter" line: contracts shipped, and what the quarter did to the budget.
-  biz.last = { won, of: contracts.length, net: Math.round(biz.money - before) };
+  biz.last = { won, of: contracts.length, net: Math.round(biz.money - before), rep: [repBefore, biz.rep] };
   biz.taken = (biz.taken ?? 0) + contracts.length;
   biz.best = biz.best == null ? biz.last.net : Math.max(biz.best, biz.last.net);
   biz.loans = biz.loans.filter((l) => l > 0); // paid off

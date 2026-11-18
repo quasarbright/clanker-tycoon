@@ -47,7 +47,7 @@ test("the money you spend in a quarter is called funds everywhere, never a budge
   await page.evaluate(() => ct.openLevel(6));
   await expect(page.locator("#laborLabel")).toHaveText(WORDS.funds.toLowerCase());
   await page.evaluate(() => (ct.biz?.owner || ct.license("Clank & Sons", "Mike"), ct.openBoard()));
-  await expect(page.locator(".ct-board-money .ct-cash-label")).toHaveText(WORDS.funds);
+  await expect(page.locator(".ct-board-money > .ct-cash-label")).toHaveText(WORDS.funds);
   await page.locator("[data-contract]").first().click();
   await page.click("#boardGo");
   await expect(page.locator("#laborLabel")).toHaveText(WORDS.funds.toLowerCase());

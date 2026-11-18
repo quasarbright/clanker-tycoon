@@ -382,7 +382,7 @@ test("everything on the board you can't afford says how much you're short, the s
 
 /** The recap's lines as [label, value] pairs. */
 const recap = (page) => page.locator(".ct-recap").evaluate((r) => {
-  const cells = [...r.children].filter((c) => !c.classList.contains("ct-recap-net")).map((c) => c.textContent.trim());
+  const cells = [...r.children].filter((c) => c.tagName === "SPAN" || c.tagName === "B").map((c) => c.textContent.trim());
   const out = [];
   for (let i = 0; i < cells.length; i += 2) out.push([cells[i], cells[i + 1]]);
   return { lines: out, net: r.querySelector(".ct-recap-net").textContent.trim() };
@@ -476,8 +476,8 @@ test("robots are told your name and never to call you boss; their own lines use 
 
 test("out of business: the front page lands on the floor, with the run's numbers beside it (decision 74)", async ({ page }) => {
   await openBoard(page);
-  // Three loans out and not enough for even the cheapest robot's shift: nothing can start again.
-  await page.evaluate(() => { const b = ct.biz; b.loans = [100, 100, 250]; b.money = 2; b.quarters = 4; b.wins = 3; b.taken = 5; b.best = 120; ct.openBoard(); });
+  // Reputation gone: no client signs (decision 78).
+  await page.evaluate(() => { const b = ct.biz; b.rep = 0; b.loans = [100, 100, 250]; b.money = 2; b.quarters = 4; b.wins = 3; b.taken = 5; b.best = 120; ct.openBoard(); });
   await expect(page.locator("#gameoverScreen")).toBeVisible();
   await expect(page.locator("#boardScreen")).toBeHidden();
   const hl = await page.locator("#paperHeadline").textContent();
@@ -526,7 +526,7 @@ test("Pam's review of the front page: a long name fits the paper, curly quotes, 
   await page.click("#boardGo");
   await page.evaluate(() => { ct.hire("blip"); });
   // Broke before anything shipped, with the longest name the license allows.
-  await page.evaluate(() => { const b = ct.biz; b.name = "Cogsworth Shipping & Sprocket"; b.loans = [100, 100, 250]; b.money = 0; b.quarters = 0; b.wins = 0; b.taken = 0; b.best = null; ct.openBoard(); });
+  await page.evaluate(() => { const b = ct.biz; b.name = "Cogsworth Shipping & Sprocket"; b.rep = 0; b.loans = [100, 100, 250]; b.money = 0; b.quarters = 0; b.wins = 0; b.taken = 0; b.best = null; ct.openBoard(); });
   await expect(page.locator("#paperColumn")).toHaveText("Cogsworth Shipping & Sprocket never shipped a contract. Robots on the floor declined to comment, citing their instructions.");
   await expect(page.locator("#paperHeadline")).not.toContainText('"');
   const fits = await page.evaluate(() => { const h = document.querySelector("#paperHeadline"), p = document.querySelector("#gameoverPaper"); return h.scrollWidth <= h.clientWidth + 1 && p.scrollHeight <= p.clientHeight + 1; });
@@ -534,4 +534,60 @@ test("Pam's review of the front page: a long name fits the paper, curly quotes, 
   for (const sel of ["#pauseBtn", "#clock", "#coach", "#crewReady"]) await expect(page.locator(sel)).toBeHidden();
   await expect(page.locator("#gameoverStats")).not.toContainText("Best quarter"); // no quarter finished
   await expect(page.locator("#gameoverStats")).toContainText("Contracts shippedNone");
+});
+
+test("reputation on the board: pips under Funds, struck full numbers with the hover lines, the gain on each card (decisions 78, 79)", async ({ page }) => {
+  await openBoard(page);
+  await expect(page.locator("#bizRep .ct-rep-text")).toHaveText("3 of 3 · offers at 100%");
+  await expect(page.locator(".ct-struck")).toHaveCount(0); // nothing is lowered at full reputation
+  await expect(page.locator("#missLine")).toHaveText("Miss any contract: −1 reputation");
+  const gains = await page.locator("[data-contract] .ct-rep-gain").allTextContents();
+  expect(gains).toEqual(["Ship it: +⅓ reputation", "Ship it: +⅔ reputation", "Ship it: +⅓ reputation"]);
+  await page.evaluate(() => { ct.biz.rep = 7; ct.openBoard(); });
+  await expect(page.locator("#bizRep .ct-rep-text")).toHaveText("2⅓ of 3 · offers at 80%");
+  const large = page.locator("[data-contract]").nth(1);
+  const tips = await large.locator(".ct-struck").evaluateAll((els) => els.map((e) => [e.textContent, e.dataset.tooltip]));
+  expect(tips).toEqual([
+    ["40", "Clients ask for 80% of the boxes while Clank & Sons' reputation is questionable. Restore reputation for the full 40."],
+    ["$320", "Clients pay 80% while Clank & Sons' reputation is questionable. Restore reputation for the full $320."],
+  ]);
+  await expect(large.locator(".ct-size-count")).toContainText("32 boxes");
+  await expect(page.locator("#bizRep")).not.toHaveClass(/is-danger/);
+  // At one pip: red, and a warning by name.
+  await page.evaluate(() => { ct.biz.rep = 4; ct.openBoard(); });
+  await expect(page.locator("#bizRep")).toHaveClass(/is-danger/);
+  await expect(page.locator("#bizRep")).toContainText("One more missed contract and the name Clank & Sons is mud.");
+  await expect(page.locator("#bizRep .ct-rep-text")).toHaveText("1⅓ of 3 · offers at 60%");
+});
+
+test("the recap stamps each contract and moves reputation; at zero the front page says why (decisions 78, 80)", async ({ page }) => {
+  await openBoard(page);
+  await page.evaluate(() => { ct.biz.rep = 4; ct.openBoard(); });
+  await page.click('[data-buy="paint"]');
+  const ids = await page.locator("[data-contract]").evaluateAll((els) => els.map((e) => e.dataset.contract));
+  await page.click(`[data-contract="${ids[1]}"]`); await page.click(`[data-contract="${ids[2]}"]`);
+  await page.click("#boardGo");
+  for (let s = 1; s <= 3; s++) { await endShift(page, [999, 0]); if (s < 3) await page.click('[data-go="next"]'); }
+  await expect(page.locator(".ct-stamp")).toHaveText(["Shipped +⅔", "Missed −1"]);
+  await expect(page.locator(".ct-recap-rep .ct-pie")).toHaveCount(6); // before → after
+  await expect(page.locator(".ct-recap-next")).toHaveText("Next quarter: offers at 60% of size and pay"); // 4 + 2 − 3 = 3: one pip
+  await page.click('[data-go="board"]');
+  expect(await page.evaluate(() => ct.biz.rep)).toBe(3);
+  // One more miss: reputation gone, and the front page says so.
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  for (let s = 1; s <= 3; s++) { await endShift(page, [0]); if (s < 3) await page.click('[data-go="next"]'); }
+  await expect(page.locator(".ct-recap-next")).toHaveText("No client will sign with Clank & Sons again.");
+  await page.click('[data-go="board"]');
+  await expect(page.locator("#gameoverScreen")).toBeVisible();
+  await expect(page.locator("#gameoverWhy")).toContainText("is mud");
+});
+
+test("too broke for any robot: Start lets you work the shift alone (being broke turns into misses)", async ({ page }) => {
+  await openBoard(page);
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  await expect(page.locator("#goBtn")).toBeDisabled(); // you can afford a crew: schedule one
+  await page.evaluate(() => { ct.quarter.money = 2; ct.step(0); });
+  await expect(page.locator("#goBtn")).toBeEnabled();
 });

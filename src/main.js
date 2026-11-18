@@ -16,8 +16,9 @@ import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, signed as signedText, shippedOf, shiftCost } from "./quarter.js";
 import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
   RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers, crewCost,
-  randomBusinessName, outOfBusiness, START_MONEY } from "./business.js";
+  randomBusinessName, outOfBusiness, START_MONEY, cheapestWage } from "./business.js";
 import { headline } from "./headlines.js";
+import { REP, wholePips, offerShare, pipsText, deltaText, gainOf, afterQuarter, ruined } from "./reputation.js";
 import { SKILL_TIER, wageOf } from "./wages.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -320,7 +321,12 @@ const cantAfford = (c) => !!quarter && payroll() + c.wage > quarter.money;
 const names = (ws) => ws.map((w) => w.hire.name).join(" and ");
 function startBlocker() {
   if (cantPay()) return `This crew costs $${payroll()} for the shift, and you have ${money(quarter.money)}. ${WORDS.takeSomeoneOff} to start.`;
-  if (!game.workers.length) return level.pool.length ? `${WORDS.schedule} your crew for this shift and give them instructions first.` : null;
+  if (!game.workers.length) {
+    // Too broke for even your cheapest robot: you can still work the shift alone (Mark: being broke
+    // flows into missed contracts, and reputation, instead of a separate ending).
+    const broke = quarter && level.roster && Math.min(...Object.values(level.roster).map((r) => r.wage)) > quarter.money;
+    return level.pool.length && !broke ? `${WORDS.schedule} your crew for this shift and give them instructions first.` : null;
+  }
   const notReady = game.workers.filter((w) => cardState(w)[0] !== "Ready");
   if (!notReady.length) return null;
   const busy = notReady.filter((w) => cardState(w)[1] === "is-busy");
@@ -1299,6 +1305,38 @@ function openBoard() {
   $("#boardScreen").classList.remove("is-hidden");
 }
 
+// ---------- reputation on the board (decisions 78, 79) ----------
+
+const possessive = (name) => (/s$/i.test(name) ? `${name}'` : `${name}'s`);
+/** A pie for one pip, filled `thirds` of 3. */
+function pieHTML(thirds) {
+  if (thirds >= 3) return `<svg class="ct-pie" viewBox="0 0 22 22" aria-hidden="true"><circle class="bg" cx="11" cy="11" r="10"/><circle class="full" cx="11" cy="11" r="10"/></svg>`;
+  if (thirds <= 0) return `<svg class="ct-pie" viewBox="0 0 22 22" aria-hidden="true"><circle class="bg" cx="11" cy="11" r="10"/></svg>`;
+  const a = (thirds / 3) * 2 * Math.PI, x = 11 + 10 * Math.sin(a), y = 11 - 10 * Math.cos(a);
+  return `<svg class="ct-pie" viewBox="0 0 22 22" aria-hidden="true"><circle class="bg" cx="11" cy="11" r="10"/><path d="M11 11V1A10 10 0 ${a > Math.PI ? 1 : 0} 1 ${x.toFixed(2)} ${y.toFixed(2)}Z"/></svg>`;
+}
+/** Three pies for a reputation, in thirds. */
+const piesHTML = (rep) => `<span class="ct-rep-pies">${[0, 1, 2].map((i) => pieHTML(Math.max(0, Math.min(3, rep - i * 3)))).join("")}</span>`;
+const offerPct = (rep) => Math.round(offerShare(rep) * 100);
+/** Under Funds: the pips, "2⅓ of 3 · offers at 80%", and a warning at one pip. */
+function renderRep() {
+  const rep = biz.rep ?? REP.max, danger = wholePips(rep) <= 1;
+  const el = $("#bizRep");
+  el.classList.toggle("is-danger", danger);
+  el.innerHTML = `<span class="ct-cash-label">${WORDS.reputation}</span>${piesHTML(rep)}<span class="ct-rep-text">${pipsText(rep)} of 3 · offers at ${offerPct(rep)}%</span>`
+    + (danger ? `<span class="ct-rep-warn">One more missed contract and the name ${escapeHTML(biz.name)} is mud.</span>` : "");
+  $("#missLine").innerHTML = `Miss any contract: <b>−1 reputation</b>`;
+}
+/** A contract's boxes and pay as offered, the full numbers struck through beside them when
+ *  reputation has lowered them (with Mike's hover lines), and what shipping it wins back. */
+function offerNumbers(c) {
+  const pct = offerPct(biz.rep ?? REP.max), who = escapeHTML(possessive(biz.name));
+  const struck = (full, now, tip) => (full != null && full !== now ? `<s class="ct-struck" data-tooltip="${tip}">${full}</s>` : "");
+  return `<span class="ct-size-count">${c.count} boxes${struck(c.fullCount, c.count, `Clients ask for ${pct}% of the boxes while ${who} reputation is questionable. Restore reputation for the full ${c.fullCount}.`)}</span>
+    <span class="ct-offer-pay">$${c.pay}${struck(c.fullPay, c.pay, `Clients pay ${pct}% while ${who} reputation is questionable. Restore reputation for the full $${c.fullPay}.`).replace(">" + c.fullPay + "<", ">$" + c.fullPay + "<")}</span>
+    <span class="ct-rep-gain">Ship it: ${deltaText(gainOf(c))} reputation</span>`;
+}
+
 // Under a contract's pay: what you keep of it, if part goes to the lender.
 const keepLine = (c) => (biz.loans.length ? `<span class="ct-offer-keep">you keep $${c.pay - repayOf(biz, c.pay)}</span>` : "");
 
@@ -1313,6 +1351,7 @@ function renderBoard() {
   $("#bizCrewCost").textContent = biz.crew.length ? `Whole crew $${crewCost(biz, CANDIDATES)} a shift` : "";
   $("#boardTitle").textContent = `Quarter ${biz.quarters + 1}`;
   $("#boardBiz").textContent = biz.name;
+  renderRep();
   // How the last quarter went, one quiet line (not in the first quarter).
   const L = biz.last;
   $("#boardLast").hidden = !L;
@@ -1337,8 +1376,7 @@ function renderBoard() {
   const blocked = (c) => (!hasMachine(biz, c.needs) ? `Needs a paint machine, and you don't own one yet.` : "");
   const size = (c) => `<button type="button" class="ct-size ${isOn(c) ? "is-on" : ""}" data-contract="${c.id}" ${blocked(c) ? "disabled" : ""}>
       <span class="ct-size-name">${isOn(c) ? CHECK : ""}${c.size === "small" ? "Small" : "Large"}</span>
-      <span class="ct-size-count">${c.count} boxes</span>
-      <span class="ct-offer-pay">$${c.pay}</span>${keepLine(c)}
+      ${offerNumbers(c)}${keepLine(c)}
     </button>`;
   const painted = (c) => (c.needs ? `<span class="ct-offer-keep">Painted: the supply only gives out red.</span>` : "");
   $("#offers").innerHTML = `<div class="ct-offer ct-pair ${isOn(small) || isOn(large) ? "is-picked" : ""}">
@@ -1350,8 +1388,7 @@ function renderBoard() {
       <div class="ct-offer-head">${ticketHTML(side.color, "")}<b>${cap(side.color)} boxes</b><span class="ct-offer-keep">Side contract</span></div>
       <div class="ct-sizes"><button type="button" class="ct-size ${isOn(side) ? "is-on" : ""}" data-contract="${side.id}" ${blocked(side) ? "disabled" : ""}>
         <span class="ct-size-name">${isOn(side) ? CHECK : ""}${isOn(side) ? "Taking it" : "Take it"}</span>
-        <span class="ct-size-count">${side.count} boxes</span>
-        <span class="ct-offer-pay">$${side.pay}</span>${keepLine(side)}
+        ${offerNumbers(side)}${keepLine(side)}
       </button></div>
       <div class="ct-offer-note is-bad">${blocked(side)}</div>${painted(side)}
     </div>`;
@@ -1570,12 +1607,14 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
   // Each contract: its ticket, what shipped of it, and (at the end) what it paid.
   const rows = `<div class="ct-end-contracts">${pays.map((p, i) => `<div class="ct-end-contract ${p.won ? "is-done" : over ? "is-missed" : ""}">
       ${ticketHTML(p.c.color, p.c.count)}<span>${Math.min(quarter.done[i], p.c.count)} of ${p.c.count} shipped</span>
+      ${over ? `<span class="ct-stamp ${p.won ? "is-shipped" : "is-missed"}" style="animation-delay:${i * 200}ms">${p.won ? `Shipped ${deltaText(gainOf(p.c))}` : `Missed ${deltaText(-REP.miss)}`}</span>` : ""}
       <b>${p.won ? `$${p.c.pay}` : over ? "$0" : `pays $${p.c.pay}`}</b></div>`).join("")}</div>`;
   // The quarter card adds up the whole quarter; a shift card says what that shift did.
   const crewPayAll = Math.round(level.quarter.budget - quarter.money);
   const stats = over ? [["Paid", `$${paid}`], [`${WORDS.crewPay}, all shifts`, `$${crewPayAll}`], ...(cut ? [[WORDS.toLender, `$${cut}`]] : []), [WORDS.funds, money(quarter.money + paid - cut)]]
     : [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.funds, money(quarter.money)]];
-  if (over) setEndStats(rows + recapHTML({ start: level.quarter.budget, paid, cut, crew: crewPayAll }), []);
+  const repBefore = biz.rep ?? REP.max, repAfter = afterQuarter(repBefore, pays);
+  if (over) setEndStats(rows + recapHTML({ start: level.quarter.budget, paid, cut, crew: crewPayAll, rep: [repBefore, repAfter] }), []);
   else setEndStats(rows, stats);
   const btns = over ? [["board", WORDS.toBoard, true]]
     : [["next", "Next shift", true], ["restart", WORDS.replayShift]];
@@ -1594,7 +1633,7 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
  * what came in and went out (no $0 lines), the budget now, and the quarter's result. Lines tally in
  * one after another; a click on the card shows them all at once (Pam's spec, decision 72).
  */
-function recapHTML({ start, paid, cut, crew }) {
+function recapHTML({ start, paid, cut, crew, rep }) {
   const now = start + paid - cut - crew, net = now - start;
   const lender = `<img class="ct-recap-face" src="favicon.svg" alt="">`;
   const lines = [
@@ -1605,8 +1644,11 @@ function recapHTML({ start, paid, cut, crew }) {
     [WORDS.fundsNow, money(now), "is-total"],
   ];
   const row = ([l, v, cls], i) => `<span class="${cls}" style="--i:${i}">${l}</span><b class="${cls}" style="--i:${i}">${v}</b>`;
+  const [before, after] = rep ?? [REP.max, REP.max], i = lines.length;
+  const repRow = `<div class="ct-recap-rep" style="--i:${i + 1}"><span>${WORDS.reputation}</span><span class="ct-rep-pies">${piesHTML(before)}<span class="arrow">→</span>${piesHTML(after)}</span></div>
+    <div class="ct-recap-next ${ruined(after) ? "is-out" : ""}" style="--i:${i + 1}">${ruined(after) ? `No client will sign with ${escapeHTML(biz.name)} again.` : `Next quarter: offers at ${offerPct(after)}% of size and pay`}</div>`;
   return `<div class="ct-recap">${lines.map(row).join("")}
-    <div class="ct-recap-net ${net >= 0 ? "is-in" : "is-out"}" style="--i:${lines.length}">${WORDS.thisQuarter} <b>${signed(net)}</b></div></div>`;
+    <div class="ct-recap-net ${net >= 0 ? "is-in" : "is-out"}" style="--i:${i}">${WORDS.thisQuarter} <b>${signed(net)}</b></div>${repRow}</div>`;
 }
 $("#endScreen").addEventListener("click", () => $(".ct-recap")?.classList.add("is-shown"));
 

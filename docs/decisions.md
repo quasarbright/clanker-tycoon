@@ -1141,3 +1141,28 @@ New screens borrow from that world of official paperwork and factory things. It 
 humor rule (a dry, official voice whose punchline is a mechanic), and with "don't over-theme":
 the charm comes from real game objects (the license, the newspaper, the stamps), not invented chrome.
 
+
+### 81. Reputation, built (2026-11-18)
+
+Mike picked layout 9 ("this variant is best"): reputation under Funds. Built to decisions 78 to 80
+and Pam's spec:
+
+- **Rules** (`src/reputation.js`, kept in thirds of a pip): start at 3; a miss of any size −1; a
+  shipped Small or side +⅓, a Large +⅔; capped at 3. Offers are 100%, 80%, 60% of size and pay at
+  3, 2, 1 whole pips, rounded to whole boxes and dollars (Pam's mock: 16 of 20, $256 of $320).
+- **The run ends below one whole pip.** There clients would offer 0%, so ⅓ or ⅔ left is already
+  out of business; the danger warning at one pip ("One more missed contract and the name … is
+  mud.") is exact. Going broke is no longer its own ending (Mark: "money needs no separate
+  ending"): when you can't pay even your cheapest robot, Start lets you work the shift alone, and
+  misses cost reputation.
+- **Board:** REPUTATION, three pie pips and "2⅓ of 3 · offers at 80%" under "Whole crew $N a
+  shift"; red with the warning at one pip (Pam's suggestion, for Mike to see). Each card shows the
+  struck-through full count and pay with Mike's hover lines ("Clients pay 80% while Clank & Sons'
+  reputation is questionable. Restore reputation for the full $320.") and "Ship it: +⅓ / +⅔
+  reputation"; "Miss any contract: −1 reputation" once by the heading.
+- **Recap:** SHIPPED +⅓ / +⅔ and MISSED −1 stamps on the contracts, and a reputation row with the
+  pips before → after and "Next quarter: offers at N% of size and pay" (or "No client will sign
+  with … again.").
+- Tests: the rules, the board's scaling, settling and the ending in `test/business.test.mjs`; the
+  board readout, struck numbers and hover text, the danger state, the recap stamps, reaching the
+  front page, and working a shift alone when broke in `e2e/business.spec.mjs`.

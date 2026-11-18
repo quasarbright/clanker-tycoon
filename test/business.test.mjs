@@ -193,16 +193,46 @@ test("the board's whole-crew cost is the sum of every robot's wage (decision 71)
   assert.equal(B.crewCost(biz, cands), 5 + 15 + 15);
 });
 
-test("out of business only when no robot's shift is affordable and the lender is done lending (decision 74)", () => {
-  const cands = [{ id: "blip", skills: [], attributes: [] }, { id: "pip", skills: ["packing"], attributes: [] }];
+test("reputation: a miss costs a whole pip, a ship wins back a third (two for a Large), capped at 3 (decisions 78, 79)", async () => {
+  const R = await import("../src/reputation.js");
+  const c = (size) => ({ size });
+  assert.equal(R.afterQuarter(9, [{ c: c("small"), won: false }]), 6);
+  assert.equal(R.afterQuarter(6, [{ c: c("small"), won: true }]), 7);
+  assert.equal(R.afterQuarter(6, [{ c: c("large"), won: true }]), 8);
+  assert.equal(R.afterQuarter(6, [{ c: c("side"), won: true }]), 7);
+  assert.equal(R.afterQuarter(6, [{ c: c("large"), won: true }, { c: c("side"), won: true }]), 9, "a clean Large + side quarter wins back a whole pip");
+  assert.equal(R.afterQuarter(8, [{ c: c("large"), won: true }]), 9, "capped at 3");
+  assert.equal(R.afterQuarter(2, [{ c: c("large"), won: false }, { c: c("side"), won: false }]), 0, "never below 0");
+  assert.equal(R.pipsText(7), "2⅓"); assert.equal(R.pipsText(9), "3"); assert.equal(R.pipsText(2), "⅔");
+  assert.equal(R.deltaText(-3), "\u22121"); assert.equal(R.deltaText(2), "+⅔");
+});
+
+test("reputation shapes the board: 100%, 80%, 60% of size and pay by whole pips (decision 78)", () => {
   const biz = B.newBusiness();
-  biz.crew = ["blip", "pip"];
-  biz.money = 2;
-  assert.equal(B.outOfBusiness(biz, cands), null, "the lender still lends");
-  biz.loans = [100, 100, 100];
-  assert.equal(B.outOfBusiness(biz, cands), "broke");
-  biz.money = 5;
-  assert.equal(B.outOfBusiness(biz, cands), null, "Blip's $5 shift is still affordable");
+  const full = B.board(biz);
+  assert.deepEqual(full.map((c) => [c.count, c.pay]), full.map((c) => [c.fullCount, c.fullPay]), "full reputation: nothing lowered");
+  biz.rep = 7; // 2⅓: rounds down to 2 whole pips
+  for (const [c, f] of B.board(biz).map((c, i) => [c, full[i]])) {
+    assert.equal(c.count, Math.round(f.count * 0.8)); assert.equal(c.pay, Math.round(f.pay * 0.8));
+    assert.equal(c.fullCount, f.count); assert.equal(c.fullPay, f.pay);
+  }
+  biz.rep = 3;
+  assert.deepEqual(B.board(biz).map((c) => c.pay), full.map((c) => Math.round(c.pay * 0.6)));
+});
+
+test("settling a quarter moves reputation, and at zero the business is out (decisions 78, 76)", () => {
+  const biz = B.newBusiness();
+  const [small, , side] = B.board(biz);
+  B.settle(biz, [small, side], [small.count, 0], biz.money);
+  assert.equal(biz.rep, 9 + 1 - 3, "shipped the Small (+⅓), missed the side (−1)");
+  assert.deepEqual(biz.last.rep, [9, 7]);
+  assert.equal(B.outOfBusiness(biz), null);
+  biz.rep = 3;
+  assert.equal(B.outOfBusiness(biz), null, "one whole pip: still in business");
+  biz.rep = 2;
+  assert.equal(B.outOfBusiness(biz), "reputation", "under one whole pip clients offer 0%: out");
+  biz.rep = 0;
+  assert.equal(B.outOfBusiness(biz), "reputation", "going broke alone isn't an ending any more");
 });
 
 test("headlines: Mike's picks, the paint machine's and the lender's always in the rotation (decisions 74, 77)", async () => {
