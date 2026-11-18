@@ -169,9 +169,9 @@ export function train(biz, c, skill) {
 // supply only gives out red, so blue and green need a paint machine.
 const TIERS = [
   { main: { color: "red", small: [36, 150], large: [75, 290] }, side: { color: "blue", count: 9, pay: 240 } },
-  { main: { color: "red", small: [30, 230], large: [55, 450] }, side: { color: "green", count: 9, pay: 250 } },
-  { main: { color: "green", small: [12, 330], large: [18, 510] }, side: { color: "red", count: 40, pay: 310 } },
-  { main: { color: "blue", small: [15, 420], large: [22, 620] }, side: { color: "red", count: 45, pay: 360 } },
+  { main: { color: "red", small: [54, 230], large: [99, 450] }, side: { color: "green", count: 9, pay: 250 } },
+  { main: { color: "green", small: [12, 330], large: [18, 510] }, side: { color: "red", count: 75, pay: 310 } },
+  { main: { color: "blue", small: [15, 420], large: [22, 620] }, side: { color: "red", count: 84, pay: 360 } },
 ];
 
 export function newBusiness() {

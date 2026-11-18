@@ -142,13 +142,22 @@ function picks(cs) {
   }
   return out.filter((p) => p.length);
 }
-for (let quarters = 0; quarters < 4; quarters++) {
-  console.log(`\nBoard ${quarters + 1} (${QUARTER_SHIFTS} shifts)`);
+// Three floors (decision 88): the backwards starting floor, it with Supply and Pack swapped, and a
+// tidy one. The target: the starting floor misses the big reds, a swap (or a second hauler) makes
+// them, and the tidy floor makes them comfortably.
+const LAYOUTS = [
+  ["starting floor", {}],
+  ["swapped (Supply 3, Pack 5)", { SUPPLY: 3, PACK: 5 }],
+  ["tidy (Supply 4, Pack 5)", { SUPPLY: 4, PACK: 5 }],
+];
+for (const [layout, at] of LAYOUTS) for (let quarters = 0; quarters < 4; quarters++) {
+  console.log(`\nBoard ${quarters + 1} (${QUARTER_SHIFTS} shifts), ${layout}`);
   for (const pick of picks(board({ quarters }))) {
     const paint = pick.some((c) => c.needs), red = pick.some((c) => !c.needs);
     console.log(`  ${pick.map((c) => `${c.count} ${c.color} $${c.pay}`).join(" + ")}`);
     for (const m of paint ? SHOP.filter((x) => x.kind === "paint") : [null]) {
       const b = { ...newBusiness(), money: 9999 };
+      Object.assign(b.floor.at, at);
       if (m) { buy(b, m.id); placeLeftovers(b.floor); }
       const L = quarterLevel(Q, b, pick);
       for (const [name, plan] of CREWS[paint && red ? "both" : paint ? "paint" : "red"]) {
