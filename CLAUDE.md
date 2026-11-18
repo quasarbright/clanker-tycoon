@@ -210,7 +210,8 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
 - **Reputation ends a run** (decisions 78, 79, 81; built in `src/reputation.js`): 3 pips, a missed contract loses a whole one, a shipped
   Small (or side) contract wins back a third and a Large one two thirds; a miss is always a whole
   pip (Mike, 2026-11-18: "big contracts can give 2/3 reputation back but still -1 on miss"). Less reputation means smaller quotas and less pay
-  (forgiving by default). At zero, no client signs with you.
+  (forgiving by default). Below one whole pip, no client signs with you and the run ends; at one
+  pip the board warns in red that one more miss ends it.
 
 **Controls**
 - Tools should let you choose what they act on: at Pack you choose the color ("Pack red"), and a

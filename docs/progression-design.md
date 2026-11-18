@@ -44,12 +44,13 @@ is the quarter's budget; wages come out of it as the shifts run.
 2. **Run shifts** on the floor: schedule your crew, give instructions, watch, fix. Wages tick.
 3. **Get paid** at the end of the quarter for every contract that shipped in full.
 
-**Reputation (agreed, not built; decisions 78, 79).** Three pips. A missed contract of any size
-loses a whole pip. A shipped Large wins back two thirds, a shipped Small or side contract a third.
-Reputation sets
-the board: with less of it, clients offer smaller quotas for less pay, which gives you room to
-recover and train up. At zero no client will sign with you, and the run is over. That's the only
-way a run ends.
+**Reputation (built; decisions 78, 79, 81).** Three pips. A missed contract of any size loses a
+whole pip. A shipped Large wins back two thirds, a shipped Small or side contract a third.
+Reputation sets the board: offers are 100%, 80% and 60% of size and pay at 3, 2 and 1 whole pips,
+which gives you room to recover and train up. Below one whole pip no client will sign with you,
+and the run is over. That's the only way a run ends; going broke just means working shifts alone
+and missing contracts. At exactly one pip the board turns red and warns that one more miss ends it
+(Mike approved both, 2026-11-18: "good").
 4. **Shop between quarters**, three choices of each: recruit a robot (a cheap blank one to train,
    a skilled one, or a pricey expert), train skills and traits, buy machines. Borrow if you need to.
 
@@ -66,9 +67,8 @@ correct the foreman. Same game, one more robot between your words and the work.
 
 ## Biggest open questions
 
-1. **How much reputation moves the board.** A run ends when reputation runs out (decision 78).
-   Open: how far quota and pay drop per pip lost, and what happens if you're broke but still
-   reputable.
+1. **Whether reputation's numbers feel right in play.** Built at 20% per pip (decision 81). To
+   watch: whether a clean Large + side quarter (a whole pip back) makes recovery too fast.
 2. **How to scale bigger.** Foremen will be a first-class concept, and there's only room for a few
    of those. Something more flexible may come later; not yet (decision 69).
 3. What happens to a contract that's late? (Now: it pays nothing.)

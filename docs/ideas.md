@@ -70,8 +70,9 @@ Agreed direction, not built yet. Roughly in roadmap order.
   Foremen will be one first-class concept; something more flexible may come later.
 - **Reputation** (decisions 78, 79; built, decision 81). Three pips; a missed contract of any size loses a whole pip, a
   shipped Large wins back two thirds and a shipped Small or side contract a third. Lower reputation means the board offers smaller quotas for
-  less pay, so you can recover. At zero, no client will sign with you and the run ends. Mike: "Fast
-  to lose, slow to regain." Open: how much quota and pay drop per pip.
+  less pay (80% at 2 pips, 60% at 1), so you can recover. Below one whole pip, no client will sign
+  with you and the run ends; at one pip the board warns you in red. Mike: "Fast to lose, slow to
+  regain."
 - **Buying equipment.** Machines are things you buy, one at a time, each tried by hand first.
 - **Equipment attributes.** Wear (a pricier machine that wears half as fast saves repair labor;
   built as the Sturdy paint machine, decision 53), speed, capacity. A trade-off between up-front cost and labor every shift.
