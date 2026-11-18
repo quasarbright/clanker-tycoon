@@ -1244,6 +1244,7 @@ function endLevel() {
 /** The numbers on a shift or quarter card, all in one row however many there are, under `top`. */
 function setEndStats(top, stats) {
   const el = $("#endStats");
+  el.classList.remove("is-shown");
   el.style.setProperty("--n", stats.length);
   el.innerHTML = top + stats.map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
 }
@@ -1613,9 +1614,10 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
     : over ? (shipped ? `${shipped} of ${cs.length} contracts shipped in full and paid. ${cs.length - shipped === 1 ? "The other pays nothing." : "The others pay nothing."}` : "No contract shipped in full, so nobody pays.")
     : `${shiftsLeft} ${shiftsLeft === 1 ? "shift" : "shifts"} left. Your crew and their instructions stay; change who's on the shift before the next one if you like.`;
   // Each contract: its ticket, what shipped of it, and (at the end) what it paid.
-  const rows = `<div class="ct-end-contracts">${pays.map((p, i) => `<div class="ct-end-contract ${p.won ? "is-done" : over ? "is-missed" : ""}">
+  // On the quarter card the stamps land one after another once the card is up (STAMP_MS apart).
+  const rows = `<div class="ct-end-contracts">${pays.map((p, i) => `<div class="ct-end-contract ${p.won ? "is-done" : over ? "is-missed" : ""} ${over ? "has-stamp" : ""}" style="--d:${STAMP_START_MS + i * STAMP_MS}ms">
       ${ticketHTML(p.c.color, p.c.count)}<span>${Math.min(quarter.done[i], p.c.count)} of ${p.c.count} shipped</span>
-      ${over ? `<span class="ct-stamp ${p.won ? "is-shipped" : "is-missed"}" style="animation-delay:${i * 200}ms">${p.won ? `Shipped ${deltaText(gainOf(p.c))}` : `Missed ${deltaText(-REP.miss)}`}</span>` : ""}
+      ${over ? `<span class="ct-stamp ${p.won ? "is-shipped" : "is-missed"}">${p.won ? `Shipped ${deltaText(gainOf(p.c))}` : `Missed ${deltaText(-REP.miss)}`}</span>` : ""}
       <b>${p.won ? `$${p.c.pay}` : over ? "$0" : `pays $${p.c.pay}`}</b></div>`).join("")}</div>`;
   // The quarter card adds up the whole quarter; a shift card says what that shift did.
   const crewPayAll = Math.round(level.quarter.budget - quarter.money);
@@ -1658,7 +1660,8 @@ function recapHTML({ start, paid, cut, crew, rep }) {
   return `<div class="ct-recap">${lines.map(row).join("")}
     <div class="ct-recap-net ${net >= 0 ? "is-in" : "is-out"}" style="--i:${i}">${WORDS.thisQuarter} <b>${signed(net)}</b></div>${repRow}</div>`;
 }
-$("#endScreen").addEventListener("click", () => $(".ct-recap")?.classList.add("is-shown"));
+$("#endScreen").addEventListener("click", () => { $(".ct-recap")?.classList.add("is-shown"); $("#endStats").classList.add("is-shown"); });
+const STAMP_START_MS = 450, STAMP_MS = 450;
 
 function setPaused(p) {
   paused = p;

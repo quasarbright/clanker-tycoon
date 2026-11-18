@@ -573,6 +573,9 @@ test("the recap stamps each contract and moves reputation; at zero the front pag
   await page.click("#boardGo");
   for (let s = 1; s <= 3; s++) { await endShift(page, [999, 0]); if (s < 3) await page.click('[data-go="next"]'); }
   await expect(page.locator(".ct-stamp")).toHaveText(["Shipped +⅔", "Missed −1"]);
+  // They land like the license's stamp, one after another (Mike).
+  const anim = await page.locator(".ct-stamp").evaluateAll((els) => els.map((e) => { const cs = getComputedStyle(e); return [cs.animationName, cs.animationDelay]; }));
+  expect(anim).toEqual([["stampIn", "0.45s"], ["stampIn", "0.9s"]]);
   await expect(page.locator(".ct-recap-rep .ct-pie")).toHaveCount(6); // before → after
   await expect(page.locator(".ct-recap-next")).toHaveText("Next quarter: offers at 60% of size and pay"); // 4 + 2 − 3 = 3: one pip
   await page.click('[data-go="board"]');
