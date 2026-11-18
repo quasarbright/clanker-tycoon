@@ -111,3 +111,5 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   ticks, one "clients are wary" sentence), a one-pip-left danger board, recap A (ledger) vs B
   (SHIPPED/MISSED stamps). Recommended B board + stamps. In /mnt/project-files/mocks-reputation/.
   Mark's watch item: at 3 pips a ship earns nothing, so risky Large contracts cost nothing extra.
+- 2026-11-18: Mike: Large contracts win back +2/3, misses stay -1 (decision 79). Board B re-mocked
+  with the gain on each size button and the miss said once (8-mock-board-B-gain-by-size).

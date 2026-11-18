@@ -1116,3 +1116,13 @@ contract. No difference between big and small."
   though"). In ideas.md under Maybe.
 **Open:** how much quota and pay drop per pip. Mark's and Pam's working number: 20% per missing
 pip, stepping by whole pips. Pam is mocking how it's shown.
+
+### 79. Large contracts win back more reputation (2026-11-18)
+
+Replaces the "whatever its size" part of 78. Mike, on Pam's reputation mock: "big contracts can
+give 2/3 reputation back but still -1 on miss." A shipped Small or side contract is +1/3, a
+shipped Large one +2/3, and any miss is -1. It also answers Mark's watch item (at 3 pips a Large
+contract was all risk and no extra reward). UI: since the gain now differs by size, it goes on each
+size button ("Ship it: +2/3 reputation"); the miss cost is the same for all, so it's said once above
+the contracts.
+

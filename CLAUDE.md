@@ -199,7 +199,8 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   can't mean a new first-class concept per tier: foremen are one, and there's only room for a few.
 - Story and writing wait for the polish phase, once the mechanics are settled.
 - **Reputation ends a run** (decision 78): 3 pips, a missed contract loses a whole one, a shipped
-  one wins back a third, whatever its size. Less reputation means smaller quotas and less pay
+  Small (or side) contract wins back a third and a Large one two thirds; a miss is always a whole
+  pip (Mike, 2026-11-18: "big contracts can give 2/3 reputation back but still -1 on miss"). Less reputation means smaller quotas and less pay
   (forgiving by default). At zero, no client signs with you.
 
 **Controls**
