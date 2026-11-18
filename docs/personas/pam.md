@@ -121,3 +121,9 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   squeezed. Sent layout 1 (reputation under Funds) and layout 2 (circles under the business name,
   recommended); moving the lender by Start left a gap and pushed the shop off, dropped. Mark owns
   the decision log; Pam doesn't write decision entries.
+- 2026-11-18: Mike on board A: "i love the cross-out, that's good. show info on hover on the
+  crossed out". Keep A's struck-through full-reputation count and pay on every card, whichever
+  board layout wins. Each struck number gets the shared `data-tooltip`: "$320 at full reputation.
+  You have 2⅓ of 3, so clients pay 80%." / "40 boxes at full reputation. You have 2⅓ of 3, so
+  clients ask for 80%." Mocked on the real board (1-hover-struck-pay, 2-hover-struck-count, 0305).
+  At full reputation nothing is struck, so nothing to hover.
