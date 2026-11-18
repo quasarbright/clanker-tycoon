@@ -488,6 +488,7 @@ test("out of business: the front page lands on the floor, with the run's numbers
   await expect(page.locator("#gameoverWhy")).toHaveText("The name Clank & Sons is mud. No client in the Widget District will sign another contract with it.");
   await expect(page.locator("#gameoverStats")).toContainText("Contracts shipped3 of 5");
   await expect(page.locator("#gameoverStats")).toContainText("Owed the lender$450");
+  for (const row of ["Total revenue", "Total costs", "Funds left"]) await expect(page.locator("#gameoverStats")).toContainText(row);
   // The paper and the panel fit the window, once they've landed.
   await page.evaluate(() => Promise.all([document.fonts.ready, ...document.getAnimations().map((a) => a.finished)]));
   const fits = await page.evaluate(() => ["#gameoverPaper", ".ct-gameover-panel"].every((q) => { const r = document.querySelector(q).getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth; }));

@@ -244,3 +244,15 @@ test("headlines: Mike's picks, the paint machine's and the lender's always in th
   assert.deepEqual([...all("reputation")].sort(), [...always, "Clank & Sons Reputation Found at Bottom of Bin 2"].sort());
   assert.equal(headline("broke", "X", 3), headline("broke", "X", 3));
 });
+
+test("the run's totals: revenue is what contracts paid, costs are everything spent (for the front page)", () => {
+  const biz = B.newBusiness();
+  B.borrow(biz, 0); // $100 borrowed: not revenue
+  const [small] = B.board(biz);
+  B.buy(biz, "bigbins"); // a machine
+  const start = biz.money;
+  B.settle(biz, [small], [small.count], start - 15); // $15 crew pay; the Small pays, 10% to the lender
+  const cut = Math.round(small.pay * 0.1);
+  assert.equal(biz.revenue, small.pay);
+  assert.equal(biz.costs, 30 + 15 + cut);
+});

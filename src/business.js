@@ -141,6 +141,7 @@ export function recruit(biz, id) {
   if (biz.money < price) return false;
   (biz.kit ??= {})[id] = kitOf(biz, id);
   biz.money -= price;
+  biz.costs = (biz.costs ?? 0) + price;
   biz.crew.push(id);
   biz.recruitedNow.push(id);
   return true;
@@ -151,6 +152,7 @@ export function train(biz, c, skill) {
   const id = c.id, r = robotOf(biz, c);
   if (!biz.crew.includes(id) || biz.money < TRAIN_PRICE || r.skills.includes(skill) || r.attributes.includes(skill)) return false;
   biz.money -= TRAIN_PRICE;
+  biz.costs = (biz.costs ?? 0) + TRAIN_PRICE;
   (biz.trained[id] ??= []).push(skill);
   return true;
 }
@@ -172,7 +174,10 @@ export function newBusiness() {
     name: "", owner: "",
     // For the front page at the end: contracts taken, and the best quarter's result.
     taken: 0, best: null,
-    rep: REP.max }; // reputation, in thirds of a pip (reputation.js)
+    rep: REP.max, // reputation, in thirds of a pip (reputation.js)
+    // The whole run's money, for the front page: what contracts paid, and everything spent (crew pay,
+    // the lender's cuts, recruiting, training, machines). Loans aren't revenue.
+    revenue: 0, costs: 0 };
 }
 
 /** Names the license's dice offers. Plain, slightly old-fashioned firm names. */
@@ -224,6 +229,7 @@ export function buy(biz, id) {
   const m = SHOP.find((x) => x.id === id);
   if (!m || owns(biz, id) || biz.money < m.price) return false;
   biz.money -= m.price;
+  biz.costs = (biz.costs ?? 0) + m.price;
   if (m.kind === "paint") biz.owned = id; else biz.upgrades.push(id);
   biz.boughtNow.push(id);
   return true;
@@ -282,12 +288,15 @@ export function forecast(biz, contracts) {
 /** The quarter's over and you're back at the board. `left` is your money after the shifts' pay. */
 export function settle(biz, contracts, done, left) {
   const before = biz.money;
+  biz.costs = (biz.costs ?? 0) + Math.max(0, before - left); // the quarter's crew pay
   biz.money = left;
   let won = 0;
   const repBefore = biz.rep ?? REP.max;
   biz.rep = afterQuarter(repBefore, payouts(contracts, done));
   for (const p of payouts(contracts, done, biz.loans)) {
     biz.money += p.pay - p.cut;
+    biz.revenue = (biz.revenue ?? 0) + p.pay;
+    biz.costs += p.cut; // the lender's share
     if (p.won) { biz.wins++; won++; }
   }
   // For the board's "Last quarter" line: contracts shipped, and what the quarter did to the budget.

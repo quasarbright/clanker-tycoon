@@ -28,6 +28,7 @@ export const WORDS = {
   lendersCut: "Lender's cut",
   crewPayAll: "Crew pay, all shifts",
   fundsNow: "Funds now",
+  fundsLeft: "Funds left",
   thisQuarter: "This quarter",
   lastQuarter: "Last quarter",
   reputation: "Reputation",

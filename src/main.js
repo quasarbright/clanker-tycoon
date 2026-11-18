@@ -1560,7 +1560,9 @@ function showGameOver(reason) {
     : `${b.name} never shipped a contract. `) + `Robots on the floor declined to comment, as commenting was not part of their instructions.`;
   $("#gameoverWhy").textContent = GAMEOVER_WHY[reason](b);
   const rows = [["Quarters survived", b.quarters], ["Contracts shipped", b.taken ? `${b.wins} of ${b.taken}` : "None"],
-    ...(b.best != null ? [["Best quarter", signedText(b.best)]] : []), ["Owed the lender", `$${debtOf(b)}`]];
+    ...(b.best != null ? [["Best quarter", signedText(b.best)]] : []),
+    ["Total revenue", `$${Math.round(b.revenue ?? 0)}`], ["Total costs", `$${Math.round(b.costs ?? 0)}`],
+    [WORDS.fundsLeft, money(b.money)], ["Owed the lender", `$${debtOf(b)}`]];
   $("#gameoverStats").innerHTML = rows.map(([l, v]) => `<div><span>${l}</span><b>${v}</b></div>`).join("");
   document.body.classList.add("is-quiet");
   $("#gameoverScreen").classList.remove("is-hidden");
