@@ -166,7 +166,31 @@ const TIERS = [
 
 export function newBusiness() {
   return { money: START_MONEY, loans: [], quarters: 0, wins: 0, owned: null, upgrades: [], crew: [...START_CREW], trained: {},
-    recruitedNow: [], boughtNow: [] };
+    recruitedNow: [], boughtNow: [],
+    // Named on the business license before the first quarter (decision 74).
+    name: "", owner: "",
+    // For the front page at the end: contracts taken, and the best quarter's result.
+    taken: 0, best: null };
+}
+
+/** Names the license's dice offers. Plain, slightly old-fashioned firm names. */
+export const BUSINESS_NAMES = ["Clank & Sons", "Widgetworks", "Boxwell & Co.", "Rivet Brothers", "Gearhart Supply",
+  "Sprocket Ltd.", "Bolt & Daughters", "Cogsworth Shipping", "Ratchet & Reed", "Tinplate Goods"];
+export const randomBusinessName = (not = "") => {
+  const pool = BUSINESS_NAMES.filter((n) => n !== not);
+  return pool[Math.floor(Math.random() * pool.length)];
+};
+
+/**
+ * Whether the run is over, and why: "broke" when you can't pay even your cheapest robot for a
+ * shift and the lender won't lend more (nothing can start a shift again). Reputation running out
+ * will be another reason later; the front page takes any reason. `candidates` is brains.js
+ * CANDIDATES.
+ */
+export function outOfBusiness(biz, candidates) {
+  if (biz.loans.length < LENDER.max) return null;
+  const cheapest = Math.min(...biz.crew.map((id) => robotOf(biz, candidates.find((c) => c.id === id)).wage));
+  return biz.money < cheapest ? "broke" : null;
 }
 
 /**
@@ -221,6 +245,7 @@ export function quarterLevel(base, biz, contracts, candidates = []) {
     order: contracts.map((c) => ({ color: c.color, count: c.count })),
     quarter: { shifts: QUARTER_SHIFTS, budget: biz.money },
     contracts,
+    owner: biz.owner, business: biz.name, // the robots call you by name (decision 74)
     start: `Ship ${list(contracts)} boxes by the end of the quarter, ${QUARTER_SHIFTS} shifts. Each contract pays when all its boxes have shipped (up to $${pay}). ${WORDS.crewPay} comes out of your funds at <b>Start</b>.`,
   };
 }
@@ -260,6 +285,8 @@ export function settle(biz, contracts, done, left) {
   }
   // For the board's "Last quarter" line: contracts shipped, and what the quarter did to the budget.
   biz.last = { won, of: contracts.length, net: Math.round(biz.money - before) };
+  biz.taken = (biz.taken ?? 0) + contracts.length;
+  biz.best = biz.best == null ? biz.last.net : Math.max(biz.best, biz.last.net);
   biz.loans = biz.loans.filter((l) => l > 0); // paid off
   biz.quarters++;
   biz.recruitedNow = [];

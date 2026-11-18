@@ -8,6 +8,7 @@ async function openBoard(page) {
   page.on("console", (m) => { if (m.type() === "error" || m.type() === "warning") errors.push(m.text()); });
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
+  await page.evaluate(() => ct.license("Clank & Sons", "Mike")); // skip the license (its own test below)
   await page.click('[data-level="7"]');
   await expect(page.locator("#boardScreen")).toBeVisible();
   return errors;
@@ -427,4 +428,67 @@ test("a losing quarter: no $0 lines, no lender line without a loan, the result i
   await page.click('[data-go="board"]');
   await expect(page.locator("#boardLast")).toHaveText("Last quarter: 0 of 1 contract shipped, −$45");
   await expect(page.locator("#boardLast b")).toHaveClass(/is-out/);
+});
+
+test("a new business starts on its license: name it, sign it, and the lender stamps it when you open (decision 74)", async ({ page }) => {
+  const errors = [];
+  page.on("pageerror", (e) => errors.push(e.message));
+  await page.goto("/");
+  await page.click('[data-level="7"]');
+  await expect(page.locator("#licenseScreen")).toBeVisible();
+  await expect(page.locator("#boardScreen")).toBeHidden();
+  const first = await page.locator("#licenseName").inputValue();
+  expect(first.length).toBeGreaterThan(0); // a name to start from
+  await expect(page.locator("#licenseGo")).toBeDisabled();
+  await expect(page.locator("#licenseWhy")).toHaveText("Sign your name as the owner first.");
+  await page.click("#licenseDice");
+  expect(await page.locator("#licenseName").inputValue()).not.toBe(first);
+  await page.fill("#licenseName", "Rivet Brothers");
+  await page.fill("#licenseOwner", "Mike");
+  await expect(page.locator("#licenseGo")).toBeEnabled();
+  await expect(page.locator("#licenseStamp")).toHaveCSS("opacity", "0"); // no stamp until you open
+  await page.click("#licenseGo");
+  await expect(page.locator("#licenseStamp")).toHaveClass(/is-stamped/);
+  await expect(page.locator("#boardScreen")).toBeVisible();
+  await expect(page.locator("#boardBiz")).toHaveText("Rivet Brothers");
+  expect(await page.evaluate(() => [ct.biz.name, ct.biz.owner])).toEqual(["Rivet Brothers", "Mike"]);
+  expect(errors).toEqual([]);
+});
+
+test("robots are told your name and never to call you boss; their own lines use it too (decision 74)", async ({ page }) => {
+  await openBoard(page); // owner "Mike", business "Clank & Sons"
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  const systems = await page.evaluate(async () => {
+    const seen = [];
+    ct.useFakeLlm(async ({ system }) => { seen.push(system); return { reply: "On it, Mike.", instructions: "carry reds", problem: "", program: 'while (needsAny() > 0) { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); }' }; });
+    ct.hire("blip");
+    await ct.give("blip", "Carry red widgets from the supply to Pack.");
+    return seen;
+  });
+  expect(systems.length).toBeGreaterThan(0);
+  for (const s of systems) {
+    expect(s).toContain("The boss is Mike, who owns Clank & Sons");
+    expect(s).toContain('Never call them "boss" out loud');
+  }
+});
+
+test("out of business: the front page lands on the floor, with the run's numbers beside it (decision 74)", async ({ page }) => {
+  await openBoard(page);
+  // Three loans out and not enough for even the cheapest robot's shift: nothing can start again.
+  await page.evaluate(() => { const b = ct.biz; b.loans = [100, 100, 250]; b.money = 2; b.quarters = 4; b.wins = 3; b.taken = 5; b.best = 120; ct.openBoard(); });
+  await expect(page.locator("#gameoverScreen")).toBeVisible();
+  await expect(page.locator("#boardScreen")).toBeHidden();
+  const hl = await page.locator("#paperHeadline").textContent();
+  expect(['Clank & Sons Ships Its Last Box (It Was Empty)', 'Robots of Clank & Sons Finally Given Clear Instructions: "Leave"']).toContain(hl);
+  await expect(page.locator("#gameoverWhy")).toContainText("lender won't lend");
+  await expect(page.locator("#gameoverStats")).toContainText("Contracts shipped3 of 5");
+  await expect(page.locator("#gameoverStats")).toContainText("Owed the lender$450");
+  // The paper and the panel fit the window.
+  const fits = await page.evaluate(() => ["#gameoverPaper", ".ct-gameover-panel"].every((q) => { const r = document.querySelector(q).getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth; }));
+  expect(fits).toBe(true);
+  // A new run starts on a fresh license.
+  await page.click("#gameoverNew");
+  await expect(page.locator("#licenseScreen")).toBeVisible();
+  expect(await page.evaluate(() => [ct.biz.quarters, ct.biz.owner])).toEqual([0, ""]);
 });

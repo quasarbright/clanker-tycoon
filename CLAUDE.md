@@ -84,6 +84,11 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   your reasoning (Mike, 2026-11-17: "i shouldn't see this, it should be caught before something
   comes to me ... do visual spot-checks for ugliness"). Disabled gold buttons with a gold lip and
   outlines that don't follow rounded corners were the examples.
+- **Humor:** the punchline is one of the game's own mechanics, said in a dry, official voice;
+  never a generic business joke. The gold-standard examples are in `docs/humor.md` (Mike,
+  2026-11-18: "this is the gold standard").
+- Robots call you by your name (the one you sign on the business license), never "boss" (Mike,
+  2026-11-18). `ownerLine` in `src/brains.js` tells the model; "boss" is a banned word in the tests.
 - Your money is **funds**, never "budget" (Mike, 2026-11-18: "should we even call it budget anymore? let's just say funds"). `WORDS.funds` in `src/words.js`; "budget" is a banned word in the tests.
 - **Showing screenshots and mocks:** each screenshot or mock is its own full-resolution PNG (2x), saved to /mnt/project-files and numbered in order for sequences (1-…, 2-…). No combined images, no gallery pages or artifacts for them (Mike, 2026-11-17: one big image is awkward, hard to zoom, and loses quality; he reads on mobile). Every mock and screenshot carries a title and a one-line description, in the image itself or in its filename plus caption (Mike, 2026-11-17).
 - PC only (Mike, 2026-11-17: "This is going to be a PC only game"). Design for wide windows and

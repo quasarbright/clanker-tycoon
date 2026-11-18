@@ -192,3 +192,23 @@ test("the board's whole-crew cost is the sum of every robot's wage (decision 71)
   biz.crew.push("cog"); biz.trained.pip = ["painting"];
   assert.equal(B.crewCost(biz, cands), 5 + 15 + 15);
 });
+
+test("out of business only when no robot's shift is affordable and the lender is done lending (decision 74)", () => {
+  const cands = [{ id: "blip", skills: [], attributes: [] }, { id: "pip", skills: ["packing"], attributes: [] }];
+  const biz = B.newBusiness();
+  biz.crew = ["blip", "pip"];
+  biz.money = 2;
+  assert.equal(B.outOfBusiness(biz, cands), null, "the lender still lends");
+  biz.loans = [100, 100, 100];
+  assert.equal(B.outOfBusiness(biz, cands), "broke");
+  biz.money = 5;
+  assert.equal(B.outOfBusiness(biz, cands), null, "Blip's $5 shift is still affordable");
+});
+
+test("headlines: the business's name in Mike's three, and only the ones that fit the ending (decision 74)", async () => {
+  const { headline, HEADLINES } = await import("../src/headlines.js");
+  assert.equal(HEADLINES.length, 3);
+  const broke = new Set([0, 1, 2, 3].map((i) => headline("broke", "Clank & Sons", i)));
+  assert.deepEqual([...broke].sort(), ['Clank & Sons Ships Its Last Box (It Was Empty)', 'Robots of Clank & Sons Finally Given Clear Instructions: "Leave"'].sort());
+  assert.ok([0, 1, 2].some((i) => headline("reputation", "X", i) === "X Reputation Found at Bottom of Bin 2"));
+});

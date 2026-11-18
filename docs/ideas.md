@@ -40,6 +40,10 @@ What's being built.
 
 Agreed direction, not built yet. Roughly in roadmap order.
 
+- **Multiple saves, named by company and owner.** Each run is a save named by its business and
+  your name from the license ("Clank & Sons · Mike"). Mike, 2026-11-18: "Later on let's make it so
+  you can have multiple saves, and the company name and your name is the name of the save."
+
 - **Teach the pause.** Players need to learn they can pause and fix things. For example, a
   tutorial moment where something goes wrong and the coach says to pause and sort it out.
 - **Something better than widgets (open).** Mike: "widgets are stupid. Boxes of widgets are stupid."

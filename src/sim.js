@@ -596,7 +596,7 @@ function describe(items) {
   return Object.entries(n).map(([k, v]) => `${v} ${k}${v > 1 ? (k.endsWith("box") ? "es" : "s") : ""}`).join(", ");
 }
 const holdingText = (w) => (w.holding ? (w.holding.kind === "box" ? "a box" : `a ${w.holding.color} widget`) : "nothing");
-const whereText = (w) => (w.station ? programStationName(w.station) : atDesk(w) ? "the boss's desk" : "walking");
+const whereText = (w) => (w.station ? programStationName(w.station) : atDesk(w) ? "the owner's desk" : "walking");
 
 export function viewFor(s, w) {
   const you = { at: whereText(w), holding: holdingText(w) };

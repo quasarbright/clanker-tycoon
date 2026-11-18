@@ -1031,3 +1031,32 @@ the board, the top bar, the shift and quarter cards ("Funds", "Funds now"), the 
 ("funds after"), level 6's text, and the thinking budget became "Thoughts". "budget" joined the
 banned words, so `test/words.test.mjs` and `e2e/wording.spec.mjs` fail if it comes back (the unit
 test caught one leftover, "You saved $X of your $110 budget").
+
+### 74. The business license, your name, and the front page (2026-11-18)
+
+Mike approved Pam's mocks: "this is so fucking funny, this exactly the type of humor I want ...
+this is the gold standard." He picked the business license and "the paper lands on your floor".
+
+- **The license.** A new business starts on a cream certificate (Widget District, Form 7-B): you
+  name the business (a dice button offers names) and sign your own name as owner. Open for
+  business waits for both and says which is missing. Pressing it lands the lender's APPROVED
+  stamp, then the board opens with the business's name above the quarter. The wording is Pam's,
+  kept as Mike loved it.
+- **Your name, not "boss".** Robots are told your name and the business's (`ownerLine` in
+  `src/brains.js`) and never to call you "boss" out loud; their own canned lines use it ("Mike?"
+  in the bubble at your desk). Before a license (the tutorial levels) they use no title. "boss"
+  is now a banned word in the player-facing text tests.
+- **Out of business.** A tilted front page of The Daily Widget lands on the dimmed floor, with your
+  shocked black-and-white photo and one of Mike's three headlines (`src/headlines.js`), next to an
+  "Out of business" panel with the run's numbers (quarters, contracts shipped, best quarter, owed
+  to the lender) and New run / Levels. Nothing ended a run before, so it triggers when the run is
+  truly stuck: the lender won't lend more (3 loans) and the funds can't pay even the cheapest
+  robot for a shift (`outOfBusiness` in `src/business.js`). Reputation, once Mike picks a model,
+  will call the same screen with its own reason ("reputation", which also unlocks the Bin 2
+  headline).
+- **Humor guideline** in `docs/humor.md`: the punchline is a game mechanic, never a generic
+  business joke, with Mike's three headlines and the license as the examples.
+- Next (ideas.md): multiple saves, named by company and owner.
+- Tests: the license (fields, dice, why Open waits, the stamp, the board's name), the model being
+  told your name, the canned line using it, `outOfBusiness`, the headlines, and the front page
+  (headline, numbers, fits the window, New run starts a fresh license).

@@ -35,7 +35,7 @@ export const WORDS = {
 };
 
 /** Words that must never reach the player (checked in e2e/wording.spec.mjs). */
-export const BANNED_WORDS = /\b(hire[sd]?|hiring|let (?:someone |people |them )?go|fire[sd]?|firing|budgets?)\b/i;
+export const BANNED_WORDS = /\b(hire[sd]?|hiring|let (?:someone |people |them )?go|fire[sd]?|firing|budgets?|boss(?:es)?)\b/i;
 
 /** Fill every [data-word] element under `root` from WORDS. */
 export function applyWords(root = document) {

@@ -6,7 +6,7 @@ import {
   newGame, step, resume, setProgram, setNow, goToDesk, atDesk, addWorker, removeWorker, playerGo, playerWalkTo,
   playerSteer, playerDo, orderLineText, actProgress, boxProgress, hasAttr, STATIONS, DESK, RULES, COLORS, supplyColors, capOf,
 } from "./sim.js";
-import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond } from "./brains.js";
+import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond, ownerName } from "./brains.js";
 import { LEVELS } from "./levels.js";
 import { backendLabel, useFakeLlm, BACKEND } from "./llm.js";
 import { getKey, setKey, signIn, finishSignIn } from "./openrouter-auth.js";
@@ -15,10 +15,13 @@ import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, signed as signedText, shippedOf, shiftCost } from "./quarter.js";
 import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
-  RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers, crewCost } from "./business.js";
+  RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers, crewCost,
+  randomBusinessName, outOfBusiness, START_MONEY } from "./business.js";
+import { headline } from "./headlines.js";
 import { SKILL_TIER, wageOf } from "./wages.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 const floor = $("#floor");
 let game = null;
 let level = LEVELS[0];
@@ -154,6 +157,8 @@ function showMenu() {
   $("#endScreen").classList.add("is-hidden");
   $("#pauseScreen").classList.add("is-hidden");
   $("#boardScreen").classList.add("is-hidden");
+  $("#licenseScreen").classList.add("is-hidden");
+  $("#gameoverScreen").classList.add("is-hidden");
   $("#startScreen").classList.remove("is-hidden");
 }
 
@@ -911,7 +916,7 @@ function clearBubble(w) {
 function deskMessage(w, text) {
   logLine(w, "them", text, "desk");
   w._cardSig = null;
-  bubble(w, "Boss?", { problem: true, hold: true });
+  bubble(w, ownerName(level) ? `${ownerName(level)}?` : "Got a minute?", { problem: true, hold: true });
 }
 function clearDesk(w) {
   if (w._cardSig !== undefined) w._cardSig = null;
@@ -1281,6 +1286,10 @@ let picked = []; // contracts picked on the board for the coming quarter
 /** Between quarters: pick this quarter's contracts, buy equipment. */
 function openBoard() {
   if (!biz) biz = newBusiness();
+  // A new business is named on its license first; a business that can't go on gets the front page.
+  if (!biz.owner) return openLicense();
+  const over = outOfBusiness(biz, CANDIDATES);
+  if (over) return showGameOver(over);
   picked = [];
   setPhase("menu");
   paused = false;
@@ -1302,6 +1311,7 @@ function renderBoard() {
   // The most a shift can cost: everyone on it. The real cost shows by Start while you schedule.
   $("#bizCrewCost").textContent = biz.crew.length ? `Whole crew $${crewCost(biz, CANDIDATES)} a shift` : "";
   $("#boardTitle").textContent = `Quarter ${biz.quarters + 1}`;
+  $("#boardBiz").textContent = biz.name;
   // How the last quarter went, one quiet line (not in the first quarter).
   const L = biz.last;
   $("#boardLast").hidden = !L;
@@ -1417,6 +1427,71 @@ function renderBoard() {
   }));
 }
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
+
+// ---------- a new business: the license (decision 74) ----------
+
+function openLicense() {
+  setPhase("menu");
+  for (const id of ["startScreen", "endScreen", "pauseScreen", "boardScreen", "gameoverScreen"]) $(`#${id}`).classList.add("is-hidden");
+  $("#licenseName").value = randomBusinessName();
+  $("#licenseOwner").value = "";
+  $("#licenseCapital").textContent = `capital: $${START_MONEY}`;
+  $("#licenseStamp").classList.remove("is-stamped");
+  for (const el of $$("#licenseScreen input, #licenseScreen button")) el.disabled = false;
+  checkLicense();
+  $("#licenseScreen").classList.remove("is-hidden");
+  $("#licenseOwner").focus();
+}
+/** Open for business waits for both names, and says which one is missing. */
+function checkLicense() {
+  const name = $("#licenseName").value.trim(), owner = $("#licenseOwner").value.trim();
+  const why = !name ? "Name your business first." : !owner ? "Sign your name as the owner first." : "";
+  $("#licenseGo").disabled = !!why;
+  $("#licenseWhy").textContent = why;
+  return !why;
+}
+$("#licenseName").addEventListener("input", checkLicense);
+$("#licenseOwner").addEventListener("input", checkLicense);
+$("#licenseDice").addEventListener("click", () => { $("#licenseName").value = randomBusinessName($("#licenseName").value); checkLicense(); });
+$("#licenseForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  if (!checkLicense() || $("#licenseStamp").classList.contains("is-stamped")) return;
+  biz.name = $("#licenseName").value.trim();
+  biz.owner = $("#licenseOwner").value.trim();
+  for (const el of $$("#licenseScreen input, #licenseScreen button")) el.disabled = true;
+  $("#licenseWhy").textContent = "";
+  // The lender stamps it, then you're on the board.
+  $("#licenseStamp").classList.add("is-stamped");
+  setTimeout(() => { $("#licenseScreen").classList.add("is-hidden"); openBoard(); }, LICENSE_STAMP_MS);
+});
+const LICENSE_STAMP_MS = 900;
+
+// ---------- out of business: the paper lands on your floor (decision 74) ----------
+
+const GAMEOVER_WHY = {
+  broke: (b) => `${b.name} can't pay a single robot for a shift, and the lender won't lend you another dollar.`,
+  reputation: (b) => `Your reputation hit zero. Nobody will offer ${b.name} a contract.`,
+};
+/** The run is over. `reason` is a key of GAMEOVER_WHY; reputation will trigger it too, later. */
+function showGameOver(reason) {
+  setPhase("menu");
+  for (const id of ["startScreen", "endScreen", "pauseScreen", "boardScreen", "licenseScreen"]) $(`#${id}`).classList.add("is-hidden");
+  const b = biz;
+  $("#paperQuarter").textContent = `Quarter ${b.quarters + 1}`;
+  const hl = headline(reason, b.name, b.quarters + b.wins);
+  $("#paperHeadline").textContent = hl;
+  $("#paperHeadline").classList.toggle("is-long", hl.length > 44);
+  $("#paperCaption").textContent = `${b.owner}, owner, pictured on the floor of ${b.name}.`;
+  $("#paperColumn").textContent = `${b.name} shipped ${b.wins} of ${b.taken} contracts in ${b.quarters} ${b.quarters === 1 ? "quarter" : "quarters"} of business. `
+    + `Robots on the floor declined to comment, citing their instructions.`;
+  $("#gameoverWhy").textContent = GAMEOVER_WHY[reason](b);
+  const rows = [["Quarters survived", b.quarters], ["Contracts shipped", `${b.wins} of ${b.taken}`],
+    ...(b.best != null ? [["Best quarter", signedText(b.best)]] : []), ["Owed the lender", `$${debtOf(b)}`]];
+  $("#gameoverStats").innerHTML = rows.map(([l, v]) => `<div><span>${l}</span><b>${v}</b></div>`).join("");
+  $("#gameoverScreen").classList.remove("is-hidden");
+}
+$("#gameoverNew").addEventListener("click", () => { biz = null; $("#gameoverScreen").classList.add("is-hidden"); openBoard(); });
+$("#gameoverMenu").addEventListener("click", () => { $("#gameoverScreen").classList.add("is-hidden"); showMenu(); });
 // The open Train picker (a robot id), if any. A click anywhere else or Escape closes it.
 let trainOpen = null;
 const CHEVRON_DOWN = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
@@ -1549,6 +1624,7 @@ window.ct = {
   openLevel: (n) => openLevel(LEVELS[n - 1]), unlockAll: () => { unlocked = LEVELS.length; renderLevels(); },
   step: (dt) => { if (started) step(game, dt); handleEvents(); render(); },
   give: (id, text) => giveInstructions(worker(id), text), say: (id, text) => message(worker(id), "message", text),
-  setPaused, begin: () => begin({ force: true }), startBlocker: () => startBlocker(), thinking: (id, d) => setThinking(worker(id), d), hire, playerActions, openBoard, renderBoard, get biz() { return biz; },
+  setPaused, begin: () => begin({ force: true }), startBlocker: () => startBlocker(), thinking: (id, d) => setThinking(worker(id), d), hire, playerActions, openBoard, renderBoard, get biz() { return biz; }, set biz(b) { biz = b; },
+  showGameOver: (r) => showGameOver(r), license: (name, owner) => { if (!biz) biz = newBusiness(); biz.name = name; biz.owner = owner; },
   useFakeLlm, // e2e: answer model calls without a model
 };

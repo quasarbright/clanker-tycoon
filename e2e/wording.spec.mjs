@@ -34,7 +34,7 @@ test("no hiring or firing words anywhere the player looks", async ({ page }) => 
   await page.click('[data-go="next"]');
   await check(page, "level 6's second shift");
   // Level 7: the board and the floor.
-  await page.evaluate(() => ct.openBoard());
+  await page.evaluate(() => (ct.biz?.owner || ct.license("Clank & Sons", "Mike"), ct.openBoard()));
   await check(page, "the board");
   await page.locator("[data-contract]").first().click();
   await page.click("#boardGo");
@@ -46,7 +46,7 @@ test("the money you spend in a quarter is called funds everywhere, never a budge
   await page.goto("/");
   await page.evaluate(() => ct.openLevel(6));
   await expect(page.locator("#laborLabel")).toHaveText(WORDS.funds.toLowerCase());
-  await page.evaluate(() => ct.openBoard());
+  await page.evaluate(() => (ct.biz?.owner || ct.license("Clank & Sons", "Mike"), ct.openBoard()));
   await expect(page.locator(".ct-board-money .ct-cash-label")).toHaveText(WORDS.funds);
   await page.locator("[data-contract]").first().click();
   await page.click("#boardGo");

@@ -131,3 +131,17 @@ test("the model is told a 'talk' reply mustn't promise new work, for messages an
     assert.match(prompt, /promise any new work/, trigger.kind);
   }
 });
+
+test("robots call you by your name, never boss: the prompt says so, and their canned line uses it (decision 74)", async () => {
+  const { ownerLine } = await import("../src/brains.js");
+  assert.match(ownerLine({ owner: "Mike", business: "Clank & Sons" }), /The boss is Mike, who owns Clank & Sons\. .*call them Mike\. Never call them "boss" out loud/);
+  assert.match(ownerLine({}), /don't call them "boss"/);
+  // A thought that steps outside the instructions goes to your desk, addressed to you by name.
+  const { s, ws: [pip] } = floor("Crew", "pip");
+  s.level = { ...s.level, owner: "Mike" };
+  fake({ reply: "x", kind: "change", summary: "", now: "", instructions: "fetch widgets", program: HAUL });
+  const r = await respond(s, pip, { kind: "unexpected", text: "nothing has moved" });
+  assert.equal(r.kind, "boss");
+  assert.match(r.reply, /^Mike, /);
+  assert.doesNotMatch(r.reply, /\bboss\b/i);
+});

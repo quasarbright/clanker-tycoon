@@ -147,6 +147,19 @@ Not allowed: arrow functions, classes, objects, methods (no .includes, .push, â€
 Actions take a moment; the program waits for each one and gets back true if it worked, false if it couldn't be done. A worker waits a few seconds for something to show up (a box, room to put something down) before an action gives up. Questions answer instantly.
 The work goes on all shift, so a program that's meant to keep working should loop forever (while (true) { â€¦ }); one that's meant to stop when the order is done can loop while (needsAny() > 0).`;
 
+/**
+ * Who the boss is. Robots call you by your name (the one on your business license), never "boss"
+ * (Mike, decision 74). Before you've signed one (the tutorial levels), they just don't use a title.
+ */
+export const ownerName = (L) => L?.owner?.trim() || "";
+export function ownerLine(L) {
+  const n = ownerName(L);
+  return n ? `The boss is ${n}${L.business ? `, who owns ${L.business}` : ""}. When you speak to them or about them, call them ${n}. Never call them "boss" out loud.`
+    : `When you speak to the boss, don't call them "boss" or any other title; just talk to them.`;
+}
+/** How a robot gets your attention, in their own canned lines: your name, or nothing. */
+export const hey = (L) => (ownerName(L) ? `${ownerName(L)}, ` : "");
+
 function systemPrompt(h, L) {
   const tools = toolNamesFor(h, L);
   // Primary work this floor has that this worker can't do. Listing it (and asking the model to use
@@ -157,6 +170,7 @@ function systemPrompt(h, L) {
   const skills = h.skills.length ? h.skills.map((k) => SKILLS[k].label).join(", ") : "none (you can carry things, but not pack, paint or repair)";
   const colors = (L.colors ?? COLORS).join(", ").replace(/, ([^,]*)$/, " or $1");
   return `${h.persona} You work in a small factory in a management game. You follow the boss's instructions faithfully.
+${ownerLine(L)}
 When you speak, it's one or two short sentences of plain speech in your own voice: no stage directions, asterisks or markdown, and never mention programs, code or functions out loud.
 
 You drive your robot body with a program, written from your instructions.
@@ -430,7 +444,7 @@ ${fromBoss ? CHOICES : THINK_CHOICES}`;
   remember(w, trigger.kind === "message" ? `Boss (to you): ${trigger.text}` : trigger.kind === "yell" ? `Boss (yelling to everyone): ${trigger.text}` : `(You thought about: ${trigger.text})`);
   if (res.problem) {
     if (res.dry) reply = await explain(s, w, system, trigger.text, res);
-    else if (!fromBoss) reply = "Boss, I think something needs doing that isn't in my instructions. What do you want me to do?";
+    else if (!fromBoss) reply = `${hey(s.level)}I think something needs doing that isn't in my instructions. What do you want me to do?`.replace(/^./, (c) => c.toUpperCase());
     remember(w, `You: ${reply}`);
     // A change the worker can't make (a skill they lack, a routine that would get nothing done) or
     // a thought that wants to step outside its instructions: both are for the boss.
