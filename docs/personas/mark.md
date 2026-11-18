@@ -96,10 +96,10 @@ pay. Source: `src/business.js`, decisions 53 to 67.
    like the bins.
 2. Floor size: **fixed, on a grid, for now; buying more slots later** (Mike: "buying slots later
    is a good idea. I like that"; decision 86).
-3. The crate recipe: still open. Mike didn't follow it ("I don't know what crates are"), because I
-   named crates before explaining them. Lesson: explain a new thing in plain words before asking
-   about it. A crate is a bigger package that holds three boxes, one of each color. The question is
-   whether every crate is one red, one blue and one green box, or each contract says its own mix.
+3. The crate recipe: **always one of each color** (Mike, 2026-11-18, on the review page): every
+   crate is one red, one blue and one green box; contracts don't set their own mix. (He first
+   didn't follow the question, "I don't know what crates are", because I named crates before
+   explaining them. Lesson: explain a new thing in plain words before asking about it.)
 
 ## Open questions Mark is watching
 
