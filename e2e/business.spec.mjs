@@ -175,6 +175,16 @@ test("a shift card says plainly what has shipped and how many shifts are left; t
   await expect(page.locator("#endStats")).toContainText("$45"); // 3 shifts of $15
 });
 
+test("on the floor you are the same hard-hat head as the newspaper photo, robots keep their faces", async ({ page }) => {
+  await openBoard(page);
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  await page.evaluate(() => ct.hire("blip"));
+  await expect(page.locator(".ct-bot.is-you .ct-owner:not(.is-shocked) .dome")).toHaveCount(1);
+  await expect(page.locator(".ct-bot:not(.is-you) .ct-owner")).toHaveCount(0);
+  await expect(page.locator(".ct-bot:not(.is-you) .ct-bot-eyes")).toHaveCount(1);
+});
+
 test("robots put on the shift don't start on top of you or each other, next shift too", async ({ page }) => {
   await openBoard(page);
   await page.locator("[data-contract]").first().click();
@@ -489,6 +499,9 @@ test("out of business: the front page lands on the floor, with the run's numbers
   await expect(page.locator("#gameoverStats")).toContainText("Contracts shipped3 of 5");
   await expect(page.locator("#gameoverStats")).toContainText("Owed the lender$450");
   for (const row of ["Total revenue", "Total costs", "Funds left"]) await expect(page.locator("#gameoverStats")).toContainText(row);
+  // The photo is you, the same hard-hat head as on the floor, caught shocked, with the caption under it.
+  await expect(page.locator("#paperPhoto .ct-owner.is-shocked .dome")).toHaveCount(1);
+  await expect(page.locator("#paperCaption")).toHaveText("The owner of Clank & Sons, moments after hearing the news.");
   // The paper and the panel fit the window, once they've landed.
   await page.evaluate(() => Promise.all([document.fonts.ready, ...document.getAnimations().map((a) => a.finished)]));
   const fits = await page.evaluate(() => ["#gameoverPaper", ".ct-gameover-panel"].every((q) => { const r = document.querySelector(q).getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth; }));

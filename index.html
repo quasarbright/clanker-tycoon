@@ -385,11 +385,22 @@
     .ct-small-btn { padding: 4px 10px; font-size: .78rem; box-shadow: 0 2px 0 var(--lip); }
 
     /* you, on the floor */
-    .ct-bot.is-you .ct-bot-head { border-radius: 50%; aspect-ratio: 1; }
-    .ct-bot.is-you .ct-bot-head::before { /* hard hat instead of an antenna */
-      width: 86%; height: calc(var(--u) * 1.6); top: calc(var(--u) * -.9); left: 50%; transform: translateX(-50%);
-      background: var(--accent); border-radius: 999px 999px 3px 3px; box-shadow: 0 2px 0 #8f6d0c;
-    }
+    /* the owner's head (ownerHeadSVG in looks.js); colors here, the paper overrides them in gray */
+    .ct-owner { display: block; overflow: visible; }
+    .ct-owner .shadow * { fill: #555; }
+    .ct-owner .face { fill: #f4f1e8; stroke: #111; stroke-width: 9; }
+    .ct-owner .chin { fill: #0002; }
+    .ct-owner .dome { fill: var(--accent); stroke: #111; stroke-width: 8; stroke-linejoin: round; }
+    .ct-owner .seam { stroke: #111; stroke-width: 7; stroke-linecap: round; }
+    .ct-owner .shine { fill: #fff; opacity: .85; }
+    .ct-owner .band { fill: #d9a51c; stroke: #111; stroke-width: 8; }
+    .ct-owner .eye { fill: #fff; stroke: #111; stroke-width: 7; }
+    .ct-owner .pupil, .ct-owner .mouth { fill: #111; }
+    .ct-owner .smile, .ct-owner .shake { stroke: #111; stroke-width: 7; stroke-linecap: round; fill: none; }
+    .ct-bot.is-you .ct-bot-head { background: none; box-shadow: none; aspect-ratio: auto; border-radius: 50%; }
+    .ct-bot.is-you .ct-bot-head::before { display: none; }
+    /* a little wider than the box so the face itself is robot-sized; the hat rises where an antenna would be */
+    .ct-bot.is-you .ct-owner { width: 118%; margin: -22% 0 0 -9%; filter: drop-shadow(0 calc(var(--u) * .4) 0 #0006); }
     .ct-bot.is-you .ct-bot-name { color: var(--accent-hi); }
     .ct-st { cursor: pointer; }
     .ct-st:hover { border-color: #f2c23066; }
@@ -669,17 +680,10 @@
     .ct-paper-hl { font: 900 46px/1.02 "Playfair Display", serif; text-wrap: balance; text-transform: uppercase; margin: 16px 0 12px; }
     .ct-paper-photo { position: relative; overflow: hidden; height: 230px; display: flex; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 45%, #bdbdbd 0, #8a8a8a 35%, #3d3d3d 75%, #1c1c1c 100%); filter: grayscale(1) contrast(1.25); }
     .ct-paper-photo::after { content: ""; position: absolute; inset: 0; background-image: radial-gradient(#0003 1px, transparent 1.4px); background-size: 4px 4px; mix-blend-mode: multiply; }
-    .ct-you-shocked { position: relative; width: 70%; height: 100%; display: block; }
-    .ct-you-shocked .shadow * { fill: #555; }
-    .ct-you-shocked .face { fill: #f2f0ea; stroke: #111; stroke-width: 9; }
-    .ct-you-shocked .chin { fill: #0002; }
-    .ct-you-shocked .dome { fill: #8c8c8c; stroke: #111; stroke-width: 8; stroke-linejoin: round; }
-    .ct-you-shocked .seam { stroke: #111; stroke-width: 7; stroke-linecap: round; }
-    .ct-you-shocked .shine { fill: #fff; }
-    .ct-you-shocked .band { fill: #7a7a7a; stroke: #111; stroke-width: 8; }
-    .ct-you-shocked .eye { fill: #fff; stroke: #111; stroke-width: 7; }
-    .ct-you-shocked .pupil, .ct-you-shocked .mouth { fill: #111; }
-    .ct-you-shocked .shake { stroke: #111; stroke-width: 6; stroke-linecap: round; fill: none; }
+    .ct-paper-photo .ct-owner { position: relative; width: 70%; height: 100%; }
+    .ct-paper-photo .ct-owner .dome { fill: #8c8c8c; }
+    .ct-paper-photo .ct-owner .band { fill: #7a7a7a; }
+    .ct-paper-photo .ct-owner .face { fill: #f2f0ea; }
     .ct-paper-capt { font-style: italic; font-size: 13px; margin-top: 6px; }
     .ct-paper-col { margin-top: 10px; font-size: 15px; line-height: 1.45; text-align: justify; hyphens: auto; }
     .ct-gameover-panel { width: min(420px, 100%); text-align: left; animation: paperDrop .5s .25s both; }
@@ -837,21 +841,8 @@
       <div class="ct-paper-mast">The Daily Widget</div>
       <div class="ct-paper-meta"><span id="paperQuarter"></span><span>Final edition</span></div>
       <div class="ct-paper-hl" id="paperHeadline"></div>
-      <div class="ct-paper-photo">
-        <!-- The owner, caught by the flash: the head only, as on the floor, with the flash's hard shadow on the wall behind and two shake lines (Pam's photo 1, Mike's pick). -->
-        <svg class="ct-you-shocked" viewBox="0 0 300 220" aria-hidden="true">
-          <g class="shadow" transform="translate(34 -12)"><circle cx="150" cy="128" r="72"/><path d="M84 92 a66 62 0 0 1 132 0 Z"/><rect x="72" y="84" width="160" height="22" rx="11" transform="rotate(4 152 95)"/></g>
-          <circle class="face" cx="150" cy="128" r="72"/>
-          <path class="chin" d="M88 158 a72 72 0 0 0 124 0 a90 60 0 0 1 -124 0 Z"/>
-          <path class="dome" d="M86 92 a64 64 0 0 1 128 4 Z"/>
-          <path class="seam" d="M152 30 L148 94"/>
-          <ellipse class="shine" cx="118" cy="56" rx="17" ry="7" transform="rotate(-18 118 56)"/>
-          <rect class="band" x="72" y="84" width="160" height="22" rx="11" transform="rotate(4 152 95)"/>
-          <circle class="eye" cx="123" cy="126" r="21"/><circle class="pupil" cx="123" cy="126" r="10"/>
-          <circle class="eye" cx="178" cy="128" r="21"/><circle class="pupil" cx="181" cy="129" r="10"/>
-          <ellipse class="mouth" cx="148" cy="170" rx="13" ry="18"/>
-          <path class="shake" d="M232 112 l14 -7 M234 140 h16"/>
-        </svg>
+      <div class="ct-paper-photo" id="paperPhoto">
+        <!-- The owner, caught by the flash: ownerHeadSVG({ shocked: true }) from looks.js, the same drawing as on the floor (Pam's photo 1, Mike's pick). -->
       </div>
       <div class="ct-paper-capt" id="paperCaption"></div>
       <div class="ct-paper-col" id="paperColumn"></div>
