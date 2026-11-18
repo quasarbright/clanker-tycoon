@@ -65,9 +65,8 @@ pay. Source: `src/business.js`, decisions 53 to 67.
 ## Spec: floor editor and assembler (decision 85, 2026-11-18)
 
 **Editor**
-- Movable: every machine you own (Paint, Pack, Assembler, the bins). Fixed: Supply on the left
-  wall, Dock on the right, your desk. Those fixed anchors keep every floor readable and set a
-  real start and end for the walk.
+- Movable: every machine you own (Paint, Pack, Assembler, the bins), and Supply (Mike's starting
+  floor, below, makes moving it the first lesson). Fixed: the Dock on the right and your desk.
 - Placement snaps to a coarse grid of slots, each a machine plus its walking ring (the floor's
   100×64 gives about 5×3). Snapping rules out overlaps and blocked spots without any wiring, and a
   slot is easy to drag into.
@@ -107,6 +106,12 @@ pay. Source: `src/business.js`, decisions 53 to 67.
 slot, and 24 with Pack one slot closer to Supply. Mark's calls:
 - Keep the starting floor as is. Moving Pack closer is the editor's first lesson and a clear win
   (twice the boxes), which is better than a floor that's already right.
+- **Mike's starting floor (2026-11-18, review page, replaces the line above):** keep it a teaching
+  floor, but laid out backwards: Supply near the Dock, Pack off to the left, so every widget walks
+  left to Pack and every box walks back right to the Dock. The lesson is to swap Supply and Pack so
+  the walk runs one way, Supply → Pack → Dock, with no backtracking. That needs Supply to be
+  movable, which changes the editor's fixed anchors to just the Dock and your desk. The 12 vs 24
+  boxes a shift and the Large red at 36 were measured on the old floor, so re-measure both.
 - Board 1's Large red goes from 40 to 36 boxes ($320 to $290), so the cheapest crew just makes it
   on the starting floor and has room to spare after one move.
 - Leave boards 2 to 4 for now. A good layout makes their red contracts easier (hauler + packer at 24
