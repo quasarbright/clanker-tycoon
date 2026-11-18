@@ -117,6 +117,14 @@ slot, and 24 with Pack one slot closer to Supply. Mark's calls:
   exactly the fix. Red throughput is about double the old wall Supply, so red counts double and pay
   stays the same: board 1 Small 36 ($150), Large 75 ($290), which misses before the swap and
   makes it after. Boards 2 to 4 need re-running on the new floor.
+- **Boards 2 to 4 on the new floor (cd23e73, starting layout only):** their red counts weren't
+  doubled, so the cheapest crew meets board 2's Large 55 without touching the editor. Board 4's
+  45 red + 22 blue misses by one with every crew, because one packer handles both colors on the
+  long start-floor walk to the Dock. Mark's calls: board 4 stays as it is, because by board 4 a
+  player should have fixed the floor, and missing by one on the starting layout is the nudge.
+  Double the reds: board 2 Small 54 ($230) and Large 99 ($450); board 3 side 75 ($310); board 4
+  side 84 ($360). That needs balance runs on the swapped and tidy floors too, since the target is
+  "needs the swap or a second hauler", not "needs nothing".
 - Board 1's Large red goes from 40 to 36 boxes ($320 to $290), so the cheapest crew just makes it
   on the starting floor and has room to spare after one move.
 - Leave boards 2 to 4 for now. A good layout makes their red contracts easier (hauler + packer at 24
