@@ -613,3 +613,24 @@ test("struck box counts are as big as the counts beside them (Pam)", async ({ pa
   const [now, struck] = await page.locator("[data-contract] .ct-size-count").first().evaluate((el) => [getComputedStyle(el).fontSize, getComputedStyle(el.querySelector(".ct-struck")).fontSize]);
   expect(struck).toBe(now);
 });
+
+test("money is green, costs and losses red, everywhere (Mike, decision 82)", async ({ page }) => {
+  const GREEN = "rgb(95, 208, 138)", RED = "rgb(255, 138, 128)";
+  const color = (sel) => page.locator(sel).first().evaluate((e) => getComputedStyle(e).color);
+  await openBoard(page);
+  expect(await color("#bizMoney")).toBe(GREEN); // Funds on the board
+  expect(await color("#bizCrewCost .ct-loss")).toBe(RED); // what the crew costs
+  expect(await color("[data-contract] .ct-offer-pay")).toBe(GREEN); // contract pay
+  await page.locator("[data-contract]").first().click();
+  await page.click("#boardGo");
+  expect(await color("#labor")).toBe(GREEN); // Funds on the floor
+  await page.evaluate(() => ct.hire("blip"));
+  expect(await color("#shiftCost b")).toBe(RED); // this shift's crew pay
+  expect(await color("#shiftCost b:nth-of-type(2)")).toBe(GREEN); // funds after
+  await endShift(page, [3]);
+  expect(await color(".ct-stat-value.ct-loss")).toBe(RED); // crew pay this shift
+  expect(await color(".ct-stat-value.ct-gain")).toBe(GREEN); // funds
+  await page.evaluate(() => { ct.biz.rep = 0; ct.openBoard(); });
+  expect(await page.locator("#gameoverStats b").evaluateAll((els) => els.map((e) => [e.previousElementSibling.textContent, getComputedStyle(e).color])))
+    .toEqual(expect.arrayContaining([["Total revenue", GREEN], ["Total costs", RED], ["Funds left", GREEN]]));
+});

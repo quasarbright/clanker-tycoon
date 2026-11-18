@@ -1166,3 +1166,14 @@ and Pam's spec:
 - Tests: the rules, the board's scaling, settling and the ending in `test/business.test.mjs`; the
   board readout, struck numbers and hover text, the danger state, the recap stamps, reaching the
   front page, and working a shift alone when broke in `e2e/business.spec.mjs`.
+
+### 82. Money is green, losses red (2026-11-18)
+
+Mike: "Let's make funds show as green for money. Money amounts should generally be green ... Or
+red for losses." Two tokens (`--money`, `--money-loss`) and two classes (`ct-gain`, `ct-loss`;
+`GAIN`/`LOSS` in `src/main.js`). Green: Funds on the board and the floor, contract pay (dark green
+on the cream tickets), the recap's started-with and funds-now, funds after by Start, shift-card
+funds, and the newspaper's revenue, funds left and best quarter. Red: the whole crew's cost a shift,
+this shift's cost by Start, crew pay on the cards, the lender's cut, total costs and what's owed.
+Prices on buttons (Recruit, Buy, Train) and per-shift wages are left as they are. Full reputation is
+green too; it sits under its own label as pips, so the two read apart.

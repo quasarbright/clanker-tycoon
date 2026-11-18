@@ -17,6 +17,8 @@
       --text: #eceae4; --muted: #9aa0a8; --faint: #626872;
       --accent: #f2c230; --accent-hi: #ffd95c; --on-accent: #17140a;
       --danger: #e5534b; --success: #5fd08a;
+      /* money (Mike, decision 82): amounts you have or earn are green, costs and losses red */
+      --money: #5fd08a; --money-loss: #ff8a80;
       --red: #e5534b; --blue: #4f8ff0; --green: #4cc06b;
       --font-ui: "Barlow", system-ui, sans-serif;
       --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -44,10 +46,11 @@
     .ct-cash { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; }
     .ct-cash-label, .ct-clock-label { display: block; font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
     .ct-cash-value { font: 400 2rem/1.05 var(--font-display); color: var(--accent); }
+    .ct-gain { color: var(--money) !important; } .ct-loss { color: var(--money-loss) !important; }
     .ct-cash-value.is-neg { color: var(--danger); }
     .ct-cash .ct-clock-value { font: 400 2rem/1.05 var(--font-display); white-space: nowrap; }
     .ct-cash #labor { color: var(--text); font: 700 .95rem var(--font-mono); letter-spacing: 0; }
-    .ct-cash.is-funds #labor { color: var(--accent); font: 400 1.45rem/1 var(--font-display); vertical-align: -3px; margin-left: 4px; }
+    .ct-cash.is-funds #labor { color: var(--money); font: 400 1.45rem/1 var(--font-display); vertical-align: -3px; margin-left: 4px; }
     .ct-cash.is-funds #laborLabel { font-size: .8rem; }
     .ct-clock { text-align: right; }
     .ct-clock-value { font: 600 1.3rem var(--font-mono); }
@@ -267,7 +270,7 @@
     .ct-recap b { font-family: var(--font-mono); color: var(--text); text-align: right; padding-left: 16px; }
     .ct-recap b.is-in { color: var(--success); } .ct-recap b.is-out { color: #ffb4ae; } /* labels stay plain; the numbers carry the color */
     .ct-recap span.is-total { border-top: 1px solid var(--border); padding-top: 6px; margin-top: 2px; color: var(--text); font-weight: 700; }
-    .ct-recap b.is-total { border-top: 1px solid var(--border); padding-top: 6px; margin-top: 2px; color: var(--accent); font-size: 1.05rem; }
+    .ct-recap b.is-total { border-top: 1px solid var(--border); padding-top: 6px; margin-top: 2px; color: var(--money); font-size: 1.05rem; }
     .ct-recap-face { width: 18px; height: 18px; vertical-align: -4px; margin-left: 4px; }
     .ct-recap-net { grid-column: 1 / -1; text-align: center; margin-top: 10px; font-weight: 700; font-size: 1.05rem; color: var(--text); }
     .ct-recap-net b { font: 400 1.6rem var(--font-display); margin-left: 6px; vertical-align: -2px; }
@@ -279,8 +282,8 @@
     .ct-crew-cost { display: block; font-weight: 600; font-size: .9rem; color: var(--text); white-space: nowrap; margin-top: 2px; }
     .ct-shift-cost { flex: none; margin-left: auto; font-weight: 600; font-size: .95rem; color: var(--text); }
     .ct-shift-cost[hidden] { display: none; }
-    .ct-shift-cost b { color: var(--accent); } .ct-shift-cost i { font-style: normal; color: var(--muted); }
-    .ct-shift-cost .is-bad { color: #ff8a80; } .ct-shift-cost b.is-plain { color: var(--text); }
+    .ct-shift-cost b { color: var(--money); } .ct-shift-cost i { font-style: normal; color: var(--muted); }
+    .ct-shift-cost .is-bad { color: #ff8a80; } .ct-shift-cost b.is-plain { color: var(--money-loss); }
     .ct-board-sec { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
     .ct-board-top { display: grid; grid-template-columns: 1fr auto; gap: 16px; }
     .ct-offers { display: grid; grid-template-columns: 2fr 1.15fr; gap: 12px; align-items: start; }
@@ -293,7 +296,7 @@
     .ct-offer-head b { font-size: 1.05rem; }
     .ct-offer-head .ct-offer-keep { margin-left: auto; }
     .ct-offer-head .ct-ticket-pay:empty { display: none; }
-    .ct-offer-pay { font: 400 1.5rem/1 var(--font-display); color: var(--accent); }
+    .ct-offer-pay { font: 400 1.5rem/1 var(--font-display); color: var(--money); }
     .ct-offer-keep { color: var(--muted); font-size: .85rem; }
     .ct-offer-note { font-size: .88rem; color: var(--muted); line-height: 1.35; margin: 0; }
     .ct-offer-note:empty { display: none; }
@@ -343,7 +346,7 @@
     .ct-shift-pips i.is-past { background: var(--faint); }
     .ct-shift-pips i.is-now { background: var(--accent); border-color: var(--accent); }
     /* a contract's ticket: shipped/count, then what it pays */
-    .ct-ticket-money { display: inline-flex; align-items: center; gap: 3px; font: 700 .9rem var(--font-mono); color: #7a5b00; border-left: 1px solid #c9bfa4; padding-left: 8px; }
+    .ct-ticket-money { display: inline-flex; align-items: center; gap: 3px; font: 700 .9rem var(--font-mono); color: #7a5b00; border-left: 1px solid #c9bfa4; padding-left: 8px; color: #1d7a42; } /* money on the cream ticket: dark green to read */
     .ct-ticket-money svg { width: 1em; height: 1em; display: block; }
     .ct-ticket.is-shipped .ct-ticket-money { color: #1d7a42; }
     .ct-ticket.is-shipped .ct-ticket-pay { opacity: .55; }
@@ -843,7 +846,7 @@
       <div class="ct-board-head">
         <div><div class="ct-board-biz" id="boardBiz"></div><div class="ct-title" id="boardTitle">Quarter 1</div><div class="ct-board-shifts" id="boardShifts"></div><div class="ct-board-last" id="boardLast" hidden></div></div>
         <div class="ct-investor"><img src="favicon.svg" alt=""><p><span class="ct-label" data-word="lender">The lender</span><br><span id="investorLine"></span></p><div class="ct-loans" id="loans"></div></div>
-        <div class="ct-board-money"><span class="ct-cash-label" data-word="funds">Funds</span><span class="ct-cash-value" id="bizMoney"></span><span class="ct-crew-cost" id="bizCrewCost"></span><div class="ct-rep" id="bizRep"></div></div>
+        <div class="ct-board-money"><span class="ct-cash-label" data-word="funds">Funds</span><span class="ct-cash-value ct-gain" id="bizMoney"></span><span class="ct-crew-cost" id="bizCrewCost"></span><div class="ct-rep" id="bizRep"></div></div>
         <button class="ct-btn" id="boardMenuBtn">Levels</button>
       </div>
       <div class="ct-board-top">

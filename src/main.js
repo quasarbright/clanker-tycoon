@@ -56,6 +56,8 @@ $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
 /** Greyed-out things you can't afford say how much you're short, the same everywhere (Recruit, Buy,
  *  Train, Schedule). */
 const shortNoteFor = (cost, have) => (have < cost ? `<span class="ct-short">$${cost - Math.floor(have)} short</span>` : "");
+// Money colors (Mike, decision 82): green for money you have or earn, red for costs and losses.
+const GAIN = "ct-gain", LOSS = "ct-loss";
 const signed = (n) => { const t = signedText(n); return `<span class="ct-sign">${t[0]}</span>${t.slice(1)}`; };
 function countsLine(counts, done, shiftsLeft) {
   const { total, now } = shippedOf(counts, done);
@@ -373,7 +375,7 @@ function renderShiftCost(short) {
   el.hidden = !quarter || short || !p;
   if (el.hidden) return;
   const c = shiftCost(quarter.money, p, quarter.shift, level.quarter.shifts);
-  el.innerHTML = `This shift <b>$${c.pay}</b> <i>·</i> funds after <b class="${c.covers ? "" : "is-plain"}">${money(c.after)}</b> <i>·</i> `
+  el.innerHTML = `This shift <b class="ct-loss">$${c.pay}</b> <i>·</i> funds after <b class="${c.covers ? "" : "is-plain"}">${money(c.after)}</b> <i>·</i> `
     + (c.covers ? (quarter.shift >= level.quarter.shifts ? "the last shift" : "covers the rest of the quarter") : `<span class="is-bad">short for shift ${c.shortAt}</span>`);
 }
 function nudgeStart() {
@@ -1225,7 +1227,7 @@ function endLevel() {
   logEvent(t, "end", { won, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), crew: crewSummary() });
   $("#endTitle").textContent = won ? "Order filled" : "Shift over";
   $("#endNote").textContent = won ? "" : "The order didn't ship before the shift ended. Try again keeps your crew and their instructions.";
-  setEndStats("", [[won ? "Finished in" : "Shipped", won ? fmtTime(t) : `${done}/${total}`], ["Labor cost", `$${Math.round(game.laborCost)}`], ["Crew", game.workers.length]]);
+  setEndStats("", [[won ? "Finished in" : "Shipped", won ? fmtTime(t) : `${done}/${total}`], ["Labor cost", `$${Math.round(game.laborCost)}`, LOSS], ["Crew", game.workers.length]]);
   const next = won && LEVELS.find((L) => L.id === level.id + 1);
   const btns = [];
   if (next) btns.push(`<button class="ct-btn is-gold" data-go="next">Next: ${next.name}</button>`);
@@ -1247,7 +1249,7 @@ function setEndStats(top, stats) {
   const el = $("#endStats");
   el.classList.remove("is-shown");
   el.style.setProperty("--n", stats.length);
-  el.innerHTML = top + stats.map(([l, v]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value">${v}</div></div>`).join("");
+  el.innerHTML = top + stats.map(([l, v, cls = ""]) => `<div><div class="ct-label">${l}</div><div class="ct-stat-value ${cls}">${v}</div></div>`).join("");
 }
 /** Said when the quarter ends before its last shift: which shifts are skipped. */
 function earlyLine(n, of) {
@@ -1267,9 +1269,9 @@ function endQuarterShift() {
   logEvent(game.t, "end", { won, quarter: { shift: n, of: Q.shifts }, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), money: Math.floor(quarter.money), crew: crewSummary() });
   if (won && (!best[level.id] || quarter.money > best[level.id].left)) best[level.id] = { left: quarter.money };
   // The quarter ends as soon as the quota ships; what's left of the budget is saved.
-  const stats = won ? [["Shifts", `${n} of ${Q.shifts}`], [`${WORDS.crewPay}, all shifts`, spent], [WORDS.funds, left]]
-    : !last ? [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.funds, left]]
-    : [["Shipped", `${done}/${total}`], [`${WORDS.crewPay}, all shifts`, spent], [WORDS.funds, left]];
+  const stats = won ? [["Shifts", `${n} of ${Q.shifts}`], [`${WORDS.crewPay}, all shifts`, spent, LOSS], [WORDS.funds, left, GAIN]]
+    : !last ? [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`, LOSS], [WORDS.funds, left, GAIN]]
+    : [["Shipped", `${done}/${total}`], [`${WORDS.crewPay}, all shifts`, spent, LOSS], [WORDS.funds, left, GAIN]];
   $("#endTitle").textContent = won ? "Quota met" : !last ? `Shift ${n} done` : "Quota missed";
   const shiftsLeft = Q.shifts - n;
   $("#endNote").textContent = won ? `${earlyLine(n, Q.shifts)} You saved ${left} of your $${Q.budget} in funds.`.trim()
@@ -1358,7 +1360,7 @@ function renderBoard() {
   const shortNote = (n) => shortNoteFor(n, biz.money);
   $("#bizMoney").textContent = money(biz.money);
   // The most a shift can cost: everyone on it. The real cost shows by Start while you schedule.
-  $("#bizCrewCost").textContent = biz.crew.length ? `Whole crew $${crewCost(biz, CANDIDATES)} a shift` : "";
+  $("#bizCrewCost").innerHTML = biz.crew.length ? `Whole crew <span class="ct-loss">$${crewCost(biz, CANDIDATES)}</span> a shift` : "";
   $("#boardTitle").textContent = `Quarter ${biz.quarters + 1}`;
   $("#boardBiz").textContent = biz.name;
   renderRep();
@@ -1561,10 +1563,10 @@ function showGameOver(reason) {
     : `${b.name} never shipped a contract. `) + `Robots on the floor declined to comment, as commenting was not part of their instructions.`;
   $("#gameoverWhy").textContent = GAMEOVER_WHY[reason](b);
   const rows = [["Quarters survived", b.quarters], ["Contracts shipped", b.taken ? `${b.wins} of ${b.taken}` : "None"],
-    ...(b.best != null ? [["Best quarter", signedText(b.best)]] : []),
-    ["Total revenue", `$${Math.round(b.revenue ?? 0)}`], ["Total costs", `$${Math.round(b.costs ?? 0)}`],
-    [WORDS.fundsLeft, money(b.money)], ["Owed the lender", `$${debtOf(b)}`]];
-  $("#gameoverStats").innerHTML = rows.map(([l, v]) => `<div><span>${l}</span><b>${v}</b></div>`).join("");
+    ...(b.best != null ? [["Best quarter", signedText(b.best), b.best < 0 ? LOSS : GAIN]] : []),
+    ["Total revenue", `$${Math.round(b.revenue ?? 0)}`, GAIN], ["Total costs", `$${Math.round(b.costs ?? 0)}`, LOSS],
+    [WORDS.fundsLeft, money(b.money), GAIN], ["Owed the lender", `$${debtOf(b)}`, debtOf(b) ? LOSS : ""]];
+  $("#gameoverStats").innerHTML = rows.map(([l, v, cls = ""]) => `<div><span>${l}</span><b class="${cls}">${v}</b></div>`).join("");
   document.body.classList.add("is-quiet");
   $("#gameoverScreen").classList.remove("is-hidden");
   fitHeadline();
@@ -1625,7 +1627,7 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
   // The quarter card adds up the whole quarter; a shift card says what that shift did.
   const crewPayAll = Math.round(level.quarter.budget - quarter.money);
   const stats = over ? [["Paid", `$${paid}`], [`${WORDS.crewPay}, all shifts`, `$${crewPayAll}`], ...(cut ? [[WORDS.toLender, `$${cut}`]] : []), [WORDS.funds, money(quarter.money + paid - cut)]]
-    : [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.funds, money(quarter.money)]];
+    : [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`, LOSS], [WORDS.funds, money(quarter.money), GAIN]];
   const repBefore = biz.rep ?? REP.max, repAfter = afterQuarter(repBefore, pays);
   if (over) setEndStats(rows + recapHTML({ start: level.quarter.budget, paid, cut, crew: crewPayAll, rep: [repBefore, repAfter] }), []);
   else setEndStats(rows, stats);
@@ -1650,7 +1652,7 @@ function recapHTML({ start, paid, cut, crew, rep }) {
   const now = start + paid - cut - crew, net = now - start;
   const lender = `<img class="ct-recap-face" src="favicon.svg" alt="">`;
   const lines = [
-    [WORDS.startedWith, money(start), ""],
+    [WORDS.startedWith, money(start), "is-in"],
     ...(paid ? [[WORDS.contractsPaid, signed(paid), "is-in"]] : []),
     ...(cut ? [[`${WORDS.lendersCut} ${lender}`, signed(-cut), "is-out"]] : []),
     ...(crew ? [[WORDS.crewPayAll, signed(-crew), "is-out"]] : []),
