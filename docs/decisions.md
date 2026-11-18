@@ -1075,3 +1075,11 @@ a headline. Close enough"), written as a real headline. Each fits only runs wher
 `headlinesFor(reason, facts)` in `src/headlines.js` filters by ending and by the run's facts; the
 humor rule (a real headline, and clever) is in `docs/humor.md`. Also: the license and the front
 page fit their text again once the fonts load (two e2e tests were flaky when they measured first).
+
+### 76. Going under is about reputation (2026-11-18)
+
+Mike, on the "Out of business" panel ("can't pay a single robot for a shift, and the lender won't
+lend you another dollar"): "make this about reputation, not about no more money." The panel now
+says "The name <Business> is mud. No client in the Widget District will sign another contract with
+it." for every ending. What triggers it is unchanged (broke with the lender done lending) until a
+reputation model is picked; the screen already takes a reason.

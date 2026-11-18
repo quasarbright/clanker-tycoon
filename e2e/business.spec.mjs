@@ -482,7 +482,8 @@ test("out of business: the front page lands on the floor, with the run's numbers
   const hl = await page.locator("#paperHeadline").textContent();
   // Three loans out: the lender's headline fits too.
   expect(['Clank & Sons Ships Its Last Box (It Was Empty)', 'Robots of Clank & Sons Finally Given Clear Instructions: “Leave”', 'Lender Collects His 10% of Clank & Sons: $0']).toContain(hl);
-  await expect(page.locator("#gameoverWhy")).toContainText("lender won't lend");
+  // Said in terms of reputation, not money (decision 76).
+  await expect(page.locator("#gameoverWhy")).toHaveText("The name Clank & Sons is mud. No client in the Widget District will sign another contract with it.");
   await expect(page.locator("#gameoverStats")).toContainText("Contracts shipped3 of 5");
   await expect(page.locator("#gameoverStats")).toContainText("Owed the lender$450");
   // The paper and the panel fit the window, once they've landed.

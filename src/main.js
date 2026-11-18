@@ -1497,10 +1497,10 @@ const LICENSE_STAMP_MS = 900;
 
 // ---------- out of business: the paper lands on your floor (decision 74) ----------
 
-const GAMEOVER_WHY = {
-  broke: (b) => `${b.name} can't pay a single robot for a shift, and the lender won't lend you another dollar.`,
-  reputation: (b) => `Your reputation hit zero. Nobody will offer ${b.name} a contract.`,
-};
+// The panel says why in terms of reputation, whatever ended the run (Mike, decision 76): going
+// under is the business's name being ruined, not a bank balance.
+const REPUTATION_GONE = (b) => `The name ${b.name} is mud. No client in the Widget District will sign another contract with it.`;
+const GAMEOVER_WHY = { broke: REPUTATION_GONE, reputation: REPUTATION_GONE };
 /** The run is over. `reason` is a key of GAMEOVER_WHY; reputation will trigger it too, later. */
 function showGameOver(reason) {
   setPhase("menu");
