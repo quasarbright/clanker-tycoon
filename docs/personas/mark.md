@@ -92,11 +92,14 @@ pay. Source: `src/business.js`, decisions 53 to 67.
   painted colors, so it also pushes a second painter or a second paint machine.
 
 **Mike's calls**
-1. Can you own two of the same machine (two Paint, two Pack)? Mark: yes, named "Paint 1" and
-   "Paint 2" like the bins. Without that, an editor can't make a factory grow.
-2. Does the floor itself get bigger (buy more floor, more slots)? Mark: yes, later, as the next
-   scaling step. For now a fixed floor with free slots.
-3. The crate recipe: one of each color (Mark), or set by each contract.
+1. Two of the same machine: **yes** (Mike, 2026-11-18, decision 86). Named "Paint 1", "Paint 2"
+   like the bins.
+2. Floor size: **fixed, on a grid, for now; buying more slots later** (Mike: "buying slots later
+   is a good idea. I like that"; decision 86).
+3. The crate recipe: still open. Mike didn't follow it ("I don't know what crates are"), because I
+   named crates before explaining them. Lesson: explain a new thing in plain words before asking
+   about it. A crate is a bigger package that holds three boxes, one of each color. The question is
+   whether every crate is one red, one blue and one green box, or each contract says its own mix.
 
 ## Open questions Mark is watching
 

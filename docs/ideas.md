@@ -38,7 +38,8 @@ What's being built.
 
 - **The floor editor** (decision 85). During scheduling, drag the machines you own around the
   floor, and place new purchases yourself. Supply, Dock and your desk stay put. Layout decides how
-  far robots walk, so it's a real choice about throughput. A machine you've bought waits
+  far robots walk, so it's a real choice about throughput. The floor is a fixed grid of slots, and
+  you can own two of the same machine ("Paint 1", "Paint 2"; decision 86). A machine you've bought waits
   **In storage** until you place it. Flow approved as mocked (Mike, 2026-11-18); no assembler art
   yet.
 - **The assembler** (decision 85). A new machine and skill: three boxes of different colors go in,
@@ -92,6 +93,8 @@ Agreed direction, not built yet. Roughly in roadmap order.
   never forces you to grow. Generate boards with bigger quotas, two painted colors at once and
   sometimes fewer shifts. Queued after the floor editor and the assembler, which give the factory
   room to grow (decision 85).
+- **Buying more floor.** More slots on the grid, so the floor grows with the business (Mike: "buying
+  slots later is a good idea. I like that"; decision 86).
 - **Buying a whole line or another factory.** Later (Mike: "Might get tricky later when we have
   multiple factories and also have to think about how we buy another factory and all that, but
   we'll think about that later").

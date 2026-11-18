@@ -1235,3 +1235,12 @@ Details, and the calls still open for Mike, are in Mark's spec (`docs/personas/m
 Later the same day Mike approved Pam's editor mocks: "sure looks good but let's not do assembler
 art yet. I also don't love 'to place'. let's call it 'in storage'". A bought machine waits
 **In storage**, and the editor comes first, without an assembler drawing.
+
+### 86. Two of the same machine; a fixed grid now, buy slots later (2026-11-18)
+
+Mike, on Mark's open calls for the editor: "yes, you should be able to own two of the same
+machine. Yes, we could do fixed floor size with a grid. And buying slots later is a good idea. I
+like that."
+- You can own several of a machine, numbered like the bins ("Paint 1", "Paint 2").
+- The floor is a fixed grid of slots for now. Buying more slots is how a floor grows later.
+- The crate recipe is still open; Mike hadn't been told what a crate is.
