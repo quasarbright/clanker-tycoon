@@ -590,4 +590,16 @@ test("too broke for any robot: Start lets you work the shift alone (being broke 
   await expect(page.locator("#goBtn")).toBeDisabled(); // you can afford a crew: schedule one
   await page.evaluate(() => { ct.quarter.money = 2; ct.step(0); });
   await expect(page.locator("#goBtn")).toBeEnabled();
+  await expect(page.locator("#crewReady")).toHaveText("You can't pay anyone this shift: Blip costs $5 and you have $2. Start works it yourself.");
+  // Each robot you can't afford says how much you're short, like Recruit, Train and Buy.
+  const blip = page.locator('[data-hire="blip"]');
+  await expect(blip).toBeDisabled();
+  await expect(blip.locator("xpath=..").locator(".ct-short")).toHaveText("$3 short");
+});
+
+test("struck box counts are as big as the counts beside them (Pam)", async ({ page }) => {
+  await openBoard(page);
+  await page.evaluate(() => { ct.biz.rep = 7; ct.openBoard(); });
+  const [now, struck] = await page.locator("[data-contract] .ct-size-count").first().evaluate((el) => [getComputedStyle(el).fontSize, getComputedStyle(el.querySelector(".ct-struck")).fontSize]);
+  expect(struck).toBe(now);
 });

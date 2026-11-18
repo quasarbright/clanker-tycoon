@@ -10,7 +10,7 @@ import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond, ownerName } from "./b
 import { LEVELS } from "./levels.js";
 import { backendLabel, useFakeLlm, BACKEND } from "./llm.js";
 import { getKey, setKey, signIn, finishSignIn } from "./openrouter-auth.js";
-import { WORDS, applyWords } from "./words.js";
+import { WORDS, applyWords, aloneLine } from "./words.js";
 import { startShift, logEvent } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, signed as signedText, shippedOf, shiftCost } from "./quarter.js";
@@ -53,6 +53,9 @@ $("#backendNote").textContent = `Workers run on ${backendLabel}.`;
  */
 // Signed money on screen: the sign in the UI font, whose minus reads as a minus next to the mono
 // digits (JetBrains Mono draws U+2212 about as short as a hyphen).
+/** Greyed-out things you can't afford say how much you're short, the same everywhere (Recruit, Buy,
+ *  Train, Schedule). */
+const shortNoteFor = (cost, have) => (have < cost ? `<span class="ct-short">$${cost - Math.floor(have)} short</span>` : "");
 const signed = (n) => { const t = signedText(n); return `<span class="ct-sign">${t[0]}</span>${t.slice(1)}`; };
 function countsLine(counts, done, shiftsLeft) {
   const { total, now } = shippedOf(counts, done);
@@ -324,7 +327,7 @@ function startBlocker() {
   if (!game.workers.length) {
     // Too broke for even your cheapest robot: you can still work the shift alone (Mark: being broke
     // flows into missed contracts, and reputation, instead of a separate ending).
-    const broke = quarter && level.roster && Math.min(...Object.values(level.roster).map((r) => r.wage)) > quarter.money;
+    const broke = cheapestOnRoster()?.wage > quarter?.money;
     return level.pool.length && !broke ? `${WORDS.schedule} your crew for this shift and give them instructions first.` : null;
   }
   const notReady = game.workers.filter((w) => cardState(w)[0] !== "Ready");
@@ -334,6 +337,8 @@ function startBlocker() {
   return `Not everyone is ready: ${notReady.map((w) => `${w.hire.name} ${cardState(w)[0].toLowerCase()}`).join(", ")}.`;
 }
 // Next to Start: who's ready, who's still reading, who can't do theirs. Start waits for the readers.
+/** In a quarter, the cheapest robot you could put on the shift (null outside one). */
+const cheapestOnRoster = () => (quarter && level.roster ? Object.values(level.roster).reduce((a, r) => (!a || r.wage < a.wage ? r : a), null) : null);
 function renderReady() {
   if (phase !== "plan") return;
   const short = cantPay();
@@ -350,7 +355,9 @@ function renderReady() {
     return;
   }
   if (!game.workers.length) {
-    el.innerHTML = level.pool.length ? `<span class="ct-planbar-note">${WORDS.schedule} your crew for this shift and give them instructions first. Start begins the clock; the schedule is set then.</span>` : "";
+    const cheapest = cheapestOnRoster();
+    el.innerHTML = cheapest && cheapest.wage > quarter.money ? `<span class="ct-planbar-note is-bad">${aloneLine(cheapest.name, cheapest.wage, quarter.money)}</span>`
+      : level.pool.length ? `<span class="ct-planbar-note">${WORDS.schedule} your crew for this shift and give them instructions first. Start begins the clock; the schedule is set then.</span>` : "";
     return;
   }
   el.innerHTML = game.workers.map((w) => {
@@ -537,7 +544,7 @@ function renderList() {
         // In a quarter you can't hire past what the budget covers for this shift.
         const broke = cantAfford(c);
         const tip = broke ? `With ${c.name} the crew would cost $${payroll() + c.wage} for the shift, and you have ${money(quarter.money)}.` : "";
-        return robotCard(c, { cls: "ct-cand", action: `<button class="ct-btn ct-small-btn" type="button" data-hire="${c.id}" ${broke ? "disabled" : ""} ${tip ? `data-tooltip="${tip}"` : ""}>${words().hire}</button>` });
+        return robotCard(c, { cls: "ct-cand", action: `<button class="ct-btn ct-small-btn" type="button" data-hire="${c.id}" ${broke ? "disabled" : ""} ${tip ? `data-tooltip="${tip}"` : ""}>${words().hire}</button>${broke ? shortNoteFor(payroll() + c.wage, quarter.money) : ""}` });
       }).join("") : "");
   list.hidden = !list.innerHTML;
   list.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => openChat(b.dataset.open)));
@@ -1345,7 +1352,7 @@ function renderBoard() {
   // Anything on the board you can't afford yet is greyed out and says how much you're short, the
   // same way everywhere (Recruit, Buy, Training): `short` disables it, `shortNote` says by how much.
   const short = (n) => (biz.money < n ? `disabled data-tooltip="It costs $${n}, and you have ${money(biz.money)}."` : "");
-  const shortNote = (n) => (biz.money < n ? `<span class="ct-short">$${n - Math.floor(biz.money)} short</span>` : "");
+  const shortNote = (n) => shortNoteFor(n, biz.money);
   $("#bizMoney").textContent = money(biz.money);
   // The most a shift can cost: everyone on it. The real cost shows by Start while you schedule.
   $("#bizCrewCost").textContent = biz.crew.length ? `Whole crew $${crewCost(biz, CANDIDATES)} a shift` : "";

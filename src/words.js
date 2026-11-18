@@ -35,6 +35,10 @@ export const WORDS = {
   labor: "labor",
 };
 
+/** By Start when you can't pay even your cheapest robot: you work the shift yourself (decision 81). */
+export const aloneLine = (name, wage, funds) =>
+  `You can't pay anyone this shift: ${name} costs $${wage} and you have $${Math.max(0, Math.floor(funds))}. Start works it yourself.`;
+
 /** Words that must never reach the player (checked in e2e/wording.spec.mjs). */
 export const BANNED_WORDS = /\b(hire[sd]?|hiring|let (?:someone |people |them )?go|fire[sd]?|firing|budgets?|boss(?:es)?)\b/i;
 
