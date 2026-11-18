@@ -14,6 +14,7 @@ export const WORDS = {
   training: "Training",
   machines: "Machines",
   bought: "Bought",
+  ownedSoFar: "Owned so far", // the Machines note on the board (Mike, 2026-11-18: not "Bought so far")
   funds: "Funds", // your money (never "budget": Mike, 2026-11-18, "let's just say funds")
   startQuarter: "Start the quarter",
   lender: "The lender",

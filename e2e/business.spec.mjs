@@ -159,10 +159,10 @@ test("a shift card says plainly what has shipped and how many shifts are left; t
   await page.click(`[data-contract="${small}"]`);
   await page.click("#boardGo");
   await page.evaluate(() => { ct.hire("blip"); ct.hire("pip"); });
-  await endShift(page, [6]); // 6 of 20 in the first shift
+  await endShift(page, [6]); // 6 of 36 in the first shift
   await expect(page.locator("#endNote")).toContainText("2 shifts left. Your crew");
-  await expect(page.locator("#endNote")).not.toContainText("6 of 20"); // the contract row says it
-  await expect(page.locator(".ct-end-contract")).toContainText("6 of 20 shipped");
+  await expect(page.locator("#endNote")).not.toContainText("6 of 36"); // the contract row says it
+  await expect(page.locator(".ct-end-contract")).toContainText("6 of 36 shipped");
   await expect(page.locator("#endScreen .ct-mascot")).toBeHidden();
   await expect(page.locator("#endNote")).not.toContainText("pace");
   await expect(page.locator("#endStats")).toContainText("Shipped this shift");
@@ -586,10 +586,10 @@ test("reputation on the board: pips under Funds, struck full numbers with the ho
   const large = page.locator("[data-contract]").nth(1);
   const tips = await large.locator(".ct-struck").evaluateAll((els) => els.map((e) => [e.textContent, e.dataset.tooltip]));
   expect(tips).toEqual([
-    ["36", "Clients ask for 80% of the boxes while Clank & Sons' reputation is questionable. Restore reputation for the full 36."],
+    ["75", "Clients ask for 80% of the boxes while Clank & Sons' reputation is questionable. Restore reputation for the full 75."],
     ["$290", "Clients pay 80% while Clank & Sons' reputation is questionable. Restore reputation for the full $290."],
   ]);
-  await expect(large.locator(".ct-size-count")).toContainText("29 boxes");
+  await expect(large.locator(".ct-size-count")).toContainText("60 boxes");
   await expect(page.locator("#bizRep")).not.toHaveClass(/is-danger/);
   // At one pip: red, and a warning by name.
   await page.evaluate(() => { ct.biz.rep = 4; ct.openBoard(); });

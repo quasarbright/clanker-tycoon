@@ -168,7 +168,8 @@ test("the quarter's level: stations are what's placed on your floor, at your lay
   let L = B.quarterLevel(BASE, b, [small]);
   assert.ok(!L.stations.includes("PAINT"));
   assert.deepEqual(L.stations, ["SUPPLY", "BIN_1", "BIN_2", "PACK", "DOCK"]);
-  assert.deepEqual(L.positions.PACK, F.SLOTS[2]);
+  assert.deepEqual(L.positions.PACK, F.SLOTS[3]);
+  assert.deepEqual(L.positions.SUPPLY, F.SLOTS[5], "Supply is placed too (decision 88)");
   assert.deepEqual(L.pool, ["blip", "pip"]);
   B.buy(b, "sturdy"); B.buy(b, "bigpack");
   L = B.quarterLevel(BASE, b, [small, side], [bot("blip"), bot("pip", ["packing"])]);

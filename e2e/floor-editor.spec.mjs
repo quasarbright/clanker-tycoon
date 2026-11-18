@@ -65,30 +65,41 @@ test("drag from storage to a slot, drag onto a taken slot to swap, Done keeps th
   await dragTo(page, page.locator('.ct-stored[data-move="PAINT"]'), page.locator('[data-slot="1"]'));
   expect(await page.evaluate(() => ct.biz.floor.at.PAINT)).toBe(1);
   await expect(page.locator(".ct-storage-empty")).toBeVisible();
-  // Pack (slot 2) onto Bin 2 (slot 4): the two swap, with the swap shown while dragging.
+  // Pack (slot 3) onto Bin 2 (slot 6): the two swap, with the swap shown while dragging.
   const pack = page.locator('.ct-st[data-move="PACK"]');
-  const a = await center(pack), b = await center(page.locator('[data-slot="4"]'));
+  const a = await center(pack), b = await center(page.locator('[data-slot="6"]'));
   await page.mouse.move(a.x, a.y); await page.mouse.down();
   await page.mouse.move(b.x, b.y, { steps: 6 });
-  await expect(page.locator('[data-slot="4"]')).toHaveClass(/is-swap/);
-  await expect(page.locator('[data-slot="4"] .ct-slot-tag')).toHaveText("Swap with Bin 2");
-  await expect(page.locator('[data-slot="2"]')).toHaveText("Bin 2 goes here");
+  await expect(page.locator('[data-slot="6"]')).toHaveClass(/is-swap/);
+  await expect(page.locator('[data-slot="6"] .ct-slot-tag')).toHaveText("Swap with Bin 2");
+  await expect(page.locator('[data-slot="3"]')).toHaveText("Bin 2 goes here");
   await page.mouse.up();
-  expect(await page.evaluate(() => ({ ...ct.biz.floor.at }))).toEqual({ PACK: 4, BIN_1: 3, BIN_2: 2, PAINT: 1 });
+  expect(await page.evaluate(() => ({ ...ct.biz.floor.at }))).toEqual({ SUPPLY: 5, PACK: 6, BIN_1: 0, BIN_2: 3, PAINT: 1 });
   // A machine dropped in storage leaves the floor.
   await dragTo(page, page.locator('.ct-st[data-move="BIN_1"]'), page.locator("#storage"));
   expect(await page.evaluate(() => ct.biz.floor.storage)).toEqual(["BIN_1"]);
-  // Bolted down: Supply and the dock can't be picked up.
-  await expect(page.locator('.ct-st.is-anchor[data-key="SUPPLY"]')).not.toHaveAttribute("data-move", /./);
+  // Supply moves (decision 88) but can't be pushed into storage by a machine from storage.
+  await dragTo(page, page.locator('.ct-st[data-move="SUPPLY"]'), page.locator('[data-slot="0"]'));
+  expect(await page.evaluate(() => ct.biz.floor.at.SUPPLY)).toBe(0);
+  const s1 = await center(page.locator('.ct-stored[data-move="BIN_1"]')), s2 = await center(page.locator('[data-slot="0"]'));
+  await page.mouse.move(s1.x, s1.y); await page.mouse.down();
+  await page.mouse.move(s2.x, s2.y, { steps: 6 });
+  await expect(page.locator('[data-slot="0"] .ct-slot-tag')).toHaveText("Supply can't go in storage");
+  await page.mouse.up();
+  expect(await page.evaluate(() => [ct.biz.floor.at.SUPPLY, ct.biz.floor.storage])).toEqual([0, ["BIN_1"]]);
+  await dragTo(page, page.locator('.ct-st[data-move="SUPPLY"]'), page.locator("#storage"));
+  expect(await page.evaluate(() => ct.biz.floor.at.SUPPLY)).toBe(0);
+  // Bolted down: the dock can't be picked up.
+  await expect(page.locator('.ct-st.is-anchor[data-key="DOCK"]')).not.toHaveAttribute("data-move", /./);
   await page.click("#doneEditBtn");
   await expect(page.locator("body")).not.toHaveClass(/is-editing/);
   const L = await page.evaluate(() => ({ stations: ct.level.stations, pack: ct.level.positions.PACK }));
   expect(L.stations).toEqual(["SUPPLY", "BIN_2", "PACK", "PAINT", "DOCK"]);
-  expect(L.pack).toEqual({ x: 52, y: 37 });
+  expect(L.pack).toEqual({ x: 34, y: 56 });
   // Same crew, same instructions, on the new floor.
   expect(await page.evaluate(() => ct.game.workers.map((w) => [w.id, !!w.ast, w.orders]))).toEqual([["blip", true, "carry reds"]]);
   const [px, py] = await page.evaluate(() => { const el = document.querySelector('.ct-st[data-key="PACK"]'); return [el.style.left, el.style.top]; });
-  expect([px, py]).toEqual(["52%", `${(37 / 64) * 100}%`]);
+  expect([px, py]).toEqual(["34%", `${(56 / 64) * 100}%`]);
   expect(errors).toEqual([]);
 });
 
@@ -110,6 +121,9 @@ test("the assembler: bought, placed, a crates contract on the board, and Assembl
   await page.evaluate(() => { ct.biz.money = 900; ct.buy("assembler"); ct.buy("paint"); ct.renderBoard(); });
   await expect(page.locator("#offers")).toContainText("Crates");
   await expect(page.locator("#offers")).toContainText("Each crate is a red, a blue and a green box.");
+  // What you have is "Owned so far" (Mike), never "Bought so far".
+  await expect(page.locator("#machines")).toContainText("Owned so far: Assembler, Paint.");
+  await expect(page.locator("#machines")).not.toContainText("Bought so far");
   await page.locator('[data-train-open="pip"]').click();
   await expect(page.locator(".ct-train-menu")).toContainText("Assembly");
 });

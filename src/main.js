@@ -12,7 +12,7 @@ import { backendLabel, useFakeLlm, BACKEND } from "./llm.js";
 import { getKey, setKey, signIn, finishSignIn } from "./openrouter-auth.js";
 import { WORDS, applyWords, aloneLine } from "./words.js";
 import { startShift, logEvent, downloadLog } from "./playlog.js";
-import { SLOTS, ANCHORS, inSlot, place, store, keepInStorage, placeLeftovers } from "./floor.js";
+import { SLOTS, ANCHORS, NEVER_STORED, inSlot, place, store, keepInStorage, placeLeftovers } from "./floor.js";
 import { headLooks, toolLooks, faceHTML, ownerHeadSVG, ownerHatSVG, ownerPhoto } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, signed as signedText, shippedOf, shiftCost } from "./quarter.js";
 import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, missingFor, trainableNow, canAdd, floorLevel, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
@@ -1454,7 +1454,7 @@ function moveDrag(e) {
   const t = dropTarget(e);
   drag.ghost.style.left = `${t.x}%`; drag.ghost.style.top = `${(t.y / 64) * 100}%`;
   floor.querySelectorAll(".ct-slot").forEach((el) => { el.className = "ct-slot"; el.innerHTML = ""; });
-  $("#storage").classList.toggle("is-target", !!t.storage && drag.from != null);
+  $("#storage").classList.toggle("is-target", !!t.storage && drag.from != null && !NEVER_STORED.includes(drag.key));
   drag.target = t;
   if (t.slot == null) return;
   const el = floor.querySelector(`[data-slot="${t.slot}"]`), other = inSlot(biz.floor, t.slot);
@@ -1467,6 +1467,10 @@ function moveDrag(e) {
       const back = floor.querySelector(`[data-slot="${drag.from}"]`);
       back.classList.add("is-preview");
       back.textContent = `${nameOf(other)} goes here`;
+    } else if (NEVER_STORED.includes(other)) {
+      // Supply can't go to storage, so a machine from storage can't take its slot (decision 88).
+      el.classList.remove("is-swap"); el.classList.add("is-refused");
+      el.innerHTML = `<span class="ct-slot-tag is-refused">${nameOf(other)} can't go in storage</span>`;
     } else el.innerHTML = `<span class="ct-slot-tag">Swap: ${nameOf(other)} goes to storage</span>`;
   }
 }
@@ -1667,7 +1671,7 @@ function renderBoard() {
       <div><div><b>${m.name}</b></div><div class="ct-biz-blurb">${m.blurb}${replaces}</div></div>
       <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} ${WORDS.bought}</span>` : `<button class="ct-btn is-gold" data-buy="${m.id}" ${short(m.price)}>Buy $${m.price}</button>${shortNote(m.price)}`}</div>
     </div>`;
-  }).join("") + `<p class="ct-offer-note">Bought so far: ${mine.length ? mine.join(", ") : "nothing yet"}.</p>`;
+  }).join("") + `<p class="ct-offer-note">${WORDS.ownedSoFar}: ${mine.length ? mine.join(", ") : "nothing yet"}.</p>`;
 
   $("#boardScreen").querySelectorAll("[data-recruit]").forEach((b) => b.addEventListener("click", () => {
     if (recruit(biz, b.dataset.recruit)) { logEvent(null, "recruit", { robot: b.dataset.recruit, funds: Math.floor(biz.money) }); renderBoard(); }

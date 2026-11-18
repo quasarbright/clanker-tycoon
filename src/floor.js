@@ -1,14 +1,17 @@
-// Your floor's layout (decision 85): where each machine you own stands. Supply, the Dock and your
-// desk are bolted down; everything else (Paint, Pack, the bins, the Assembler) sits in one of a
-// few slots, or waits "in storage" until you place it. Editing happens before a shift, never
+// Your floor's layout (decision 85): where each machine you own stands. The Dock and your desk are
+// bolted down; everything else (Supply, Paint, Pack, the bins, the Assembler) sits in one of a few
+// slots, or waits "in storage" until you place it. Supply moves but never goes in storage (decision
+// 88): a floor always has one. Editing happens before a shift, never
 // during one. Programs name stations, not places, so moving a machine never breaks anyone's
 // instructions: it only changes how far the crew walks.
 //
 // The floor is 100 × 64 units (sim.js). A slot is a machine's tile plus the ring robots stand in to
 // use it, so slots never overlap and a robot can always reach a machine from some side.
 
-/** The bolted-down anchors on a business floor. */
-export const ANCHORS = { SUPPLY: { x: 14, y: 12 }, DOCK: { x: 89, y: 37 } };
+/** The bolted-down anchor on a business floor. */
+export const ANCHORS = { DOCK: { x: 89, y: 37 } };
+/** Movable, but never into storage. */
+export const NEVER_STORED = ["SUPPLY"];
 
 /** The slots, left to right and top to bottom. The bottom right is your desk. */
 export const SLOTS = [
@@ -17,10 +20,11 @@ export const SLOTS = [
   { x: 34, y: 56 }, { x: 52, y: 56 },
 ];
 
-/** A new business's floor: Pack and the two bins, where level 6 had them. */
+/** A new business's floor (Mike and Mark, decision 88): deliberately untidy, with Supply over by the
+ *  Dock and Pack across the floor, so the first Large contract misses until you rearrange it. */
 // `fresh` is what you bought and haven't placed or set aside yet: the Edit floor button pulses for
 // it, and Start places it for you. "Keep in storage" empties it (Mike, 2026-11-18).
-export const newFloor = () => ({ at: { PACK: 2, BIN_1: 3, BIN_2: 4 }, storage: [], fresh: [] });
+export const newFloor = () => ({ at: { SUPPLY: 5, PACK: 3, BIN_1: 0, BIN_2: 6 }, storage: [], fresh: [] });
 
 /** Which machine stands in slot `i`, if any. */
 export const inSlot = (floor, i) => Object.keys(floor.at).find((k) => floor.at[k] === i) ?? null;
@@ -34,6 +38,7 @@ export function place(floor, key, i) {
   if (i < 0 || i >= SLOTS.length) return null;
   const from = floor.at[key] ?? null, other = inSlot(floor, i);
   if (other === key) return null;
+  if (other && from == null && NEVER_STORED.includes(other)) return null; // it would go to storage
   floor.storage = floor.storage.filter((k) => k !== key);
   floor.fresh = (floor.fresh ?? []).filter((k) => k !== key);
   floor.at[key] = i;
@@ -46,7 +51,7 @@ export function place(floor, key, i) {
 
 /** Take a machine off the floor and into storage. */
 export function store(floor, key) {
-  if (floor.at[key] == null) return false;
+  if (floor.at[key] == null || NEVER_STORED.includes(key)) return false;
   delete floor.at[key];
   if (!floor.storage.includes(key)) floor.storage.push(key);
   return true;

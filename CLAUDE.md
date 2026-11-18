@@ -206,7 +206,9 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   scheduling, before a shift, never mid-shift. Multiple factories and buying a factory are later.
   Built (decision 87): `src/floor.js` (slots, swap, storage), Edit floor in the plan bar; a bought
   machine waits **In storage** and Edit floor pulses until you place it or "Keep in storage" (Mike).
-  You can own two of a machine ("Paint 2"), each with its own wear.
+  You can own two of a machine ("Paint 2"), each with its own wear. Supply moves too but never goes in storage; the Dock
+  and your desk are bolted down. The starting floor runs backwards on purpose (Supply by the Dock):
+  the first lesson is swapping Supply and Pack (decision 88).
 - Delegation comes from scale, not rules: you can only talk to one robot at a time.
 - Runs are endless (Mike: "the contracts get crazier and eventually they'll die"). Growing bigger
   can't mean a new first-class concept per tier: foremen are one, and there's only room for a few.

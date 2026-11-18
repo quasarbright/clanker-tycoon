@@ -138,6 +138,8 @@
     .ct-slot { position: absolute; transform: translate(-50%, -50%); width: calc(var(--u) * 17); height: calc(var(--u) * 11); border: 1.5px dashed #dfe9f74d; border-radius: 12px; }
     .ct-slot.is-target { border: 2px solid var(--accent); background: #f2c23022; }
     .ct-slot.is-target.is-swap { background: #f2c23033; }
+    .ct-slot.is-target.is-refused { border-color: var(--danger); background: #e5534b22; }
+    .ct-slot-tag.is-refused { background: var(--danger); color: #fff; box-shadow: none; }
     .ct-slot.is-preview { border: 2px dashed var(--accent); background: #f2c23018; display: grid; place-items: center; color: var(--accent-hi); font: 600 clamp(9px, calc(var(--u) * 1.4), 14px) var(--font-ui); }
     .ct-slot-tag { position: absolute; left: 50%; top: 100%; translate: -50% 6px; white-space: nowrap; padding: 3px 10px; border-radius: 8px; background: var(--accent); color: #17140a; font: 700 clamp(9px, calc(var(--u) * 1.4), 14px) var(--font-ui); box-shadow: 0 2px 0 var(--lip); }
     .ct-drag-ghost { position: absolute; z-index: 20; pointer-events: none; transform: translate(-50%, -50%) rotate(-2deg); box-shadow: 0 10px 24px #0008; border-color: var(--accent) !important; }
@@ -859,7 +861,7 @@
     <aside class="ct-side">
       <div class="ct-edit-panel" id="editPanel">
         <div class="ct-edit-head">Edit floor</div>
-        <p class="ct-edit-text">Drag a machine to any open slot, or onto another machine to swap the two. Supply, the dock and your desk are bolted down. Moving things only changes how far your crew walks; their instructions stay the same.</p>
+        <p class="ct-edit-text">Drag a machine (Supply too) to any open slot, or onto another machine to swap the two. The dock and your desk are bolted down, and Supply can't go in storage. Moving things only changes how far your crew walks; their instructions stay the same.</p>
         <div class="ct-edit-head">In storage</div>
         <div class="ct-storage" id="storage"></div>
       </div>
