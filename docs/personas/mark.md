@@ -73,8 +73,8 @@ pay. Source: `src/business.js`, decisions 53 to 67.
   slot is easy to drag into.
 - Programs name stations, not positions, so moving a machine never breaks instructions. Layout
   only changes walking distance, which is the point: a tight floor ships more.
-- Only during scheduling (before Start), never mid-shift. A machine bought at the board waits in a
-  "to place" tray on the floor. Start offers to drop it in the nearest free slot if you haven't.
+- Only during scheduling (before Start), never mid-shift. A machine bought at the board waits "in
+  storage" on the floor (Mike's word, 2026-11-18; not "to place"). Start offers to drop it in the nearest free slot if you haven't.
 - The dry run should use the current layout, so re-run it when a layout change affects a robot's
   program.
 

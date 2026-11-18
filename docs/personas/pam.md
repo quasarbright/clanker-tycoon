@@ -149,3 +149,10 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   blush): "i like all of them except 3. 4 is pretty funny". So 1 Mid-bite, 2 Blushing and 4
   Awkward all join the rotation beside the classic shocked photo; 3 Glazed over is out. Same head,
   hard hat and wall shadow as `ownerHeadSVG` in `src/looks.js`. For the build thread.
+- 2026-11-18: floor editor mocks (blueprint view, drag to a slot, place from the crate tray, Start
+  with a crate waiting). Mike: "sure looks good but let's not do assembler art yet. I also don't
+  love 'to place'. let's call it 'in storage'". So the editor flow is approved as mocked; the
+  tray's label is **In storage** (a word for `src/words.js` when it's built, and the same
+  word everywhere a bought machine waits); and the assembler gets no art yet, so the editor ships
+  showing a crate for whatever machine you bought (the Paint machine in mocks), not an
+  Assembler.
