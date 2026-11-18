@@ -4,7 +4,7 @@
 // Calls are tagged with the current shift from the play log, so the two logs line up.
 // Default: local on localhost, openrouter anywhere else. Override with ?llm=local|openrouter.
 
-import { shiftId, isTest } from "./playlog.js";
+import { shiftId, isTest, logEvent } from "./playlog.js";
 
 const params = new URLSearchParams(location.search);
 const onLocalhost = ["localhost", "127.0.0.1", "[::1]"].includes(location.hostname);
@@ -38,8 +38,16 @@ export function useFakeLlm(fn) { fake = fn; }
 export async function llm({ system, prompt, schema }) {
   if (fake) return fake({ system, prompt, schema });
   await slot();
+  const started = performance.now();
   try {
-    return BACKEND === "openrouter" ? await viaOpenRouter(system, prompt, schema) : await viaLocal(system, prompt, schema);
+    const answer = BACKEND === "openrouter" ? await viaOpenRouter(system, prompt, schema) : await viaLocal(system, prompt, schema);
+    // The local server writes every call to logs/llm.jsonl itself; the web build has no server, so
+    // its calls go in the play log in full (prompt and answer, never the key).
+    if (BACKEND === "openrouter") logEvent(null, "llm", { model: OPENROUTER_MODEL, ms: Math.round(performance.now() - started), system, prompt, answer });
+    return answer;
+  } catch (e) {
+    logEvent(null, "llm_error", { backend: BACKEND, ms: Math.round(performance.now() - started), message: e.message, prompt });
+    throw e;
   } finally { release(); }
 }
 

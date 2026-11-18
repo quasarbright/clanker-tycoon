@@ -226,8 +226,19 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   both ways), `instructions` (what a worker wrote down), `start`, `you` (your moves), `sim` (every
   sim event: pickups, ships, fails, waits that gave up, unexpected, desk visits, wear), a
   `snapshot` every 5 s (where everyone is, holding, doing, station contents, order), and `end`.
+  The business layer and the UI too (decision 83): `run_start`, `license`, `board` (offers with
+  full and scaled numbers, funds, reputation, loans, crew), `pick`, `recruit`, `train`, `buy`,
+  `borrow`, `quarter_start`, `quarter_settle` (each contract, crew pay, funds and reputation before
+  and after), `gameover`, `new_run`, `pause`/`resume`, `restart_shift`, `end_card`, `menu`,
+  `chat_open`, `start_blocked` (with why), and `error`/`llm_error` (uncaught errors, console.error,
+  failed model calls). Mike (2026-11-18): logs "pretty comprehensive, so if I do a playtest and then
+  I report that something was weird ... you will be able to look at logs".
   When Mike mentions something that happened in play ("Blip just stood there"), find the shift in
-  the newest play log first and read what happened, before asking him.
+  the newest play log first and read what happened, before asking him:
+  `node tools/playlog.mjs` lists sessions, `--session <id>` or `--shift <id>` prints the timeline
+  (with that shift's model calls). The web build (Pages) has no server: it keeps the log in the
+  browser (memory and localStorage, model calls included without the key), and a small "Download
+  log" link at the bottom left saves it as a .jsonl Mike can send; `tools/playlog.mjs <file>` reads it.
 - Every model call is appended to `logs/llm.jsonl` (gitignored), tagged with the same `shift` id
   (`test: true` for automated browsers, which don't write play logs unless the URL has
   `?playlog`). Read it to see what a worker was told and decided.

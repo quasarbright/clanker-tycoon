@@ -11,7 +11,7 @@ import { LEVELS } from "./levels.js";
 import { backendLabel, useFakeLlm, BACKEND } from "./llm.js";
 import { getKey, setKey, signIn, finishSignIn } from "./openrouter-auth.js";
 import { WORDS, applyWords, aloneLine } from "./words.js";
-import { startShift, logEvent } from "./playlog.js";
+import { startShift, logEvent, downloadLog } from "./playlog.js";
 import { headLooks, toolLooks, faceHTML } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, signed as signedText, shippedOf, shiftCost } from "./quarter.js";
 import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
@@ -157,6 +157,7 @@ function renderLevels() {
 }
 
 function showMenu() {
+  logEvent(null, "menu");
   setPhase("menu");
   paused = false;
   renderLevels();
@@ -379,6 +380,7 @@ function renderShiftCost(short) {
     + (c.covers ? (quarter.shift >= level.quarter.shifts ? "the last shift" : "covers the rest of the quarter") : `<span class="is-bad">short for shift ${c.shortAt}</span>`);
 }
 function nudgeStart() {
+  logEvent(null, "start_blocked", { why: startBlocker() });
   const b = $("#goBtn");
   b.classList.remove("is-nudged"); void b.offsetWidth; b.classList.add("is-nudged");
 }
@@ -502,6 +504,7 @@ function buildCrew() {
 
 /** Open a worker's conversation, saving what you'd typed in the one you leave. */
 function openChat(id, { focus = true } = {}) {
+  if (ui.open !== id) logEvent(clockT(), "chat_open", { worker: id });
   keepTyped();
   ui.open = id;
   lastList = "";
@@ -1303,12 +1306,15 @@ let picked = []; // contracts picked on the board for the coming quarter
 
 /** Between quarters: pick this quarter's contracts, buy equipment. */
 function openBoard() {
-  if (!biz) biz = newBusiness();
+  if (!biz) { biz = newBusiness(); logEvent(null, "run_start"); }
   // A new business is named on its license first; a business that can't go on gets the front page.
   if (!biz.owner) return openLicense();
   const over = outOfBusiness(biz, CANDIDATES);
   if (over) return showGameOver(over);
   picked = [];
+  logEvent(null, "board", { business: biz.name, quarter: biz.quarters + 1, funds: Math.floor(biz.money), rep: biz.rep, loans: [...biz.loans],
+    crew: biz.crew.map((id) => ({ id, ...pick(robotOf(biz, CANDIDATES.find((c) => c.id === id)), "skills", "attributes", "wage") })),
+    offers: board(biz).map((c) => pick(c, "id", "size", "color", "count", "pay", "fullCount", "fullPay", "needs")), last: biz.last });
   setPhase("menu");
   paused = false;
   for (const id of ["startScreen", "endScreen", "pauseScreen"]) $(`#${id}`).classList.add("is-hidden");
@@ -1378,7 +1384,9 @@ function renderBoard() {
     : `"Short on cash? Borrow from me, no interest. Each loan takes ${pct} of every contract you finish until it's paid off; two loans take ${Math.round(LENDER.share * 200)}%."`;
   $("#loans").innerHTML = LENDER.amounts.map((a, i) => `<button class="ct-btn" data-loan="${i}" ${n >= LENDER.max ? "disabled" : ""} data-tooltip="${n >= LENDER.max ? `You have ${LENDER.max} loans, the most he'll give. He's paid back from your contracts, 10% of each per loan.`
     : `You'd owe $${a}, paid back by ${pct} of every contract you finish${n ? `, on top of the ${now} you already pay` : ""}.`}">Borrow $${a}</button>`).join("");
-  $("#loans").querySelectorAll("[data-loan]").forEach((b) => b.addEventListener("click", () => { if (borrow(biz, +b.dataset.loan)) renderBoard(); }));
+  $("#loans").querySelectorAll("[data-loan]").forEach((b) => b.addEventListener("click", () => {
+    if (borrow(biz, +b.dataset.loan)) { logEvent(null, "borrow", { amount: LENDER.amounts[+b.dataset.loan], funds: Math.floor(biz.money), loans: [...biz.loans] }); renderBoard(); }
+  }));
 
   // ----- contracts: one card with a small and a large size (take one or neither), and a side one
   const offers = board(biz);
@@ -1408,6 +1416,7 @@ function renderBoard() {
     const c = offers.find((o) => o.id === b.dataset.contract);
     // Taking one size drops the other: a quarter's contracts never share a color.
     picked = isOn(c) ? picked.filter((p) => p.id !== c.id) : [...picked.filter((p) => p.color !== c.color), c];
+    logEvent(null, "pick", { contract: c.id, on: isOn(c), picked: picked.map((p) => p.id) });
     renderBoard();
   }));
   const total = picked.reduce((a, c) => a + c.count, 0);
@@ -1462,12 +1471,16 @@ function renderBoard() {
     </div>`;
   }).join("") + `<p class="ct-offer-note">On your floor: ${mine.length ? mine.map((m) => m.name.toLowerCase()).join(", ") : "nothing yet"}.</p>`;
 
-  $("#boardScreen").querySelectorAll("[data-recruit]").forEach((b) => b.addEventListener("click", () => { if (recruit(biz, b.dataset.recruit)) renderBoard(); }));
-  $("#boardScreen").querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => { if (buy(biz, b.dataset.buy)) renderBoard(); }));
+  $("#boardScreen").querySelectorAll("[data-recruit]").forEach((b) => b.addEventListener("click", () => {
+    if (recruit(biz, b.dataset.recruit)) { logEvent(null, "recruit", { robot: b.dataset.recruit, funds: Math.floor(biz.money) }); renderBoard(); }
+  }));
+  $("#boardScreen").querySelectorAll("[data-buy]").forEach((b) => b.addEventListener("click", () => {
+    if (buy(biz, b.dataset.buy)) { logEvent(null, "buy", { machine: b.dataset.buy, funds: Math.floor(biz.money) }); renderBoard(); }
+  }));
   $("#boardScreen").querySelectorAll("[data-train]").forEach((b) => b.addEventListener("click", (e) => {
     e.stopPropagation();
     const [id, k] = b.dataset.train.split(":");
-    if (train(biz, CANDIDATES.find((c) => c.id === id), k)) { trainOpen = null; renderBoard(); }
+    if (train(biz, CANDIDATES.find((c) => c.id === id), k)) { logEvent(null, "train", { robot: id, learned: k, funds: Math.floor(biz.money) }); trainOpen = null; renderBoard(); }
   }));
   placeTrainMenu();
   $("#boardScreen").querySelectorAll("[data-train-open]").forEach((b) => b.addEventListener("click", (e) => {
@@ -1477,6 +1490,13 @@ function renderBoard() {
   }));
 }
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
+/** Just these fields of an object, for the log. */
+const pick = (o, ...keys) => Object.fromEntries(keys.filter((k) => o[k] !== undefined).map((k) => [k, o[k]]));
+
+// The web build has no server to write logs to: a small "Download log" link saves this browser's
+// play log to send after a playtest (decision 83). Also with ?log on any build.
+$("#downloadLog").hidden = !(BACKEND === "openrouter" || new URLSearchParams(location.search).has("log"));
+$("#downloadLog").addEventListener("click", () => { logEvent(null, "download_log"); downloadLog(); });
 
 // ---------- a new business: the license (decision 74) ----------
 
@@ -1535,6 +1555,7 @@ $("#licenseForm").addEventListener("submit", (e) => {
   if (!checkLicense() || $("#licenseStamp").classList.contains("is-stamped")) return;
   biz.name = $("#licenseName").value.trim();
   biz.owner = $("#licenseOwner").value.trim();
+  logEvent(null, "license", { business: biz.name, owner: biz.owner });
   for (const el of $$("#licenseScreen input, #licenseScreen button")) el.disabled = true;
   $("#licenseWhy").textContent = "";
   // The lender stamps it, then you're on the board.
@@ -1558,6 +1579,7 @@ function showGameOver(reason) {
   $("#paperQuarter").textContent = `Quarter ${b.quarters + 1}`;
   const hl = headline(reason, b.name, b.quarters + b.wins);
   $("#paperHeadline").textContent = hl;
+  logEvent(null, "gameover", { reason, headline: hl, quarters: b.quarters, wins: b.wins, taken: b.taken, best: b.best, revenue: b.revenue, costs: b.costs, funds: Math.floor(b.money), owed: debtOf(b), rep: b.rep });
   $("#paperCaption").textContent = `${b.owner}, owner, pictured on the floor of ${b.name}.`;
   $("#paperColumn").textContent = (b.wins ? `${b.name} shipped ${b.wins} of ${b.taken} contracts in ${b.quarters} ${b.quarters === 1 ? "quarter" : "quarters"} of business. `
     : `${b.name} never shipped a contract. `) + `Robots on the floor declined to comment, as commenting was not part of their instructions.`;
@@ -1572,7 +1594,7 @@ function showGameOver(reason) {
   fitHeadline();
   document.fonts.ready.then(fitHeadline);
 }
-$("#gameoverNew").addEventListener("click", () => { biz = null; $("#gameoverScreen").classList.add("is-hidden"); document.body.classList.remove("is-quiet"); openBoard(); });
+$("#gameoverNew").addEventListener("click", () => { logEvent(null, "new_run"); biz = null; $("#gameoverScreen").classList.add("is-hidden"); document.body.classList.remove("is-quiet"); openBoard(); });
 $("#gameoverMenu").addEventListener("click", () => { $("#gameoverScreen").classList.add("is-hidden"); document.body.classList.remove("is-quiet"); showMenu(); });
 // The open Train picker (a robot id), if any. A click anywhere else or Escape closes it.
 let trainOpen = null;
@@ -1598,6 +1620,7 @@ $("#boardGo").addEventListener("click", () => {
   if (!picked.length) return;
   // In the order the board lists them, so the tickets on the floor match the board.
   const offers = board(biz).filter((c) => picked.some((p) => p.id === c.id));
+  logEvent(null, "quarter_start", { quarter: biz.quarters + 1, contracts: offers.map((c) => pick(c, "id", "size", "color", "count", "pay")), funds: Math.floor(biz.money), rep: biz.rep });
   openLevel(quarterLevel(BUSINESS, biz, offers, CANDIDATES), { keepCrew: true });
 });
 
@@ -1636,8 +1659,15 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
   $("#endBtns").innerHTML = btns.map(([go, text, gold]) => `<button class="ct-btn ${gold ? "is-gold" : ""}" data-go="${go}">${text}</button>`).join("")
     + `<button class="ct-btn" data-go="menu">Levels</button>`;
   $("#endBtns").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+    logEvent(null, "end_card", { go: b.dataset.go });
     if (b.dataset.go === "menu") showMenu();
-    else if (b.dataset.go === "board") { settle(biz, cs, quarter.done, quarter.money); openBoard(); }
+    else if (b.dataset.go === "board") {
+      const before = { funds: Math.floor(level.quarter.budget), rep: biz.rep };
+      settle(biz, cs, quarter.done, quarter.money);
+      logEvent(null, "quarter_settle", { quarter: biz.quarters, before, after: { funds: Math.floor(biz.money), rep: biz.rep }, crewPay: Math.round(level.quarter.budget - quarter.money),
+        contracts: payouts(cs, quarter.done).map((p, i) => ({ id: p.c.id, count: p.c.count, shipped: quarter.done[i], won: p.won, pay: p.pay })), last: biz.last, loans: [...biz.loans] });
+      openBoard();
+    }
     else openLevel(level, { again: true, shift: b.dataset.go });
   }));
   $("#endScreen").classList.remove("is-hidden");
@@ -1669,6 +1699,7 @@ $("#endScreen").addEventListener("click", () => { $(".ct-recap")?.classList.add(
 const STAMP_START_MS = 450, STAMP_MS = 450;
 
 function setPaused(p) {
+  if (p !== paused) logEvent(game?.t ?? null, p ? "pause" : "resume");
   paused = p;
   keysDown.clear();
   if (game) playerSteer(game, 0, 0);
@@ -1679,7 +1710,7 @@ $("#pauseBtn").addEventListener("click", () => { if ((phase === "run" && !game.o
 $("#resumeBtn").addEventListener("click", () => setPaused(false));
 // The pause card sits on the floor; clicks on it aren't moves on the floor.
 $("#pauseScreen").addEventListener("click", (e) => e.stopPropagation());
-$("#restartBtn").addEventListener("click", () => openLevel(level, { again: true }));
+$("#restartBtn").addEventListener("click", () => { logEvent(game?.t ?? null, "restart_shift"); openLevel(level, { again: true }); });
 $("#menuBtn").addEventListener("click", () => showMenu());
 
 applyWords();

@@ -717,6 +717,10 @@
     .ct-recap-rep .arrow { color: var(--muted); margin: 0 4px; }
     .ct-recap-next { grid-column: 1 / -1; font-size: .85rem; color: var(--muted); text-align: right; }
     .ct-recap-next.is-out { color: #ff8a80; }
+    /* the web build's Download log: small, muted, bottom left, out of the way (decision 83) */
+    .ct-log-link { position: fixed; left: 12px; bottom: 10px; z-index: 50; background: none; border: 0; padding: 2px 4px; color: var(--faint); font: 500 .75rem var(--font-ui); cursor: pointer; text-decoration: underline dotted; }
+    .ct-log-link:hover { color: var(--muted); }
+    .ct-log-link[hidden] { display: none; }
     .ct-board-biz { font: 600 .8rem var(--font-mono); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
   </style>
 </head>
@@ -793,6 +797,8 @@
       <div class="ct-btns" id="endBtns"></div>
     </div>
   </div>
+
+  <button class="ct-log-link" id="downloadLog" type="button" hidden data-tooltip="Saves this browser's play log, to send after a playtest.">Download log</button>
 
   <!-- A new business: the license you name it on (decision 74). The lender stamps it when you open. -->
   <div class="ct-overlay is-hidden" id="licenseScreen">

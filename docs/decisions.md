@@ -1177,3 +1177,25 @@ funds, and the newspaper's revenue, funds left and best quarter. Red: the whole 
 this shift's cost by Start, crew pay on the cards, the lender's cut, total costs and what's owed.
 Prices on buttons (Recruit, Buy, Train) and per-shift wages are left as they are. Full reputation is
 green too; it sits under its own label as pips, so the two read apart.
+
+### 83. Comprehensive play logs, on the web build too (2026-11-18)
+
+Mike: "I want our logs to be pretty comprehensive, so if I do a playtest and then I report that
+something was weird or wrong or unexpected or whatever, you will be able to look at logs to have a
+full comprehensive report of what happened." The floor was already logged (chat, instructions,
+moves, every sim event, 5-second snapshots, shift ends; every model call in `logs/llm.jsonl`).
+Added:
+- The business layer: the license, every board visit (offers, funds, reputation, loans, crew),
+  picks, recruits, training, machines, loans, quarter start and settle (each contract, crew pay,
+  funds and reputation before and after), game over and new run. A page session starts at
+  "<session>/0", so the board is logged before any shift.
+- UI events: pause and resume, restart shift, end-card buttons, back to the levels, chats opened,
+  Start pressed while blocked (with the reason).
+- Errors: uncaught errors, rejected promises, console.error, and failed model calls.
+- The web build has no server, so the log stays in the browser (memory, and the newest 2.5 MB in
+  localStorage so a reload keeps it); its OpenRouter calls go in it in full (prompt and answer,
+  never the key). A small dotted "Download log" link at the bottom left saves it as a .jsonl.
+- `tools/playlog.mjs`: lists sessions and prints a run's or a shift's timeline as sentences, with
+  that shift's model calls; reads the local logs or a downloaded file.
+Tests: `test/playlog.test.mjs` (the tool), `e2e/logging.spec.mjs` (a whole run's events reach the
+log, an error is caught, the web build's link downloads the log and is hidden locally).
