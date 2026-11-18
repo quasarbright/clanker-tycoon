@@ -152,7 +152,10 @@ Ideas worth keeping that aren't planned yet.
 - **Challenge mode.** Write the robots' programs yourself, no model during the shift (issue #11).
 - **Difficulty settings or challenges.** In the default game, quota and pay both drop with
   reputation, which is forgiving. A challenge keeps quotas rising as usual while pay still drops,
-  so a miss really hurts. Mike: "that's for later though" (decision 78).
+  so a miss really hurts. Mike: "that's for later though" (decision 78). Another challenge,
+  **Credit score**: with low reputation the lender takes a bigger share per loan. Mike: "should we
+  also have the lender take more of a percent at once for low reputation? maybe a challenge mode
+  thing called 'credit score'". Kept out of the default game, which is meant to be forgiving.
 - **The business side.** Competitors, stock (issue #8). Probably post-game at most.
 - **Talk to robots by voice.** Push-to-talk dictation instead of typing, so you can manage on the
   fly (typing is slow, which is half of why a shift feels short). Options: the browser's speech
