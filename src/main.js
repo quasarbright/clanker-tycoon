@@ -1580,7 +1580,7 @@ function showGameOver(reason) {
   const hl = headline(reason, b.name, b.quarters + b.wins);
   $("#paperHeadline").textContent = hl;
   logEvent(null, "gameover", { reason, headline: hl, quarters: b.quarters, wins: b.wins, taken: b.taken, best: b.best, revenue: b.revenue, costs: b.costs, funds: Math.floor(b.money), owed: debtOf(b), rep: b.rep });
-  $("#paperCaption").textContent = `${b.owner}, owner, pictured on the floor of ${b.name}.`;
+  $("#paperCaption").textContent = `The owner of ${b.name}, moments after hearing the news.`;
   $("#paperColumn").textContent = (b.wins ? `${b.name} shipped ${b.wins} of ${b.taken} contracts in ${b.quarters} ${b.quarters === 1 ? "quarter" : "quarters"} of business. `
     : `${b.name} never shipped a contract. `) + `Robots on the floor declined to comment, as commenting was not part of their instructions.`;
   $("#gameoverWhy").textContent = GAMEOVER_WHY[reason](b);
