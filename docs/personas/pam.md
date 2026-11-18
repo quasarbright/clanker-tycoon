@@ -96,3 +96,8 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   box drawing), nor the tabloid. The ones he liked turn a game mechanic (shipping, bins,
   instructions) into the punchline; the rejected ones are generic business jokes. The license wording ("official-sounding but ridiculous") is the tone.
   Sources in docs/mocks/business-name/.
+- 2026-11-18: round 2 for Mike: 12 more headlines and 6 shocked-photo variants (in
+  /mnt/project-files/mocks-headlines-photos/); waiting on his picks. Reviewed 7ca88f2 (license, your
+  name, front page) in the browser: matches the mocks; fixes sent: long names overflow the license
+  and headline, lender's "Lovely name" shows before signing, zero-contracts front page, straight
+  quotes, dead HUD ("LABOR $0") behind both screens.
