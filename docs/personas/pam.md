@@ -138,3 +138,7 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   replaces my B recommendation (nine ticks, one sentence).
 - 2026-11-18: Mike picked the stamps for the quarter recap (SHIPPED +1/3 / MISSED -1) and set the
   look: "charming, cute, industrial and almost slapstick ... lean more into this going forward".
+- 2026-11-18: reputation UI signed off: layout 1 (pips under Funds), struck-through full numbers with
+  Mike's hover ("...while Clank & Sons' reputation is questionable. Restore reputation for the full
+  $320."), per-size ship gain, miss said once, recap stamps. Spec sent to the build thread; Pam
+  reviews the screenshots before Mike.
