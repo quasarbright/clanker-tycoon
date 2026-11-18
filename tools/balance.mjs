@@ -157,3 +157,38 @@ for (let quarters = 0; quarters < 4; quarters++) {
     }
   }
 }
+
+// ---------- crates (decision 87): the Assembler contract ----------
+// A business that owns a paint machine and an assembler, both placed as Start would place them.
+// Pack holds 6 and a crate needs 9 widgets, so the crew fills one color at a time: the first color
+// the Assembler (and Pack) has no box of. The hauler brings reds for it, the painter blue or green,
+// the packer packs it and carries the box over, and the assembler puts a crate together and ships it. Prints crates shipped per shift, wages and profit.
+const C_HAUL = `while (needsAny() > 0) { let t = "none"; for (const k of ["red", "blue", "green"]) { if (t == "none" && boxes("ASSEMBLE", k) == 0 && boxes("PACK", k) == 0) t = k; } if (t == "red" && count("PACK", "red") < 3) { move("SUPPLY"); pickUp("red"); move("PACK"); putDown(); } else wait(1); }`;
+const C_PAINT = `while (needsAny() > 0) { let t = "none"; for (const k of ["red", "blue", "green"]) { if (t == "none" && boxes("ASSEMBLE", k) == 0 && boxes("PACK", k) == 0) t = k; } if ((t == "blue" || t == "green") && count("PACK", t) < 3 && wear("PAINT") < 100) { move("SUPPLY"); pickUp("red"); move("PAINT"); paint(t); move("PACK"); putDown(); } else wait(1); }`;
+const C_PACK = `while (needsAny() > 0) { move("PACK"); for (const k of ["red", "blue", "green"]) { if (count("PACK", k) >= 3 && boxes("PACK", k) == 0) pack(k); } let c = "none"; for (const k of ["red", "blue", "green"]) { if (c == "none" && boxes("PACK", k) > 0 && boxes("ASSEMBLE", k) == 0) c = k; } if (c != "none") { pickUpBox(c); move("ASSEMBLE"); putDown(); } else wait(1); }`;
+const C_ASM = `while (needsAny() > 0) { move("ASSEMBLE"); if (boxes("ASSEMBLE", "red") > 0 && boxes("ASSEMBLE", "blue") > 0 && boxes("ASSEMBLE", "green") > 0) assemble(); if (crates("ASSEMBLE") > 0) { pickUpCrate(); move("DOCK"); putDown(); } else wait(1); }`;
+QB.asm = [["assembly", "repair"], []];
+const C_PROG = { blip: C_HAUL, pip: C_PACK, vex: C_PAINT, asm: C_ASM };
+for (let quarters = 0; quarters < 4; quarters++) {
+  const b = { ...newBusiness(), money: 9999, quarters };
+  buy(b, "paint"); buy(b, "assembler"); placeLeftovers(b.floor);
+  const crates = board(b).find((c) => c.color === "crate");
+  const L = quarterLevel(Q, b, [crates]);
+  console.log(`\nCrates, board ${quarters + 1}: ${crates.count} crates $${crates.pay} (paint in slot ${b.floor.at.PAINT}, assembler in slot ${b.floor.at.ASSEMBLE})`);
+  for (const [name, plan] of [["painter + packer + assembler", ["vex", "pip", "asm"]], ["painter + hauler + packer + assembler", ["vex", "blip", "pip", "asm"]]]) {
+    let wages = 0, done = [0];
+    const log = [];
+    for (let shift = 1; shift <= L.quarter.shifts; shift++) {
+      const hires = plan.map(qr);
+      wages += hires.reduce((a, h) => a + h.wage, 0);
+      const g = newGame(L, hires, 10 + shift, { done });
+      g.workers.forEach((w, i) => setProgram(g, w, program(hires[i], L, C_PROG[hires[i].id])));
+      while (!g.over) { step(g, 1 / 30); g.events.length = 0; }
+      done = g.order.map((l) => l.done);
+      log.push(String(done[0]));
+      if (g.won) break;
+    }
+    const paid = payouts(L.contracts, done).reduce((a, p) => a + p.pay - p.cut, 0);
+    console.log(`    ${name}`.padEnd(52), `${log.join(" ").padEnd(26)} wages $${String(wages).padEnd(4)} paid $${String(paid).padEnd(4)} profit $${paid - wages}`);
+  }
+}

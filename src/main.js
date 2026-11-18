@@ -236,6 +236,11 @@ function buildFloor() {
     const out = Math.min(dx ? 7.5 / Math.abs(dx / len) : 1e9, dy ? 5 / Math.abs(dy / len) : 1e9) + 1;
     const x1 = A.x + (dx / len) * out, y1 = A.y + (dy / len) * out;
     const x2 = B.x - (dx / len) * (out + 2.4), y2 = B.y - (dy / len) * (out + 2.4);
+    // A line that would run under another station isn't drawn: half an arrow peeking out between
+    // tiles reads as broken (Pam). Only lines with a clear run get one, all with arrowheads.
+    const blocked = level.stations.some((k) => k !== a && k !== b && Array.from({ length: 21 }, (_, i) => i / 20)
+      .some((t) => Math.abs(x1 + (x2 - x1) * t - STATIONS[k].x) < 8.5 && Math.abs(y1 + (y2 - y1) * t - STATIONS[k].y) < 6));
+    if (blocked) return "";
     return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" marker-end="url(#arrowhead)"/>`;
   };
   $("#lineArrows").innerHTML = line.slice(1).map((k, i) => seg(line[i], k)).join("");
@@ -1353,7 +1358,7 @@ const andList = (xs) => xs.join(", ").replace(/, ([^,]*)$/, " and $1");
 function renderFloorEdit() {
   const show = onBusinessFloor() && phase === "plan";
   $("#floorEdit").hidden = !show;
-  if (!show) return;
+  if (!show) { $("#newNote").hidden = true; return; }
   const f = biz.floor, fresh = f.fresh ?? [];
   const reading = game.workers.find((w) => w.compiling);
   const btn = $("#editFloorBtn");
@@ -1581,6 +1586,7 @@ function renderBoard() {
       ${offerNumbers(c)}${keepLine(c)}
     </button>`;
   const painted = (c) => (c.needs ? `<span class="ct-offer-keep">Painted: the supply only gives out red.</span>` : "");
+  $("#offers").classList.toggle("has-crates", !!crates);
   $("#offers").innerHTML = `<div class="ct-offer ct-pair ${isOn(small) || isOn(large) ? "is-picked" : ""}">
       <div class="ct-offer-head">${ticketHTML(small.color, "")}<b>${cap(small.color)} boxes</b><span class="ct-offer-keep">Pick one size</span></div>
       <div class="ct-sizes">${size(small)}${size(large)}</div>

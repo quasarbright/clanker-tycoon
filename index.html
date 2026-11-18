@@ -92,10 +92,11 @@
 
     /* ----- the floor editor (decision 85): a blueprint of your floor, machines snap to slots ----- */
     .ct-floor-edit { display: flex; align-items: center; gap: 12px; }
-    .ct-badge { display: inline-grid; place-items: center; min-width: 1.4em; height: 1.4em; margin-left: 8px; padding: 0 .35em; border-radius: 99px; background: var(--accent); color: #17140a; font: 700 .78rem var(--font-ui); }
+    .ct-badge { display: inline-grid; place-items: center; min-width: 1.4em; height: 1.4em; margin-left: 8px; padding: 0 .35em; border-radius: 99px; background: #3a414b; color: var(--text); font: 700 .78rem var(--font-ui); }
+    #editFloorBtn.is-new .ct-badge { background: var(--accent); color: #17140a; }
     #editFloorBtn.is-new { border-color: var(--accent); color: var(--accent-hi); animation: editPulse 1.4s ease-in-out infinite; }
     @keyframes editPulse { 50% { box-shadow: 0 0 0 5px #f2c23044; } }
-    .ct-new-note { color: var(--muted); font-size: .9rem; }
+    .ct-new-note { color: var(--muted); font-size: .9rem; flex-basis: 100%; order: 9; margin-top: -6px; } /* its own line under the bar (Pam) */
     .ct-new-note b { color: var(--text); font-weight: 600; }
     .ct-link { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
     .ct-link:hover { color: var(--accent-hi); }
@@ -118,7 +119,7 @@
     .ct-stored div > span { color: var(--muted); font-size: .85rem; }
     .ct-stored .ct-new-tag { margin-left: 6px; padding: 1px 6px; border-radius: 99px; background: var(--accent); color: #17140a; font: 700 .68rem var(--font-ui); letter-spacing: .06em; text-transform: uppercase; vertical-align: 2px; }
     /* a machine in storage: a plain wooden crate with its name (no machine art yet, Mike) */
-    .ct-stored-crate { flex: none; width: 56px; height: 40px; border-radius: 4px; display: grid; place-items: center; background: repeating-linear-gradient(90deg, #9a6a35 0 9px, #8a5c2c 0 11px); border: 2px solid #5a3a18; font: 400 9px var(--font-display); color: #2a1a08; letter-spacing: .04em; text-align: center; line-height: 1; padding: 2px; }
+    .ct-stored-crate { flex: none; width: 56px; height: 40px; border-radius: 4px; display: grid; place-items: center; background: repeating-linear-gradient(90deg, #9a6a35 0 9px, #8a5c2c 0 11px); border: 2px solid #5a3a18; font: 400 7.5px var(--font-display); color: #2a1a08; letter-spacing: 0; text-align: center; line-height: 1.05; padding: 2px; overflow: hidden; overflow-wrap: anywhere; }
     body.is-editing .ct-floor { background-color: #17355e; background-image: linear-gradient(#ffffff14 1px, transparent 1px), linear-gradient(90deg, #ffffff14 1px, transparent 1px); border-color: #3c6aa8; }
     body.is-editing .ct-floor::before { opacity: .35; }
     body.is-editing .ct-bot, body.is-editing .ct-coach, body.is-editing .ct-truckbay, body.is-editing .ct-line-svg, body.is-editing .ct-st-items, body.is-editing .ct-wear { visibility: hidden; }
@@ -128,6 +129,7 @@
     body.is-editing .ct-st.is-movable { cursor: grab; touch-action: none; user-select: none; }
     body.is-editing .ct-st.is-movable:hover { border-color: var(--accent); }
     body.is-editing .ct-st.is-lifted { opacity: .3; }
+    body.is-editing .ct-st.is-lifted > * { visibility: hidden; } /* its slot may show "X goes here" (Pam) */
     .ct-handle { position: absolute; left: 50%; top: 0; translate: -50% -55%; width: 24px; height: 24px; border-radius: 99px; display: grid; place-items: center; background: #102846; border: 2px solid #dfe9f7; color: #dfe9f7; pointer-events: none; }
     .ct-handle svg { width: 14px; height: 14px; display: block; }
     .ct-st.is-anchor .ct-handle, .ct-desk .ct-handle { left: auto; right: 0; translate: 45% -45%; border-style: solid; }
@@ -346,6 +348,8 @@
     .ct-board-sec { font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin: 0 0 8px; }
     .ct-board-top { display: grid; grid-template-columns: 1fr auto; gap: 16px; }
     .ct-offers { display: grid; grid-template-columns: 2fr 1.15fr; gap: 12px; align-items: start; }
+    /* A crates contract (decision 87) joins the same row, so the shop below keeps its room (Pam). */
+    .ct-offers.has-crates { grid-template-columns: 2fr 1fr 1fr; }
     .ct-board-top { align-items: start; }
     .ct-board-go { display: flex; flex-direction: column; justify-content: center; gap: 10px; width: 300px; }
     .ct-board-go .ct-btn:disabled { opacity: 1; background: var(--panel-2); color: var(--faint); cursor: not-allowed; }
@@ -841,8 +845,8 @@
              something you bought waits in storage; "Keep in storage" stops that (Mike). -->
         <div class="ct-floor-edit" id="floorEdit" hidden>
           <button class="ct-btn" id="editFloorBtn">Edit floor<span class="ct-badge" id="storageBadge" hidden></span></button>
-          <span class="ct-new-note" id="newNote" hidden></span>
         </div>
+        <span class="ct-new-note" id="newNote" hidden></span>
         <div class="ct-crew-ready" id="crewReady"></div>
         <div class="ct-shift-cost" id="shiftCost" hidden></div>
       </div>
