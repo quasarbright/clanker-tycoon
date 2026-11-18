@@ -101,6 +101,21 @@ pay. Source: `src/business.js`, decisions 53 to 67.
    didn't follow the question, "I don't know what crates are", because I named crates before
    explaining them. Lesson: explain a new thing in plain words before asking about it.)
 
+## Balance after the editor (decision 87, 2026-11-18)
+
+`tools/balance.mjs` on the new floor: hauler + packer ships 12 red a shift with Pack in its starting
+slot, and 24 with Pack one slot closer to Supply. Mark's calls:
+- Keep the starting floor as is. Moving Pack closer is the editor's first lesson and a clear win
+  (twice the boxes), which is better than a floor that's already right.
+- Board 1's Large red goes from 40 to 36 boxes ($320 to $290), so the cheapest crew just makes it
+  on the starting floor and has room to spare after one move.
+- Leave boards 2 to 4 for now. A good layout makes their red contracts easier (hauler + packer at 24
+  a shift covers 55 in a quarter), and that's the reward for using the editor. Escalating contracts
+  is next and should be tuned against good layouts, not the starting one.
+- Crates (3 for $330, +1 crate and +$90 a quarter): about right on paper, because 6 painted boxes
+  pay what 12 green boxes do, and you need the $120 machine and an Assembly robot. It isn't
+  measured yet: `balance.mjs` needs a crates case.
+
 ## Open questions Mark is watching
 
 - How a run ends (above), what a late contract does, what the lender does when you can't pay.
