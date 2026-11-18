@@ -40,8 +40,9 @@ is the quarter's budget; wages come out of it as the shifts run.
 2. **Run shifts** on the floor: schedule your crew, give instructions, watch, fix. Wages tick.
 3. **Get paid** at the end of the quarter for every contract that shipped in full.
 
-**Reputation (agreed, not built; decision 78).** Three pips. A missed contract loses a whole pip, a
-shipped one wins back a third, and Small, Large and side contracts count the same. Reputation sets
+**Reputation (agreed, not built; decisions 78, 79).** Three pips. A missed contract of any size
+loses a whole pip. A shipped Large wins back two thirds, a shipped Small or side contract a third.
+Reputation sets
 the board: with less of it, clients offer smaller quotas for less pay, which gives you room to
 recover and train up. At zero no client will sign with you, and the run is over. That's the only
 way a run ends.

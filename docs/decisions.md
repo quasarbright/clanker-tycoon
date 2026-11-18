@@ -1125,4 +1125,7 @@ shipped Large one +2/3, and any miss is -1. It also answers Mark's watch item (a
 contract was all risk and no extra reward). UI: since the gain now differs by size, it goes on each
 size button ("Ship it: +2/3 reputation"); the miss cost is the same for all, so it's said once above
 the contracts.
+The Large becomes the faster way back as well as the bigger risk: a clean quarter with the Large and
+the side contract now wins back a whole pip (it was ⅔). Mark's watch: if recovery turns out too
+fast, cap the gain at 1 pip a quarter.
 

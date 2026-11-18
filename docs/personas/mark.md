@@ -36,7 +36,8 @@ pay. Source: `src/business.js`, decisions 53 to 67.
 
 ## Mark's current take
 
-1. **Reputation ends a run (decided, #78).** 3 pips, −1 a miss, +⅓ a shipped contract, any size.
+1. **Reputation ends a run (decided, #78).** 3 pips, −1 a miss of any size, +⅔ a shipped Large, +⅓
+   a shipped Small or side (#79). A clean Large + side quarter wins back a whole pip.
    Lower reputation shrinks quota and pay. Mark's balance calls: the board steps by whole pips
    (rounded down), 100% / 80% / 60% of quota and pay at 3 / 2 / 1, counts rounded to boxes of 3.
    Being broke flows into reputation (no crew means misses), so money needs no separate ending.

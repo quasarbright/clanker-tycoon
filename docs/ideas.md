@@ -68,8 +68,8 @@ Agreed direction, not built yet. Roughly in roadmap order.
 - **How a run ends.** Endless (decision 69): you keep going, the contracts get crazier, and
   eventually you go under. Open: how the game scales bigger without piling up new concepts.
   Foremen will be one first-class concept; something more flexible may come later.
-- **Reputation** (decision 78). Three pips; a missed contract loses a whole pip and a shipped one
-  wins back a third, whatever its size. Lower reputation means the board offers smaller quotas for
+- **Reputation** (decisions 78, 79). Three pips; a missed contract of any size loses a whole pip, a
+  shipped Large wins back two thirds and a shipped Small or side contract a third. Lower reputation means the board offers smaller quotas for
   less pay, so you can recover. At zero, no client will sign with you and the run ends. Mike: "Fast
   to lose, slow to regain." Open: how much quota and pay drop per pip.
 - **Buying equipment.** Machines are things you buy, one at a time, each tried by hand first.
