@@ -165,6 +165,7 @@ test("a shift card says plainly what has shipped and how many shifts are left; t
   await expect(page.locator("#endScreen .ct-mascot")).toBeHidden();
   await expect(page.locator("#endNote")).not.toContainText("pace");
   await expect(page.locator("#endStats")).toContainText("Shipped this shift");
+  await expect(page.locator("#endStats")).toContainText("Remaining budget");
   await page.click('[data-go="next"]');
   await endShift(page, [12]);
   await page.click('[data-go="next"]');

@@ -15,6 +15,7 @@ export const WORDS = {
   machines: "Machines",
   bought: "Bought",
   budget: "Budget",
+  budgetLeft: "Remaining budget", // on the shift cards, after the shift's pay came out
   startQuarter: "Start the quarter",
   lender: "The lender",
   toLender: "To the lender",

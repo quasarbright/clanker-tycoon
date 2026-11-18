@@ -1246,9 +1246,9 @@ function endQuarterShift() {
   logEvent(game.t, "end", { won, quarter: { shift: n, of: Q.shifts }, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), money: Math.floor(quarter.money), crew: crewSummary() });
   if (won && (!best[level.id] || quarter.money > best[level.id].left)) best[level.id] = { left: quarter.money };
   // The quarter ends as soon as the quota ships; what's left of the budget is saved.
-  const stats = won ? [["Shifts", `${n} of ${Q.shifts}`], [`${WORDS.crewPay}, all shifts`, spent], [WORDS.budget, left]]
-    : !last ? [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.budget, left]]
-    : [["Shipped", `${done}/${total}`], [`${WORDS.crewPay}, all shifts`, spent], [WORDS.budget, left]];
+  const stats = won ? [["Shifts", `${n} of ${Q.shifts}`], [`${WORDS.crewPay}, all shifts`, spent], [WORDS.budgetLeft, left]]
+    : !last ? [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.budgetLeft, left]]
+    : [["Shipped", `${done}/${total}`], [`${WORDS.crewPay}, all shifts`, spent], [WORDS.budgetLeft, left]];
   $("#endTitle").textContent = won ? "Quota met" : !last ? `Shift ${n} done` : "Quota missed";
   const shiftsLeft = Q.shifts - n;
   $("#endNote").textContent = won ? `${earlyLine(n, Q.shifts)} You saved ${left} of your $${Q.budget} budget.`.trim()
@@ -1468,7 +1468,7 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
   // The quarter card adds up the whole quarter; a shift card says what that shift did.
   const crewPayAll = Math.round(level.quarter.budget - quarter.money);
   const stats = over ? [["Paid", `$${paid}`], [`${WORDS.crewPay}, all shifts`, `$${crewPayAll}`], ...(cut ? [[WORDS.toLender, `$${cut}`]] : []), [WORDS.budget, money(quarter.money + paid - cut)]]
-    : [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.budget, money(quarter.money)]];
+    : [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.budgetLeft, money(quarter.money)]];
   if (over) setEndStats(rows + recapHTML({ start: level.quarter.budget, paid, cut, crew: crewPayAll }), []);
   else setEndStats(rows, stats);
   const btns = over ? [["board", WORDS.toBoard, true]]
