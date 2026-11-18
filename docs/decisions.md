@@ -1093,3 +1093,26 @@ e2e test checks the license never says "quarter".
 
 Then, for the lender's headline: "same with lender". "Lender Collects His 10% of <Business>: $0"
 is in the rotation on every ending too, borrowed or not; the run-facts check is gone.
+
+### 78. Reputation: three pips, and it shapes the board (2026-11-18)
+
+**Problem:** Mike: "right now, there is kind of no reason not to take on extra contracts. i feel
+like we need to punish missing a contract more." A miss paid $0 and cost nothing else, so an extra
+contract was a free bet.
+**Options (Mark):** a deposit when you take a contract, a penalty after a miss, strikes that end
+the run, or the missed boxes carried into next quarter unpaid. Mike: "I like strikes. that's how a
+run ends, very roguelike. But let's make it more like reputation. Fast to lose, slow to regain."
+Mark then laid out four reputation shapes (a life bar, pips that set the board, a pay multiplier,
+strikes that heal); Mike liked reputation controlling contract quality.
+**Picked:** Mike: "3 pips, lose a whole one on a lost contract, gain a third for a completed
+contract. No difference between big and small."
+- Reputation caps at 3. A missed contract loses 1 pip; a shipped one wins back ⅓.
+- Lower reputation lowers both the quota and the pay of what the board offers: "lowering quota
+  requirement would be more forgiving and make it easier to recover and train your workforce ...
+  only lowering payout would be a positive feedback loop making failure really screw you."
+- At zero no client will sign with you and the run ends. This replaces "broke with the lender done
+  lending" as the trigger behind decision 76's ending.
+- Later, maybe: a challenge setting where quotas keep rising while pay drops ("that's for later
+  though"). In ideas.md under Maybe.
+**Open:** how much quota and pay drop per pip. Mark's and Pam's working number: 20% per missing
+pip, stepping by whole pips. Pam is mocking how it's shown.

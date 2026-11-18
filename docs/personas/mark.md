@@ -36,8 +36,10 @@ pay. Source: `src/business.js`, decisions 53 to 67.
 
 ## Mark's current take
 
-1. **Runs are endless (decided, #69).** Still open: what exactly ends one. Mark's pick: bankrupt
-   when you can't pay a single shift and the lender won't lend (three loans out).
+1. **Reputation ends a run (decided, #78).** 3 pips, −1 a miss, +⅓ a shipped contract, any size.
+   Lower reputation shrinks quota and pay. Mark's balance calls: the board steps by whole pips
+   (rounded down), 100% / 80% / 60% of quota and pay at 3 / 2 / 1, counts rounded to boxes of 3.
+   Being broke flows into reputation (no crew means misses), so money needs no separate ending.
 2. **The economy is bimodal.** Early, one bad buy strands you (the careful playtester sat at $40
    for the rest of the run). Late, past board 4, nothing new happens, just 15% bigger numbers.
    The early stranding becomes a real loss once (1) exists; the late flatness needs new things to
@@ -66,6 +68,9 @@ pay. Source: `src/business.js`, decisions 53 to 67.
   4, painted Large about half).
 
 ## Log
+
+- 2026-11-18: missing a contract cost nothing, so extra contracts were free bets. Mark offered a
+  deposit, a penalty, strikes or a carry-over; Mike picked strikes as reputation (decision 78).
 
 - 2026-11-17: Mike chose endless runs over Mark's fixed 8 quarters; foremen are a first-class
   concept and there's room for few; story waits for polish (decision 69).

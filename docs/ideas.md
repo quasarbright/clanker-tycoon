@@ -66,9 +66,12 @@ Agreed direction, not built yet. Roughly in roadmap order.
   61, 64). Open: what happens when you can't pay him
   back, and whether loans get pricier the more you owe.
 - **How a run ends.** Endless (decision 69): you keep going, the contracts get crazier, and
-  eventually you go under. Open: exactly what going under is (money running out with a debt you
-  can't pay?), and how the game scales bigger without piling up new concepts. Foremen will be one
-  first-class concept; something more flexible may come later.
+  eventually you go under. Open: how the game scales bigger without piling up new concepts.
+  Foremen will be one first-class concept; something more flexible may come later.
+- **Reputation** (decision 78). Three pips; a missed contract loses a whole pip and a shipped one
+  wins back a third, whatever its size. Lower reputation means the board offers smaller quotas for
+  less pay, so you can recover. At zero, no client will sign with you and the run ends. Mike: "Fast
+  to lose, slow to regain." Open: how much quota and pay drop per pip.
 - **Buying equipment.** Machines are things you buy, one at a time, each tried by hand first.
 - **Equipment attributes.** Wear (a pricier machine that wears half as fast saves repair labor;
   built as the Sturdy paint machine, decision 53), speed, capacity. A trade-off between up-front cost and labor every shift.
@@ -147,6 +150,9 @@ Ideas worth keeping that aren't planned yet.
   API backend with thinking off (about 2 s a call instead of 4 to 5).
 - **Recovering from problems.** Time controls, clear alerts, buffers, one-click cleanup (issue #10).
 - **Challenge mode.** Write the robots' programs yourself, no model during the shift (issue #11).
+- **Difficulty settings or challenges.** In the default game, quota and pay both drop with
+  reputation, which is forgiving. A challenge keeps quotas rising as usual while pay still drops,
+  so a miss really hurts. Mike: "that's for later though" (decision 78).
 - **The business side.** Competitors, stock (issue #8). Probably post-game at most.
 - **Talk to robots by voice.** Push-to-talk dictation instead of typing, so you can manage on the
   fly (typing is slow, which is half of why a shift feels short). Options: the browser's speech

@@ -39,6 +39,12 @@ is the quarter's budget; wages come out of it as the shifts run.
    Before you start, the board shows what the quarter does to your money if everything ships.
 2. **Run shifts** on the floor: schedule your crew, give instructions, watch, fix. Wages tick.
 3. **Get paid** at the end of the quarter for every contract that shipped in full.
+
+**Reputation (agreed, not built; decision 78).** Three pips. A missed contract loses a whole pip, a
+shipped one wins back a third, and Small, Large and side contracts count the same. Reputation sets
+the board: with less of it, clients offer smaller quotas for less pay, which gives you room to
+recover and train up. At zero no client will sign with you, and the run is over. That's the only
+way a run ends.
 4. **Shop between quarters**, three choices of each: recruit a robot (a cheap blank one to train,
    a skilled one, or a pricey expert), train skills and traits, buy machines. Borrow if you need to.
 
@@ -55,9 +61,9 @@ correct the foreman. Same game, one more robot between your words and the work.
 
 ## Biggest open questions
 
-1. **What ends a run.** A run is endless: contracts keep getting crazier until you go under
-   (decision 69). What "going under" is exactly is open (running out of money with a debt you
-   can't pay?).
+1. **How much reputation moves the board.** A run ends when reputation runs out (decision 78).
+   Open: how far quota and pay drop per pip lost, and what happens if you're broke but still
+   reputable.
 2. **How to scale bigger.** Foremen will be a first-class concept, and there's only room for a few
    of those. Something more flexible may come later; not yet (decision 69).
 3. What happens to a contract that's late? (Now: it pays nothing.)

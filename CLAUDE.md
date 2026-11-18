@@ -198,6 +198,9 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
 - Runs are endless (Mike: "the contracts get crazier and eventually they'll die"). Growing bigger
   can't mean a new first-class concept per tier: foremen are one, and there's only room for a few.
 - Story and writing wait for the polish phase, once the mechanics are settled.
+- **Reputation ends a run** (decision 78): 3 pips, a missed contract loses a whole one, a shipped
+  one wins back a third, whatever its size. Less reputation means smaller quotas and less pay
+  (forgiving by default). At zero, no client signs with you.
 
 **Controls**
 - Tools should let you choose what they act on: at Pack you choose the color ("Pack red"), and a
