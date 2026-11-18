@@ -1206,6 +1206,7 @@ function openLevel(L, { again = false, shift = "restart", keepCrew = false } = {
     Array.from({ length: L.quarter.shifts }, (_, k) => `<i class="${k + 1 < quarter.shift ? "is-past" : k + 1 === quarter.shift ? "is-now" : ""}"></i>`).join("")}</span></span>` : `Level ${L.id}: ${L.name}`;
   $("#goalLabel").textContent = L.contracts ? "Contracts" : quarter ? "This quarter" : "Today's order";
   $("#laborLabel").textContent = quarter ? WORDS.funds.toLowerCase() : WORDS.labor;
+  $(".ct-cash").classList.toggle("is-funds", !!quarter); // in a quarter, your funds are big (Mike)
   $("#startScreen").classList.add("is-hidden");
   $("#boardScreen").classList.add("is-hidden");
   $("#endScreen").classList.add("is-hidden");

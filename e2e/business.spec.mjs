@@ -599,6 +599,8 @@ test("too broke for any robot: Start lets you work the shift alone (being broke 
   await page.evaluate(() => { ct.quarter.money = 2; ct.step(0); });
   await expect(page.locator("#goBtn")).toBeEnabled();
   await expect(page.locator("#crewReady")).toHaveText("You can't pay anyone this shift: Blip costs $5 and you have $2. Start works it yourself.");
+  // Funds are prominent on the floor in a quarter (Mike): the big display face, not the small mono line.
+  expect(parseFloat(await page.locator("#labor").evaluate((e) => getComputedStyle(e).fontSize))).toBeGreaterThanOrEqual(22);
   // Each robot you can't afford says how much you're short, like Recruit, Train and Buy.
   const blip = page.locator('[data-hire="blip"]');
   await expect(blip).toBeDisabled();
