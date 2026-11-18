@@ -1243,4 +1243,6 @@ machine. Yes, we could do fixed floor size with a grid. And buying slots later i
 like that."
 - You can own several of a machine, numbered like the bins ("Paint 1", "Paint 2").
 - The floor is a fixed grid of slots for now. Buying more slots is how a floor grows later.
-- The crate recipe is still open; Mike hadn't been told what a crate is.
+- The crate recipe: once it was explained (a crate is a bigger package holding three boxes), Mike
+  picked on the review page that a crate is always one box of each color: red, blue and green.
+  Contracts don't set their own mix.

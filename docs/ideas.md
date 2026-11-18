@@ -42,8 +42,9 @@ What's being built.
   you can own two of the same machine ("Paint 1", "Paint 2"; decision 86). A machine you've bought waits
   **In storage** until you place it. Flow approved as mocked (Mike, 2026-11-18); no assembler art
   yet.
-- **The assembler** (decision 85). A new machine and skill: three boxes of different colors go in,
-  one mixed crate comes out and ships at the Dock. Contracts can ask for crates. It's the first
+- **The assembler** (decision 85). A new machine and skill: one box each of red, blue and green
+  goes in, and one crate (a bigger package holding the three) comes out and ships at the Dock.
+  Every crate is that same mix (decision 86). Contracts can ask for crates. It's the first
   step toward lines feeding lines.
 
 ## Next
