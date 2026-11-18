@@ -116,3 +116,8 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
 - 2026-11-18: Mike on board A: "big contracts can give 2/3 reputation back but still -1 on miss"
   (decision 79). The Large card's line becomes "Ship it +⅔ reputation · Miss it −1 reputation";
   Small and side stay +⅓. The two sizes now differ in reputation as well as pay.
+- 2026-11-18: Mike on the reputation mocks: likes the pies (A) and the cross-outs ("i love the
+  cross-out"), wants info on hover on the crossed-out numbers, and didn't like the lender box
+  squeezed. Sent layout 1 (reputation under Funds) and layout 2 (circles under the business name,
+  recommended); moving the lender by Start left a gap and pushed the shop off, dropped. Mark owns
+  the decision log; Pam doesn't write decision entries.
