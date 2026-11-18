@@ -1083,3 +1083,13 @@ lend you another dollar"): "make this about reputation, not about no more money.
 says "The name <Business> is mud. No client in the Widget District will sign another contract with
 it." for every ending. What triggers it is unchanged (broke with the lender done lending) until a
 reputation model is picked; the screen already takes a reason.
+
+### 77. Paint-machine headline always in the rotation; no quarter on the license (2026-11-18)
+
+Mike: "paint machine can just blindly be in the rotation", so "<Business> Paint Machine Outlasts
+<Business>" no longer checks for a paint machine (replaces that part of decision 75). And on the
+license: "leave quarter out that makes no sense", so it reads "Widget District · Form 7-B", and an
+e2e test checks the license never says "quarter".
+
+Then, for the lender's headline: "same with lender". "Lender Collects His 10% of <Business>: $0"
+is in the rotation on every ending too, borrowed or not; the run-facts check is gone.

@@ -437,6 +437,7 @@ test("a new business starts on its license: name it, sign it, and the lender sta
   await page.click('[data-level="7"]');
   await expect(page.locator("#licenseScreen")).toBeVisible();
   await expect(page.locator("#boardScreen")).toBeHidden();
+  await expect(page.locator("#licenseScreen")).not.toContainText(/quarter/i); // makes no sense on a license (Mike)
   const first = await page.locator("#licenseName").inputValue();
   expect(first.length).toBeGreaterThan(0); // a name to start from
   await expect(page.locator("#licenseGo")).toBeDisabled();
@@ -481,7 +482,8 @@ test("out of business: the front page lands on the floor, with the run's numbers
   await expect(page.locator("#boardScreen")).toBeHidden();
   const hl = await page.locator("#paperHeadline").textContent();
   // Three loans out: the lender's headline fits too.
-  expect(['Clank & Sons Ships Its Last Box (It Was Empty)', 'Robots of Clank & Sons Finally Given Clear Instructions: “Leave”', 'Lender Collects His 10% of Clank & Sons: $0']).toContain(hl);
+  expect(['Clank & Sons Ships Its Last Box (It Was Empty)', 'Robots of Clank & Sons Finally Given Clear Instructions: “Leave”', 'Lender Collects His 10% of Clank & Sons: $0',
+    'Clank & Sons Paint Machine Outlasts Clank & Sons']).toContain(hl);
   // Said in terms of reputation, not money (decision 76).
   await expect(page.locator("#gameoverWhy")).toHaveText("The name Clank & Sons is mud. No client in the Widget District will sign another contract with it.");
   await expect(page.locator("#gameoverStats")).toContainText("Contracts shipped3 of 5");

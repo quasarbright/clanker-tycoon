@@ -205,29 +205,12 @@ test("out of business only when no robot's shift is affordable and the lender is
   assert.equal(B.outOfBusiness(biz, cands), null, "Blip's $5 shift is still affordable");
 });
 
-test("headlines: Mike's picks, only the ones that fit the ending and the run (decision 74)", async () => {
+test("headlines: Mike's picks, the paint machine's and the lender's always in the rotation (decisions 74, 77)", async () => {
   const { headline, headlinesFor } = await import("../src/headlines.js");
-  const all = (reason, facts) => new Set(headlinesFor(reason, facts).map((h) => h.text("Clank & Sons")));
-  const base = ["Clank & Sons Ships Its Last Box (It Was Empty)", "Robots of Clank & Sons Finally Given Clear Instructions: \u201cLeave\u201d"];
-  assert.deepEqual([...all("broke", {})].sort(), [...base].sort());
-  // A paint machine adds its headline to both endings.
-  assert.ok(all("broke", { paint: true }).has("Clank & Sons Paint Machine Outlasts Clank & Sons"));
-  assert.ok(all("reputation", { paint: true }).has("Clank & Sons Paint Machine Outlasts Clank & Sons"));
-  // The lender's: only when you borrowed, and only when you went broke.
-  assert.ok(all("broke", { borrowed: true }).has("Lender Collects His 10% of Clank & Sons: $0"));
-  assert.ok(!all("reputation", { borrowed: true }).has("Lender Collects His 10% of Clank & Sons: $0"));
-  assert.ok(!all("broke", {}).has("Lender Collects His 10% of Clank & Sons: $0"));
-  // Bin 2 is the reputation ending's.
-  assert.ok(all("reputation", {}).has("Clank & Sons Reputation Found at Bottom of Bin 2"));
-  assert.ok(!all("broke", {}).has("Clank & Sons Reputation Found at Bottom of Bin 2"));
-  // The same seed gives the same headline.
-  assert.equal(headline("broke", "X", 3, { paint: true }), headline("broke", "X", 3, { paint: true }));
-});
-
-test("borrowing marks the business as having borrowed, even once the loan is paid off", () => {
-  const biz = B.newBusiness();
-  assert.ok(!biz.borrowed);
-  B.borrow(biz, 0);
-  biz.loans = [];
-  assert.equal(biz.borrowed, true);
+  const all = (reason) => new Set(headlinesFor(reason).map((h) => h.text("Clank & Sons")));
+  const always = ["Clank & Sons Ships Its Last Box (It Was Empty)", "Robots of Clank & Sons Finally Given Clear Instructions: \u201cLeave\u201d",
+    "Clank & Sons Paint Machine Outlasts Clank & Sons", "Lender Collects His 10% of Clank & Sons: $0"];
+  assert.deepEqual([...all("broke")].sort(), [...always].sort());
+  assert.deepEqual([...all("reputation")].sort(), [...always, "Clank & Sons Reputation Found at Bottom of Bin 2"].sort());
+  assert.equal(headline("broke", "X", 3), headline("broke", "X", 3));
 });

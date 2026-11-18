@@ -1507,7 +1507,7 @@ function showGameOver(reason) {
   for (const id of ["startScreen", "endScreen", "pauseScreen", "boardScreen", "licenseScreen"]) $(`#${id}`).classList.add("is-hidden");
   const b = biz;
   $("#paperQuarter").textContent = `Quarter ${b.quarters + 1}`;
-  const hl = headline(reason, b.name, b.quarters + b.wins, { paint: !!b.owned, borrowed: !!b.borrowed || b.loans.length > 0 });
+  const hl = headline(reason, b.name, b.quarters + b.wins);
   $("#paperHeadline").textContent = hl;
   $("#paperCaption").textContent = `${b.owner}, owner, pictured on the floor of ${b.name}.`;
   $("#paperColumn").textContent = (b.wins ? `${b.name} shipped ${b.wins} of ${b.taken} contracts in ${b.quarters} ${b.quarters === 1 ? "quarter" : "quarters"} of business. `

@@ -26,7 +26,7 @@ things in, and the instructions you write.
 The business license (the screen where you name your business, `index.html` `#licenseScreen`).
 Mike: "perfect amount of on-theme and cute, love how it's official-sounding but ridiculous."
 
-> CERTIFICATE OF BUSINESS. Widget District · Form 7-B · Quarter 1.
+> CERTIFICATE OF BUSINESS. Widget District · Form 7-B.
 > This certifies that the business known as ___ may make, box and ship widgets, and is
 > responsible for every robot it puts on the floor.
 > Stamp: APPROVED, capital: $100. The lender: "Lovely name. I'll remember it."
