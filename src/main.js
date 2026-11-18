@@ -1557,7 +1557,7 @@ function showGameOver(reason) {
   $("#paperHeadline").textContent = hl;
   $("#paperCaption").textContent = `${b.owner}, owner, pictured on the floor of ${b.name}.`;
   $("#paperColumn").textContent = (b.wins ? `${b.name} shipped ${b.wins} of ${b.taken} contracts in ${b.quarters} ${b.quarters === 1 ? "quarter" : "quarters"} of business. `
-    : `${b.name} never shipped a contract. `) + `Robots on the floor declined to comment, citing their instructions.`;
+    : `${b.name} never shipped a contract. `) + `Robots on the floor declined to comment, as commenting was not part of their instructions.`;
   $("#gameoverWhy").textContent = GAMEOVER_WHY[reason](b);
   const rows = [["Quarters survived", b.quarters], ["Contracts shipped", b.taken ? `${b.wins} of ${b.taken}` : "None"],
     ...(b.best != null ? [["Best quarter", signedText(b.best)]] : []), ["Owed the lender", `$${debtOf(b)}`]];

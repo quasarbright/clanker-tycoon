@@ -23,6 +23,10 @@ Headlines Mike loved (the front page when a business goes under, `src/headlines.
 Each one is about something you actually did on the floor: boxes that ship, the bins you store
 things in, and the instructions you write.
 
+The front page's article ends: "Robots on the floor declined to comment, as commenting was not part
+of their instructions." (Mike's rewrite of "…citing their instructions": the robots doing exactly
+what they're told is the joke.)
+
 The business license (the screen where you name your business, `index.html` `#licenseScreen`).
 Mike: "perfect amount of on-theme and cute, love how it's official-sounding but ridiculous."
 

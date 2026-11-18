@@ -527,7 +527,7 @@ test("Pam's review of the front page: a long name fits the paper, curly quotes, 
   await page.evaluate(() => { ct.hire("blip"); });
   // Broke before anything shipped, with the longest name the license allows.
   await page.evaluate(() => { const b = ct.biz; b.name = "Cogsworth Shipping & Sprocket"; b.rep = 0; b.loans = [100, 100, 250]; b.money = 0; b.quarters = 0; b.wins = 0; b.taken = 0; b.best = null; ct.openBoard(); });
-  await expect(page.locator("#paperColumn")).toHaveText("Cogsworth Shipping & Sprocket never shipped a contract. Robots on the floor declined to comment, citing their instructions.");
+  await expect(page.locator("#paperColumn")).toHaveText("Cogsworth Shipping & Sprocket never shipped a contract. Robots on the floor declined to comment, as commenting was not part of their instructions.");
   await expect(page.locator("#paperHeadline")).not.toContainText('"');
   const fits = await page.evaluate(() => { const h = document.querySelector("#paperHeadline"), p = document.querySelector("#gameoverPaper"); return h.scrollWidth <= h.clientWidth + 1 && p.scrollHeight <= p.clientHeight + 1; });
   expect(fits).toBe(true);
