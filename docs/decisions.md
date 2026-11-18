@@ -1060,3 +1060,18 @@ this is the gold standard." He picked the business license and "the paper lands 
 - Tests: the license (fields, dice, why Open waits, the stamp, the board's name), the model being
   told your name, the canned line using it, `outOfBusiness`, the headlines, and the front page
   (headline, numbers, fits the window, New run starts a fresh license).
+
+### 75. Two more headlines, each tied to the run (2026-11-18)
+
+Mike kept two from Pam's second round of headlines (decision 74 has the first three): "Paint
+Machine Outlasts" ("ok") and the lender taking 10% of nothing ("good, but doesn't make sense for
+a headline. Close enough"), written as a real headline. Each fits only runs where it's true:
+
+- "<Business> Paint Machine Outlasts <Business>": only if the business owns a paint machine, on
+  either ending.
+- "Lender Collects His 10% of <Business>: $0": only on going broke, and only if the business ever
+  borrowed (`biz.borrowed`, set by `borrow`, stays true after the loan's paid off).
+
+`headlinesFor(reason, facts)` in `src/headlines.js` filters by ending and by the run's facts; the
+humor rule (a real headline, and clever) is in `docs/humor.md`. Also: the license and the front
+page fit their text again once the fonts load (two e2e tests were flaky when they measured first).

@@ -30,6 +30,7 @@ export function borrow(biz, i) {
   if (!amount || biz.loans.length >= LENDER.max) return false;
   biz.money += amount;
   biz.loans.push(amount);
+  biz.borrowed = true; // ever, even after it's paid back (the front page's lender headline)
   return true;
 }
 

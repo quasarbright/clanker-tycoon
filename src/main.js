@@ -1466,6 +1466,7 @@ function openLicense() {
   document.body.classList.add("is-quiet");
   $("#licenseScreen").classList.remove("is-hidden");
   fitLicense();
+  document.fonts.ready.then(fitLicense); // measure again once the license's fonts have loaded
   $("#licenseOwner").focus();
 }
 /** Open for business waits for both names, and says which one is missing. */
@@ -1478,6 +1479,7 @@ function checkLicense() {
 }
 $("#licenseName").addEventListener("input", () => { checkLicense(); fitLicense(); });
 $("#licenseOwner").addEventListener("input", () => { checkLicense(); fitLicense(); });
+document.fonts.addEventListener?.("loadingdone", () => { if (!$("#licenseScreen").classList.contains("is-hidden")) fitLicense(); });
 $("#licenseDice").addEventListener("click", () => { $("#licenseName").value = randomBusinessName($("#licenseName").value); checkLicense(); fitLicense(); });
 $("#licenseForm").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -1505,7 +1507,7 @@ function showGameOver(reason) {
   for (const id of ["startScreen", "endScreen", "pauseScreen", "boardScreen", "licenseScreen"]) $(`#${id}`).classList.add("is-hidden");
   const b = biz;
   $("#paperQuarter").textContent = `Quarter ${b.quarters + 1}`;
-  const hl = headline(reason, b.name, b.quarters + b.wins);
+  const hl = headline(reason, b.name, b.quarters + b.wins, { paint: !!b.owned, borrowed: !!b.borrowed || b.loans.length > 0 });
   $("#paperHeadline").textContent = hl;
   $("#paperCaption").textContent = `${b.owner}, owner, pictured on the floor of ${b.name}.`;
   $("#paperColumn").textContent = (b.wins ? `${b.name} shipped ${b.wins} of ${b.taken} contracts in ${b.quarters} ${b.quarters === 1 ? "quarter" : "quarters"} of business. `
@@ -1517,6 +1519,7 @@ function showGameOver(reason) {
   document.body.classList.add("is-quiet");
   $("#gameoverScreen").classList.remove("is-hidden");
   fitHeadline();
+  document.fonts.ready.then(fitHeadline);
 }
 $("#gameoverNew").addEventListener("click", () => { biz = null; $("#gameoverScreen").classList.add("is-hidden"); document.body.classList.remove("is-quiet"); openBoard(); });
 $("#gameoverMenu").addEventListener("click", () => { $("#gameoverScreen").classList.add("is-hidden"); document.body.classList.remove("is-quiet"); showMenu(); });

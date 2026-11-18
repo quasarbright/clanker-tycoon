@@ -480,11 +480,13 @@ test("out of business: the front page lands on the floor, with the run's numbers
   await expect(page.locator("#gameoverScreen")).toBeVisible();
   await expect(page.locator("#boardScreen")).toBeHidden();
   const hl = await page.locator("#paperHeadline").textContent();
-  expect(['Clank & Sons Ships Its Last Box (It Was Empty)', 'Robots of Clank & Sons Finally Given Clear Instructions: “Leave”']).toContain(hl);
+  // Three loans out: the lender's headline fits too.
+  expect(['Clank & Sons Ships Its Last Box (It Was Empty)', 'Robots of Clank & Sons Finally Given Clear Instructions: “Leave”', 'Lender Collects His 10% of Clank & Sons: $0']).toContain(hl);
   await expect(page.locator("#gameoverWhy")).toContainText("lender won't lend");
   await expect(page.locator("#gameoverStats")).toContainText("Contracts shipped3 of 5");
   await expect(page.locator("#gameoverStats")).toContainText("Owed the lender$450");
-  // The paper and the panel fit the window.
+  // The paper and the panel fit the window, once they've landed.
+  await page.evaluate(() => Promise.all([document.fonts.ready, ...document.getAnimations().map((a) => a.finished)]));
   const fits = await page.evaluate(() => ["#gameoverPaper", ".ct-gameover-panel"].every((q) => { const r = document.querySelector(q).getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth; }));
   expect(fits).toBe(true);
   // A new run starts on a fresh license.
@@ -500,6 +502,7 @@ test("Pam's review of the license: long names fit, the lender waits for the stam
   for (const sel of ["#pauseBtn", "#clock", "#coach"]) await expect(page.locator(sel)).toBeHidden();
   await page.fill("#licenseName", "W".repeat(28));
   await page.fill("#licenseOwner", "W".repeat(20));
+  await page.evaluate(() => document.fonts.ready);
   for (const sel of ["#licenseName", "#licenseOwner"]) {
     const fits = await page.locator(sel).evaluate((el) => {
       const c = document.createElement("canvas").getContext("2d"), cs = getComputedStyle(el);
