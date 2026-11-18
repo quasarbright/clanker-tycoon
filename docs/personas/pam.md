@@ -87,3 +87,9 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   projections that assume how the player splits work; show what's true (counts) instead.
 - 2026-11-17: Mike approved the quarter recap and plain counts on the shift card; Pam's spec went to
   the build thread (via the coordinator).
+- 2026-11-18: mocks for naming the business and reputation game over. Mike: "this exactly the type
+  of humor I want ... the gold standard". Picked: the business license (stamp lands when you press
+  Open for business) and the paper landing on your floor. Headlines 1 and 2 are the humor
+  reference ("Ships Its Last Box (It Was Empty)", "Reputation Found at Bottom of Bin 2"); the
+  tabloid was too much. The license wording ("official-sounding but ridiculous") is the tone.
+  Sources in docs/mocks/business-name/.
