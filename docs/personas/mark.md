@@ -125,6 +125,12 @@ slot, and 24 with Pack one slot closer to Supply. Mark's calls:
   Double the reds: board 2 Small 54 ($230) and Large 99 ($450); board 3 side 75 ($310); board 4
   side 84 ($360). That needs balance runs on the swapped and tidy floors too, since the target is
   "needs the swap or a second hauler", not "needs nothing".
+- **Three floors measured (7cebd2b):** the starting floor caps red at 66 a quarter whatever the
+  crew, because Pack is the limit. So the editor is required from board 1, which is the lesson. My
+  "or a second hauler" was wrong: on the starting floor only the swap helps. Swapped with hauler +
+  packer makes 84; board 2's Large 99 then needs a second hauler or the tidy floor, which is right
+  for a stretch. Board 4's side 84 sat exactly on 84 with no slack, and real programs from
+  instructions run less cleanly than balance.mjs's, so it drops to 78.
 - Board 1's Large red goes from 40 to 36 boxes ($320 to $290), so the cheapest crew just makes it
   on the starting floor and has room to spare after one move.
 - Leave boards 2 to 4 for now. A good layout makes their red contracts easier (hauler + packer at 24
