@@ -5,6 +5,7 @@
 //   node tools/business-playtest.mjs [quarters=4]
 // Robots don't think mid-shift here (no unexpected-event thinking), so a jam stays jammed: a bit
 // harsher than real play. Results: tools/business-playtest/results-<time>.json.
+import { placeLeftovers } from "../src/floor.js";
 import "../test/setup.mjs";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 
@@ -59,15 +60,15 @@ const PLAYERS = {
   // The Small contract, plus the side job once there's a paint machine; buys one when it's cheap to.
   careful: (biz, [small, , side]) => {
     const p = { picks: [small], buy: [], recruit: [], borrow: [] };
-    if (!biz.owned && biz.money >= 150) p.buy.push("paint");
-    if (biz.owned || p.buy.length) p.picks.push(side);
+    if (!B.hasMachine(biz, "paint") && biz.money >= 150) p.buy.push("paint");
+    if (B.hasMachine(biz, "paint") || p.buy.length) p.picks.push(side);
     if (biz.crew.length < 4 && biz.money >= 60) p.recruit.push("cheap");
     return p;
   },
   // Always the Large and the side job; borrows to get the machine and staff up.
   greedy: (biz, [, large, side]) => {
     const p = { picks: [large, side], buy: [], recruit: [], borrow: [] };
-    if (!biz.owned) { if (biz.money < 250) p.borrow.push(1); p.buy.push("paint"); }
+    if (!B.hasMachine(biz, "paint")) { if (biz.money < 250) p.borrow.push(1); p.buy.push("paint"); }
     if (biz.crew.length < 4) p.recruit.push("cheap");
     if (biz.crew.length < 5) p.recruit.push("skilled");
     return p;
@@ -76,8 +77,8 @@ const PLAYERS = {
   middle: (biz, [small, large, side]) => {
     const p = { picks: [large.color === "red" ? large : small], buy: [], recruit: [], borrow: [] };
     if (biz.crew.length < 4 && biz.money >= 40) p.recruit.push("cheap");
-    if (!biz.owned && biz.money >= 130) p.buy.push("paint");
-    if (biz.owned || p.buy.length) p.picks.push(side);
+    if (!B.hasMachine(biz, "paint") && biz.money >= 130) p.buy.push("paint");
+    if (B.hasMachine(biz, "paint") || p.buy.length) p.picks.push(side);
     return p;
   },
 };
@@ -113,6 +114,7 @@ async function playRun(name, quarters) {
     const plan = PLAYERS[name](biz, board);
     for (const i of plan.borrow) B.borrow(biz, i);
     for (const id of plan.buy) B.buy(biz, id);
+    placeLeftovers(biz.floor); // as Start does
     const offers = B.recruitOffers(biz);
     for (const tier of plan.recruit) B.recruit(biz, tier === "cheap" ? offers[0] : tier === "skilled" ? offers[1] : offers[2]);
     const picks = plan.picks.filter((c) => B.hasMachine(biz, c.needs));

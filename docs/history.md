@@ -236,3 +236,10 @@ into a roguelike shop, three choices of everything: contracts in a Small and Lar
 contract, recruits in three tiers (a blank robot to train up, a skilled one, an expert), training for
 skills and traits, and machines. The belt went too, replaced by a supply that never runs out.
 
+**2026-11-18, the floor becomes yours.** Mike: "Maybe we should have a factory builder/editor where
+you can drag the stuff you own around." Until then the floor was fixed and new machines just
+appeared on it. Now, before a shift, Edit floor turns it into a blueprint: machines snap to slots,
+dropping one on another swaps them, and what you buy waits in storage, with the button pulsing until
+you place it or say to keep it there. The first new machine to arrive that way was the assembler:
+three boxes, one of each color, into a crate.
+

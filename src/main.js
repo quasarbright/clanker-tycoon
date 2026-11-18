@@ -4,7 +4,7 @@
 // instructions, and they do the work too. A level ends when today's order is filled.
 import {
   newGame, step, resume, setProgram, setNow, goToDesk, atDesk, addWorker, removeWorker, playerGo, playerWalkTo,
-  playerSteer, playerDo, orderLineText, actProgress, boxProgress, hasAttr, STATIONS, DESK, RULES, COLORS, supplyColors, capOf,
+  playerSteer, playerDo, orderLineText, actProgress, boxProgress, hasAttr, STATIONS, DESK, RULES, COLORS, supplyColors, capOf, kindOf, CRATE,
 } from "./sim.js";
 import { CANDIDATES, SKILLS, ATTRIBUTES, compile, respond, ownerName } from "./brains.js";
 import { LEVELS } from "./levels.js";
@@ -12,9 +12,10 @@ import { backendLabel, useFakeLlm, BACKEND } from "./llm.js";
 import { getKey, setKey, signIn, finishSignIn } from "./openrouter-auth.js";
 import { WORDS, applyWords, aloneLine } from "./words.js";
 import { startShift, logEvent, downloadLog } from "./playlog.js";
+import { SLOTS, ANCHORS, inSlot, place, store, keepInStorage, placeLeftovers } from "./floor.js";
 import { headLooks, toolLooks, faceHTML, ownerHeadSVG, ownerHatSVG, ownerPhoto } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, signed as signedText, shippedOf, shiftCost } from "./quarter.js";
-import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
+import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, missingFor, trainableNow, canAdd, floorLevel, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
   RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers, crewCost,
   randomBusinessName, outOfBusiness, START_MONEY, cheapestWage } from "./business.js";
 import { headline } from "./headlines.js";
@@ -84,7 +85,9 @@ function robotCard(r, { cls = "", blurb = true, action = "", extra = "" } = {}) 
  */
 function ticketHTML(color, count, { cls = "", tip = "", pay = null, paid = false, loose = false } = {}) {
   const dot = `<span class="ct-dot ${color === "any" ? "c-any" : `c-${color}`}"></span>`;
-  const icon = loose ? dot : `<span class="ct-ticket-dots">${dot.repeat(3)}</span>`;
+  // A crate (decision 85) is a red, a blue and a green box together.
+  const icon = color === "crate" ? `<span class="ct-ticket-dots is-crate">${CRATE.map((c) => `<span class="ct-dot c-${c}"></span>`).join("")}</span>`
+    : loose ? dot : `<span class="ct-ticket-dots">${dot.repeat(3)}</span>`;
   const money = pay == null ? "" : `<span class="ct-ticket-money">${paid ? CHECK : ""}$${pay}</span>`;
   return `<span class="ct-ticket ${cls}" ${tip ? `data-tooltip="${tip}"` : ""}>${icon}<span class="ct-ticket-pay">${count}</span>${money}</span>`;
 }
@@ -131,7 +134,12 @@ const STATION_HINTS = {
   DOCK: "ship from here",
   BIN_1: "storage",
   BIN_2: "storage",
+  PAINT_2: "repaints a widget, wears with use",
+  ASSEMBLE: "red + blue + green box → 1 crate",
+  ASSEMBLE_2: "red + blue + green box → 1 crate",
 };
+/** Machines with a wear meter. */
+const wears = (key) => ["PAINT", "ASSEMBLE"].includes(kindOf(key));
 
 function setPhase(p) {
   phase = p;
@@ -193,26 +201,32 @@ function supplyHint() {
   return `${supplyColors(level).map((c) => `${dot(c)} ${c}`).join(", ")}, never runs out`;
 }
 
+/** A station's tile at floor position `at` (the floor and the editor draw the same tile). */
+function stationEl(key, at) {
+  const st = STATIONS[key];
+  const el = document.createElement("div");
+  el.className = "ct-st";
+  el.dataset.key = key;
+  el.style.left = `${at.x}%`; el.style.top = `${(at.y / 64) * 100}%`;
+  const cap = ["PACK", "PAINT", "BIN", "ASSEMBLE"].includes(kindOf(key)) ? capOf(level, key) : null;
+  const hint = key === "DOCK" ? (level.ship === "widgets" ? "ship widgets here" : "ship boxes here") : key === "SUPPLY" ? supplyHint() : STATION_HINTS[key];
+  if (key === "SUPPLY") el.dataset.tooltip = "Raw widgets. Take as many as you like; it never runs out.";
+  el.innerHTML = `<div class="ct-st-label"><span>${st.label}</span><span class="ct-st-cap"></span></div><div class="ct-st-hint">${hint}</div><div class="ct-st-items"></div>`
+    + (wears(key) ? `<div class="ct-wear" data-tooltip="Wear. At 100% the machine stops until someone with Repair services it."><i></i></div>` : "");
+  el.dataset.cap = cap ?? "";
+  return el;
+}
+
 function buildFloor() {
   floor.querySelectorAll(".ct-st, .ct-desk, .ct-bot, .ct-float, .ct-truckbay").forEach((el) => el.remove());
   ui.stations = {}; ui.bots = {};
   for (const key of level.stations) {
-    const st = STATIONS[key];
-    const el = document.createElement("div");
-    el.className = "ct-st";
-    el.dataset.key = key;
-    el.style.left = `${st.x}%`; el.style.top = `${(st.y / 64) * 100}%`;
-    const cap = ["PACK", "PAINT"].includes(key) || key.startsWith("BIN_") ? capOf(level, key) : null;
-    const hint = key === "DOCK" ? (level.ship === "widgets" ? "ship widgets here" : "ship boxes here") : key === "SUPPLY" ? supplyHint() : STATION_HINTS[key];
-    if (key === "SUPPLY") el.dataset.tooltip = "Raw widgets. Take as many as you like; it never runs out.";
-    el.innerHTML = `<div class="ct-st-label"><span>${st.label}</span><span class="ct-st-cap"></span></div><div class="ct-st-hint">${hint}</div><div class="ct-st-items"></div>`
-      + (key === "PAINT" ? `<div class="ct-wear" data-tooltip="Wear. At 100% the machine stops until someone with Repair services it."><i></i></div>` : "");
-    el.dataset.cap = cap ?? "";
+    const el = stationEl(key, STATIONS[key]);
     floor.append(el);
     ui.stations[key] = el;
   }
   // The main line, drawn between the tiles, through whichever stations this level has.
-  const line = ["SUPPLY", "PAINT", "PACK", "DOCK"].filter((k) => level.stations.includes(k));
+  const line = ["SUPPLY", "PAINT", "PACK", "ASSEMBLE", "DOCK"].filter((k) => level.stations.includes(k));
   const seg = (a, b) => {
     const A = STATIONS[a], B = STATIONS[b];
     const dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy);
@@ -251,7 +265,9 @@ function buildFloor() {
   lastVersion = -1;
 }
 
-const itemHTML = (it, clickable = false) => it.kind === "box"
+const itemHTML = (it, clickable = false) => it.kind === "crate"
+  ? `<span class="ct-crate${it.building ? " is-building" : ""}" data-id="${it.id ?? ""}"${clickable && !it.building ? ` data-pick="crate"` : ""}>${it.building ? `<span class="ct-box-fill"></span>` : ""}${CRATE.map((c) => `<i class="c-${c}"></i>`).join("")}</span>`
+  : it.kind === "box"
   ? `<span class="ct-box${it.building ? " is-building" : ""}" data-id="${it.id ?? ""}"${clickable && !it.building ? ` data-pick="box"` : ""}>${it.building ? `<span class="ct-box-fill"></span>` : ""}${it.colors.map((c) => `<i class="c-${c}"></i>`).join("")}</span>`
   : `<span class="ct-dot c-${it.color}" data-id="${it.id ?? ""}"${clickable ? ` data-pick="${it.color}"` : ""}></span>`;
 
@@ -261,13 +277,14 @@ const itemHTML = (it, clickable = false) => it.kind === "box"
 // Click a station to walk there; click something in it to walk there and pick that up; click the
 // floor to walk to that spot.
 floor.addEventListener("click", (e) => {
+  if (editing) return;
   if (phase === "plan") { nudgeStart(); return; }
   if (phase !== "run" || paused || !game || game.over) return;
   const pick = e.target.closest("[data-pick]");
   const st = e.target.closest(".ct-st");
   const p = game.player;
   if (st) {
-    const then = pick ? (pick.dataset.pick === "box" ? { action: "pickUp" } : { action: "pickUp", color: pick.dataset.pick }) : null;
+    const then = pick ? (pick.dataset.pick === "box" ? { action: "pickUp", box: true } : pick.dataset.pick === "crate" ? { action: "pickUp", crate: true } : { action: "pickUp", color: pick.dataset.pick }) : null;
     logEvent(game.t, "you", { go: st.dataset.key, then });
     playerGo(game, st.dataset.key, then);
     return;
@@ -308,6 +325,12 @@ window.addEventListener("blur", () => { keysDown.clear(); steerFromKeys(); });
 function begin({ force = false } = {}) {
   if (started || phase !== "plan") return;
   if (!force && startBlocker()) { nudgeStart(); return; }
+  if (editing) closeEditor();
+  // Something you bought and didn't place or set aside goes into the nearest free slot (Mark's spec).
+  if (onBusinessFloor() && biz.floor.fresh?.length) {
+    const placed = placeLeftovers(biz.floor);
+    if (placed.length) { logEvent(0, "floor_auto", { placed, at: { ...biz.floor.at } }); relayout(); }
+  }
   started = true;
   setPhase("run");
   // The crew is paid their flat rate for the shift as it starts.
@@ -350,6 +373,7 @@ function renderReady() {
   const sig = game.workers.map((w) => `${w.id}:${cardState(w)[0]}`).join() + blocker + (quarter ? `${payroll()}/${quarter.money}` : "");
   if (sig === lastReady) return;
   lastReady = sig;
+  renderFloorEdit(); // Edit floor waits while anyone is still reading
   renderShiftCost(short);
   $("#goBtn").disabled = !!blocker;
   $("#goBtn").dataset.tooltip = blocker || "";
@@ -398,28 +422,36 @@ function playerActions() {
   if (!st || p.act) return []; // not at a station, walking, or busy
   const items = game.stations[st];
   const acts = [];
+  const kind = kindOf(st);
   if (p.holding) {
-    if (st === "PAINT" && p.holding.kind === "widget") {
+    if (kind === "PAINT" && p.holding.kind === "widget") {
       for (const c of COLORS) if (c !== p.holding.color) acts.push({ label: `Paint ${c}`, a: { action: "paint", color: c } });
     }
-    const canDrop = st === "DOCK" ? (level.ship === "widgets" || p.holding.kind === "box") : true;
+    const canDrop = st === "DOCK" ? (level.ship === "widgets" || p.holding.kind !== "widget") : kind === "ASSEMBLE" ? p.holding.kind === "box" : true;
     // At the paint machine painting comes first (Space); everywhere else putting it down does.
     const drop = { label: st === "DOCK" ? "Ship it" : "Put down", a: { action: "putDown" } };
-    if (canDrop) st === "PAINT" ? acts.push(drop) : acts.unshift(drop);
+    if (canDrop) kind === "PAINT" ? acts.push(drop) : acts.unshift(drop);
   } else {
-    if (st === "PACK") {
+    if (kind === "ASSEMBLE") {
+      const has = (c) => items.some((i) => i.kind === "box" && !i.building && i.colors.every((x) => x === c));
+      if (CRATE.every(has)) acts.push({ label: "Assemble a crate", a: { action: "assemble" } });
+      if (items.some((i) => i.kind === "crate" && !i.building)) acts.push({ label: "Pick up crate", a: { action: "pickUp", crate: true } });
+      for (const c of CRATE) if (has(c)) acts.push({ label: `Pick up ${c} box`, a: { action: "pickUp", box: true, color: c } });
+    }
+    if (kind === "BIN") for (const c of COLORS) if (items.some((i) => i.kind === "box" && !i.building && i.colors.every((x) => x === c))) acts.push({ label: `Pick up ${c} box`, a: { action: "pickUp", box: true, color: c } });
+    if (kind === "PACK") {
       // One button per color there are 3 of: a box is one color, wherever the widgets sit. The
       // colors the order still needs come first.
       const needed = (c) => game.order.some((l) => l.done < l.count && (l.color === c || l.color === "any"));
       const ready = COLORS.filter((c) => items.filter((i) => i.kind === "widget" && i.color === c).length >= 3);
       for (const c of [...ready.filter(needed), ...ready.filter((c) => !needed(c))]) acts.push({ label: `Pack ${c}`, a: { action: "pack", color: c } });
-      if (items.some((i) => i.kind === "box" && !i.building)) acts.push({ label: "Pick up box", a: { action: "pickUp" } });
+      if (items.some((i) => i.kind === "box" && !i.building)) acts.push({ label: "Pick up box", a: { action: "pickUp", box: true } });
     }
     for (const c of COLORS) if (items.some((i) => i.kind === "widget" && i.color === c)) acts.push({ label: `Pick up ${c}`, a: { action: "pickUp", color: c } });
   }
-  if (st === "PAINT" && game.wear.PAINT > 0) {
-    const worn = game.wear.PAINT >= 100;
-    const act = { label: worn ? "Service the machine" : `Service (${Math.round(game.wear.PAINT)}% worn)`, a: { action: "service" } };
+  if (wears(st) && game.wear[st] > 0) {
+    const worn = game.wear[st] >= 100;
+    const act = { label: worn ? "Service the machine" : `Service (${Math.round(game.wear[st])}% worn)`, a: { action: "service" } };
     worn ? acts.unshift(act) : acts.push(act);
   }
   return acts;
@@ -996,11 +1028,11 @@ function handleEvents() {
         if (w) w.now = null;
         break;
       case "worn":
-        floater("worn out", STATIONS.PAINT.x, STATIONS.PAINT.y - 8, true);
+        floater("worn out", STATIONS[ev.station ?? "PAINT"].x, STATIONS[ev.station ?? "PAINT"].y - 8, true);
         break;
       case "ship": {
         floater(ev.matched ? "+1" : "not ordered", STATIONS.DOCK.x, STATIONS.DOCK.y - 8, !ev.matched);
-        haul(ev.item === "widget" ? { kind: "widget", color: ev.colors[0] } : { kind: "box", colors: ev.colors });
+        haul(ev.item === "widget" ? { kind: "widget", color: ev.colors[0] } : ev.item === "crate" ? { kind: "crate" } : { kind: "box", colors: ev.colors });
         break;
       }
       case "gaveUp": clearBubble(w); clearDesk(w); logLine(w, "sys", "Gave up waiting at your desk and went back to work."); break;
@@ -1024,7 +1056,7 @@ function snapshot() {
   logEvent(game.t, "snapshot", {
     you: who(game.player), workers: game.workers.map(who),
     stations: Object.fromEntries(Object.entries(game.stations).map(([k, items]) => [k, items.map((i) => (i.kind === "box" ? `box:${i.colors.join("")}` : i.color))])),
-    wear: game.wear.PAINT, order: game.order.map((l) => `${l.color} ${l.done}/${l.count}`).join(", "),
+    wear: { ...game.wear }, order: game.order.map((l) => `${l.color} ${l.done}/${l.count}`).join(", "),
   });
 }
 
@@ -1094,17 +1126,17 @@ function render() {
       const items = game.stations[key];
       el.querySelector(".ct-st-items").innerHTML = items.map((it) => itemHTML(it, true)).join("");
       el.querySelector(".ct-st-cap").textContent = el.dataset.cap ? `${items.length}/${el.dataset.cap}` : "";
-      if (key === "PAINT") {
-        el.querySelector(".ct-wear i").style.transform = `scaleX(${game.wear.PAINT / 100})`;
-        el.classList.toggle("is-worn", game.wear.PAINT >= 100);
+      if (wears(key)) {
+        el.querySelector(".ct-wear i").style.transform = `scaleX(${game.wear[key] / 100})`;
+        el.classList.toggle("is-worn", game.wear[key] >= 100);
       }
     }
   }
   for (const [key, el] of Object.entries(ui.stations)) el.classList.toggle("is-here", game.player.station === key && !game.player.act);
   // Boxes being packed fill in.
-  for (const fill of floor.querySelectorAll(".ct-box.is-building .ct-box-fill")) {
+  for (const fill of floor.querySelectorAll(".ct-box.is-building .ct-box-fill, .ct-crate.is-building .ct-box-fill")) {
     const id = +fill.parentElement.dataset.id;
-    const box = game.stations.PACK?.find((i) => i.id === id);
+    const box = Object.values(game.stations).flat().find((i) => i.id === id);
     if (box) fill.style.transform = `scaleX(${boxProgress(game, box)})`;
   }
   // In a quarter: the money left (the crew's pay comes out at Start). Otherwise what the crew costs.
@@ -1175,9 +1207,10 @@ function frame(now) {
  * In a quarter, `shift` says which shift that is: "restart" plays this one again (undoing what it
  * spent and shipped, if it ran), "next" moves on to the next one, and "new" starts the quarter over.
  */
-function openLevel(L, { again = false, shift = "restart", keepCrew = false } = {}) {
-  // A new quarter of contracts keeps the crew from the last one, with their instructions.
-  const crew = (again && game?.level === L) || (keepCrew && game?.level.contracts) ? game.workers : [];
+function openLevel(L, { again = false, shift = "restart", keepCrew = false, relaid = false } = {}) {
+  // A new quarter of contracts keeps the crew from the last one, with their instructions; so does
+  // the same shift on a floor you just rearranged (`relaid`).
+  const crew = (again && game?.level === L) || (keepCrew && game?.level.contracts) || relaid ? game.workers : [];
   const ran = started || phase === "end";
   if (!L.quarter) quarter = null;
   else if (!again || shift === "new") quarter = newQuarter(L);
@@ -1198,7 +1231,7 @@ function openLevel(L, { again = false, shift = "restart", keepCrew = false } = {
     else if (keepCrew) logLine(w, "sys", "New quarter", "divider");
   }
   startShift(L, { again, crew: crewSummary(), quarter: quarter ? { shift: quarter.shift, money: Math.floor(quarter.money), done: quarter.done } : undefined,
-    contracts: L.contracts ? { picked: L.contracts.map(({ id, color, count, pay }) => ({ id, color, count, pay })), machine: biz?.owned ?? null } : undefined });
+    contracts: L.contracts ? { picked: L.contracts.map(({ id, color, count, pay }) => ({ id, color, count, pay })), machines: biz?.machines.map((x) => x.key) ?? [], floor: biz?.floor.at } : undefined });
   started = false;
   lastVersion = -1; lastClock = null; lastOrder = ""; lastHands = ""; lastList = ""; lastReady = "";
   ui.thinking = {};
@@ -1219,6 +1252,7 @@ function openLevel(L, { again = false, shift = "restart", keepCrew = false } = {
   $("#pauseScreen").classList.add("is-hidden");
   paused = false;
   setPhase("plan");
+  renderFloorEdit();
 }
 
 function endLevel() {
@@ -1299,6 +1333,150 @@ function endQuarterShift() {
   $("#endScreen .ct-mascot").hidden = false;
   $("#endScreen").classList.remove("is-hidden");
 }
+
+// ---------- the floor editor (decision 85) ----------
+// Before a shift on your business's floor you can rearrange it: drag a machine to an open slot, or
+// onto another one to swap the two; drag it to "In storage" to take it off the floor. Done lays the
+// shift out again on the new floor with the same crew and instructions. Supply, the dock and your
+// desk are bolted down.
+
+const ICON_LOCK = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>`;
+const ICON_MOVE = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M15 19l-3 3-3-3M19 9l3 3-3 3M2 12h20M5 9l-3 3 3 3M9 5l3-3 3 3"/></svg>`;
+let editing = false, drag = null;
+const onBusinessFloor = () => !!(biz && level?.contracts && level.positions);
+const nameOf = (key) => STATIONS[key].label;
+const andList = (xs) => xs.join(", ").replace(/, ([^,]*)$/, " and $1");
+
+/** The plan bar's Edit floor button: it pulses while something new waits in storage (Mike). */
+function renderFloorEdit() {
+  const show = onBusinessFloor() && phase === "plan";
+  $("#floorEdit").hidden = !show;
+  if (!show) return;
+  const f = biz.floor, fresh = f.fresh ?? [];
+  const reading = game.workers.find((w) => w.compiling);
+  const btn = $("#editFloorBtn");
+  btn.classList.toggle("is-new", fresh.length > 0);
+  btn.disabled = !!reading;
+  if (reading) btn.dataset.tooltip = `${reading.hire.name} is still reading their instructions.`; else delete btn.dataset.tooltip;
+  $("#storageBadge").hidden = !f.storage.length;
+  $("#storageBadge").textContent = f.storage.length;
+  $("#newNote").hidden = !fresh.length;
+  $("#newNote").innerHTML = fresh.length ? `New in storage: <b>${andList(fresh.map(nameOf))}</b>. Start places ${fresh.length > 1 ? "them" : "it"} for you. <button class="ct-link" id="keepStored">Keep in storage</button>` : "";
+  $("#keepStored")?.addEventListener("click", () => { keepInStorage(biz.floor); logEvent(null, "floor_keep", { storage: [...biz.floor.storage] }); renderFloorEdit(); });
+}
+
+function openEditor() {
+  if (!onBusinessFloor() || phase !== "plan" || started) return;
+  editing = true;
+  document.body.classList.add("is-editing");
+  logEvent(null, "floor_edit", { at: { ...biz.floor.at }, storage: [...biz.floor.storage] });
+  renderEditor();
+}
+$("#editFloorBtn").addEventListener("click", openEditor);
+
+function closeEditor() {
+  editing = false; drag = null;
+  document.body.classList.remove("is-editing");
+}
+$("#doneEditBtn").addEventListener("click", () => {
+  closeEditor();
+  logEvent(null, "floor_done", { at: { ...biz.floor.at }, storage: [...biz.floor.storage] });
+  relayout();
+});
+
+/** The same shift again on the floor as it's laid out now: same crew, same instructions. */
+function relayout() {
+  openLevel({ ...level, ...floorLevel(biz) }, { again: true, relaid: true });
+}
+
+/** Draw the blueprint: slots, the bolted-down anchors, your machines where they stand, the storage list. */
+function renderEditor() {
+  const f = biz.floor;
+  $("#slots").innerHTML = SLOTS.map((p, i) => `<div class="ct-slot" data-slot="${i}" style="left:${p.x}%;top:${(p.y / 64) * 100}%"></div>`).join("");
+  floor.querySelectorAll(".ct-st").forEach((el) => el.remove());
+  ui.stations = {};
+  for (const key of Object.keys(ANCHORS)) {
+    const el = stationEl(key, ANCHORS[key]);
+    el.classList.add("is-anchor");
+    el.insertAdjacentHTML("beforeend", `<span class="ct-handle" data-tooltip="Bolted down">${ICON_LOCK}</span>`);
+    floor.append(el);
+  }
+  for (const [key, i] of Object.entries(f.at)) {
+    const el = stationEl(key, SLOTS[i]);
+    el.classList.add("is-movable");
+    el.dataset.move = key;
+    el.insertAdjacentHTML("beforeend", `<span class="ct-handle">${ICON_MOVE}</span>`);
+    floor.append(el);
+  }
+  const desk = floor.querySelector(".ct-desk");
+  if (desk && !desk.querySelector(".ct-handle")) desk.insertAdjacentHTML("beforeend", `<span class="ct-handle">${ICON_LOCK}</span>`);
+  const fresh = f.fresh ?? [];
+  $("#storage").innerHTML = f.storage.length ? f.storage.map((key) => `<div class="ct-stored" data-move="${key}">
+      <span class="ct-stored-crate">${nameOf(key)}</span>
+      <div><b>${nameOf(key)}${fresh.includes(key) ? `<span class="ct-new-tag">New</span>` : ""}</b><span>${STATION_HINTS[key]}. Drag it onto the floor.</span></div>
+    </div>`).join("") : `<div class="ct-storage-empty">Nothing in storage. Drag a machine here to take it off the floor.</div>`;
+}
+
+/** Where on the floor a point is, in floor units, and the slot it's over (if any). */
+function dropTarget(e) {
+  const r = floor.getBoundingClientRect(), k = r.width / 100;
+  const x = (e.clientX - r.left) / k, y = (e.clientY - r.top) / k;
+  const over = document.elementFromPoint(e.clientX, e.clientY);
+  if (over?.closest(".ct-storage")) return { x, y, storage: true };
+  const i = SLOTS.findIndex((p) => Math.abs(p.x - x) <= 9 && Math.abs(p.y - y) <= 9);
+  return { x, y, slot: i >= 0 ? i : null };
+}
+
+document.addEventListener("pointerdown", (e) => {
+  if (!editing) return;
+  const src = e.target.closest("[data-move]");
+  if (!src) return;
+  e.preventDefault();
+  const key = src.dataset.move;
+  const ghost = stationEl(key, { x: 0, y: 0 });
+  ghost.classList.add("ct-drag-ghost");
+  floor.append(ghost);
+  src.classList.add("is-lifted");
+  drag = { key, src, ghost, from: biz.floor.at[key] ?? null };
+  moveDrag(e);
+});
+
+function moveDrag(e) {
+  if (!drag) return;
+  const t = dropTarget(e);
+  drag.ghost.style.left = `${t.x}%`; drag.ghost.style.top = `${(t.y / 64) * 100}%`;
+  floor.querySelectorAll(".ct-slot").forEach((el) => { el.className = "ct-slot"; el.innerHTML = ""; });
+  $("#storage").classList.toggle("is-target", !!t.storage && drag.from != null);
+  drag.target = t;
+  if (t.slot == null) return;
+  const el = floor.querySelector(`[data-slot="${t.slot}"]`), other = inSlot(biz.floor, t.slot);
+  el.classList.add("is-target");
+  if (other && other !== drag.key) {
+    // Swap: both slots light up, and the other machine shows where it will go (Mike's pick).
+    el.classList.add("is-swap");
+    el.innerHTML = `<span class="ct-slot-tag">Swap with ${nameOf(other)}</span>`;
+    if (drag.from != null) {
+      const back = floor.querySelector(`[data-slot="${drag.from}"]`);
+      back.classList.add("is-preview");
+      back.textContent = `${nameOf(other)} goes here`;
+    } else el.innerHTML = `<span class="ct-slot-tag">Swap: ${nameOf(other)} goes to storage</span>`;
+  }
+}
+document.addEventListener("pointermove", moveDrag);
+
+document.addEventListener("pointerup", (e) => {
+  if (!drag) return;
+  const t = dropTarget(e), { key } = drag;
+  drag.ghost.remove();
+  drag.src.classList.remove("is-lifted");
+  $("#storage").classList.remove("is-target");
+  drag = null;
+  let moved = null;
+  if (t.storage) moved = store(biz.floor, key) ? { key, to: "storage" } : null;
+  else if (t.slot != null) moved = place(biz.floor, key, t.slot);
+  if (moved) logEvent(null, "floor_move", { ...moved, at: { ...biz.floor.at }, storage: [...biz.floor.storage] });
+  renderEditor();
+});
 
 // ---------- your business: the contract board ----------
 
@@ -1393,8 +1571,8 @@ function renderBoard() {
   const offers = board(biz);
   picked = picked.filter((p) => offers.some((c) => c.id === p.id));
   const isOn = (c) => picked.some((p) => p.id === c.id);
-  const [small, large, side] = offers;
-  const blocked = (c) => (!hasMachine(biz, c.needs) ? `Needs a paint machine, and you don't own one yet.` : "");
+  const [small, large, side, crates] = offers;
+  const blocked = (c) => missingFor(biz, c);
   const size = (c) => `<button type="button" class="ct-size ${isOn(c) ? "is-on" : ""}" data-contract="${c.id}" ${blocked(c) ? "disabled" : ""}>
       <span class="ct-size-name">${isOn(c) ? CHECK : ""}${c.size === "small" ? "Small" : "Large"}</span>
       ${offerNumbers(c)}${keepLine(c)}
@@ -1412,7 +1590,15 @@ function renderBoard() {
         ${offerNumbers(side)}${keepLine(side)}
       </button></div>
       <div class="ct-offer-note is-bad">${blocked(side)}</div>${painted(side)}
-    </div>`;
+    </div>${crates ? `
+    <div class="ct-offer ct-side ${isOn(crates) ? "is-picked" : ""}">
+      <div class="ct-offer-head">${ticketHTML("crate", "")}<b>Crates</b><span class="ct-offer-keep">Assembler contract</span></div>
+      <div class="ct-sizes"><button type="button" class="ct-size ${isOn(crates) ? "is-on" : ""}" data-contract="${crates.id}" ${blocked(crates) ? "disabled" : ""}>
+        <span class="ct-size-name">${isOn(crates) ? CHECK : ""}${isOn(crates) ? "Taking it" : "Take it"}</span>
+        ${offerNumbers(crates)}${keepLine(crates)}
+      </button></div>
+      <div class="ct-offer-note is-bad">${blocked(crates)}</div><span class="ct-offer-keep">Each crate is a red, a blue and a green box.</span>
+    </div>` : ""}`;
   $("#offers").querySelectorAll("[data-contract]").forEach((b) => b.addEventListener("click", () => {
     const c = offers.find((o) => o.id === b.dataset.contract);
     // Taking one size drops the other: a quarter's contracts never share a color.
@@ -1420,7 +1606,8 @@ function renderBoard() {
     logEvent(null, "pick", { contract: c.id, on: isOn(c), picked: picked.map((p) => p.id) });
     renderBoard();
   }));
-  const total = picked.reduce((a, c) => a + c.count, 0);
+  const boxesIn = (c) => c.count * (c.color === "crate" ? 3 : 1);
+  const total = picked.reduce((a, c) => a + boxesIn(c), 0);
   $("#boardGo").disabled = !picked.length;
   $("#boardGo").textContent = WORDS.startQuarter;
   $("#boardNote").textContent = !picked.length ? "Pick at least one contract."
@@ -1449,7 +1636,7 @@ function renderBoard() {
       const broke = biz.money < TRAIN_PRICE;
       return `<button class="ct-train-item" data-train="${id}:${k}" ${broke ? short(TRAIN_PRICE) : `data-tooltip="${(isSkill ? SKILLS : ATTRIBUTES)[k].tip}"`}>${(isSkill ? SKILLS : ATTRIBUTES)[k].label}<span>${signed(after - r.wage)} a shift${broke ? ` · ${shortNote(TRAIN_PRICE)}` : ""}</span></button>`;
     };
-    const skills = TRAINABLE.filter((k) => !r.skills.includes(k)), traits = TRAINABLE_ATTRS.filter((k) => !r.attributes.includes(k));
+    const skills = trainableNow(biz).filter((k) => !r.skills.includes(k)), traits = TRAINABLE_ATTRS.filter((k) => !r.attributes.includes(k));
     const open = trainOpen === id;
     const menu = !open ? "" : `<div class="ct-train-menu">${skills.length ? `<div class="ct-train-head">Skills · $${TRAIN_PRICE} each</div>${skills.map((k) => item(k, true)).join("")}` : ""}${
       traits.length ? `<div class="ct-train-head">Traits · $${TRAIN_PRICE} each</div>${traits.map((k) => item(k, false)).join("")}` : ""}</div>`;
@@ -1462,15 +1649,16 @@ function renderBoard() {
   }).join("");
 
   // ----- machines: three this visit, and what's on your floor
-  const mine = SHOP.filter((m) => owns(biz, m.id));
+  const mine = [...biz.machines.map((x) => STATIONS[x.key].label), ...biz.upgrades.map((id) => SHOP.find((m) => m.id === id).name)];
   $("#machines").innerHTML = machineOffers(biz).map((m) => {
-    const done = owns(biz, m.id) && biz.boughtNow.includes(m.id);
-    const replaces = m.kind === "paint" && biz.owned && !owns(biz, m.id) ? " Replaces your paint machine." : "";
+    // A floor machine you can still buy a second of stays buyable; it's "bought" only once you can't.
+    const done = biz.boughtNow.includes(m.id) && !(m.station && canAdd(biz, m));
+    const replaces = m.station && biz.machines.some((x) => SHOP.find((y) => y.id === x.id).kind === m.kind) ? " A second one: it goes in storage as " + STATIONS[`${m.station}_2`].label + "." : m.station ? " It goes in storage; place it with Edit floor." : "";
     return `<div class="ct-biz-bot ct-machine ${done ? "is-done" : ""}">
       <div><div><b>${m.name}</b></div><div class="ct-biz-blurb">${m.blurb}${replaces}</div></div>
       <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} ${WORDS.bought}</span>` : `<button class="ct-btn is-gold" data-buy="${m.id}" ${short(m.price)}>Buy $${m.price}</button>${shortNote(m.price)}`}</div>
     </div>`;
-  }).join("") + `<p class="ct-offer-note">On your floor: ${mine.length ? mine.map((m) => m.name.toLowerCase()).join(", ") : "nothing yet"}.</p>`;
+  }).join("") + `<p class="ct-offer-note">Bought so far: ${mine.length ? mine.join(", ") : "nothing yet"}.</p>`;
 
   $("#boardScreen").querySelectorAll("[data-recruit]").forEach((b) => b.addEventListener("click", () => {
     if (recruit(biz, b.dataset.recruit)) { logEvent(null, "recruit", { robot: b.dataset.recruit, funds: Math.floor(biz.money) }); renderBoard(); }
@@ -1750,6 +1938,7 @@ window.ct = {
   step: (dt) => { if (started) step(game, dt); handleEvents(); render(); },
   give: (id, text) => giveInstructions(worker(id), text), say: (id, text) => message(worker(id), "message", text),
   setPaused, begin: () => begin({ force: true }), startBlocker: () => startBlocker(), thinking: (id, d) => setThinking(worker(id), d), hire, playerActions, openBoard, renderBoard, get biz() { return biz; }, set biz(b) { biz = b; },
+  buy: (id) => buy(biz, id), openEditor, closeEditor, relayout, get editing() { return editing; }, get level() { return level; },
   showGameOver: (r) => showGameOver(r), license: (name, owner) => { if (!biz) biz = newBusiness(); biz.name = name; biz.owner = owner; },
   useFakeLlm, // e2e: answer model calls without a model
 };

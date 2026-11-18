@@ -17,7 +17,22 @@ export const STATIONS = {
   DOCK:   { x: 89, y: 37, label: "Dock" },
   BIN_1:  { x: 26, y: 37, label: "Bin 1" },
   BIN_2:  { x: 50, y: 37, label: "Bin 2" },
+  // Only on a business floor, where you buy them and place them yourself (floor.js, decision 85).
+  PAINT_2:  { x: 52, y: 56, label: "Paint 2" },
+  ASSEMBLE: { x: 34, y: 56, label: "Assembler" },
+  ASSEMBLE_2: { x: 52, y: 56, label: "Assembler 2" },
 };
+// The levels' own positions, so a business floor's layout can be laid over them and taken off again.
+const HOME = Object.fromEntries(Object.entries(STATIONS).map(([k, v]) => [k, { x: v.x, y: v.y }]));
+/** Put the stations where this level's floor has them (a business floor's layout), or back home. */
+export function applyLayout(positions) {
+  for (const [k, v] of Object.entries(HOME)) Object.assign(STATIONS[k], v);
+  for (const [k, v] of Object.entries(positions ?? {})) if (STATIONS[k]) Object.assign(STATIONS[k], { x: v.x, y: v.y });
+}
+/** What kind of station this is: "PAINT_2" is a PAINT, "BIN_1" a BIN, "ASSEMBLE_2" an ASSEMBLE. */
+export const kindOf = (key) => (key.startsWith("BIN_") ? "BIN" : key.replace(/_\d+$/, ""));
+/** Machines that wear and get serviced. */
+const WEARS = ["PAINT", "ASSEMBLE"];
 // Raw widgets come from the supply, which never runs out (decision #57; there used to be a belt that
 // brought one every few seconds). Old programs that say "BELT" still mean the supply.
 const stationKey = (name) => (name === "BELT" ? "SUPPLY" : name);
@@ -51,13 +66,13 @@ function distToTile(key, x, y) {
 export const COLORS = ["red", "blue", "green"];
 
 // Skills are things a worker knows how to do; attributes are traits (docs/worker-agent-design.md).
-export const SKILL_ACTIONS = { packing: "pack", painting: "paint", repair: "service" };
-const PRIMARY = { pack: "packing", paint: "painting" }; // without the skill: a compile error
+export const SKILL_ACTIONS = { packing: "pack", painting: "paint", assembly: "assemble", repair: "service" };
+const PRIMARY = { pack: "packing", paint: "painting", assemble: "assembly" }; // without the skill: a compile error
 const SIDE = { service: "repair" };                      // without the skill: silently nothing
 
 export const RULES = {
   speed: 22,            // floor units per second
-  binCap: 5, packCap: 6, paintCap: 3,
+  binCap: 5, packCap: 6, paintCap: 3, assembleCap: 6,
   supplyShown: 4,       // widgets of each color drawn at the supply (it never runs out)
   reach: 6,             // how close to a station's tile you have to stand to use it (corners are 4√2 ≈ 5.7 away)
   stationWait: 8,       // how long a worker waits anywhere else (for a box, for room, for 3 widgets)
@@ -72,7 +87,9 @@ export const RULES = {
 };
 // Picking up and putting down are instant. Everything that takes time shows its progress
 // (actProgress below), so nothing on the floor just sits there.
-const DUR = { pickUp: 0, putDown: 0, paint: 1.5, pack: 2, service: 3, say: 1 };
+const DUR = { pickUp: 0, putDown: 0, paint: 1.5, pack: 2, assemble: 3, service: 3, say: 1 };
+/** A crate is one finished box of each of these, put together at the Assembler (Mark's default). */
+export const CRATE = ["red", "blue", "green"];
 
 export function mulberry32(a) {
   return function () {
@@ -85,18 +102,19 @@ export function mulberry32(a) {
 
 const label = (st) => STATIONS[st]?.label ?? st;
 const widget = (s, color) => ({ id: ++s.ids, kind: "widget", color });
-const itemName = (it) => (it.kind === "box" ? "box" : `${it.color} widget`);
+const itemName = (it) => (it.kind === "box" ? "box" : it.kind === "crate" ? "crate" : `${it.color} widget`);
 
 /**
  * A new game of `level` (see levels.js) with these hires, in level order. `done` (one count per
  * order line) starts the order part-shipped: a quarter's later shifts carry its quota forward.
  */
 export function newGame(level, hires, seed = (Math.random() * 2 ** 32) >>> 0, { done } = {}) {
+  applyLayout(level.positions);
   const s = {
     t: 0, seed, rng: mulberry32(seed), ids: 0, version: 0, level,
     shipped: 0, counted: 0, wasted: 0, laborCost: 0,
     stations: Object.fromEntries(level.stations.map((k) => [k, []])),
-    wear: level.stations.includes("PAINT") ? { PAINT: 0 } : {},
+    wear: Object.fromEntries(level.stations.filter((k) => WEARS.includes(kindOf(k))).map((k) => [k, 0])),
     workers: [], events: [],
     order: level.order.map((l, i) => ({ ...l, done: done?.[i] ?? 0 })),
     over: false, won: false, lastProgress: 0,
@@ -179,15 +197,18 @@ export function step(s, dt) {
 
 /** Names of the actions and questions this worker's programs may use in this level. */
 export function toolNamesFor(hire, level) {
-  const has = (k) => level.stations.includes(k);
+  const has = (kind) => level.stations.some((k) => kindOf(k) === kind);
   const actions = ["move", "pickUp", "putDown", "wait", "say", "think"];
   if (has("PACK")) actions.push("pickUpBox");
   if (has("PACK") && hire.skills.includes("packing")) actions.push("pack");
   if (has("PAINT") && hire.skills.includes("painting")) actions.push("paint");
-  if (has("PAINT")) actions.push("service"); // a side task: anyone may include it
+  if (has("ASSEMBLE")) actions.push("pickUpCrate");
+  if (has("ASSEMBLE") && hire.skills.includes("assembly")) actions.push("assemble");
+  if (WEARS.some(has)) actions.push("service"); // a side task: anyone may include it
   const queries = ["holding", "count", "boxes", "space", "needs", "needsAny", "where", "holds"];
-  if (has("PAINT")) queries.push("wear");
-  return { actions, queries, known: ["move", "pickUp", "pickUpBox", "putDown", "pack", "paint", "service", "wait", "say", "think"] };
+  if (has("ASSEMBLE")) queries.push("crates");
+  if (WEARS.some(has)) queries.push("wear");
+  return { actions, queries, known: ["move", "pickUp", "pickUpBox", "pickUpCrate", "putDown", "pack", "paint", "assemble", "service", "wait", "say", "think"] };
 }
 
 function makeTools(s, w) {
@@ -195,7 +216,9 @@ function makeTools(s, w) {
   const actions = {
     move: (st) => ({ action: "moveTo", station: stationKey(st) }),
     pickUp: (c) => ({ action: "pickUp", color: color(c) }),
-    pickUpBox: () => ({ action: "pickUp", box: true }),
+    pickUpBox: (c) => ({ action: "pickUp", box: true, color: color(c) }),
+    pickUpCrate: () => ({ action: "pickUp", crate: true }),
+    assemble: () => ({ action: "assemble" }),
     putDown: () => ({ action: "putDown" }),
     pack: (c) => ({ action: "pack", color: color(c) }),
     paint: (c) => ({ action: "paint", color: c }),
@@ -205,14 +228,15 @@ function makeTools(s, w) {
     think: (reason) => ({ action: "think", reason }),
   };
   const at = (st) => s.stations[stationKey(st)] ?? [];
-  const holdingOf = (x) => (!x.holding ? "nothing" : x.holding.kind === "box" ? "box" : x.holding.color);
+  const holdingOf = (x) => (!x.holding ? "nothing" : x.holding.kind === "box" ? "box" : x.holding.kind === "crate" ? "crate" : x.holding.color);
   const findPerson = (name) => [s.player, ...s.workers].find((x) => x.hire.name.toLowerCase() === String(name).toLowerCase() || (name === "boss" && x.isPlayer));
   const queries = {
     holding: () => holdingOf(w),
     count: (st, c) => at(st).filter((i) => i.kind === "widget" && (!c || i.color === c)).length,
-    boxes: (st) => at(st).filter((i) => i.kind === "box" && !i.building).length,
+    boxes: (st, c) => at(st).filter((i) => i.kind === "box" && !i.building && (!c || i.colors.every((x) => x === c))).length,
+    crates: (st) => at(st).filter((i) => i.kind === "crate" && !i.building).length,
     space: (st) => Math.max(0, capOf(s.level, stationKey(st)) - at(st).length),
-    needs: (c) => s.order.filter((l) => l.color === c || l.color === "any").reduce((a, l) => a + l.count - l.done, 0),
+    needs: (c) => s.order.filter((l) => l.color === c || l.color === "any" || (l.color === "crate" && CRATE.includes(c))).reduce((a, l) => a + l.count - l.done, 0),
     needsAny: () => s.order.reduce((a, l) => a + l.count - l.done, 0),
     wear: (st) => Math.round(s.wear[stationKey(st)] ?? 0),
     where: (name) => { const x = findPerson(name); return x ? programStationName(x.station ?? "walking") : "nobody"; },
@@ -222,8 +246,11 @@ function makeTools(s, w) {
 }
 
 /** How much a station holds. A level's `caps` ({ PACK, BIN }) can raise it: bought upgrades. */
-export const capOf = (level, st) => (st.startsWith("BIN_") ? level.caps?.BIN ?? RULES.binCap : st === "PACK" ? level.caps?.PACK ?? RULES.packCap
-  : st === "PAINT" ? RULES.paintCap : st === "DOCK" ? Infinity : 0);
+export const capOf = (level, st) => {
+  const k = kindOf(st);
+  return k === "BIN" ? level.caps?.BIN ?? RULES.binCap : k === "PACK" ? level.caps?.PACK ?? RULES.packCap
+    : k === "PAINT" ? RULES.paintCap : k === "ASSEMBLE" ? RULES.assembleCap : k === "DOCK" ? Infinity : 0;
+};
 
 /** Give a worker a (parsed, checked) program. It starts from the top. */
 export function setProgram(s, w, ast) {
@@ -371,14 +398,15 @@ function start(s, w, a) {
       emit(s, { type: "thinkRequest", worker: w.id, reason: String(a.reason ?? "") });
       w.act = { a, kind: "wait", start: s.t, until: s.t + 0.5 };
       return;
-    case "pack": case "paint":
+    case "pack": case "paint": case "assemble":
       if (!w.isPlayer && !hasSkill(w, PRIMARY[a.action])) return fail(s, w, a, `I don't know how to ${a.action}`);
-      w.act = { a, kind: a.action, start: s.t, until: s.t + (a.action === "pack" ? 0 : machineTime(w, a.action)) };
+      // Packing and assembling start right away and fill in; painting takes its time first.
+      w.act = { a, kind: a.action, start: s.t, until: s.t + (a.action === "paint" ? machineTime(w, a.action) : 0) };
       return;
     case "service":
       // A side task: without the Repair skill it quietly does nothing.
       if (!w.isPlayer && !hasSkill(w, SIDE.service)) return ok(s, w, a);
-      w.act = { a, kind: "service", start: s.t, until: s.t + (w.station === "PAINT" && s.wear.PAINT > 0 ? machineTime(w, "service") : 0) };
+      w.act = { a, kind: "service", start: s.t, until: s.t + (s.wear[w.station] > 0 ? machineTime(w, "service") : 0) };
       return;
     case "pickUp": case "putDown":
       w.act = { a, kind: a.action, start: s.t, until: s.t };
@@ -410,6 +438,7 @@ function finish(s, w, act) {
     case "putDown": return putDown(s, w, a, act);
     case "paint": return paint(s, w, a);
     case "pack": return pack(s, w, a, act);
+    case "assemble": return assemble(s, w, a, act);
     case "service": return service(s, w, a);
     default: w.lastOk = true; return; // wait, say
   }
@@ -432,12 +461,14 @@ function pickUp(s, w, a, act) {
   const items = s.stations[w.station];
   const color = COLORS.includes(a.color) ? a.color : null;
   let idx;
-  if (a.box || (!color && w.station === "PACK")) idx = items.findIndex((i) => i.kind === "box" && !i.building);
+  const boxOf = (i) => i.kind === "box" && !i.building && (!color || i.colors.every((c) => c === color));
+  if (a.crate || (!color && !a.box && kindOf(w.station) === "ASSEMBLE" && items.some((i) => i.kind === "crate" && !i.building))) idx = items.findIndex((i) => i.kind === "crate" && !i.building);
+  else if (a.box || (!color && kindOf(w.station) === "PACK")) idx = items.findIndex(boxOf);
   else if (color) idx = items.findIndex((i) => i.kind === "widget" && i.color === color);
   else idx = items.findIndex((i) => i.kind === "widget");
   if (idx < 0) {
     if (keepWaiting(s, w, act)) return;
-    const what = a.box || (!color && w.station === "PACK") ? "finished box" : color ? `${color} widget` : "widget";
+    const what = a.crate ? "finished crate" : a.box || (!color && kindOf(w.station) === "PACK") ? `finished ${a.box && color ? `${color} ` : ""}box` : color ? `${color} widget` : "widget";
     return fail(s, w, a, `there's no ${what} at ${label(w.station)}`);
   }
   w.holding = items.splice(idx, 1)[0];
@@ -452,11 +483,12 @@ function putDown(s, w, a, act) {
   if (!w.holding) return fail(s, w, a, "my hands are empty");
   const st = w.station;
   if (st === "DOCK") {
-    if (s.level.ship === "boxes" && w.holding.kind !== "box") return fail(s, w, a, "only boxes can ship from the dock");
+    if (s.level.ship === "boxes" && w.holding.kind === "widget") return fail(s, w, a, "only boxes can ship from the dock");
     ship(s, w, w.holding);
     w.holding = null; s.version++;
     return ok(s, w, a);
   }
+  if (kindOf(st) === "ASSEMBLE" && w.holding.kind !== "box") return fail(s, w, a, "only boxes go in the assembler");
   if (s.stations[st].length >= capOf(s.level, st)) {
     if (keepWaiting(s, w, act)) return;
     fail(s, w, a, `${label(st)} is full`);
@@ -473,24 +505,52 @@ function putDown(s, w, a, act) {
   ok(s, w, a);
 }
 
+/** Machines wear predictably: every job adds a bit, less in a Steady worker's hands. */
+function wearOut(s, w, st) {
+  const per = s.level.wearOf?.[st] ?? s.level.wear ?? RULES.wear;
+  s.wear[st] = Math.min(100, s.wear[st] + per * (hasAttr(w, "steady") ? RULES.steady : 1));
+  if (s.wear[st] >= 100) emit(s, { type: "worn", worker: w.id, station: st });
+}
+
 function paint(s, w, a) {
-  if (w.station !== "PAINT") return fail(s, w, a, "I'm not at the paint machine");
+  const st = w.station;
+  if (!st || kindOf(st) !== "PAINT") return fail(s, w, a, "I'm not at a paint machine");
   if (!w.holding || w.holding.kind !== "widget") return fail(s, w, a, "I'm not holding a widget to paint");
   if (!COLORS.includes(a.color)) return fail(s, w, a, `there's no ${a.color || "such"} paint`);
-  if (s.wear.PAINT >= 100) return fail(s, w, a, "the paint machine needs servicing");
+  if (s.wear[st] >= 100) return fail(s, w, a, `${label(st)} needs servicing`);
   w.holding.color = a.color; s.version++;
-  // Machines wear predictably: every job adds a bit, less in a Steady worker's hands.
-  s.wear.PAINT = Math.min(100, s.wear.PAINT + (s.level.wear ?? RULES.wear) * (hasAttr(w, "steady") ? RULES.steady : 1));
-  if (s.wear.PAINT >= 100) emit(s, { type: "worn", worker: w.id });
+  wearOut(s, w, st);
   ok(s, w, a);
+}
+
+// Assembling (decision 85): a finished red, blue and green box at the Assembler become one crate,
+// which fills in like a box being packed, then ships from the Dock.
+function assemble(s, w, a, act) {
+  const st = w.station;
+  if (!st || kindOf(st) !== "ASSEMBLE") return fail(s, w, a, "I'm not at an assembler");
+  const items = s.stations[st];
+  if (act.crate) { delete act.crate.building; s.version++; return ok(s, w, a); }
+  if (s.wear[st] >= 100) return fail(s, w, a, `${label(st)} needs servicing`);
+  const boxOf = (c) => items.find((i) => i.kind === "box" && !i.building && i.colors.every((x) => x === c));
+  const parts = CRATE.map(boxOf);
+  if (parts.some((p) => !p)) {
+    const missing = CRATE.filter((c, i) => !parts[i]);
+    return keepWaiting(s, w, act) || fail(s, w, a, `a crate needs a ${CRATE.join(", a ").replace(/, a ([^,]*)$/, " and a $1")} box at ${label(st)}; there's no ${missing.join(" or ")} box`);
+  }
+  for (const p of parts) items.splice(items.indexOf(p), 1);
+  const time = machineTime(w, "assemble");
+  const crate = { id: ++s.ids, kind: "crate", building: { start: s.t, until: s.t + time } };
+  items.push(crate); s.version++;
+  wearOut(s, w, st);
+  w.act = { a, kind: "assemble", crate, start: s.t, until: s.t + time };
 }
 
 // Packing happens in place: the 3 widgets turn into a box that fills in over DUR.pack seconds, then
 // it's a finished box someone can pick up. You choose which 3 (a.ids); a worker can name a color
 // (a.color); otherwise it's the first 3 widgets there.
 function pack(s, w, a, act) {
-  if (w.station !== "PACK") return fail(s, w, a, "I'm not at the pack station");
-  const items = s.stations.PACK;
+  if (!w.station || kindOf(w.station) !== "PACK") return fail(s, w, a, "I'm not at the pack station");
+  const items = s.stations[w.station];
   if (act.box) { // done building
     delete act.box.building; s.version++;
     return ok(s, w, a);
@@ -503,7 +563,7 @@ function pack(s, w, a, act) {
   let color = COLORS.includes(a.color) ? a.color : null;
   if (!color) {
     const ready = COLORS.filter((c) => of(c).length >= 3);
-    const needed = (c) => s.order.some((l) => l.done < l.count && (l.color === c || l.color === "any"));
+    const needed = (c) => s.order.some((l) => l.done < l.count && (l.color === c || l.color === "any" || (l.color === "crate" && CRATE.includes(c))));
     color = ready.find(needed) ?? ready[0] ?? null;
   }
   const pool = color ? of(color) : [];
@@ -520,19 +580,21 @@ function pack(s, w, a, act) {
 }
 
 function service(s, w, a) {
-  if (w.station !== "PAINT") return fail(s, w, a, "I'm not at the paint machine");
-  if (s.wear.PAINT > 0) { s.wear.PAINT = 0; s.version++; s.lastProgress = s.t; w.worked = (w.worked ?? 0) + 1; emit(s, { type: "serviced", worker: w.id }); }
+  const st = w.station;
+  if (!st || !WEARS.includes(kindOf(st))) return fail(s, w, a, "I'm not at a machine that needs servicing");
+  if (s.wear[st] > 0) { s.wear[st] = 0; s.version++; s.lastProgress = s.t; w.worked = (w.worked ?? 0) + 1; emit(s, { type: "serviced", worker: w.id }); }
   ok(s, w, a);
 }
 
 /** Does this item count toward this line of the order? */
 function fits(line, item) {
+  if (line.color === "crate" || item.kind === "crate") return line.color === "crate" && item.kind === "crate";
   if (item.kind === "box") return line.color === "any" || item.colors.every((c) => c === line.color);
   return line.color === "any" || item.color === line.color;
 }
 
 function ship(s, w, item) {
-  const colors = item.kind === "box" ? item.colors : [item.color];
+  const colors = item.kind === "box" ? item.colors : item.kind === "crate" ? [...CRATE] : [item.color];
   const line = s.order.find((l) => l.done < l.count && fits(l, item));
   if (line) { line.done++; s.counted++; } else s.wasted++;
   s.shipped++;
@@ -545,9 +607,9 @@ function ship(s, w, item) {
 function ok(s, w, a) {
   w.lastOk = true;
   if (a?.action && a.action !== "moveTo") w.fails = 0;
-  if (["pickUp", "putDown", "pack", "paint"].includes(a?.action)) s.lastProgress = s.t;
+  if (["pickUp", "putDown", "pack", "paint", "assemble"].includes(a?.action)) s.lastProgress = s.t;
   // Work that leaves something done (the pre-shift dry run counts these; picking up alone isn't).
-  if (["putDown", "pack", "paint"].includes(a?.action)) w.worked = (w.worked ?? 0) + 1;
+  if (["putDown", "pack", "paint", "assemble"].includes(a?.action)) w.worked = (w.worked ?? 0) + 1;
 }
 
 function fail(s, w, a, why) {
@@ -590,12 +652,12 @@ function describe(items) {
   if (!items.length) return "empty";
   const n = {};
   for (const it of items) {
-    const k = it.kind === "box" ? `${it.colors.every((c) => c === it.colors[0]) ? it.colors[0] : "mixed"} packed box` : `${it.color} widget`;
+    const k = it.kind === "crate" ? "crate" : it.kind === "box" ? `${it.colors.every((c) => c === it.colors[0]) ? it.colors[0] : "mixed"} packed box` : `${it.color} widget`;
     n[k] = (n[k] || 0) + 1;
   }
   return Object.entries(n).map(([k, v]) => `${v} ${k}${v > 1 ? (k.endsWith("box") ? "es" : "s") : ""}`).join(", ");
 }
-const holdingText = (w) => (w.holding ? (w.holding.kind === "box" ? "a box" : `a ${w.holding.color} widget`) : "nothing");
+const holdingText = (w) => (w.holding ? (w.holding.kind === "box" ? "a box" : w.holding.kind === "crate" ? "a crate" : `a ${w.holding.color} widget`) : "nothing");
 const whereText = (w) => (w.station ? programStationName(w.station) : atDesk(w) ? "the owner's desk" : "walking");
 
 export function viewFor(s, w) {
@@ -603,7 +665,8 @@ export function viewFor(s, w) {
   const floor = {};
   for (const k of Object.keys(s.stations)) floor[programStationName(k)] = describe(s.stations[k]);
   const view = { you, floor };
-  if ("PAINT" in s.stations) view.paintMachineWear = `${Math.round(s.wear.PAINT)}% (it stops at 100% until serviced)`;
+  const worn = Object.keys(s.wear);
+  if (worn.length) view.machineWear = Object.fromEntries(worn.map((k) => [programStationName(k), `${Math.round(s.wear[k])}% (it stops at 100% until serviced)`]));
   view.order = s.order.map((l) => orderLineText(s.level, l));
   view.boss = `works on the floor too: at ${whereText(s.player)}, holding ${holdingText(s.player)}`;
   const others = s.workers.filter((o) => o !== w);
@@ -616,6 +679,7 @@ export function viewFor(s, w) {
 
 /** "2 of 5 green boxes shipped" etc. */
 export function orderLineText(L, l) {
+  if (l.color === "crate") return `${l.done} of ${l.count} crates shipped`;
   const what = L.ship === "boxes" ? (l.color === "any" ? "boxes (any color)" : `${l.color} boxes`) : (l.color === "any" ? "widgets (any color)" : `${l.color} widgets`);
   return `${l.done} of ${l.count} ${what} shipped`;
 }

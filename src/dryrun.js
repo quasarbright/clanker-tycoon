@@ -13,7 +13,7 @@
 // A worker who packs gets one more try that starts with Pack full of the color the order wants
 // (decision #63). A routine that walks up holding something and waits for room, instead of packing
 // to make room, jams the line in play: nobody else can clear a full Pack.
-import { newGame, step, setProgram, RULES, capOf } from "./sim.js";
+import { newGame, step, setProgram, RULES, capOf, kindOf, CRATE } from "./sim.js";
 
 const SECONDS = 40, DT = 1 / 20;
 
@@ -22,12 +22,18 @@ const ASKS_TO_PACK = /(?<!\b(?:to|at|from|the|into|by|near)\s+)\bpack(?:s|ing|ed
 
 /** The color the order wants next, for the stage hand to supply. */
 function wanted(L) {
-  const line = L.order.find((l) => l.color !== "any") ?? L.order[0];
-  return line.color === "any" ? (L.colors ?? ["red"])[0] : line.color;
+  const line = L.order.find((l) => l.color !== "any" && l.color !== "crate") ?? L.order[0];
+  return line.color === "any" || line.color === "crate" ? (L.colors ?? ["red"])[0] : line.color;
 }
 
 function stageHand(g, color, boxes) {
   const add = (st, it) => g.stations[st].push({ id: ++g.ids, ...it });
+  // An assembler gets the three boxes a crate needs, and a finished crate to carry off.
+  for (const st of Object.keys(g.stations).filter((k) => kindOf(k) === "ASSEMBLE")) {
+    const at = g.stations[st];
+    for (const c of CRATE) if (!at.some((i) => i.kind === "box" && i.colors[0] === c) && at.length < RULES.assembleCap - 1) add(st, { kind: "box", colors: [c, c, c] });
+    if (!at.some((i) => i.kind === "crate") && at.length < RULES.assembleCap) add(st, { kind: "crate" });
+  }
   const pack = g.stations.PACK;
   if (!pack) return;
   // Leave room at Pack: a worker whose job is bringing things there needs space to put them down.
@@ -48,9 +54,10 @@ export function dryRun(L, hire, crew, ast, instructions) {
   // a packer whose routine packed and walked to the dock empty-handed jammed a whole quarter).
   const wantsShip = /\bship/i.test(instructions ?? "") && L.stations.includes("DOCK");
   let last;
-  for (const worn of L.stations.includes("PAINT") ? [false, true] : [false]) {
+  const wears = L.stations.some((k) => ["PAINT", "ASSEMBLE"].includes(kindOf(k)));
+  for (const worn of wears ? [false, true] : [false]) {
     const g = newGame({ ...L, shift: null }, hires, 1);
-    if (worn) g.wear.PAINT = 100;
+    if (worn) for (const k of Object.keys(g.wear)) g.wear[k] = 100;
     const w = g.workers[0];
     setProgram(g, w, ast);
     const visited = new Set(), fails = [];
@@ -77,7 +84,7 @@ export function dryRun(L, hire, crew, ast, instructions) {
     : last.ended ? "it finished without doing anything"
     : "it only walked and waited";
   const where = last.visited.size ? `, at ${[...last.visited].join(", ")}` : "";
-  return { ok: false, why: `In a ${SECONDS}-second practice run, with ${color} widgets at the supply and at PACK${boxes ? " and a finished box at PACK" : ""}, your program never put anything down, packed, painted or serviced anything: ${what}${where}. It has to actually do the work your instructions describe.` };
+  return { ok: false, why: `In a ${SECONDS}-second practice run, with ${color} widgets at the supply and at PACK${boxes ? " and a finished box at PACK" : ""}, your program never put anything down, packed, painted, assembled or serviced anything: ${what}${where}. It has to actually do the work your instructions describe.` };
 }
 
 // A packer facing a full Pack: they should pack to make room, not wait for it.

@@ -145,33 +145,59 @@ test("training: $20 a skill or trait, raises the wage, never twice, only your cr
   assert.equal(B.train(b, bot("blip"), "packing"), false, "can't afford it");
 });
 
-test("machines: a paint machine is offered until you own one; paint machines replace each other", () => {
+test("machines: a paint machine is offered until you own one; two of a kind at most, the second is Paint 2 (decision 85)", () => {
   const b = B.newBusiness();
   b.money = 1000;
   for (let q = 0; q < 10; q++) assert.ok(B.machineOffers({ ...b, quarters: q }).some((m) => m.id === "paint"));
   assert.ok(B.buy(b, "paint"));
-  assert.equal(B.buy(b, "paint"), false, "already own it");
+  assert.deepEqual(b.machines, [{ id: "paint", key: "PAINT" }]);
+  assert.deepEqual(b.floor.storage, ["PAINT"], "a bought machine waits in storage");
+  assert.deepEqual(b.floor.fresh, ["PAINT"], "and is new, so Edit floor pulses");
   assert.ok(B.machineOffers(b).some((m) => m.id === "paint"), "the one you just bought stays on show this visit");
-  assert.ok(B.buy(b, "sturdy"));
-  assert.equal(b.owned, "sturdy");
+  assert.ok(B.buy(b, "sturdy"), "a second paint machine, not a replacement");
+  assert.deepEqual(b.machines.map((x) => x.key), ["PAINT", "PAINT_2"]);
+  assert.equal(B.buy(b, "paint"), false, "two paint machines at most");
   assert.ok(B.machineOffers(b).length <= 3);
 });
 
-test("the quarter's level: a paint station only with a machine, caps from upgrades, your crew", () => {
+test("the quarter's level: stations are what's placed on your floor, at your layout; wear per machine; caps from upgrades", async () => {
+  const F = await import("../src/floor.js");
   const b = B.newBusiness();
   b.money = 1000;
   const [small, , side] = B.board(b);
   let L = B.quarterLevel(BASE, b, [small]);
   assert.ok(!L.stations.includes("PAINT"));
+  assert.deepEqual(L.stations, ["SUPPLY", "BIN_1", "BIN_2", "PACK", "DOCK"]);
+  assert.deepEqual(L.positions.PACK, F.SLOTS[2]);
   assert.deepEqual(L.pool, ["blip", "pip"]);
   B.buy(b, "sturdy"); B.buy(b, "bigpack");
   L = B.quarterLevel(BASE, b, [small, side], [bot("blip"), bot("pip", ["packing"])]);
+  assert.ok(!L.stations.includes("PAINT"), "still in storage");
+  F.place(b.floor, "PAINT", 1);
+  L = B.quarterLevel(BASE, b, [small, side], [bot("blip"), bot("pip", ["packing"])]);
   assert.ok(L.stations.includes("PAINT"));
-  assert.equal(L.wear, 5);
+  assert.deepEqual(L.positions.PAINT, F.SLOTS[1]);
+  assert.equal(L.wearOf.PAINT, 5);
   assert.equal(L.caps.PACK, 9);
   assert.equal(L.quarter.shifts, B.QUARTER_SHIFTS);
   assert.deepEqual(L.order, [{ color: small.color, count: small.count }, { color: side.color, count: side.count }]);
   assert.equal(L.roster.pip.wage, 10);
+});
+
+test("the assembler: a crates contract once you own one (and paint), Assembly trainable only then", () => {
+  const b = B.newBusiness();
+  b.money = 1000;
+  assert.ok(!B.board(b).some((c) => c.color === "crate"));
+  assert.ok(!B.trainableNow(b).includes("assembly"));
+  assert.ok(B.buy(b, "assembler"));
+  assert.deepEqual(b.machines.at(-1), { id: "assembler", key: "ASSEMBLE" });
+  const crates = B.board(b).find((c) => c.color === "crate");
+  assert.ok(crates, "a crates contract on the board");
+  assert.equal(B.hasMachine(b, crates.needs), false, "a crate needs painted boxes too");
+  assert.match(B.missingFor(b, crates), /paint machine/);
+  B.buy(b, "paint");
+  assert.equal(B.hasMachine(b, crates.needs), true);
+  assert.ok(B.trainableNow(b).includes("assembly"));
 });
 
 test("shift cost by Start: budget after, and whether shifts like this cover the rest of the quarter (decision 71)", async () => {

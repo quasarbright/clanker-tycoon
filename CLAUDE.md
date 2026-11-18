@@ -204,6 +204,9 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   builder/editor where you can drag the stuff you own around. And when you buy something new you
   can place it down"; decision 85, which replaces "no factory building"). Editing happens during
   scheduling, before a shift, never mid-shift. Multiple factories and buying a factory are later.
+  Built (decision 87): `src/floor.js` (slots, swap, storage), Edit floor in the plan bar; a bought
+  machine waits **In storage** and Edit floor pulses until you place it or "Keep in storage" (Mike).
+  You can own two of a machine ("Paint 2"), each with its own wear.
 - Delegation comes from scale, not rules: you can only talk to one robot at a time.
 - Runs are endless (Mike: "the contracts get crazier and eventually they'll die"). Growing bigger
   can't mean a new first-class concept per tier: foremen are one, and there's only room for a few.
@@ -233,7 +236,8 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   full and scaled numbers, funds, reputation, loans, crew), `pick`, `recruit`, `train`, `buy`,
   `borrow`, `quarter_start`, `quarter_settle` (each contract, crew pay, funds and reputation before
   and after), `gameover`, `new_run`, `pause`/`resume`, `restart_shift`, `end_card`, `menu`,
-  `chat_open`, `start_blocked` (with why), and `error`/`llm_error` (uncaught errors, console.error,
+  `chat_open`, `start_blocked` (with why), the floor editor (`floor_edit`, `floor_move`,
+  `floor_done`, `floor_keep`, `floor_auto`), and `error`/`llm_error` (uncaught errors, console.error,
   failed model calls). Mike (2026-11-18): logs "pretty comprehensive, so if I do a playtest and then
   I report that something was weird ... you will be able to look at logs".
   When Mike mentions something that happened in play ("Blip just stood there"), find the shift in

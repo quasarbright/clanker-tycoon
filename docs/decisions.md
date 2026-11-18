@@ -1246,3 +1246,29 @@ like that."
 - The crate recipe: once it was explained (a crate is a bigger package holding three boxes), Mike
   picked on the review page that a crate is always one box of each color: red, blue and green.
   Contracts don't set their own mix.
+
+### 87. The floor editor and assembler, as built (2026-11-18)
+
+Built to Mark's spec (#85) with Mike's calls (#86). What the build had to decide on its own:
+- **The grid:** 8 slots, 3 × 3 with your desk in the bottom right (`src/floor.js`). Supply moved to
+  the left wall (x 14) so every slot fits a machine plus the ring robots stand in. A new business
+  starts with Pack and both bins where level 6 had them.
+- **Two of a kind replaces "a paint machine replaces the one you have":** buying a second paint
+  machine (either kind) or a second assembler adds a station named "Paint 2" / "Assembler 2"; each
+  machine keeps its own wear meter and wear rate. Bigger pack table and bigger bins stay upgrades.
+- **In storage and the pulse (Mike, 2026-11-18):** a bought machine waits in storage; Edit floor
+  pulses with a count and the plan bar says what's new. "Keep in storage" stops the pulse. Start
+  places only what's new and not set aside, in the free slot nearest the middle of the floor.
+- **Swap:** dropping on a taken slot swaps the two; from storage, the other machine goes to storage.
+  Dragging a machine onto "In storage" takes it off the floor.
+- **Done** lays the same shift out again on the new floor: same crew, same instructions (programs
+  name stations, so nothing recompiles). Edit floor waits while anyone is still reading.
+- **The assembler:** $120, holds 6 (boxes only), `assemble()` with the new Assembly skill (trainable
+  once you own one), `pickUpCrate()`, `crates(station)`, and `pickUpBox(color)` now takes a color.
+  Assembling takes 3 s and wears 10% a crate. A crates contract appears once you own one: 3 crates
+  for $330 on the first board (+1 crate and +$90 a quarter after), needing paint as well.
+- **Balance:** Supply on the wall makes the default floor a little slower: `tools/balance.mjs` has
+  the cheapest crew (hauler + packer) ship 12 red boxes a shift instead of 14, so it misses the
+  first Large red (36 of 40). Moving Pack one slot toward Supply ships 24 a shift. Mark to weigh
+  whether to retune the boards or the default floor. The crates contract's numbers are placeholders.
+

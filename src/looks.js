@@ -14,6 +14,10 @@ const TOOLS = {
   painting: `<g transform="rotate(40 12 12)"><rect x="10.5" y="10" width="3" height="13" rx="1.5" fill="#a86b3c" stroke="#17140a" stroke-width="1.4"/>
     <rect x="9.5" y="7" width="5" height="4" fill="#b8bec7" stroke="#17140a" stroke-width="1.4"/>
     <path d="M9.5 7V4.5C9.5 2.5 12 1 12 1s2.5 1.5 2.5 3.5V7z" fill="#4f8ff0" stroke="#17140a" stroke-width="1.4" stroke-linejoin="round"/></g>`,
+  // a screwdriver, for Assembly
+  assembly: `<g transform="rotate(-40 12 12)"><rect x="10.3" y="1.5" width="3.4" height="9" rx="1.6" fill="#e0b13a" stroke="#17140a" stroke-width="1.5"/>
+    <rect x="11.2" y="10.5" width="1.6" height="9" fill="#c9ced6" stroke="#17140a" stroke-width="1.2"/>
+    <path d="M11.2 19.5h1.6l-.8 3z" fill="#c9ced6" stroke="#17140a" stroke-width="1.2" stroke-linejoin="round"/></g>`,
   // a wrench (Lucide's shape, filled)
   repair: `<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" fill="#c9ced6" stroke="#17140a" stroke-width="1.6" stroke-linejoin="round"/>`,
 };
@@ -35,7 +39,7 @@ export const headLooks = (h) =>
 
 /** The tools they carry, one per skill. */
 export const toolLooks = (h) => {
-  const tools = ["packing", "painting", "repair"].filter((k) => has(h, k));
+  const tools = ["packing", "painting", "assembly", "repair"].filter((k) => has(h, k));
   return tools.length ? `<span class="ct-tools">${tools.map((k) => svg(TOOLS[k], `ct-tool is-${k}`)).join("")}</span>` : "";
 };
 

@@ -14,6 +14,7 @@
 import { wageOf } from "./wages.js";
 import { WORDS } from "./words.js";
 import { REP, scaleOffer, afterQuarter, ruined } from "./reputation.js";
+import { newFloor, addToStorage, positionsOf } from "./floor.js";
 
 /** What you start with, free (decision #61: no investor). */
 export const START_MONEY = 100;
@@ -51,12 +52,14 @@ export const repayOf = (biz, pay) => repay([...biz.loans], pay);
 export const QUARTER_SHIFTS = 3;
 
 /**
- * Machines. Paint machines replace each other (the floor has one paint station); the others are
- * upgrades you keep. `caps` raises how much a station holds.
+ * Machines. A machine with a `station` stands on your floor (you place it, floor.js): you can own
+ * two of each kind, the second named "Paint 2" like the bins (decision 85, Mark's default). The
+ * others are upgrades you keep. `caps` raises how much a station holds.
  */
 export const SHOP = [
-  { id: "paint", kind: "paint", name: "Paint machine", price: 80, wear: 10, blurb: "Paints widgets. Wears 10% a job, so someone with Repair services it every 10 jobs." },
-  { id: "sturdy", kind: "paint", name: "Sturdy paint machine", price: 170, wear: 5, blurb: "Paints widgets. Wears 5% a job: half the servicing." },
+  { id: "paint", kind: "paint", station: "PAINT", name: "Paint machine", price: 80, wear: 10, blurb: "Paints widgets. Wears 10% a job, so someone with Repair services it every 10 jobs." },
+  { id: "sturdy", kind: "paint", station: "PAINT", name: "Sturdy paint machine", price: 170, wear: 5, blurb: "Paints widgets. Wears 5% a job: half the servicing." },
+  { id: "assembler", kind: "assemble", station: "ASSEMBLE", name: "Assembler", price: 120, wear: 10, blurb: "Puts a red, a blue and a green box together into one crate. Wears 10% a crate." },
   { id: "bigpack", name: "Bigger pack table", price: 50, caps: { PACK: 9 }, blurb: "Pack holds 9 things instead of 6." },
   { id: "bigbins", name: "Bigger bins", price: 30, caps: { BIN: 10 }, blurb: "Each bin holds 10 instead of 5." },
 ];
@@ -88,7 +91,9 @@ const kitOf = (biz, id) => biz.kit?.[id] ?? (CHEAP.includes(id) && !biz.crew.inc
 /** A recruit's fee. A cheap one costs $5 more for each thing it came with. */
 export const recruitPrice = (biz, id) => RECRUITS[id] + (CHEAP.includes(id) ? 5 * kitOf(biz, id).length : 0);
 export const TRAIN_PRICE = 20;
-export const TRAINABLE = ["packing", "painting", "repair"];
+export const TRAINABLE = ["packing", "painting", "assembly", "repair"];
+/** What you can train now: Assembly only once you own an assembler (it's no use before). */
+export const trainableNow = (biz) => TRAINABLE.filter((k) => k !== "assembly" || machinesOf(biz, "assemble").length > 0);
 // Attributes can be trained too, at the same price, and count the same way toward the wage.
 export const TRAINABLE_ATTRS = ["fast", "nimble", "steady", "smart"];
 
@@ -126,9 +131,10 @@ export const recruitOffers = (biz) => TIERS_OF_RECRUITS
 
 /** The three machines this visit. A paint machine is always among them until you own one. */
 export function machineOffers(biz) {
-  const had = (id) => owns(biz, id) && !biz.boughtNow.includes(id);
-  const hadPaint = SHOP.some((m) => m.kind === "paint" && had(m.id));
-  const open = SHOP.filter((m) => !had(m.id) && !(m.id === "paint" && had("sturdy")));
+  // A floor machine is on offer until you have two of its kind; an upgrade until you have it.
+  const had = (id) => { const m = SHOP.find((x) => x.id === id); return m.station ? !canAdd(biz, m) && !biz.boughtNow.includes(id) : owns(biz, id) && !biz.boughtNow.includes(id); };
+  const hadPaint = biz.machines.some((x) => kindOfMachine(x) === "paint" && !biz.boughtNow.includes(x.id));
+  const open = SHOP.filter((m) => !had(m.id));
   const paint = hadPaint ? [] : open.filter((m) => m.id === "paint");
   const rest = pickFew(open.filter((m) => !paint.includes(m)).map((m) => m.id), 3 - paint.length, biz.quarters + 7);
   return [...paint, ...open.filter((m) => rest.includes(m.id))].sort((x, y) => x.price - y.price);
@@ -168,7 +174,9 @@ const TIERS = [
 ];
 
 export function newBusiness() {
-  return { money: START_MONEY, loans: [], quarters: 0, wins: 0, owned: null, upgrades: [], crew: [...START_CREW], trained: {},
+  // `machines` are the floor machines you bought ({ id, key }: the shop item and its station),
+  // `floor` where everything stands (floor.js).
+  return { money: START_MONEY, loans: [], quarters: 0, wins: 0, machines: [], upgrades: [], floor: newFloor(), crew: [...START_CREW], trained: {},
     recruitedNow: [], boughtNow: [],
     // Named on the business license before the first quarter (decision 74).
     name: "", owner: "",
@@ -217,47 +225,80 @@ export function board(biz) {
     { id: `${q}-s`, size: "small", color: T.main.color, count: T.main.small[0], pay: pay(T.main.small[1]), needs: needs(T.main.color) },
     { id: `${q}-l`, size: "large", color: T.main.color, count: T.main.large[0], pay: pay(T.main.large[1]), needs: needs(T.main.color) },
     { id: `${q}-x`, size: "side", color: T.side.color, count: T.side.count, pay: pay(T.side.pay), needs: needs(T.side.color) },
+    // Once you own an assembler, a crates contract too: a red, a blue and a green box each, so it
+    // also needs paint (decision 85).
+    ...(machinesOf(biz, "assemble").length ? [{ id: `${q}-c`, size: "crate", color: "crate", count: CRATES.count + q, pay: pay(CRATES.pay + 90 * q), needs: "assembler" }] : []),
   ].map((c) => scaleOffer(c, biz.rep ?? REP.max));
 }
+/** The crates contract's first size and pay (Mark's balance pass is still to come). */
+export const CRATES = { count: 3, pay: 330 };
 
-export const owns = (biz, id) => biz.owned === id || biz.upgrades.includes(id);
-export const machine = (biz) => SHOP.find((m) => m.id === biz.owned) ?? null;
-export const hasMachine = (biz, needs) => !needs || !!biz.owned; // both paint machines paint
+const kindOfMachine = (x) => SHOP.find((m) => m.id === x.id)?.kind;
+export const owns = (biz, id) => biz.upgrades.includes(id) || biz.machines.some((x) => x.id === id);
+/** Your floor machines of one kind ("paint", "assemble"). */
+export const machinesOf = (biz, kind) => (biz.machines ?? []).filter((x) => kindOfMachine(x) === kind);
+/** Can you own another of this floor machine? Two of a kind at most. */
+export const canAdd = (biz, m) => machinesOf(biz, m.kind).length < 2;
+/** Do you own what a contract needs? Paint jobs need a paint machine (either kind); crates an assembler (and paint). */
+export const hasMachine = (biz, needs) => !needs
+  || (needs === "paint" ? machinesOf(biz, "paint").length > 0 : needs === "assembler" ? machinesOf(biz, "assemble").length > 0 && machinesOf(biz, "paint").length > 0 : false);
+/** Why a contract can't be taken yet, in words, or "". */
+export const missingFor = (biz, c) => (hasMachine(biz, c.needs) ? ""
+  : c.needs === "assembler" && !machinesOf(biz, "assemble").length ? "Needs an assembler, and you don't own one yet."
+  : "Needs a paint machine, and you don't own one yet.");
 
-/** Buy a machine. A paint machine replaces the one you have, no money back. */
+/** Buy a machine. A floor machine waits in storage until you place it (floor.js). */
 export function buy(biz, id) {
   const m = SHOP.find((x) => x.id === id);
-  if (!m || owns(biz, id) || biz.money < m.price) return false;
+  if (!m || biz.money < m.price) return false;
+  if (m.station ? !canAdd(biz, m) : owns(biz, id)) return false;
   biz.money -= m.price;
   biz.costs = (biz.costs ?? 0) + m.price;
-  if (m.kind === "paint") biz.owned = id; else biz.upgrades.push(id);
+  if (m.station) {
+    const n = machinesOf(biz, m.kind).length;
+    const key = n ? `${m.station}_2` : m.station;
+    biz.machines.push({ id, key });
+    addToStorage(biz.floor, key);
+  } else biz.upgrades.push(id);
   biz.boughtNow.push(id);
   return true;
 }
+/** The shop item standing at this station on your floor. */
+export const machineAt = (biz, key) => SHOP.find((m) => m.id === biz.machines.find((x) => x.key === key)?.id) ?? null;
 
 /** Can this contract join the ones already picked? One contract per color. */
 export const clashes = (picked, c) => picked.some((p) => p.id !== c.id && p.color === c.color);
 
-const list = (cs) => cs.map((c) => `${c.count} ${c.color}`).join(", ").replace(/, ([^,]*)$/, " and $1");
+const list = (cs) => cs.map((c) => (c.color === "crate" ? `${c.count} crates` : `${c.count} ${c.color} boxes`)).join(", ").replace(/, ([^,]*)$/, " and $1");
+
+/** The parts of a level that come from your floor: its stations as you laid them out (the
+ *  anchors, then what's placed; what's in storage isn't there), where they stand, and each
+ *  machine's wear per job. */
+export function floorLevel(biz) {
+  const floor = biz.floor ?? newFloor();
+  return {
+    stations: ["SUPPLY", ...Object.keys(floor.at).sort(), "DOCK"],
+    positions: positionsOf(floor),
+    wearOf: Object.fromEntries(biz.machines.map((x) => [x.key, SHOP.find((m) => m.id === x.id).wear])),
+  };
+}
 
 /** The level a quarter plays as: level 6's floor, with a paint station only if you own one. */
 // `candidates` (brains.js CANDIDATES) gives the floor your crew with their trained skills.
 export function quarterLevel(base, biz, contracts, candidates = []) {
-  const m = machine(biz);
   const pay = contracts.reduce((a, c) => a + c.pay, 0);
   const caps = Object.assign({}, ...biz.upgrades.map((id) => SHOP.find((x) => x.id === id).caps ?? {}));
   return {
     ...base, name: "Quarter",
-    stations: base.stations.filter((k) => k !== "PAINT" || m),
+    ...floorLevel(biz),
     pool: [...biz.crew],
     roster: Object.fromEntries(candidates.filter((c) => biz.crew.includes(c.id)).map((c) => [c.id, robotOf(biz, c)])),
-    wear: m?.wear,
     caps,
     order: contracts.map((c) => ({ color: c.color, count: c.count })),
     quarter: { shifts: QUARTER_SHIFTS, budget: biz.money },
     contracts,
     owner: biz.owner, business: biz.name, // the robots call you by name (decision 74)
-    start: `Ship ${list(contracts)} boxes by the end of the quarter, ${QUARTER_SHIFTS} shifts. Each contract pays when all its boxes have shipped (up to $${pay}). ${WORDS.crewPay} comes out of your funds at <b>Start</b>.`,
+    start: `Ship ${list(contracts)} by the end of the quarter, ${QUARTER_SHIFTS} shifts. Each contract pays when all its boxes have shipped (up to $${pay}). ${WORDS.crewPay} comes out of your funds at <b>Start</b>.`,
   };
 }
 

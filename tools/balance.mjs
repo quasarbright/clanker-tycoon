@@ -4,7 +4,8 @@
 import { newGame, step, setProgram, toolNamesFor } from "../src/sim.js";
 import { parseProgram, checkProgram } from "../src/lang.js";
 import { LEVELS } from "../src/levels.js";
-import { board, quarterLevel, payouts, SHOP, QUARTER_SHIFTS, newBusiness } from "../src/business.js";
+import { board, quarterLevel, payouts, SHOP, QUARTER_SHIFTS, newBusiness, buy } from "../src/business.js";
+import { placeLeftovers } from "../src/floor.js";
 
 const robot = (id, skills, attributes = []) => ({ id, name: id, skills, attributes, wage: 5 + 5 * (skills.length + attributes.length) });
 const level = (name) => LEVELS.find((l) => l.name === name);
@@ -147,7 +148,9 @@ for (let quarters = 0; quarters < 4; quarters++) {
     const paint = pick.some((c) => c.needs), red = pick.some((c) => !c.needs);
     console.log(`  ${pick.map((c) => `${c.count} ${c.color} $${c.pay}`).join(" + ")}`);
     for (const m of paint ? SHOP.filter((x) => x.kind === "paint") : [null]) {
-      const L = quarterLevel(Q, { ...newBusiness(), money: 9999, owned: m?.id ?? null }, pick);
+      const b = { ...newBusiness(), money: 9999 };
+      if (m) { buy(b, m.id); placeLeftovers(b.floor); }
+      const L = quarterLevel(Q, b, pick);
       for (const [name, plan] of CREWS[paint && red ? "both" : paint ? "paint" : "red"]) {
         console.log(`    ${(m ? m.id + ": " : "") + name}`.padEnd(52), businessQuarter(L, plan, 1));
       }

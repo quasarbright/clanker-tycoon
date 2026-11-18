@@ -199,3 +199,65 @@ test("signed money uses a real minus sign (Pam's review, decision 72)", () => {
   assert.equal(signed(-15), "\u2212$15");
   assert.equal(signed(0), "+$0");
 });
+
+// ---------- your own floor: a second paint machine and the assembler (decision 85) ----------
+
+const box = (g, st, c) => g.stations[st].push({ id: ++g.ids, kind: "box", colors: [c, c, c] });
+
+test("two paint machines wear separately; PAINT_2 paints like PAINT", async () => {
+  const { kindOf } = await import("../src/sim.js");
+  assert.equal(kindOf("PAINT_2"), "PAINT"); assert.equal(kindOf("BIN_1"), "BIN"); assert.equal(kindOf("ASSEMBLE"), "ASSEMBLE");
+  const L = FLOOR({ stations: ["SUPPLY", "PAINT", "PAINT_2", "PACK", "DOCK", "BIN_1", "BIN_2"], wearOf: { PAINT: 10, PAINT_2: 5 }, caps: { BIN: 99 } });
+  const loop2 = `while (true) { move("SUPPLY"); pickUp("red"); move("PAINT_2"); paint("green"); move("BIN_1"); putDown(); }`;
+  const g = play(L, [[bot("p", ["painting"]), loop2]], 20);
+  const jobs = g.stations.BIN_1.filter((i) => i.color === "green").length;
+  assert.ok(jobs > 0);
+  assert.equal(g.wear.PAINT_2, jobs * 5, "its own wear rate");
+  assert.equal(g.wear.PAINT, 0, "the other machine untouched");
+});
+
+test("the assembler: a red, a blue and a green box become a crate, which ships for a crates order", () => {
+  const L = FLOOR({ stations: ["SUPPLY", "PACK", "ASSEMBLE", "DOCK"], order: [{ color: "crate", count: 1 }] });
+  const g = newGame(L, [bot("a", ["assembly"])], 1);
+  for (const c of ["red", "blue", "green"]) box(g, "ASSEMBLE", c);
+  setProgram(g, g.workers[0], parseProgram(`move("ASSEMBLE"); assemble(); pickUpCrate(); move("DOCK"); putDown();`));
+  while (g.t < 30 && !g.over) step(g, 1 / 30);
+  assert.ok(g.won, "the crate shipped and filled the order");
+  assert.equal(g.order[0].done, 1);
+  assert.equal(g.wear.ASSEMBLE, 10, "assembling wears it like painting");
+});
+
+test("assembling needs one box of each color, and the Assembly skill; only boxes go in", () => {
+  const L = FLOOR({ stations: ["SUPPLY", "PACK", "ASSEMBLE", "DOCK"], order: [{ color: "crate", count: 1 }] });
+  const fails = [];
+  const g = newGame(L, [bot("a", ["assembly"]), bot("b")], 1);
+  box(g, "ASSEMBLE", "red"); box(g, "ASSEMBLE", "red"); box(g, "ASSEMBLE", "blue");
+  setProgram(g, g.workers[0], parseProgram(`move("ASSEMBLE"); assemble();`));
+  setProgram(g, g.workers[1], parseProgram(`move("SUPPLY"); pickUp("red"); move("ASSEMBLE"); putDown();`));
+  while (g.t < 20) { step(g, 1 / 30); for (const e of g.events.splice(0)) if (e.type === "fail") fails.push(e.why); }
+  assert.ok(fails.some((f) => /no green box/.test(f)), fails.join("; "));
+  assert.ok(fails.some((f) => /only boxes go in the assembler/.test(f)));
+  assert.ok(!toolNamesFor(bot("b"), L).actions.includes("assemble"), "no skill, no assemble()");
+  assert.ok(toolNamesFor(bot("a", ["assembly"]), L).actions.includes("assemble"));
+  assert.ok(toolNamesFor(bot("b"), L).actions.includes("service"), "anyone may service it (a side task)");
+});
+
+test("a crate doesn't count for a boxes order, and a box doesn't count for a crates order", () => {
+  const L = FLOOR({ stations: ["SUPPLY", "ASSEMBLE", "DOCK"], order: [{ color: "red", count: 1 }, { color: "crate", count: 1 }] });
+  const g = newGame(L, [bot("a")], 1);
+  g.stations.ASSEMBLE.push({ id: ++g.ids, kind: "crate" });
+  box(g, "ASSEMBLE", "blue");
+  setProgram(g, g.workers[0], parseProgram(`move("ASSEMBLE"); pickUpCrate(); move("DOCK"); putDown(); move("ASSEMBLE"); pickUpBox("blue"); move("DOCK"); putDown();`));
+  while (g.t < 20 && !g.over) step(g, 1 / 30);
+  assert.deepEqual(g.order.map((l) => l.done), [0, 1]);
+  assert.equal(g.wasted, 1);
+});
+
+test("a business floor's layout moves the stations, and an ordinary level puts them back", async () => {
+  const { STATIONS } = await import("../src/sim.js");
+  const home = { ...STATIONS.PACK };
+  newGame(FLOOR({ positions: { PACK: { x: 34, y: 56 } } }), [], 1);
+  assert.deepEqual([STATIONS.PACK.x, STATIONS.PACK.y], [34, 56]);
+  newGame(FLOOR(), [], 1);
+  assert.deepEqual([STATIONS.PACK.x, STATIONS.PACK.y], [home.x, home.y]);
+});

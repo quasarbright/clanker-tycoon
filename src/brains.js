@@ -13,7 +13,7 @@
 // can change them, and a thought's one-off stays inside them (or the worker comes to your desk).
 // Nothing here is specific to one model.
 import { llm } from "./llm.js";
-import { COLORS, viewFor, toolNamesFor, programStationName, capOf } from "./sim.js";
+import { COLORS, viewFor, toolNamesFor, programStationName, capOf, kindOf } from "./sim.js";
 import { parseProgram, checkProgram } from "./lang.js";
 import { dryRun } from "./dryrun.js";
 import { wageOf } from "./wages.js";
@@ -23,6 +23,7 @@ import { wageOf } from "./wages.js";
 export const SKILLS = {
   packing: { label: "Packing", tip: "Can pack 3 widgets into a box at Pack." },
   painting: { label: "Painting", tip: "Can run the paint machine." },
+  assembly: { label: "Assembly", tip: "Can put a red, a blue and a green box together into a crate at the Assembler." },
   repair: { label: "Repair", tip: "Can service a worn machine." },
 };
 export const ATTRIBUTES = {
@@ -102,29 +103,35 @@ const STATION_TEXT = {
   DOCK: `"DOCK": things put down here ship`,
   BIN_1: `"BIN_1": storage, holds {cap}`,
   BIN_2: `"BIN_2": storage, holds {cap}`,
+  PAINT_2: `"PAINT_2": a second paint machine, the same as PAINT. It wears with use and stops at 100% wear until someone with the Repair skill services it.`,
+  ASSEMBLE: `"ASSEMBLE": the assembler. A finished red box, blue box and green box sitting here can be assembled into one crate, which ships from DOCK. Holds {cap} things (boxes only). It wears with use and stops at 100% until someone with the Repair skill services it.`,
+  ASSEMBLE_2: `"ASSEMBLE_2": a second assembler, the same as ASSEMBLE. Holds {cap} things (boxes only).`,
 };
 const SHIP_TEXT = {
   widgets: "Widgets put down at DOCK ship. Each counts toward today's order if it's a color the order still needs.",
-  boxes: "Only boxes ship from DOCK. A box counts toward today's order only if all 3 widgets are one color the order still needs; anything else ships for nothing.",
+  boxes: "Only boxes (and crates) ship from DOCK. A box counts toward today's order only if all 3 widgets are one color the order still needs; anything else ships for nothing. A crate counts toward an order for crates.",
 };
 const TOOL_TEXT = {
   move: `move(station)        walk to a station`,
   pickUp: `pickUp(color)        pick up a widget here of that color; pickUp() takes any widget`,
-  pickUpBox: `pickUpBox()          at PACK, pick up a finished box`,
+  pickUpBox: `pickUpBox(color)     pick up a finished box here (PACK, a bin, an assembler); pickUpBox("blue") takes a blue one; pickUpBox() any`,
+  pickUpCrate: `pickUpCrate()        at an assembler, pick up a finished crate`,
+  assemble: `assemble()           at an assembler, put a red, a blue and a green box sitting there together into one crate`,
   putDown: `putDown()            put down what you're holding here`,
   pack: `pack(color)          at PACK, pack 3 widgets of that color into a box (a box is always one color; they can be anywhere in PACK); pack() packs whichever color there are 3 of`,
   paint: `paint(color)         at PAINT, paint the widget you're holding ("red", "blue" or "green")`,
-  service: `service()            at PAINT, service the machine (sets wear back to 0). Only does anything if you have the Repair skill; harmless otherwise`,
+  service: `service()            at a paint machine or an assembler, service it (sets wear back to 0). Only does anything if you have the Repair skill; harmless otherwise`,
   wait: `wait(seconds)`,
   say: `say(text)            say something out loud`,
   think: `think(reason)        stop and use your own judgment; only when something is truly unexpected`,
   holding: `holding()            "nothing", "box", or the color of the widget you're holding`,
   count: `count(station, color) widgets there of that color; count(station) counts all widgets`,
-  boxes: `boxes(station)       finished boxes there`,
+  boxes: `boxes(station, color) finished boxes there of that color; boxes(station) counts all finished boxes`,
+  crates: `crates(station)      finished crates there`,
   space: `space(station)       free spots there`,
-  needs: `needs(color)         how many more of that color today's order still needs, counted in what ships (on a boxes order, boxes: needs("green") is 1 when one more green box is wanted, so pack while it's above 0)`,
+  needs: `needs(color)         how many more of that color today's order still needs, counted in what ships (on a boxes order, boxes: needs("green") is 1 when one more green box is wanted, so pack while it's above 0; an order for crates needs a box of every color, so needs("red") counts the crates still wanted)`,
   needsAny: `needsAny()           how many more things today's order still needs in total, counted the same way`,
-  wear: `wear("PAINT")        the paint machine's wear, 0 to 100`,
+  wear: `wear(station)        a machine's wear, 0 to 100 (wear("PAINT"))`,
   where: `where(name)          the station a coworker (or "boss") is at, or "walking"`,
   holds: `holds(name)          what a coworker (or "boss") is holding, like holding()`,
 };
@@ -165,9 +172,9 @@ function systemPrompt(h, L) {
   // Primary work this floor has that this worker can't do. Listing it (and asking the model to use
   // it anyway when the instructions want it) is what turns "Blip, pack these" into a compile error
   // the player sees, instead of a program that quietly skips the packing.
-  const missing = [["pack", "packing", "PACK"], ["paint", "painting", "PAINT"]]
-    .filter(([n, k, st]) => L.stations.includes(st) && !h.skills.includes(k)).map(([n, k]) => [n, k]);
-  const skills = h.skills.length ? h.skills.map((k) => SKILLS[k].label).join(", ") : "none (you can carry things, but not pack, paint or repair)";
+  const missing = [["pack", "packing", "PACK"], ["paint", "painting", "PAINT"], ["assemble", "assembly", "ASSEMBLE"]]
+    .filter(([n, k, st]) => L.stations.some((x) => kindOf(x) === st) && !h.skills.includes(k)).map(([n, k]) => [n, k]);
+  const skills = h.skills.length ? h.skills.map((k) => SKILLS[k].label).join(", ") : "none (you can carry things, but not pack, paint, assemble or repair)";
   const colors = (L.colors ?? COLORS).join(", ").replace(/, ([^,]*)$/, " or $1");
   return `${h.persona} You work in a small factory in a management game. You follow the boss's instructions faithfully.
 ${ownerLine(L)}
@@ -276,6 +283,7 @@ Only the boss can change your instructions, so never take on work they don't men
 // Which stations a piece of instructions mentions, by the words people use for them.
 const STATION_WORDS = {
   SUPPLY: /\bbelt\b|\bsuppl/i, PACK: /\bpack/i, DOCK: /\bdock|\bship/i, PAINT: /\bpaint|\bservic|\bwear|\brepair/i,
+  PAINT_2: /\bpaint|\bservic|\bwear|\brepair/i, ASSEMBLE: /\bassembl|\bcrate|\bservic|\bwear|\brepair/i, ASSEMBLE_2: /\bassembl|\bcrate|\bservic|\bwear|\brepair/i,
   BIN_1: /\bbins?\b(?!\s*2)/i, BIN_2: /\bbins?\b(?!\s*1)/i,
 };
 /** Stations a program walks to that the instructions never mention (none if they mention none). */
