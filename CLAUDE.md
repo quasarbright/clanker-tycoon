@@ -84,6 +84,10 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   your reasoning (Mike, 2026-11-17: "i shouldn't see this, it should be caught before something
   comes to me ... do visual spot-checks for ugliness"). Disabled gold buttons with a gold lip and
   outlines that don't follow rounded corners were the examples.
+- **Identity:** charming, cute, industrial, almost slapstick, in the spirit of the business license
+  and its stamp, the end-of-run newspaper and the quarter recap's rubber stamps (Mike, 2026-11-18:
+  "let's lean more into this going forward"; decision 80). New screens borrow from that world of
+  paperwork, stamps and factory things.
 - **Humor:** the punchline is one of the game's own mechanics, said in a dry, official voice;
   never a generic business joke. The gold-standard examples are in `docs/humor.md` (Mike,
   2026-11-18: "this is the gold standard").

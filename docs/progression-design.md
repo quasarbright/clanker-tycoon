@@ -22,6 +22,10 @@ with detail and open questions, is an entry in [ideas.md](ideas.md). Reasons and
   where you keep going and the contracts get crazier and eventually they'll die."
 - **Mechanics first, story later.** Story and writing come in the polish phase, once the mechanics
   are settled.
+- **Identity: cute, industrial, almost slapstick** (decision 80). The business license and its
+  stamp, the newspaper headlines at the end of a run, and rubber stamps on the quarter recap set
+  the tone: official paperwork and factory things, with a cute, slapstick charm. Mike: "let's lean
+  more into this going forward, it'll be good for charm and personality and identity."
 
 ## The game
 

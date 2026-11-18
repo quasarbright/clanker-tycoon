@@ -1129,3 +1129,15 @@ The Large becomes the faster way back as well as the bigger risk: a clean quarte
 the side contract now wins back a whole pip (it was ⅔). Mark's watch: if recovery turns out too
 fast, cap the gain at 1 pip a quarter.
 
+### 80. The game's identity: cute, industrial, almost slapstick; stamps on the recap (2026-11-18)
+
+Mike, commenting on Pam's quarter-recap mock with rubber stamps: "I like this. I like the direction
+we're going with the license sand stamp and the newspaper, giving it a charming, cute, industrial
+and almost slapstick feel. let's lean more into this going forward, it'll be good for charm and
+personality and identity."
+**Picked:** the stamps version of the quarter recap, and this feel as the game's identity: the
+business license and its stamp, the end-of-run newspaper and the recap's stamps are the reference.
+New screens borrow from that world of official paperwork and factory things. It sits with the
+humor rule (a dry, official voice whose punchline is a mechanic), and with "don't over-theme":
+the charm comes from real game objects (the license, the newspaper, the stamps), not invented chrome.
+
