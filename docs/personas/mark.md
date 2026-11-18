@@ -79,6 +79,8 @@ pay. Source: `src/business.js`, decisions 53 to 67.
   program.
 
 **Assembler**
+- No assembler art yet (Mike, 2026-11-18: "let's not do assembler art yet"); the editor ships
+  first, with the machines that exist.
 - Inputs: one box each of red, blue and green, put down at the assembler (it holds 6 boxes).
   Output: one crate, which ships at the Dock like a box.
 - Verb: `assemble()` at ASSEMBLE, like `pack("red")` at Pack. A new **Assembly** skill

@@ -1232,3 +1232,6 @@ later. Escalating contracts stay queued, with these two as their prerequisite.
 - **Assembler:** a new machine and skill that turns three boxes of different colors into a mixed
   crate.
 Details, and the calls still open for Mike, are in Mark's spec (`docs/personas/mark.md`).
+Later the same day Mike approved Pam's editor mocks: "sure looks good but let's not do assembler
+art yet. I also don't love 'to place'. let's call it 'in storage'". A bought machine waits
+**In storage**, and the editor comes first, without an assembler drawing.

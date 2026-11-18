@@ -38,7 +38,9 @@ What's being built.
 
 - **The floor editor** (decision 85). During scheduling, drag the machines you own around the
   floor, and place new purchases yourself. Supply, Dock and your desk stay put. Layout decides how
-  far robots walk, so it's a real choice about throughput.
+  far robots walk, so it's a real choice about throughput. A machine you've bought waits
+  **In storage** until you place it. Flow approved as mocked (Mike, 2026-11-18); no assembler art
+  yet.
 - **The assembler** (decision 85). A new machine and skill: three boxes of different colors go in,
   one mixed crate comes out and ships at the Dock. Contracts can ask for crates. It's the first
   step toward lines feeding lines.
