@@ -42,13 +42,13 @@ test("no hiring or firing words anywhere the player looks", async ({ page }) => 
   await check(page, "level 7's floor");
 });
 
-test("the money you spend in a quarter is called the budget everywhere", async ({ page }) => {
+test("the money you spend in a quarter is called funds everywhere, never a budget", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => ct.openLevel(6));
-  await expect(page.locator("#laborLabel")).toHaveText(WORDS.budget.toLowerCase());
+  await expect(page.locator("#laborLabel")).toHaveText(WORDS.funds.toLowerCase());
   await page.evaluate(() => ct.openBoard());
-  await expect(page.locator(".ct-board-money .ct-cash-label")).toHaveText(WORDS.budget);
+  await expect(page.locator(".ct-board-money .ct-cash-label")).toHaveText(WORDS.funds);
   await page.locator("[data-contract]").first().click();
   await page.click("#boardGo");
-  await expect(page.locator("#laborLabel")).toHaveText(WORDS.budget.toLowerCase());
+  await expect(page.locator("#laborLabel")).toHaveText(WORDS.funds.toLowerCase());
 });

@@ -354,7 +354,7 @@ function renderShiftCost(short) {
   el.hidden = !quarter || short || !p;
   if (el.hidden) return;
   const c = shiftCost(quarter.money, p, quarter.shift, level.quarter.shifts);
-  el.innerHTML = `This shift <b>$${c.pay}</b> <i>·</i> budget after <b class="${c.covers ? "" : "is-plain"}">${money(c.after)}</b> <i>·</i> `
+  el.innerHTML = `This shift <b>$${c.pay}</b> <i>·</i> funds after <b class="${c.covers ? "" : "is-plain"}">${money(c.after)}</b> <i>·</i> `
     + (c.covers ? (quarter.shift >= level.quarter.shifts ? "the last shift" : "covers the rest of the quarter") : `<span class="is-bad">short for shift ${c.shortAt}</span>`);
 }
 function nudgeStart() {
@@ -681,7 +681,7 @@ function renderChat() {
   w._cardSig = sig;
   const pips = $(".ct-pips", box);
   pips.innerHTML = `<span>thoughts</span>` + Array.from({ length: b.max }, (_, i) => `<i class="${i < b.n ? "is-on" : ""}"></i>`).join("");
-  pips.dataset.tooltip = `Thinking budget: ${b.n} of ${b.max}. ${w.hire.name} spends one to think through something unexpected; it refills by one every ${b.every}s while the shift runs. Talking to them is free.`;
+  pips.dataset.tooltip = `Thoughts: ${b.n} of ${b.max}. ${w.hire.name} spends one to think through something unexpected; it refills by one every ${b.every}s while the shift runs. Talking to them is free.`;
   // Their working instructions, as they wrote them down, collapsed to one line. Hidden until they
   // have some.
   $(".ct-pin", box).hidden = !w.ast || !w.orders;
@@ -1186,7 +1186,7 @@ function openLevel(L, { again = false, shift = "restart", keepCrew = false } = {
   $("#levelName").innerHTML = quarter ? `<span class="ct-shift-of">Shift ${quarter.shift} of ${L.quarter.shifts}<span class="ct-shift-pips">${
     Array.from({ length: L.quarter.shifts }, (_, k) => `<i class="${k + 1 < quarter.shift ? "is-past" : k + 1 === quarter.shift ? "is-now" : ""}"></i>`).join("")}</span></span>` : `Level ${L.id}: ${L.name}`;
   $("#goalLabel").textContent = L.contracts ? "Contracts" : quarter ? "This quarter" : "Today's order";
-  $("#laborLabel").textContent = quarter ? WORDS.budget.toLowerCase() : WORDS.labor;
+  $("#laborLabel").textContent = quarter ? WORDS.funds.toLowerCase() : WORDS.labor;
   $("#startScreen").classList.add("is-hidden");
   $("#boardScreen").classList.add("is-hidden");
   $("#endScreen").classList.add("is-hidden");
@@ -1246,12 +1246,12 @@ function endQuarterShift() {
   logEvent(game.t, "end", { won, quarter: { shift: n, of: Q.shifts }, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), money: Math.floor(quarter.money), crew: crewSummary() });
   if (won && (!best[level.id] || quarter.money > best[level.id].left)) best[level.id] = { left: quarter.money };
   // The quarter ends as soon as the quota ships; what's left of the budget is saved.
-  const stats = won ? [["Shifts", `${n} of ${Q.shifts}`], [`${WORDS.crewPay}, all shifts`, spent], [WORDS.budgetLeft, left]]
-    : !last ? [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.budgetLeft, left]]
-    : [["Shipped", `${done}/${total}`], [`${WORDS.crewPay}, all shifts`, spent], [WORDS.budgetLeft, left]];
+  const stats = won ? [["Shifts", `${n} of ${Q.shifts}`], [`${WORDS.crewPay}, all shifts`, spent], [WORDS.funds, left]]
+    : !last ? [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.funds, left]]
+    : [["Shipped", `${done}/${total}`], [`${WORDS.crewPay}, all shifts`, spent], [WORDS.funds, left]];
   $("#endTitle").textContent = won ? "Quota met" : !last ? `Shift ${n} done` : "Quota missed";
   const shiftsLeft = Q.shifts - n;
-  $("#endNote").textContent = won ? `${earlyLine(n, Q.shifts)} You saved ${left} of your $${Q.budget} budget.`.trim()
+  $("#endNote").textContent = won ? `${earlyLine(n, Q.shifts)} You saved ${left} of your $${Q.budget} in funds.`.trim()
     : !last ? `${countsLine(level.order.map((l) => l.count), quarter.done, shiftsLeft)} Your crew and their instructions stay; change who's on the shift before the next one if you like.`
     : "The quarter ended short of the quota.";
   // What's still to ship, as the same tickets the floor shows.
@@ -1467,8 +1467,8 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
       <b>${p.won ? `$${p.c.pay}` : over ? "$0" : `pays $${p.c.pay}`}</b></div>`).join("")}</div>`;
   // The quarter card adds up the whole quarter; a shift card says what that shift did.
   const crewPayAll = Math.round(level.quarter.budget - quarter.money);
-  const stats = over ? [["Paid", `$${paid}`], [`${WORDS.crewPay}, all shifts`, `$${crewPayAll}`], ...(cut ? [[WORDS.toLender, `$${cut}`]] : []), [WORDS.budget, money(quarter.money + paid - cut)]]
-    : [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.budgetLeft, money(quarter.money)]];
+  const stats = over ? [["Paid", `$${paid}`], [`${WORDS.crewPay}, all shifts`, `$${crewPayAll}`], ...(cut ? [[WORDS.toLender, `$${cut}`]] : []), [WORDS.funds, money(quarter.money + paid - cut)]]
+    : [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`], [WORDS.funds, money(quarter.money)]];
   if (over) setEndStats(rows + recapHTML({ start: level.quarter.budget, paid, cut, crew: crewPayAll }), []);
   else setEndStats(rows, stats);
   const btns = over ? [["board", WORDS.toBoard, true]]
@@ -1496,7 +1496,7 @@ function recapHTML({ start, paid, cut, crew }) {
     ...(paid ? [[WORDS.contractsPaid, signed(paid), "is-in"]] : []),
     ...(cut ? [[`${WORDS.lendersCut} ${lender}`, signed(-cut), "is-out"]] : []),
     ...(crew ? [[WORDS.crewPayAll, signed(-crew), "is-out"]] : []),
-    [WORDS.budgetNow, money(now), "is-total"],
+    [WORDS.fundsNow, money(now), "is-total"],
   ];
   const row = ([l, v, cls], i) => `<span class="${cls}" style="--i:${i}">${l}</span><b class="${cls}" style="--i:${i}">${v}</b>`;
   return `<div class="ct-recap">${lines.map(row).join("")}

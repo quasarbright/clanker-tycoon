@@ -165,7 +165,7 @@ test("a shift card says plainly what has shipped and how many shifts are left; t
   await expect(page.locator("#endScreen .ct-mascot")).toBeHidden();
   await expect(page.locator("#endNote")).not.toContainText("pace");
   await expect(page.locator("#endStats")).toContainText("Shipped this shift");
-  await expect(page.locator("#endStats")).toContainText("Remaining budget");
+  await expect(page.locator("#endStats")).toContainText("Funds");
   await page.click('[data-go="next"]');
   await endShift(page, [12]);
   await page.click('[data-go="next"]');
@@ -333,10 +333,10 @@ test("crew cost: the whole crew's shift on the board, this shift's cost by Start
   await page.click("#boardGo");
   await expect(page.locator("#shiftCost")).toBeHidden(); // nobody on the shift yet
   await page.evaluate(() => ct.hire("blip"));
-  await expect(page.locator("#shiftCost")).toHaveText("This shift $5 · budget after $95 · covers the rest of the quarter");
+  await expect(page.locator("#shiftCost")).toHaveText("This shift $5 · funds after $95 · covers the rest of the quarter");
   await page.evaluate(() => { ct.quarter.money = 20; ct.hire("pip"); });
-  await expect(page.locator("#shiftCost")).toHaveText("This shift $15 · budget after $5 · short for shift 2");
-  // On the same row as the names by Start, and "budget after" isn't gold when it's short.
+  await expect(page.locator("#shiftCost")).toHaveText("This shift $15 · funds after $5 · short for shift 2");
+  // On the same row as the names by Start, and "funds after" isn't gold when it's short.
   const [cost, names] = await page.evaluate(() => ["#shiftCost", "#crewReady"].map((q) => document.querySelector(q).getBoundingClientRect()));
   expect(cost.top).toBeLessThan(names.bottom);
   expect(cost.left).toBeGreaterThanOrEqual(names.left);
@@ -397,7 +397,7 @@ test("the quarter card is a recap: started with, paid, lender, crew, budget now,
   await endShift(page); // everything ships in shift 1: crew $15, contract $150, lender $15
   await expect(page.locator("#endScreen .ct-mascot")).toBeHidden();
   expect(await recap(page)).toEqual({
-    lines: [["Started with", "$200"], ["Contracts paid", "+$150"], ["Lender's cut", "−$15"], ["Crew pay, all shifts", "−$15"], ["Budget now", "$320"]],
+    lines: [["Started with", "$200"], ["Contracts paid", "+$150"], ["Lender's cut", "−$15"], ["Crew pay, all shifts", "−$15"], ["Funds now", "$320"]],
     net: "This quarter +$120",
   });
   await expect(page.locator(".ct-recap-face")).toHaveCount(1);
@@ -420,7 +420,7 @@ test("a losing quarter: no $0 lines, no lender line without a loan, the result i
   }
   await expect(page.locator("#endTitle")).toHaveText("Quarter over");
   expect(await recap(page)).toEqual({
-    lines: [["Started with", "$100"], ["Crew pay, all shifts", "−$45"], ["Budget now", "$55"]],
+    lines: [["Started with", "$100"], ["Crew pay, all shifts", "−$45"], ["Funds now", "$55"]],
     net: "This quarter −$45",
   });
   await expect(page.locator(".ct-recap-net")).toHaveClass(/is-out/);

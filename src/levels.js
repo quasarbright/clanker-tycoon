@@ -67,14 +67,14 @@ export const LEVELS = [
     // bigger crew really ships more. It only gives out red, so every blue box is three paint jobs,
     // and the paint machine wears. Numbers from tools/balance.mjs: see docs/decisions.md #35, #57.
     id: 6, name: "First quarter",
-    blurb: "A quota, three shifts and a budget.",
+    blurb: "A quota, three shifts and the funds to pay a crew.",
     stations: ["SUPPLY", "PAINT", "PACK", "DOCK", "BIN_1", "BIN_2"],
     ship: "boxes", colors: ["red"],
     order: [{ color: "red", count: 24 }, { color: "blue", count: 9 }],
     pool: ["blip", "dot", "pip", "gary", "rusty", "vex"],
     shift: SHIFT_FLOOR,
     quarter: { shifts: 3, budget: 110 },
-    start: "Ship the quota within three shifts. Each robot's pay for the shift comes out of your budget when you press <b>Start</b>. Your crew stays from shift to shift.",
+    start: "Ship the quota within three shifts. Each robot's pay for the shift comes out of your funds when you press <b>Start</b>. Your crew stays from shift to shift.",
   },
   {
     // Your business (src/business.js): the contract loop on level 6's floor. Opens on the

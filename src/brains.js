@@ -29,7 +29,7 @@ export const ATTRIBUTES = {
   fast: { label: "Fast", tip: "Walks 1.5× faster." },
   nimble: { label: "Nimble", tip: "Works machines faster: packing, painting and servicing take 40% less time." },
   steady: { label: "Steady", tip: "Machines wear half as fast in their hands." },
-  smart: { label: "Smart", tip: "Can think things through more often (a bigger thinking budget that refills faster)." },
+  smart: { label: "Smart", tip: "Can think things through more often (more thoughts, refilling faster)." },
 };
 // Wage: a flat rate for a shift, from their skills and attributes (wages.js).
 const robot = (r) => ({ ...r, wage: wageOf(r.skills, r.attributes) });

@@ -221,7 +221,7 @@ export function quarterLevel(base, biz, contracts, candidates = []) {
     order: contracts.map((c) => ({ color: c.color, count: c.count })),
     quarter: { shifts: QUARTER_SHIFTS, budget: biz.money },
     contracts,
-    start: `Ship ${list(contracts)} boxes by the end of the quarter, ${QUARTER_SHIFTS} shifts. Each contract pays when all its boxes have shipped (up to $${pay}). ${WORDS.crewPay} comes out of your budget at <b>Start</b>.`,
+    start: `Ship ${list(contracts)} boxes by the end of the quarter, ${QUARTER_SHIFTS} shifts. Each contract pays when all its boxes have shipped (up to $${pay}). ${WORDS.crewPay} comes out of your funds at <b>Start</b>.`,
   };
 }
 

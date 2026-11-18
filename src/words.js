@@ -14,8 +14,7 @@ export const WORDS = {
   training: "Training",
   machines: "Machines",
   bought: "Bought",
-  budget: "Budget",
-  budgetLeft: "Remaining budget", // on the shift cards, after the shift's pay came out
+  funds: "Funds", // your money (never "budget": Mike, 2026-11-18, "let's just say funds")
   startQuarter: "Start the quarter",
   lender: "The lender",
   toLender: "To the lender",
@@ -28,7 +27,7 @@ export const WORDS = {
   contractsPaid: "Contracts paid",
   lendersCut: "Lender's cut",
   crewPayAll: "Crew pay, all shifts",
-  budgetNow: "Budget now",
+  fundsNow: "Funds now",
   thisQuarter: "This quarter",
   lastQuarter: "Last quarter",
   // the top bar's money line, per kind of level
@@ -36,7 +35,7 @@ export const WORDS = {
 };
 
 /** Words that must never reach the player (checked in e2e/wording.spec.mjs). */
-export const BANNED_WORDS = /\b(hire[sd]?|hiring|let (?:someone |people |them )?go|fire[sd]?|firing)\b/i;
+export const BANNED_WORDS = /\b(hire[sd]?|hiring|let (?:someone |people |them )?go|fire[sd]?|firing|budgets?)\b/i;
 
 /** Fill every [data-word] element under `root` from WORDS. */
 export function applyWords(root = document) {

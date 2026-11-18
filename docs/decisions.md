@@ -1022,3 +1022,12 @@ for the same reason the live pace label was dropped: a pace assumes the work goe
 - Strings are in `src/words.js`. Tests: two recap tests in `e2e/business.spec.mjs` (a winning
   quarter with a loan, a losing one with no $0 lines and no lender line), the shift-card text, and
   `shippedOf` in `test/mechanics.test.mjs`.
+
+### 73. "Funds", not "budget" (2026-11-18)
+
+Mike, on the shift card's "Budget" (after asking for "remaining budget"): "should we even call it
+budget anymore? let's just say funds". Your money is now "Funds" everywhere the player sees it:
+the board, the top bar, the shift and quarter cards ("Funds", "Funds now"), the cost line by Start
+("funds after"), level 6's text, and the thinking budget became "Thoughts". "budget" joined the
+banned words, so `test/words.test.mjs` and `e2e/wording.spec.mjs` fail if it comes back (the unit
+test caught one leftover, "You saved $X of your $110 budget").
