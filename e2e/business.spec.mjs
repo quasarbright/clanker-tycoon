@@ -539,12 +539,16 @@ test("Pam's review of the front page: a long name fits the paper, curly quotes, 
 test("reputation on the board: pips under Funds, struck full numbers with the hover lines, the gain on each card (decisions 78, 79)", async ({ page }) => {
   await openBoard(page);
   await expect(page.locator("#bizRep .ct-rep-text")).toHaveText("3 of 3 · offers at 100%");
+  // Green at full reputation (Mike), gold once it drops.
+  await expect(page.locator("#bizRep")).toHaveClass(/is-full/);
+  expect(await page.locator("#bizRep .ct-pie circle.full").first().evaluate((c) => getComputedStyle(c).fill)).toBe("rgb(95, 208, 138)");
   await expect(page.locator(".ct-struck")).toHaveCount(0); // nothing is lowered at full reputation
   await expect(page.locator("#missLine")).toHaveText("Miss any contract: −1 reputation");
   const gains = await page.locator("[data-contract] .ct-rep-gain").allTextContents();
   expect(gains).toEqual(["Ship it: +⅓ reputation", "Ship it: +⅔ reputation", "Ship it: +⅓ reputation"]);
   await page.evaluate(() => { ct.biz.rep = 7; ct.openBoard(); });
   await expect(page.locator("#bizRep .ct-rep-text")).toHaveText("2⅓ of 3 · offers at 80%");
+  await expect(page.locator("#bizRep")).not.toHaveClass(/is-full/);
   const large = page.locator("[data-contract]").nth(1);
   const tips = await large.locator(".ct-struck").evaluateAll((els) => els.map((e) => [e.textContent, e.dataset.tooltip]));
   expect(tips).toEqual([

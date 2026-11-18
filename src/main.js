@@ -1330,6 +1330,7 @@ function renderRep() {
   const rep = biz.rep ?? REP.max, danger = wholePips(rep) <= 1;
   const el = $("#bizRep");
   el.classList.toggle("is-danger", danger);
+  el.classList.toggle("is-full", rep >= REP.max); // green at full reputation (Mike)
   el.innerHTML = `<span class="ct-cash-label">${WORDS.reputation}</span>${piesHTML(rep)}<span class="ct-rep-text">${pipsText(rep)} of 3 · offers at ${offerPct(rep)}%</span>`
     + (danger ? `<span class="ct-rep-warn">One more missed contract and the name ${escapeHTML(biz.name)} is mud.</span>` : "");
   $("#missLine").innerHTML = `Miss any contract: <b>−1 reputation</b>`;
