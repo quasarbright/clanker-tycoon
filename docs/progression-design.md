@@ -10,8 +10,10 @@ with detail and open questions, is an entry in [ideas.md](ideas.md). Reasons and
 
 - **You never leave the floor.** At every size, the game is giving robots instructions and seeing
   what they do with them. Mike: "When it gets too managerial, it becomes a spreadsheet simulator."
-- **No factory building.** New lines drop into pre-wired bays; anything flexible about routing is
-  told to a foreman in words. The only thing you build is instructions.
+- **Arrange your own floor** (decision 85, replacing "no factory building"). During scheduling,
+  before a shift, you drag the machines you own around the floor and place new ones you buy.
+  Layout sets how far robots walk. Instructions are still the main thing you build; how several
+  factories, or buying one, would work comes later.
 - **You choose your difficulty** by which contracts you take.
 - **Delegation comes from scale, not rules.** You can only talk to one robot at a time; a big
   enough factory makes foremen the obvious move.

@@ -9,8 +9,8 @@ as context arrives.
 
 - **You never leave the floor.** At every size the game is giving robots instructions and watching
   what they do. "When it gets too managerial, it becomes a spreadsheet simulator."
-- **No factory building.** Lines drop into pre-wired bays; routing is told to a foreman in words.
-  The only thing the player builds is instructions.
+- **You arrange your own floor** (decision 85, replacing "no factory building"): drag what you
+  own and place what you buy, during scheduling only. Instructions stay the main thing you build.
 - **Symmetry,** where it isn't silly: what you do to robots under you was done to you first.
 - **Keep it simple.** Fewer decisions for workers, fewer options on screen. A roguelike visit offers
   three of each, not everything. When unsure, do less.
@@ -61,6 +61,38 @@ pay. Source: `src/business.js`, decisions 53 to 67.
    new machines and lines, not new systems.
 7. **Scale by nesting one concept, not adding more.** A foreman is a robot who instructs robots.
    Let a foreman instruct foremen and the same idea covers any size, with no "plant manager" tier.
+
+## Spec: floor editor and assembler (decision 85, 2026-11-18)
+
+**Editor**
+- Movable: every machine you own (Paint, Pack, Assembler, the bins). Fixed: Supply on the left
+  wall, Dock on the right, your desk. Those fixed anchors keep every floor readable and set a
+  real start and end for the walk.
+- Placement snaps to a coarse grid of slots, each a machine plus its walking ring (the floor's
+  100×64 gives about 5×3). Snapping rules out overlaps and blocked spots without any wiring, and a
+  slot is easy to drag into.
+- Programs name stations, not positions, so moving a machine never breaks instructions. Layout
+  only changes walking distance, which is the point: a tight floor ships more.
+- Only during scheduling (before Start), never mid-shift. A machine bought at the board waits in a
+  "to place" tray on the floor. Start offers to drop it in the nearest free slot if you haven't.
+- The dry run should use the current layout, so re-run it when a layout change affects a robot's
+  program.
+
+**Assembler**
+- Inputs: one box each of red, blue and green, put down at the assembler (it holds 6 boxes).
+  Output: one crate, which ships at the Dock like a box.
+- Verb: `assemble()` at ASSEMBLE, like `pack("red")` at Pack. A new **Assembly** skill
+  (primary work, so it's a compile error without the skill), trainable at $20 like the rest.
+- It takes time like painting, and wears like the paint machine so Repair still matters.
+- Contracts: a "crates" contract appears on the board once you own an assembler. It needs both
+  painted colors, so it also pushes a second painter or a second paint machine.
+
+**Mike's calls**
+1. Can you own two of the same machine (two Paint, two Pack)? Mark: yes, named "Paint 1" and
+   "Paint 2" like the bins. Without that, an editor can't make a factory grow.
+2. Does the floor itself get bigger (buy more floor, more slots)? Mark: yes, later, as the next
+   scaling step. For now a fixed floor with free slots.
+3. The crate recipe: one of each color (Mark), or set by each contract.
 
 ## Open questions Mark is watching
 

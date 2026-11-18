@@ -200,9 +200,10 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   growth makes it bigger (lines that feed each other) and has you talk to foremen instead of every
   worker, but you still give robots instructions and watch what they do with them. Mike: "When it
   gets too managerial, it becomes a spreadsheet simulator." Design: `docs/progression-design.md`.
-- No factory building. New lines drop into pre-wired bays (supply bins, belts between lines,
-  output belts already connected); anything flexible about routing is told to a foreman in words.
-  The only thing the player builds is instructions.
+- **You arrange your own floor** (Mike, 2026-11-18: "Maybe we should have a factory
+  builder/editor where you can drag the stuff you own around. And when you buy something new you
+  can place it down"; decision 85, which replaces "no factory building"). Editing happens during
+  scheduling, before a shift, never mid-shift. Multiple factories and buying a factory are later.
 - Delegation comes from scale, not rules: you can only talk to one robot at a time.
 - Runs are endless (Mike: "the contracts get crazier and eventually they'll die"). Growing bigger
   can't mean a new first-class concept per tier: foremen are one, and there's only room for a few.

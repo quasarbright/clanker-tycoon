@@ -1214,3 +1214,21 @@ technically go negative, it doesn't matter. You just go to zero."
   and below, since any miss from there reaches 0.
   Built as `onTheEdge` in `src/reputation.js`: from 1 pip down to just above 0. At 1⅓ it doesn't
   show, since a miss there leaves ⅓.
+
+### 85. A floor editor and an assembler, replacing "no factory building" (2026-11-18)
+
+**Question:** what to build next. Mark suggested escalating contracts, then an assembler, then a
+second line. Mike: "For 1 we also need a way for factories to get bigger. Maybe we should have a
+factory builder/editor where you can drag the stuff you own around. And when you buy something new
+you can place it down. Might get tricky later when we have multiple factories and also have to
+think about how we buy another factory and all that, but we'll think about that later. Let's just
+do factory editor and assembler for now. You can edit before a shift, I guess during the
+scheduling phase would be natural."
+**Picked:** a floor editor and an assembler, next. This replaces "no factory building" (#46): you
+now arrange what you own. Pre-wired bays and buying whole lines or factories are set aside until
+later. Escalating contracts stay queued, with these two as their prerequisite.
+- **Editor:** during scheduling, drag your machines around and place new purchases. Not
+  mid-shift.
+- **Assembler:** a new machine and skill that turns three boxes of different colors into a mixed
+  crate.
+Details, and the calls still open for Mike, are in Mark's spec (`docs/personas/mark.md`).

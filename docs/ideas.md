@@ -36,6 +36,13 @@ What's being built.
   everything costs more than a crew (the "Bolt does everything" problem). Later: experience making
   training cheaper (issue #4), a hiring pool that changes between quarters.
 
+- **The floor editor** (decision 85). During scheduling, drag the machines you own around the
+  floor, and place new purchases yourself. Supply, Dock and your desk stay put. Layout decides how
+  far robots walk, so it's a real choice about throughput.
+- **The assembler** (decision 85). A new machine and skill: three boxes of different colors go in,
+  one mixed crate comes out and ships at the Dock. Contracts can ask for crates. It's the first
+  step toward lines feeding lines.
+
 ## Next
 
 Agreed direction, not built yet. Roughly in roadmap order.
@@ -79,8 +86,13 @@ Agreed direction, not built yet. Roughly in roadmap order.
 - **Upgrading machines.** Started: a bigger pack table and bigger bins are on sale (decision 58). Mike: "we should be able to upgrade machines ... the durability and the
   capacity, like the inventory space of it." Improve a machine you own (wears slower, holds more)
   instead of only buying a different one.
-- **Buying a whole line.** It drops into the next empty bay of a fixed plant layout, already wired:
-  supply bins, the belt from the line before it, its output belt. No placing or wiring.
+- **Escalating contracts.** Past the last hand-written board only pay grows, so an endless run
+  never forces you to grow. Generate boards with bigger quotas, two painted colors at once and
+  sometimes fewer shifts. Queued after the floor editor and the assembler, which give the factory
+  room to grow (decision 85).
+- **Buying a whole line or another factory.** Later (Mike: "Might get tricky later when we have
+  multiple factories and also have to think about how we buy another factory and all that, but
+  we'll think about that later").
 - **Lines feed lines.** Stages of one product: Line A paints and boxes, Line B builds mixed crates,
   Line C ships. A mistake upstream starves the line downstream.
 - **Routing by talking.** Anything flexible about routing (shared supplies, overflow, which source a
@@ -202,7 +214,8 @@ Each with the reason.
   the line (decision 41).
 - **Repairs as a plant-level concern:** "a line manager should manage repairs" (decision 41).
 - **Meeting foremen between shifts only:** too far from the floor (decision 42).
-- **Factory building and wiring:** Mike doesn't want a factory-builder; pre-wired bays instead (decision 46).
+- **Factory building and wiring:** Mike didn't want a factory-builder; pre-wired bays instead
+  (decision 46). Reversed by decision 85: you now arrange the machines you own.
 - **Grinding money in the tutorial levels:** the tutorial teaches mechanics; money is long-term (decision 7).
 - **JSON rules, or a Lisp, as the worker language:** JavaScript subset was more correct (decision 16).
 - **Apple's on-device model or a decision model:** couldn't plan, or couldn't talk (decision 1).
