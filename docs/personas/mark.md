@@ -36,8 +36,8 @@ pay. Source: `src/business.js`, decisions 53 to 67.
 
 ## Mark's current take
 
-1. **Reputation ends a run (built, #78, #79, #81).** The run ends below one whole pip; at one pip
-   the board warns in red (Mike approved, 2026-11-18). 3 pips, −1 a miss of any size, +⅔ a shipped Large, +⅓
+1. **Reputation ends a run (built, #78, #79, #81).** The run ends at zero only (#84); under 1 pip
+   offers are 40%, and at 1 pip and below the board warns in red. 3 pips, −1 a miss of any size, +⅔ a shipped Large, +⅓
    a shipped Small or side (#79). A clean Large + side quarter wins back a whole pip.
    Lower reputation shrinks quota and pay. Mark's balance calls: the board steps by whole pips
    (rounded down), 100% / 80% / 60% of quota and pay at 3 / 2 / 1, counts rounded to boxes of 3.

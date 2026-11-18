@@ -44,13 +44,13 @@ is the quarter's budget; wages come out of it as the shifts run.
 2. **Run shifts** on the floor: schedule your crew, give instructions, watch, fix. Wages tick.
 3. **Get paid** at the end of the quarter for every contract that shipped in full.
 
-**Reputation (built; decisions 78, 79, 81).** Three pips. A missed contract of any size loses a
-whole pip. A shipped Large wins back two thirds, a shipped Small or side contract a third.
-Reputation sets the board: offers are 100%, 80% and 60% of size and pay at 3, 2 and 1 whole pips,
-which gives you room to recover and train up. Below one whole pip no client will sign with you,
-and the run is over. That's the only way a run ends; going broke just means working shifts alone
-and missing contracts. At exactly one pip the board turns red and warns that one more miss ends it
-(Mike approved both, 2026-11-18: "good").
+**Reputation (built; decisions 78, 79, 81, 84).** Three pips. A missed contract of any size loses a
+whole pip, but never below zero. A shipped Large wins back two thirds, a shipped Small or side
+contract a third. Reputation sets the board: offers are 100%, 80%, 60% and 40% of size and pay at
+3, 2, 1 and under 1 whole pip, which gives you room to recover and train up. At zero no client
+will sign with you, and the run is over. That's the only way a run ends; going broke just means
+working shifts alone and missing contracts. At one pip and below the board turns red and warns
+that one more miss ends it.
 4. **Shop between quarters**, three choices of each: recruit a robot (a cheap blank one to train,
    a skilled one, or a pricey expert), train skills and traits, buy machines. Borrow if you need to.
 

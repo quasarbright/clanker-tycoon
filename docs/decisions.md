@@ -1199,3 +1199,16 @@ Added:
   that shift's model calls; reads the local logs or a downloaded file.
 Tests: `test/playlog.test.mjs` (the tool), `e2e/logging.spec.mjs` (a whole run's events reach the
 log, an error is caught, the web build's link downloads the log and is hidden locally).
+
+### 84. The run ends at zero reputation, not below one pip (2026-11-18)
+
+**Correction:** Mike: "You should die at zero reputation. When you have less than one but more
+than zero, you should still be able to get contracts. They should just be worse than more than one
+pip. The whole one more miss on your mud thing is fine. Even if you're at one third and you
+technically go negative, it doesn't matter. You just go to zero."
+**Picked:** replaces the "run ends below one whole pip" part of #81.
+- The run ends only at 0. A miss below 1 pip clamps to 0, which ends it.
+- With ⅓ or ⅔ of a pip left, the board still offers contracts, at 40% of size and pay, continuing
+  the 20% steps: 100% / 80% / 60% / 40% at 3 / 2 / 1 / under 1 whole pip.
+- The red warning ("One more missed contract and the name … is mud.") stays, and applies at 1 pip
+  and below, since any miss from there reaches 0.
