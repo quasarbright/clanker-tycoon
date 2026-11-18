@@ -184,6 +184,8 @@ test("the quarter's level: stations are what's placed on your floor, at your lay
   assert.equal(L.roster.pip.wage, 10);
 });
 
+const pick = (c) => ({ count: c.count, pay: c.pay });
+
 test("the assembler: a crates contract once you own one (and paint), Assembly trainable only then", () => {
   const b = B.newBusiness();
   b.money = 1000;
@@ -197,6 +199,9 @@ test("the assembler: a crates contract once you own one (and paint), Assembly tr
   assert.match(B.missingFor(b, crates), /paint machine/);
   B.buy(b, "paint");
   assert.equal(B.hasMachine(b, crates.needs), true);
+  // Mark's numbers: 3, 3, 4, 4 crates, then one more every two quarters; $110 a crate plus $10 a quarter.
+  assert.deepEqual([0, 1, 2, 3, 4, 5].map(B.cratesOffer), [{ count: 3, pay: 330 }, { count: 3, pay: 360 }, { count: 4, pay: 520 }, { count: 4, pay: 560 }, { count: 5, pay: 750 }, { count: 5, pay: 800 }]);
+  assert.deepEqual(pick(crates), { count: 3, pay: 330 });
   assert.ok(B.trainableNow(b).includes("assembly"));
 });
 

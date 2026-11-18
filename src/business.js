@@ -228,11 +228,13 @@ export function board(biz) {
     { id: `${q}-x`, size: "side", color: T.side.color, count: T.side.count, pay: pay(T.side.pay), needs: needs(T.side.color) },
     // Once you own an assembler, a crates contract too: a red, a blue and a green box each, so it
     // also needs paint (decision 85).
-    ...(machinesOf(biz, "assemble").length ? [{ id: `${q}-c`, size: "crate", color: "crate", count: CRATES.count + q, pay: pay(CRATES.pay + 90 * q), needs: "assembler" }] : []),
+    ...(machinesOf(biz, "assemble").length ? [{ id: `${q}-c`, size: "crate", color: "crate", ...cratesOffer(q), needs: "assembler" }] : []),
   ].map((c) => scaleOffer(c, biz.rep ?? REP.max));
 }
-/** The crates contract's first size and pay (Mark's balance pass is still to come). */
-export const CRATES = { count: 3, pay: 330 };
+/** The crates contract (Mark, decision 87): 3 crates on boards 1 and 2, 4 on 3 and 4, then one more
+ *  every two quarters; $110 a crate on board 1 and $10 more a crate each quarter. So $330, $360,
+ *  $520, $560 on boards 1 to 4. */
+export const cratesOffer = (q) => { const count = 3 + Math.floor(q / 2); return { count, pay: (110 + 10 * q) * count }; };
 
 const kindOfMachine = (x) => SHOP.find((m) => m.id === x.id)?.kind;
 export const owns = (biz, id) => biz.upgrades.includes(id) || biz.machines.some((x) => x.id === id);
