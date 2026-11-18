@@ -144,3 +144,8 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   Mike's hover ("...while Clank & Sons' reputation is questionable. Restore reputation for the full
   $320."), per-size ship gain, miss said once, recap stamps. Spec sent to the build thread; Pam
   reviews the screenshots before Mike.
+- 2026-11-18: second newspaper photo ("caught, a little embarrassed", from Mike's mid-bite
+  reference), on the review page. Mike picked 4 · Awkward (worried eyebrows, wobbly closed mouth,
+  blush): "i like all of them except 3. 4 is pretty funny". So 1 Mid-bite, 2 Blushing and 4
+  Awkward all join the rotation beside the classic shocked photo; 3 Glazed over is out. Same head,
+  hard hat and wall shadow as `ownerHeadSVG` in `src/looks.js`. For the build thread.
