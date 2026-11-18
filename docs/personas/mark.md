@@ -71,6 +71,8 @@ pay. Source: `src/business.js`, decisions 53 to 67.
 - Placement snaps to a coarse grid of slots, each a machine plus its walking ring (the floor's
   100×64 gives about 5×3). Snapping rules out overlaps and blocked spots without any wiring, and a
   slot is easy to drag into.
+- Dropping a machine on a taken slot swaps the two (Mike, 2026-11-18, picked over refusing the
+  drop): both slots light up gold and the other machine shows where it will go before you let go.
 - Programs name stations, not positions, so moving a machine never breaks instructions. Layout
   only changes walking distance, which is the point: a tight floor ships more.
 - Only during scheduling (before Start), never mid-shift. A machine bought at the board waits "in

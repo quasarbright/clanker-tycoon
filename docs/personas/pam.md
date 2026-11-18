@@ -156,3 +156,6 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   word everywhere a bought machine waits); and the assembler gets no art yet, so the editor ships
   showing a crate for whatever machine you bought (the Paint machine in mocks), not an
   Assembler.
+- 2026-11-18: dropping a machine on a taken slot: Mike picked **Swap** (my recommendation) over
+  Refuse. Both slots light gold and the other machine previews its new spot; letting go trades
+  them. In Mark's spec.
