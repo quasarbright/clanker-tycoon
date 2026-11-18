@@ -87,6 +87,11 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
 - **Humor:** the punchline is one of the game's own mechanics, said in a dry, official voice;
   never a generic business joke. The gold-standard examples are in `docs/humor.md` (Mike,
   2026-11-18: "this is the gold standard").
+- **Look and feel: charming, cute, industrial, almost slapstick** (Mike, 2026-11-18: "I like the
+  direction we're going with the license and stamp and the newspaper ... let's lean more into this
+  going forward, it'll be good for charm and personality and identity"). Paperwork and physical
+  props that land with a thunk: the license and its APPROVED stamp, SHIPPED/MISSED stamps on the
+  quarter recap, the newspaper on your floor. Lean into this for new screens.
 - Robots call you by your name (the one you sign on the business license), never "boss" (Mike,
   2026-11-18). `ownerLine` in `src/brains.js` tells the model; "boss" is a banned word in the tests.
 - Your money is **funds**, never "budget" (Mike, 2026-11-18: "should we even call it budget anymore? let's just say funds"). `WORDS.funds` in `src/words.js`; "budget" is a banned word in the tests.

@@ -24,6 +24,9 @@ are at 1440x900, every state a change touches.
 - **One conversation per robot,** messages-app style; no separate logs or instruction panels.
 - **Words live in `src/words.js`,** and repeated things have one renderer (see CLAUDE.md).
 - **Keep it simple.** Mechanics over small polish; fewer options on screen; tutorials minimal.
+- **The game's look (Mike, 2026-11-18):** charming, cute, industrial, almost slapstick. Physical
+  paperwork and props that land with a thunk (license and stamp, recap stamps, the newspaper on
+  the floor). Reach for this first on new screens; keep it light so it doesn't turn cheesy.
 - **Money info (the standard, Mike 2026-11-17: "I loved that"):** the board shows the whole crew's
   cost a shift next to the budget, as a ceiling, and the forecast shows contract pay only. The
   exact cost shows by Start while you schedule: this shift, budget after, and whether it covers
@@ -131,3 +134,5 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   the lender and funds): "I like this variant." So the board is A: pie pips in the header, struck
   numbers with tooltips on the cards, and per-card "Ship it +⅓ / +⅔ · Miss it −1" lines. That
   replaces my B recommendation (nine ticks, one sentence).
+- 2026-11-18: Mike picked the stamps for the quarter recap (SHIPPED +1/3 / MISSED -1) and set the
+  look: "charming, cute, industrial and almost slapstick ... lean more into this going forward".
