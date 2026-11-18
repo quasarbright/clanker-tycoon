@@ -118,8 +118,11 @@ slot, and 24 with Pack one slot closer to Supply. Mark's calls:
   The old +1 crate a quarter missed every board after the first. New numbers: 3 crates on boards 1
   and 2, 4 on boards 3 and 4, then +1 crate every two quarters. Pay is $110 a crate on board 1,
   rising $10 a crate each quarter: $330, $360, $520, $560. 4 crates should need one step of
-  scaling (a second hauler, Paint 2 with a second painter, or the bigger pack table), which still
-  needs measuring.
+  scaling (a second hauler, Paint 2 with a second painter, or the bigger pack table).
+- Measured (56a6d8e): only Paint 2 with a second painter reaches 4 crates on board 3, and it does
+  so in 2 of 3 shifts. Painting is the bottleneck, so a hauler, a bigger table or a better layout
+  don't help. Settled as is. One answer is right for crates (paint more), and the spare shift is
+  room to take a painted side contract too, so the slack is the payoff for a pricey upgrade.
 
 ## Open questions Mark is watching
 
