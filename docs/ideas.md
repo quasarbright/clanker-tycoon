@@ -37,7 +37,8 @@ What's being built.
   training cheaper (issue #4), a hiring pool that changes between quarters.
 
 - **The floor editor** (decision 85). During scheduling, drag the machines you own around the
-  floor, and place new purchases yourself. Supply, Dock and your desk stay put. Layout decides how
+  floor, and place new purchases yourself. Supply moves like a machine (it can't go into storage);
+  the Dock and your desk stay put (decision 88). Layout decides how
   far robots walk, so it's a real choice about throughput. The floor is a fixed grid of slots, and
   you can own two of the same machine ("Paint 1", "Paint 2"; decision 86). A machine you've bought waits
   **In storage** until you place it. Flow approved as mocked (Mike, 2026-11-18); no assembler art

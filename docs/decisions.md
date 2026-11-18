@@ -1272,3 +1272,27 @@ Built to Mark's spec (#85) with Mike's calls (#86). What the build had to decide
   first Large red (36 of 40). Moving Pack one slot toward Supply ships 24 a shift. Mark to weigh
   whether to retune the boards or the default floor. The crates contract's numbers are placeholders.
 
+### 88. Supply moves; the starting floor makes the packer walk too far (2026-11-18)
+
+**Question (Mark, on the review page):** should the starting floor already be laid out well, or
+should fixing it be the first thing the floor editor teaches? Mike chose to teach: "We should
+start out with supply near dock and pack to the left, and then the teaching moment will be to swap
+their positions or something so that there is a minimal backtracking when going from supply to
+pack to dock."
+**Picked (Mark):**
+- **Supply moves** like a machine, in a slot. It can't go into storage, since every floor needs
+  one. The Dock stays bolted to the right wall and your desk stays in the bottom right.
+- **Starting floor:** Supply in slot 5, next to the Dock. Pack in slot 3 on the left, and the bins
+  out of the way in slots 0 and 6. Robots walk Supply → Pack → Dock and back across the floor.
+**Evidence** (Mark's scratch run on the sim, hauler + packer, boxes shipped a quarter; the same for
+every seed):
+- Starting floor: 66 (22 a shift). The packer's Pack → Dock walk is the bottleneck, so a second
+  hauler adds nothing.
+- One swap (Supply to slot 3, Pack to slot 5): 84 (28 a shift). With two haulers, 120.
+- Tidy (Supply slot 4, Pack slot 5, side by side by the Dock): 126 (42 a shift).
+- The old floor (Supply on the wall, Pack slot 2): 36 (12 a shift).
+Every slot layout is faster than the old wall Supply, so red throughput roughly doubles. Red
+counts should double with it, and pay stays the same, so the money side doesn't change. Board 1's
+Large red goes to 75 boxes, between 66 and 84, so the cheapest crew misses it on the starting floor
+and makes it after one swap, which is Mike's teaching moment. Board 1's Small red goes to 36. The
+red contracts on boards 2 to 4 need re-running on the new starting floor before they're set.

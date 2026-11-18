@@ -110,8 +110,13 @@ slot, and 24 with Pack one slot closer to Supply. Mark's calls:
   floor, but laid out backwards: Supply near the Dock, Pack off to the left, so every widget walks
   left to Pack and every box walks back right to the Dock. The lesson is to swap Supply and Pack so
   the walk runs one way, Supply → Pack → Dock, with no backtracking. That needs Supply to be
-  movable, which changes the editor's fixed anchors to just the Dock and your desk. The 12 vs 24
-  boxes a shift and the Large red at 36 were measured on the old floor, so re-measure both.
+  movable, which changes the editor's fixed anchors to just the Dock and your desk.
+- **Measured (decision 88):** start Supply slot 5, Pack slot 3, bins 0 and 6. Hauler + packer ships
+  66 a quarter there, 84 after the swap, and 126 tidy (Supply 4, Pack 5). On the start floor the
+  packer's long walk to the Dock is the limit, so a second hauler doesn't help, and the swap is
+  exactly the fix. Red throughput is about double the old wall Supply, so red counts double and pay
+  stays the same: board 1 Small 36 ($150), Large 75 ($290), which misses before the swap and
+  makes it after. Boards 2 to 4 need re-running on the new floor.
 - Board 1's Large red goes from 40 to 36 boxes ($320 to $290), so the cheapest crew just makes it
   on the starting floor and has room to spare after one move.
 - Leave boards 2 to 4 for now. A good layout makes their red contracts easier (hauler + packer at 24
