@@ -42,26 +42,24 @@ export const toolLooks = (h) => {
 /** A small face for lists and chat headers, with the same looks. */
 export const faceHTML = (h) => `<span class="ct-face" style="--c:${h.color}">${headLooks(h)}${toolLooks(h)}</span>`;
 
-// You, the owner: a round head under a hard hat with a center seam and a brim. One drawing for
-// every place you appear (the floor, the newspaper photo), so they always match (Mike, 2026-11-18:
-// "make the in game character look like that with the hard hat"). `shocked` is the newspaper's
+// You, the owner: a round head under a hard hat with a center seam and a brim. The hat is shared
+// with the floor (ownerHatSVG), where your face stays a robot's face (Mike, 2026-11-18). `shocked` is the newspaper's
 // moment: pinned pupils, an open mouth, the flash's hard shadow on the wall and two shake lines.
 // Colors come from CSS (.ct-owner in index.html), so the paper prints it in gray.
 const OWNER_HAT = `<path class="dome" d="M86 92 a64 64 0 0 1 128 4 Z"/>
   <path class="seam" d="M152 30 L148 94"/>
   <ellipse class="shine" cx="118" cy="56" rx="17" ry="7" transform="rotate(-18 118 56)"/>
   <rect class="band" x="72" y="84" width="160" height="22" rx="11" transform="rotate(4 152 95)"/>`;
-export function ownerHeadSVG({ shocked = false } = {}) {
-  const shadow = shocked ? `<g class="shadow" transform="translate(34 -12)"><circle cx="150" cy="128" r="72"/><path d="M84 92 a66 62 0 0 1 132 0 Z"/><rect x="72" y="84" width="160" height="22" rx="11" transform="rotate(4 152 95)"/></g>` : "";
-  const eyes = shocked
-    ? `<circle class="eye" cx="123" cy="126" r="21"/><circle class="pupil" cx="123" cy="126" r="10"/><circle class="eye" cx="178" cy="128" r="21"/><circle class="pupil" cx="181" cy="129" r="10"/>`
-    : `<circle class="eye" cx="123" cy="128" r="21"/><circle class="pupil" cx="126" cy="131" r="11"/><circle class="eye" cx="178" cy="130" r="21"/><circle class="pupil" cx="181" cy="133" r="11"/>`;
-  const mouth = shocked ? `<ellipse class="mouth" cx="148" cy="170" rx="13" ry="18"/>` : `<path class="smile" d="M130 166 q19 14 38 0"/>`;
-  const shake = shocked ? `<path class="shake" d="M232 112 l14 -7 M234 140 h16"/>` : "";
-  // The floor version is cropped to the head; the photo keeps room for the shadow and shake lines.
-  const box = shocked ? "0 0 300 220" : "66 22 172 184";
-  return `<svg class="ct-owner${shocked ? " is-shocked" : ""}" viewBox="${box}" aria-hidden="true">${shadow}
+/** Just the hard hat, for you on the floor: your face there stays a robot's face (Mike, 2026-11-18:
+ *  "Just change the hat in game ... keep the eyes the same as the robots"). Same shapes as the photo. */
+export const ownerHatSVG = () => `<svg class="ct-owner ct-owner-hat" viewBox="66 22 172 90" aria-hidden="true">${OWNER_HAT}</svg>`;
+/** You in the newspaper photo, caught by the flash: pinned pupils, an open mouth, the flash's hard
+ *  shadow on the wall and two shake lines. Colors come from CSS (.ct-paper-photo .ct-owner). */
+export const ownerHeadSVG = () => `<svg class="ct-owner is-shocked" viewBox="0 0 300 220" aria-hidden="true">
+  <g class="shadow" transform="translate(34 -12)"><circle cx="150" cy="128" r="72"/><path d="M84 92 a66 62 0 0 1 132 0 Z"/><rect x="72" y="84" width="160" height="22" rx="11" transform="rotate(4 152 95)"/></g>
   <circle class="face" cx="150" cy="128" r="72"/>
   <path class="chin" d="M88 158 a72 72 0 0 0 124 0 a90 60 0 0 1 -124 0 Z"/>
-  ${OWNER_HAT}${eyes}${mouth}${shake}</svg>`;
-}
+  ${OWNER_HAT}
+  <circle class="eye" cx="123" cy="126" r="21"/><circle class="pupil" cx="123" cy="126" r="10"/><circle class="eye" cx="178" cy="128" r="21"/><circle class="pupil" cx="181" cy="129" r="10"/>
+  <ellipse class="mouth" cx="148" cy="170" rx="13" ry="18"/>
+  <path class="shake" d="M232 112 l14 -7 M234 140 h16"/></svg>`;

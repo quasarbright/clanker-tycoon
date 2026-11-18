@@ -12,7 +12,7 @@ import { backendLabel, useFakeLlm, BACKEND } from "./llm.js";
 import { getKey, setKey, signIn, finishSignIn } from "./openrouter-auth.js";
 import { WORDS, applyWords, aloneLine } from "./words.js";
 import { startShift, logEvent, downloadLog } from "./playlog.js";
-import { headLooks, toolLooks, faceHTML, ownerHeadSVG } from "./looks.js";
+import { headLooks, toolLooks, faceHTML, ownerHeadSVG, ownerHatSVG } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, signed as signedText, shippedOf, shiftCost } from "./quarter.js";
 import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
   RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers, crewCost,
@@ -180,8 +180,8 @@ function makeBot(id, name, color, isYou, hire) {
   bot.style.setProperty("--c", color);
   // A robot's skills and attributes show on them (looks.js): tools in hand, glasses, a bolt.
   const looks = hire ? headLooks(hire) + toolLooks(hire) : "";
-  const face = isYou ? ownerHeadSVG() : `<div class="ct-bot-eyes"><i></i><i></i></div>`;
-  bot.innerHTML = `<div class="ct-bot-head">${face}${looks}<div class="ct-bot-held"></div></div><div class="ct-bot-bar"><i></i></div><div class="ct-bot-name">${name}</div>`;
+  const hat = isYou ? ownerHatSVG() : "";
+  bot.innerHTML = `<div class="ct-bot-head">${hat}<div class="ct-bot-eyes"><i></i><i></i></div>${looks}<div class="ct-bot-held"></div></div><div class="ct-bot-bar"><i></i></div><div class="ct-bot-name">${name}</div>`;
   floor.append(bot);
   ui.bots[id] = bot;
   return bot;
@@ -1574,7 +1574,7 @@ const REPUTATION_GONE = (b) => `The name ${b.name} is mud. No client in the Widg
 const GAMEOVER_WHY = { broke: REPUTATION_GONE, reputation: REPUTATION_GONE };
 /** The run is over. `reason` is a key of GAMEOVER_WHY; reputation will trigger it too, later. */
 function showGameOver(reason) {
-  $("#paperPhoto").innerHTML = ownerHeadSVG({ shocked: true });
+  $("#paperPhoto").innerHTML = ownerHeadSVG();
   setPhase("menu");
   for (const id of ["startScreen", "endScreen", "pauseScreen", "boardScreen", "licenseScreen"]) $(`#${id}`).classList.add("is-hidden");
   const b = biz;

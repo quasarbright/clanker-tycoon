@@ -385,7 +385,7 @@
     .ct-small-btn { padding: 4px 10px; font-size: .78rem; box-shadow: 0 2px 0 var(--lip); }
 
     /* you, on the floor */
-    /* the owner's head (ownerHeadSVG in looks.js); colors here, the paper overrides them in gray */
+    /* the owner's hard hat (ownerHatSVG) and newspaper head (ownerHeadSVG) in looks.js; the paper grays them */
     .ct-owner { display: block; overflow: visible; }
     .ct-owner .shadow * { fill: #555; }
     .ct-owner .face { fill: #f4f1e8; stroke: #111; stroke-width: 9; }
@@ -396,11 +396,11 @@
     .ct-owner .band { fill: #d9a51c; stroke: #111; stroke-width: 8; }
     .ct-owner .eye { fill: #fff; stroke: #111; stroke-width: 7; }
     .ct-owner .pupil, .ct-owner .mouth { fill: #111; }
-    .ct-owner .smile, .ct-owner .shake { stroke: #111; stroke-width: 7; stroke-linecap: round; fill: none; }
-    .ct-bot.is-you .ct-bot-head { background: none; box-shadow: none; aspect-ratio: auto; border-radius: 50%; }
+    .ct-owner .shake { stroke: #111; stroke-width: 7; stroke-linecap: round; fill: none; }
+    .ct-bot.is-you .ct-bot-head { border-radius: 50%; aspect-ratio: 1; }
     .ct-bot.is-you .ct-bot-head::before { display: none; }
-    /* a little wider than the box so the face itself is robot-sized; the hat rises where an antenna would be */
-    .ct-bot.is-you .ct-owner { width: 118%; margin: -22% 0 0 -9%; filter: drop-shadow(0 calc(var(--u) * .4) 0 #0006); }
+    /* the newspaper's hard hat (ownerHatSVG), sized to this round head: the photo's head is r72 */
+    .ct-bot.is-you .ct-owner-hat { position: absolute; left: -8.3%; top: -31%; width: 119.4%; }
     .ct-bot.is-you .ct-bot-name { color: var(--accent-hi); }
     .ct-st { cursor: pointer; }
     .ct-st:hover { border-color: #f2c23066; }
@@ -842,7 +842,7 @@
       <div class="ct-paper-meta"><span id="paperQuarter"></span><span>Final edition</span></div>
       <div class="ct-paper-hl" id="paperHeadline"></div>
       <div class="ct-paper-photo" id="paperPhoto">
-        <!-- The owner, caught by the flash: ownerHeadSVG({ shocked: true }) from looks.js, the same drawing as on the floor (Pam's photo 1, Mike's pick). -->
+        <!-- The owner, caught by the flash: ownerHeadSVG() from looks.js, wearing the same hard hat as you do on the floor (Pam's photo 1, Mike's pick). -->
       </div>
       <div class="ct-paper-capt" id="paperCaption"></div>
       <div class="ct-paper-col" id="paperColumn"></div>

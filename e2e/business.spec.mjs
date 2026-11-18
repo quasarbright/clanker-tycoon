@@ -175,14 +175,16 @@ test("a shift card says plainly what has shipped and how many shifts are left; t
   await expect(page.locator("#endStats")).toContainText("$45"); // 3 shifts of $15
 });
 
-test("on the floor you are the same hard-hat head as the newspaper photo, robots keep their faces", async ({ page }) => {
+test("on the floor you wear the newspaper photo's hard hat over a robot's face", async ({ page }) => {
   await openBoard(page);
   await page.locator("[data-contract]").first().click();
   await page.click("#boardGo");
   await page.evaluate(() => ct.hire("blip"));
-  await expect(page.locator(".ct-bot.is-you .ct-owner:not(.is-shocked) .dome")).toHaveCount(1);
+  // Only the hat comes from the photo; your eyes stay a robot's eyes (Mike: "keep the eyes the same as the robots").
+  await expect(page.locator(".ct-bot.is-you .ct-owner-hat .dome")).toHaveCount(1);
+  await expect(page.locator(".ct-bot.is-you .ct-owner .eye, .ct-bot.is-you .ct-owner .smile")).toHaveCount(0);
+  await expect(page.locator(".ct-bot.is-you .ct-bot-eyes")).toHaveCount(1);
   await expect(page.locator(".ct-bot:not(.is-you) .ct-owner")).toHaveCount(0);
-  await expect(page.locator(".ct-bot:not(.is-you) .ct-bot-eyes")).toHaveCount(1);
 });
 
 test("robots put on the shift don't start on top of you or each other, next shift too", async ({ page }) => {
