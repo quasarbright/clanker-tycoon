@@ -12,7 +12,7 @@ import { backendLabel, useFakeLlm, BACKEND } from "./llm.js";
 import { getKey, setKey, signIn, finishSignIn } from "./openrouter-auth.js";
 import { WORDS, applyWords, aloneLine } from "./words.js";
 import { startShift, logEvent, downloadLog } from "./playlog.js";
-import { headLooks, toolLooks, faceHTML, ownerHeadSVG, ownerHatSVG } from "./looks.js";
+import { headLooks, toolLooks, faceHTML, ownerHeadSVG, ownerHatSVG, ownerPhoto } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, signed as signedText, shippedOf, shiftCost } from "./quarter.js";
 import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
   RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers, crewCost,
@@ -1574,15 +1574,18 @@ const REPUTATION_GONE = (b) => `The name ${b.name} is mud. No client in the Widg
 const GAMEOVER_WHY = { broke: REPUTATION_GONE, reputation: REPUTATION_GONE };
 /** The run is over. `reason` is a key of GAMEOVER_WHY; reputation will trigger it too, later. */
 function showGameOver(reason) {
-  $("#paperPhoto").innerHTML = ownerHeadSVG();
   setPhase("menu");
   for (const id of ["startScreen", "endScreen", "pauseScreen", "boardScreen", "licenseScreen"]) $(`#${id}`).classList.add("is-hidden");
   const b = biz;
   $("#paperQuarter").textContent = `Quarter ${b.quarters + 1}`;
   const hl = headline(reason, b.name, b.quarters + b.wins);
+  // Which photo the paper runs: its own seed, so it doesn't always pair with the same headline.
+  // (window.ct.photoSeed picks one in tests and screenshots.)
+  const photo = ownerPhoto(window.ct?.photoSeed ?? b.quarters * 3 + b.taken + b.wins * 2);
   $("#paperHeadline").textContent = hl;
-  logEvent(null, "gameover", { reason, headline: hl, quarters: b.quarters, wins: b.wins, taken: b.taken, best: b.best, revenue: b.revenue, costs: b.costs, funds: Math.floor(b.money), owed: debtOf(b), rep: b.rep });
-  $("#paperCaption").textContent = `The owner of ${b.name}, moments after hearing the news.`;
+  logEvent(null, "gameover", { reason, headline: hl, photo: photo.face, quarters: b.quarters, wins: b.wins, taken: b.taken, best: b.best, revenue: b.revenue, costs: b.costs, funds: Math.floor(b.money), owed: debtOf(b), rep: b.rep });
+  $("#paperPhoto").innerHTML = ownerHeadSVG(photo.face);
+  $("#paperCaption").textContent = photo.caption(b.name);
   $("#paperColumn").textContent = (b.wins ? `${b.name} shipped ${b.wins} of ${b.taken} contracts in ${b.quarters} ${b.quarters === 1 ? "quarter" : "quarters"} of business. `
     : `${b.name} never shipped a contract. `) + `Robots on the floor declined to comment, as commenting was not part of their instructions.`;
   $("#gameoverWhy").textContent = GAMEOVER_WHY[reason](b);

@@ -175,6 +175,24 @@ test("a shift card says plainly what has shipped and how many shifts are left; t
   await expect(page.locator("#endStats")).toContainText("$45"); // 3 shifts of $15
 });
 
+test("the paper runs one of four photos of you, each with its caption", async ({ page }) => {
+  await openBoard(page);
+  const seen = {};
+  for (let seed = 0; seed < 4; seed++) {
+    if (seed) { await page.click("#gameoverMenu"); await page.evaluate(() => ct.license("Clank & Sons", "Mike")); await page.click('[data-level="7"]'); }
+    await page.evaluate((seed) => { ct.photoSeed = seed; ct.biz.rep = 0; ct.openBoard(); }, seed);
+    await expect(page.locator("#gameoverScreen")).toBeVisible();
+    const face = await page.locator("#paperPhoto .ct-owner").evaluate((e) => [...e.classList].find((c) => c.startsWith("is-")));
+    seen[face] = await page.locator("#paperCaption").textContent();
+  }
+  expect(seen).toEqual({
+    "is-shocked": "The owner of Clank & Sons, moments after hearing the news.",
+    "is-awkward": "The owner of Clank & Sons, reached for comment.",
+    "is-bite": "The owner of Clank & Sons, reached for comment.",
+    "is-blushing": "The owner of Clank & Sons, reached for comment.",
+  });
+});
+
 test("on the floor you wear the newspaper photo's hard hat over a robot's face", async ({ page }) => {
   await openBoard(page);
   await page.locator("[data-contract]").first().click();
@@ -502,8 +520,8 @@ test("out of business: the front page lands on the floor, with the run's numbers
   await expect(page.locator("#gameoverStats")).toContainText("Owed the lender$450");
   for (const row of ["Total revenue", "Total costs", "Funds left"]) await expect(page.locator("#gameoverStats")).toContainText(row);
   // The photo is you, the same hard-hat head as on the floor, caught shocked, with the caption under it.
-  await expect(page.locator("#paperPhoto .ct-owner.is-shocked .dome")).toHaveCount(1);
-  await expect(page.locator("#paperCaption")).toHaveText("The owner of Clank & Sons, moments after hearing the news.");
+  await expect(page.locator("#paperPhoto .ct-owner .dome")).toHaveCount(1);
+  await expect(page.locator("#paperCaption")).toHaveText(/^The owner of Clank & Sons, (moments after hearing the news|reached for comment)\.$/);
   // The paper and the panel fit the window, once they've landed.
   await page.evaluate(() => Promise.all([document.fonts.ready, ...document.getAnimations().map((a) => a.finished)]));
   const fits = await page.evaluate(() => ["#gameoverPaper", ".ct-gameover-panel"].every((q) => { const r = document.querySelector(q).getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && r.left >= 0 && r.right <= innerWidth; }));

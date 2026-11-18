@@ -53,13 +53,41 @@ const OWNER_HAT = `<path class="dome" d="M86 92 a64 64 0 0 1 128 4 Z"/>
 /** Just the hard hat, for you on the floor: your face there stays a robot's face (Mike, 2026-11-18:
  *  "Just change the hat in game ... keep the eyes the same as the robots"). Same shapes as the photo. */
 export const ownerHatSVG = () => `<svg class="ct-owner ct-owner-hat" viewBox="66 22 172 90" aria-hidden="true">${OWNER_HAT}</svg>`;
-/** You in the newspaper photo, caught by the flash: pinned pupils, an open mouth, the flash's hard
- *  shadow on the wall and two shake lines. Colors come from CSS (.ct-paper-photo .ct-owner). */
-export const ownerHeadSVG = () => `<svg class="ct-owner is-shocked" viewBox="0 0 300 220" aria-hidden="true">
+// The newspaper photo of you, caught by the flash, in Pam's four poses (Mike, 2026-11-18: the shocked
+// head, then "i like all of them except 3. 4 is pretty funny"). Same head, hat, flash shadow on the
+// wall; only the face changes. Faces are drawn in Pam's mock coordinates (head r60 at 500,300) and
+// placed on this head (r72 at 150,128).
+// This hat sits lower on the head than in Pam's mocks, so her faces move down 16 to clear the brim.
+const PAM = (body) => `<g transform="translate(150 128) scale(1.05) translate(-500 -284)">${body}</g>`;
+const WORRIED_EYES = (dx = 0, dy = 0) => `<circle class="eye" cx="477" cy="297" r="16"/><circle class="pupil" cx="${477 + dx}" cy="${297 + dy}" r="5"/>
+  <circle class="eye" cx="523" cy="297" r="16"/><circle class="pupil" cx="${523 + dx}" cy="${297 + dy}" r="5"/>
+  <path class="brow" d="M467 273 L486 267 M533 273 L514 267"/>`;
+const BLUSH = `<path class="blush" d="M462 325l5-9 M470 325l5-9 M478 325l5-9 M520 325l5-9 M528 325l5-9 M536 325l5-9"/>`;
+const FACES = {
+  // wide eyes, pinned pupils, an open mouth and two shake lines
+  shocked: `<circle class="eye" cx="123" cy="126" r="21"/><circle class="pupil" cx="123" cy="126" r="10"/><circle class="eye" cx="178" cy="128" r="21"/><circle class="pupil" cx="181" cy="129" r="10"/>
+    <ellipse class="mouth" cx="148" cy="170" rx="13" ry="18"/><path class="shake" d="M232 112 l14 -7 M234 140 h16"/>`,
+  // worried brows, a wobbly line of a smile, blushing (Mike's favorite)
+  awkward: PAM(`${WORRIED_EYES()}<path class="wobble" d="M488 331 q4 -5 8 0 t8 0 t8 0"/>${BLUSH}<path class="shake" d="M568 270 l10 -6"/>`),
+  // caught with the mouth full
+  bite: PAM(`${WORRIED_EYES()}<ellipse class="mouth" cx="500" cy="330" rx="6" ry="7"/><path class="shake" d="M568 270 l10 -6"/>`),
+  // eyes sliding off to the side, blushing
+  blushing: PAM(`${WORRIED_EYES(6, 2)}<ellipse class="mouth" cx="502" cy="331" rx="5.5" ry="6.5"/>${BLUSH}`),
+};
+/** The photos the paper picks from, and what each caption says. */
+export const OWNER_PHOTOS = [
+  { face: "shocked", caption: (name) => `The owner of ${name}, moments after hearing the news.` },
+  { face: "awkward", caption: (name) => `The owner of ${name}, reached for comment.` },
+  { face: "bite", caption: (name) => `The owner of ${name}, reached for comment.` },
+  { face: "blushing", caption: (name) => `The owner of ${name}, reached for comment.` },
+];
+/** One photo for this ending, the same one for the same `seed`. */
+export const ownerPhoto = (seed = 0) => OWNER_PHOTOS[Math.abs(Math.floor(seed)) % OWNER_PHOTOS.length];
+
+/** You in the newspaper photo with this face. Colors come from CSS (.ct-paper-photo .ct-owner). */
+export const ownerHeadSVG = (face = "shocked") => `<svg class="ct-owner is-${face}" viewBox="0 0 300 220" aria-hidden="true">
   <g class="shadow" transform="translate(34 -12)"><circle cx="150" cy="128" r="72"/><path d="M84 92 a66 62 0 0 1 132 0 Z"/><rect x="72" y="84" width="160" height="22" rx="11" transform="rotate(4 152 95)"/></g>
   <circle class="face" cx="150" cy="128" r="72"/>
   <path class="chin" d="M88 158 a72 72 0 0 0 124 0 a90 60 0 0 1 -124 0 Z"/>
   ${OWNER_HAT}
-  <circle class="eye" cx="123" cy="126" r="21"/><circle class="pupil" cx="123" cy="126" r="10"/><circle class="eye" cx="178" cy="128" r="21"/><circle class="pupil" cx="181" cy="129" r="10"/>
-  <ellipse class="mouth" cx="148" cy="170" rx="13" ry="18"/>
-  <path class="shake" d="M232 112 l14 -7 M234 140 h16"/></svg>`;
+  ${FACES[face]}</svg>`;
