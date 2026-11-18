@@ -113,8 +113,13 @@ slot, and 24 with Pack one slot closer to Supply. Mark's calls:
   a shift covers 55 in a quarter), and that's the reward for using the editor. Escalating contracts
   is next and should be tuned against good layouts, not the starting one.
 - Crates (3 for $330, +1 crate and +$90 a quarter): about right on paper, because 6 painted boxes
-  pay what 12 green boxes do, and you need the $120 machine and an Assembly robot. It isn't
-  measured yet: `balance.mjs` needs a crates case.
+  pay what 12 green boxes do, and you need the $120 machine and an Assembly robot.
+- Measured (5a8820c): painter + hauler + packer + assembler ships 1 crate a shift, so 3 a quarter.
+  The old +1 crate a quarter missed every board after the first. New numbers: 3 crates on boards 1
+  and 2, 4 on boards 3 and 4, then +1 crate every two quarters. Pay is $110 a crate on board 1,
+  rising $10 a crate each quarter: $330, $360, $520, $560. 4 crates should need one step of
+  scaling (a second hauler, Paint 2 with a second painter, or the bigger pack table), which still
+  needs measuring.
 
 ## Open questions Mark is watching
 
