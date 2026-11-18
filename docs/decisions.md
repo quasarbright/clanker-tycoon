@@ -1212,3 +1212,5 @@ technically go negative, it doesn't matter. You just go to zero."
   the 20% steps: 100% / 80% / 60% / 40% at 3 / 2 / 1 / under 1 whole pip.
 - The red warning ("One more missed contract and the name … is mud.") stays, and applies at 1 pip
   and below, since any miss from there reaches 0.
+  Built as `onTheEdge` in `src/reputation.js`: from 1 pip down to just above 0. At 1⅓ it doesn't
+  show, since a miss there leaves ⅓.

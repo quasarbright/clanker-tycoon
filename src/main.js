@@ -18,7 +18,7 @@ import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, buy, owns
   RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers, crewCost,
   randomBusinessName, outOfBusiness, START_MONEY, cheapestWage } from "./business.js";
 import { headline } from "./headlines.js";
-import { REP, wholePips, offerShare, pipsText, deltaText, gainOf, afterQuarter, ruined } from "./reputation.js";
+import { REP, wholePips, offerShare, pipsText, deltaText, gainOf, afterQuarter, ruined, onTheEdge } from "./reputation.js";
 import { SKILL_TIER, wageOf } from "./wages.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
@@ -1337,7 +1337,7 @@ const piesHTML = (rep) => `<span class="ct-rep-pies">${[0, 1, 2].map((i) => pieH
 const offerPct = (rep) => Math.round(offerShare(rep) * 100);
 /** Under Funds: the pips, "2⅓ of 3 · offers at 80%", and a warning at one pip. */
 function renderRep() {
-  const rep = biz.rep ?? REP.max, danger = wholePips(rep) <= 1;
+  const rep = biz.rep ?? REP.max, danger = onTheEdge(rep);
   const el = $("#bizRep");
   el.classList.toggle("is-danger", danger);
   el.classList.toggle("is-full", rep >= REP.max); // green at full reputation (Mike)

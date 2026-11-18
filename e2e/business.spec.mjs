@@ -560,9 +560,16 @@ test("reputation on the board: pips under Funds, struck full numbers with the ho
   await expect(page.locator("#bizRep")).not.toHaveClass(/is-danger/);
   // At one pip: red, and a warning by name.
   await page.evaluate(() => { ct.biz.rep = 4; ct.openBoard(); });
+  await expect(page.locator("#bizRep")).not.toHaveClass(/is-danger/); // 1⅓: a miss leaves ⅓, still in business
+  await page.evaluate(() => { ct.biz.rep = 3; ct.openBoard(); });
   await expect(page.locator("#bizRep")).toHaveClass(/is-danger/);
   await expect(page.locator("#bizRep")).toContainText("One more missed contract and the name Clank & Sons is mud.");
-  await expect(page.locator("#bizRep .ct-rep-text")).toHaveText("1⅓ of 3 · offers at 60%");
+  await expect(page.locator("#bizRep .ct-rep-text")).toHaveText("1 of 3 · offers at 60%");
+  // Under one pip: still offered contracts, worse ones (decision 84).
+  await page.evaluate(() => { ct.biz.rep = 1; ct.openBoard(); });
+  await expect(page.locator("#boardScreen")).toBeVisible();
+  await expect(page.locator("#bizRep .ct-rep-text")).toHaveText("⅓ of 3 · offers at 40%");
+  await expect(page.locator("#bizRep")).toHaveClass(/is-danger/);
 });
 
 test("the recap stamps each contract and moves reputation; at zero the front page says why (decisions 78, 80)", async ({ page }) => {

@@ -203,6 +203,9 @@ test("reputation: a miss costs a whole pip, a ship wins back a third (two for a 
   assert.equal(R.afterQuarter(6, [{ c: c("large"), won: true }, { c: c("side"), won: true }]), 9, "a clean Large + side quarter wins back a whole pip");
   assert.equal(R.afterQuarter(8, [{ c: c("large"), won: true }]), 9, "capped at 3");
   assert.equal(R.afterQuarter(2, [{ c: c("large"), won: false }, { c: c("side"), won: false }]), 0, "never below 0");
+  assert.equal(R.afterQuarter(1, [{ c: c("small"), won: false }]), 0, "a miss at ⅓ clamps to 0 (decision 84)");
+  assert.ok(!R.ruined(1) && R.ruined(0), "only exactly zero ends the run");
+  assert.deepEqual([9, 4, 3, 2, 1, 0].map(R.onTheEdge), [false, false, true, true, true, false], "one more miss ends it: one pip or less, above 0");
   assert.equal(R.pipsText(7), "2⅓"); assert.equal(R.pipsText(9), "3"); assert.equal(R.pipsText(2), "⅔");
   assert.equal(R.deltaText(-3), "\u22121"); assert.equal(R.deltaText(2), "+⅔");
 });
@@ -218,6 +221,8 @@ test("reputation shapes the board: 100%, 80%, 60% of size and pay by whole pips 
   }
   biz.rep = 3;
   assert.deepEqual(B.board(biz).map((c) => c.pay), full.map((c) => Math.round(c.pay * 0.6)));
+  biz.rep = 1; // ⅓ of a pip: 40% (decision 84)
+  assert.deepEqual(B.board(biz).map((c) => c.pay), full.map((c) => Math.round(c.pay * 0.4)));
 });
 
 test("settling a quarter moves reputation, and at zero the business is out (decisions 78, 76)", () => {
@@ -229,8 +234,8 @@ test("settling a quarter moves reputation, and at zero the business is out (deci
   assert.equal(B.outOfBusiness(biz), null);
   biz.rep = 3;
   assert.equal(B.outOfBusiness(biz), null, "one whole pip: still in business");
-  biz.rep = 2;
-  assert.equal(B.outOfBusiness(biz), "reputation", "under one whole pip clients offer 0%: out");
+  biz.rep = 1;
+  assert.equal(B.outOfBusiness(biz), null, "a third of a pip: still in business, with worse offers (decision 84)");
   biz.rep = 0;
   assert.equal(B.outOfBusiness(biz), "reputation", "going broke alone isn't an ending any more");
 });
