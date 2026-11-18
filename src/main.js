@@ -236,6 +236,7 @@ function buildFloor() {
     const out = Math.min(dx ? 7.5 / Math.abs(dx / len) : 1e9, dy ? 5 / Math.abs(dy / len) : 1e9) + 1;
     const x1 = A.x + (dx / len) * out, y1 = A.y + (dy / len) * out;
     const x2 = B.x - (dx / len) * (out + 2.4), y2 = B.y - (dy / len) * (out + 2.4);
+    if (len - 2 * out - 2.4 < 4) return ""; // neighbors: no room for an arrow, just a stub
     // A line that would run under another station isn't drawn: half an arrow peeking out between
     // tiles reads as broken (Pam). Only lines with a clear run get one, all with arrowheads.
     const blocked = level.stations.some((k) => k !== a && k !== b && Array.from({ length: 21 }, (_, i) => i / 20)
@@ -1196,6 +1197,8 @@ function renderCoach() {
   else if (cantDo) text = `${cantDo.hire.name} can't do their instructions; their chat says why.`;
   const el = $("#coach");
   if (el._text !== text) { el.innerHTML = text; el._text = text; }
+  // On a business floor the slots fill the middle and bottom; the coach takes the free left column.
+  el.classList.toggle("is-column", !!level.positions);
 }
 
 function frame(now) {
