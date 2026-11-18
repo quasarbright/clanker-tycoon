@@ -131,7 +131,9 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   board layout wins. Each struck number gets the shared `data-tooltip`: "$320 at full reputation.
   You have 2⅓ of 3, so clients pay 80%." / "40 boxes at full reputation. You have 2⅓ of 3, so
   clients ask for 80%." Mocked on the real board (1-hover-struck-pay, 2-hover-struck-count, 0305).
-  At full reputation nothing is struck, so nothing to hover.
+  At full reputation nothing is struck, so nothing to hover. (Copy superseded by Mike's own
+  wording, below: "...while <Business>'s reputation is questionable. Restore reputation for the
+  full $320.")
 - 2026-11-18: Mike on board A's header readout (three pie pips, "2⅓ of 3 · offers at 80%", between
   the lender and funds): "I like this variant." So the board is A: pie pips in the header, struck
   numbers with tooltips on the cards, and per-card "Ship it +⅓ / +⅔ · Miss it −1" lines. That
