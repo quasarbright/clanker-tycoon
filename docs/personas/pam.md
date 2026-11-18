@@ -89,7 +89,10 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   the build thread (via the coordinator).
 - 2026-11-18: mocks for naming the business and reputation game over. Mike: "this exactly the type
   of humor I want ... the gold standard". Picked: the business license (stamp lands when you press
-  Open for business) and the paper landing on your floor. Headlines 1 and 2 are the humor
-  reference ("Ships Its Last Box (It Was Empty)", "Reputation Found at Bottom of Bin 2"); the
-  tabloid was too much. The license wording ("official-sounding but ridiculous") is the tone.
+  Open for business) and the paper landing on your floor. Headlines he loves, the humor
+  reference: "Ships Its Last Box (It Was Empty)", "Reputation Found at Bottom of Bin 2", "Robots of
+  Clank & Sons Finally Given Clear Instructions: 'Leave'". He didn't like the other seven (the
+  quoted-client one, lender snacks, "says no one", missing widgets, every deadline, forklift, sad
+  box drawing), nor the tabloid. The ones he liked turn a game mechanic (shipping, bins,
+  instructions) into the punchline; the rejected ones are generic business jokes. The license wording ("official-sounding but ridiculous") is the tone.
   Sources in docs/mocks/business-name/.
