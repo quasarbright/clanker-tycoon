@@ -226,7 +226,9 @@ function buildFloor() {
     ui.stations[key] = el;
   }
   // The main line, drawn between the tiles, through whichever stations this level has.
-  const line = ["SUPPLY", "PAINT", "PACK", "ASSEMBLE", "DOCK"].filter((k) => level.stations.includes(k));
+  // Through the Assembler only when the quarter has crates to make.
+  const crates = level.order.some((l) => l.color === "crate");
+  const line = ["SUPPLY", "PAINT", "PACK", ...(crates ? ["ASSEMBLE"] : []), "DOCK"].filter((k) => level.stations.includes(k));
   const seg = (a, b) => {
     const A = STATIONS[a], B = STATIONS[b];
     const dx = B.x - A.x, dy = B.y - A.y, len = Math.hypot(dx, dy);
@@ -1361,7 +1363,8 @@ function renderFloorEdit() {
   $("#storageBadge").hidden = !f.storage.length;
   $("#storageBadge").textContent = f.storage.length;
   $("#newNote").hidden = !fresh.length;
-  $("#newNote").innerHTML = fresh.length ? `New in storage: <b>${andList(fresh.map(nameOf))}</b>. Start places ${fresh.length > 1 ? "them" : "it"} for you. <button class="ct-link" id="keepStored">Keep in storage</button>` : "";
+  $("#newNote").innerHTML = fresh.length ? `New: <b>${andList(fresh.map(nameOf))}</b> <button class="ct-link" id="keepStored">Keep in storage</button>` : "";
+  $("#newNote").dataset.tooltip = fresh.length ? `Bought and waiting in storage. Place ${fresh.length > 1 ? "them" : "it"} with Edit floor, or Start puts ${fresh.length > 1 ? "them" : "it"} in the nearest free slot.` : "";
   $("#keepStored")?.addEventListener("click", () => { keepInStorage(biz.floor); logEvent(null, "floor_keep", { storage: [...biz.floor.storage] }); renderFloorEdit(); });
 }
 
@@ -1529,7 +1532,7 @@ function renderRep() {
 function offerNumbers(c) {
   const pct = offerPct(biz.rep ?? REP.max), who = escapeHTML(possessive(biz.name));
   const struck = (full, now, tip) => (full != null && full !== now ? `<s class="ct-struck" data-tooltip="${tip}">${full}</s>` : "");
-  return `<span class="ct-size-count">${c.count} boxes${struck(c.fullCount, c.count, `Clients ask for ${pct}% of the boxes while ${who} reputation is questionable. Restore reputation for the full ${c.fullCount}.`)}</span>
+  return `<span class="ct-size-count">${c.count} ${c.color === "crate" ? "crates" : "boxes"}${struck(c.fullCount, c.count, `Clients ask for ${pct}% of the ${c.color === "crate" ? "crates" : "boxes"} while ${who} reputation is questionable. Restore reputation for the full ${c.fullCount}.`)}</span>
     <span class="ct-offer-pay">$${c.pay}${struck(c.fullPay, c.pay, `Clients pay ${pct}% while ${who} reputation is questionable. Restore reputation for the full $${c.fullPay}.`).replace(">" + c.fullPay + "<", ">$" + c.fullPay + "<")}</span>
     <span class="ct-rep-gain">Ship it: ${deltaText(gainOf(c))} reputation</span>`;
 }

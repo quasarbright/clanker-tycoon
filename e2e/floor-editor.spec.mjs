@@ -28,7 +28,7 @@ test("a bought machine waits in storage: Edit floor pulses with a count, and Kee
   const errors = await toPlan(page, { buy: ["paint"] });
   await expect(page.locator("#editFloorBtn")).toHaveClass(/is-new/);
   await expect(page.locator("#storageBadge")).toHaveText("1");
-  await expect(page.locator("#newNote")).toContainText("New in storage: Paint");
+  await expect(page.locator("#newNote")).toContainText("New: Paint");
   await page.click("#keepStored");
   await expect(page.locator("#editFloorBtn")).not.toHaveClass(/is-new/);
   await expect(page.locator("#storageBadge")).toHaveText("1", { timeout: 1000 }); // still in storage

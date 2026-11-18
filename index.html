@@ -499,6 +499,9 @@
     .ct-box.is-building i { opacity: .5; }
     .ct-box-fill { position: absolute; inset: 0; background: #b88a52; transform-origin: left; transform: scaleX(0); }
     .ct-box i { position: relative; }
+    /* machine wear: fills with every job, full = stopped until serviced. Room under the items for it
+       (the Assembler holds 6, two rows). */
+    .ct-st:has(.ct-wear) { padding-bottom: calc(var(--u) * 2); }
     /* machine wear: fills with every job, full = stopped until serviced */
     .ct-wear { position: absolute; left: 8%; right: 8%; bottom: calc(var(--u) * .7); height: calc(var(--u) * .6); border-radius: 99px; background: #0008; overflow: hidden; }
     .ct-wear i { display: block; height: 100%; background: linear-gradient(90deg, var(--success), var(--accent) 60%, var(--danger)); background-size: 100% 100%; transform-origin: left; transform: scaleX(0); transition: transform .3s; }
@@ -955,7 +958,7 @@
       <div class="ct-shop-cols">
         <div class="ct-shop-col"><div class="ct-board-sec" data-word="recruit">Recruit</div><p class="ct-offer-note">New robots for your crew. A one-time fee, then their pay each shift you schedule them.</p><div class="ct-shop-list" id="recruits"></div></div>
         <div class="ct-shop-col"><div class="ct-board-sec" data-word="training">Training</div><p class="ct-offer-note" id="crewNote"></p><div class="ct-shop-list" id="bizCrew"></div></div>
-        <div class="ct-shop-col"><div class="ct-board-sec" data-word="machines">Machines</div><p class="ct-offer-note">Paint machines replace each other; the rest you keep.</p><div class="ct-shop-list" id="machines"></div></div>
+        <div class="ct-shop-col"><div class="ct-board-sec" data-word="machines">Machines</div><p class="ct-offer-note">Machines wait in storage until you place them with Edit floor. You can own two of each.</p><div class="ct-shop-list" id="machines"></div></div>
       </div>
     </div>
   </div>

@@ -82,7 +82,8 @@ function cheapKit(biz, id) {
   let a = ((biz.quarters + 1) * 7919 + [...id].reduce((h, ch) => h * 31 + ch.charCodeAt(0), 7)) >>> 0;
   const rnd = () => ((a = (a * 1664525 + 1013904223) >>> 0) / 4294967296);
   const kit = [];
-  if (rnd() < 0.6) kit.push(TRAINABLE[Math.floor(rnd() * TRAINABLE.length)]);
+  const skills = trainableNow(biz); // no Assembly until you own an assembler
+  if (rnd() < 0.6) kit.push(skills[Math.floor(rnd() * skills.length)]);
   if (rnd() < 0.5) kit.push(TRAINABLE_ATTRS[Math.floor(rnd() * TRAINABLE_ATTRS.length)]);
   return kit;
 }
