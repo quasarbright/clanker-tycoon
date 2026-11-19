@@ -279,7 +279,9 @@ const CRATE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" 
   <path d="M4.8 4.8L19.2 19.2M19.2 4.8L4.8 19.2" stroke="#3d2510" stroke-width="3"/>
   <circle cx="12" cy="12" r="3.4" fill="#e8d6a0" stroke="#3d2510" stroke-width="1.2"/></svg>`;
 const itemHTML = (it, clickable = false) => it.kind === "crate"
-  ? `<span class="ct-crate${it.building ? " is-building" : ""}" data-id="${it.id ?? ""}"${clickable && !it.building ? ` data-pick="crate"` : ""}>${it.building ? `<span class="ct-box-fill"></span>` : ""}${CRATE_SVG}</span>`
+  // One crate drawing in every state (Mike): while it's being assembled, the same crate appears
+  // left to right over its own faint outline, like a box filling in at Pack.
+  ? `<span class="ct-crate${it.building ? " is-building" : ""}" data-id="${it.id ?? ""}"${clickable && !it.building ? ` data-pick="crate"` : ""}>${it.building ? `<span class="ct-crate-ghost">${CRATE_SVG}</span><span class="ct-crate-reveal">${CRATE_SVG}</span>` : CRATE_SVG}</span>`
   : it.kind === "box"
   ? `<span class="ct-box${it.building ? " is-building" : ""}" data-id="${it.id ?? ""}"${clickable && !it.building ? ` data-pick="box"` : ""}>${it.building ? `<span class="ct-box-fill"></span>` : ""}${it.colors.map((c) => `<i class="c-${c}"></i>`).join("")}</span>`
   : `<span class="ct-dot c-${it.color}" data-id="${it.id ?? ""}"${clickable ? ` data-pick="${it.color}"` : ""}></span>`;
@@ -1156,10 +1158,16 @@ function render() {
   }
   for (const [key, el] of Object.entries(ui.stations)) el.classList.toggle("is-here", game.player.station === key && !game.player.act);
   // Boxes being packed fill in.
-  for (const fill of floor.querySelectorAll(".ct-box.is-building .ct-box-fill, .ct-crate.is-building .ct-box-fill")) {
+  for (const fill of floor.querySelectorAll(".ct-box.is-building .ct-box-fill")) {
     const id = +fill.parentElement.dataset.id;
     const box = Object.values(game.stations).flat().find((i) => i.id === id);
     if (box) fill.style.transform = `scaleX(${boxProgress(game, box)})`;
+  }
+  // Crates being assembled appear the same way, as the finished crate.
+  for (const reveal of floor.querySelectorAll(".ct-crate.is-building .ct-crate-reveal")) {
+    const id = +reveal.parentElement.dataset.id;
+    const crate = Object.values(game.stations).flat().find((i) => i.id === id);
+    if (crate) reveal.style.clipPath = `inset(0 ${(1 - boxProgress(game, crate)) * 100}% 0 0)`;
   }
   // In a quarter: the money left (the crew's pay comes out at Start). Otherwise what the crew costs.
   // At the end of a business quarter it's the budget after the clients pay, the same as the card.

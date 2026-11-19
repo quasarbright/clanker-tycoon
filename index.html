@@ -152,10 +152,11 @@
     /* a crate: a slatted wooden case, a red, blue and green box inside (decision 85; no real art yet) */
     /* A crate (Mike's pick, 2026-11-19): a dark X-braced wooden case with a stencil dot, taller than
        a box and with no colored dots, so it never reads as one. */
-    .ct-crate { position: relative; overflow: hidden; display: inline-block; width: calc(var(--u) * 2.6); height: calc(var(--u) * 2.6); border-radius: 3px; box-shadow: 0 2px 0 #0006; }
+    .ct-crate { position: relative; overflow: hidden; display: inline-block; width: calc(var(--u) * 3.2); height: calc(var(--u) * 3.2); border-radius: 3px; box-shadow: 0 2px 0 #0006; }
     .ct-crate svg { display: block; width: 100%; height: 100%; }
-    .ct-crate.is-building svg { opacity: .4; }
-    .ct-crate .ct-box-fill { background: #6b4520cc; z-index: 1; }
+    .ct-crate-ghost, .ct-crate-reveal { position: absolute; inset: 0; }
+    .ct-crate-ghost { opacity: .25; }
+    .ct-crate.is-building { box-shadow: none; }
     .ct-ticket-dots.is-crate .ct-dot { border-radius: 2px; }
     .c-red { background: var(--red); } .c-blue { background: var(--blue); } .c-green { background: var(--green); }
     .ct-ticket .ct-dot { width: 12px; height: 12px; }
