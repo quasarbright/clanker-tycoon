@@ -424,6 +424,13 @@ function doAct(act) {
   lastVersion = -1;
 }
 
+/** Colors worth painting a widget that's `color` now: the ones the order still needs, else any other. */
+function paintChoices(color) {
+  const needed = (c) => game.order.some((l) => l.done < l.count && (l.color === c || (l.color === "crate" && CRATE.includes(c))));
+  const others = COLORS.filter((c) => c !== color);
+  return others.some(needed) ? others.filter(needed) : others;
+}
+
 // What you can do where you're standing, best guess first (Space does the first one).
 function playerActions() {
   const p = game.player, st = p.station;
@@ -433,7 +440,9 @@ function playerActions() {
   const kind = kindOf(st);
   if (p.holding) {
     if (kind === "PAINT" && p.holding.kind === "widget") {
-      for (const c of COLORS) if (c !== p.holding.color) acts.push({ label: `Paint ${c}`, a: { action: "paint", color: c } });
+      // Only the colors the order still needs (Mike: on the green level, blue came first). If it
+      // needs none, every other color, so you can still paint.
+      for (const c of paintChoices(p.holding.color)) acts.push({ label: `Paint ${c}`, a: { action: "paint", color: c } });
     }
     const canDrop = st === "DOCK" ? (level.ship === "widgets" || p.holding.kind !== "widget") : kind === "ASSEMBLE" ? p.holding.kind === "box" : true;
     // At the paint machine painting comes first (Space); everywhere else putting it down does.
@@ -1954,7 +1963,7 @@ window.ct = {
   step: (dt) => { if (started) step(game, dt); handleEvents(); render(); },
   give: (id, text) => giveInstructions(worker(id), text), say: (id, text) => message(worker(id), "message", text),
   setPaused, begin: () => begin({ force: true }), startBlocker: () => startBlocker(), thinking: (id, d) => setThinking(worker(id), d), hire, playerActions, openBoard, renderBoard, get biz() { return biz; }, set biz(b) { biz = b; },
-  buy: (id) => buy(biz, id), openEditor, closeEditor, relayout, get editing() { return editing; }, get level() { return level; },
+  buy: (id) => buy(biz, id), paintChoices: (c) => paintChoices(c), openEditor, closeEditor, relayout, get editing() { return editing; }, get level() { return level; },
   showGameOver: (r) => showGameOver(r), license: (name, owner) => { if (!biz) biz = newBusiness(); biz.name = name; biz.owner = owner; },
   useFakeLlm, // e2e: answer model calls without a model
 };
