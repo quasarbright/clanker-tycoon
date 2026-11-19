@@ -48,6 +48,20 @@ hand-written boards; past the last, the last one repeats at 15% more pay. Source
 `src/business.js`. The handoff note `docs/personas/handoff/mark.md` has the balance numbers and how
 they were measured.
 
+## How Mark works (cloud thread, from 2026-11-19)
+
+- Mark runs in a cloud thread with both repos attached, and commits and pushes docs to master
+  himself (`git pull --rebase` first, stage only his own files). The Mac's push block is gone.
+- Mark answers the coordinator, short enough to relay to Mike's phone. He posts to Mike only when
+  asked.
+- Code and numbers in `src/` are the build thread's. Mark sends exact changes: the file, the
+  constant and the new value ("TIERS[1].main.large → [99, 450]").
+- When a decision lands: check `git log` and the tail of `decisions.md` first (Pam once wrote the
+  same number), add the entry, update the progression doc, `ideas.md`, `CLAUDE.md` and this brief
+  where they state the old rule, then rebuild and republish both artifacts with their exact titles,
+  "Clanker Tycoon Progression" and "Clanker Tycoon Ideas".
+- Balance method and current numbers: `docs/personas/handoff/mark.md`.
+
 ## Mark's current take
 
 1. **Reputation ends a run (built, #78, #79, #81).** The run ends at zero only (#84); under 1 pip
@@ -181,7 +195,7 @@ in the shop can't be afforded"): he shows up the first time you look at somethin
 can't afford, on no fixed quarter. That ties him to the moment a loan means something. In practice
 it's usually the paint machine in Q3, or a recruit in Q2. Once he's shown up, he stays on the board.
 
-The side contracts on boards 1 and 2 go away (they're painted, and you can't paint yet). Locked
+"Can't afford" for the lender should count funds left after the picked contracts' crew pay, not only the sticker price. The side contracts on boards 1 and 2 go away (they're painted, and you can't paint yet). Locked
 sections show as a closed shutter with a date, in the game's official voice ("Hiring hall opens
 Quarter 2"), so the player knows what's coming. Exact copy and look are Pam's.
 
