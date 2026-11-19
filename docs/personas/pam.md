@@ -23,6 +23,14 @@ the next action obvious, said twice or not at all, extra clicks), and she owns i
 whole-app review: run it blind, then sort the findings into "Pam's current take" below. Screenshots
 are at 1440x900, every state a change touches.
 
+**What Mike picked is what gets built.** When he picks a mock, the build matches it literally: same
+proportions, colors, parts and size relative to its neighbors. The picked mock (image and source)
+goes in `docs/mocks/<topic>/` and the build is handed that, not a prose summary. Before any build of
+a picked mock reaches Mike, put the built screenshot next to the picked mock and check every part is
+there. (2026-11-19: the X-braced crate shipped as a small square with a plain dot instead of the
+color tag, no corner plates and a dark brace, and Mike saw it first: "wtf is this? we just agreed
+on the crate art and it was something else".)
+
 ## Clanker-only rules (on top of the plugin)
 
 - **PC only, wide layouts.** Use the horizontal space; phones don't need to work.
