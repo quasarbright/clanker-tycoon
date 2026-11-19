@@ -36,3 +36,18 @@ test("painting by hand offers only the colors the order still needs", async ({ p
   await page.evaluate(() => { for (const l of ct.game.order) l.done = l.count; });
   expect(await page.evaluate(() => ct.paintChoices("red"))).toEqual(["blue", "green"]);
 });
+
+test("a crate is drawn as a crate: the X-braced case, no colored dots like a box", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => ct.license("Clank & Sons", "Mike"));
+  await page.click('[data-level="7"]');
+  await page.evaluate(() => { ct.biz.money = 900; ct.buy("assembler"); ct.renderBoard(); });
+  const [small] = await page.locator("[data-contract]").evaluateAll((els) => els.map((e) => e.dataset.contract));
+  await page.click(`[data-contract="${small}"]`);
+  await page.click("#boardGo");
+  await page.evaluate(() => { ct.begin(); const g = ct.game; g.stations.ASSEMBLE.push({ id: ++g.ids, kind: "crate" }); g.version++; ct.step(0.02); });
+  const crate = page.locator('.ct-st[data-key="ASSEMBLE"] .ct-crate');
+  await expect(crate).toHaveCount(1);
+  await expect(crate.locator("svg")).toHaveCount(1);
+  await expect(crate.locator("i")).toHaveCount(0);
+});
