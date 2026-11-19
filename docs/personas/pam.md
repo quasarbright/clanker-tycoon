@@ -159,3 +159,12 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
 - 2026-11-18: dropping a machine on a taken slot: Mike picked **Swap** (my recommendation) over
   Refuse. Both slots light gold and the other machine previews its new spot; letting go trades
   them. In Mark's spec.
+- 2026-11-19: Mike: "crate looks too similar to box. should be more distinct". Mocked three looks
+  (X-braced wooden crate, three boxes strapped on a pallet, gray shipping case; I recommended the
+  pallet). Mike picked **1 · X-braced wooden crate**. Spec for `.ct-crate` in index.html, at the
+  floor's unit `--u`: about 3.8u × 3u; dark planks `#6b4220` in a `#3d2410` frame with an inner
+  `#8a5a2c` rim; an X brace (two `#8a5a2c` bars at ±38°, outlined `#3d2410`); gray `#9aa0a8` metal
+  corner plates; the red, blue and green on a small cream `#efe6cf` tag in the middle, not loose
+  dots. Boxes stay plain cardboard, so the two never read alike. Applies everywhere a crate shows:
+  floor stations, held, at the Dock, the in-progress crate at the Assembler (same shape, faded),
+  and the Crates ticket. Source mock: `crates.mjs` option 1 (0355).
