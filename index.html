@@ -158,7 +158,7 @@
     /* The Assembler holds boxes and crates (1.7x a box): one unit wider, the size of its footprint in
        the sim (TILE.hw 8), with tighter spacing, so two boxes and two crates sit on one row. */
     .ct-st[data-key^="ASSEMBLE"] { width: calc(var(--u) * 16); padding-left: calc(var(--u) * .3); padding-right: calc(var(--u) * .3); }
-    .ct-st[data-key^="ASSEMBLE"] .ct-st-items { gap: calc(var(--u) * .3); }
+    .ct-st[data-key^="ASSEMBLE"] .ct-st-items { gap: calc(var(--u) * .3); flex-wrap: nowrap; }
     .ct-crate-ghost { opacity: .25; }
     .ct-crate.is-building { box-shadow: none; }
     .ct-ticket-dots.is-crate .ct-dot { border-radius: 2px; }

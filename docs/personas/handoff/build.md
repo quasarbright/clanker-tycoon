@@ -21,9 +21,8 @@ Everything is pushed to `master`. Nothing is half-built. The last stretch shippe
 
 ## Open threads / likely next asks
 
-- Board 4's large blue (22) misses with every crew in `tools/balance.mjs` (21 of 22). Mark knows.
-- The Assembler still wraps to two rows with three or more waiting boxes (six max). Fine per review
-  desk for now; two boxes + two crates fit on one row (tested).
+- ~~Board 4's large blue (22) misses with every crew (21 of 22).~~ Stale (cloud build thread, 2026-11-19): that was board 4's old 45-red side, and Mark chose to keep it (mark.md). With today's 78-red side, `balance.mjs` meets 22 blue alone on every floor whenever someone services the paint machine, and red + 22 blue on the swapped and tidy floors. Only the sturdy machine with nobody servicing stops at 18, which is the point of servicing. No change made.
+- ~~The Assembler wraps to two rows with three or more waiting boxes.~~ Fixed (cloud build thread): a crowded Assembler shrinks its whole row to fit (`assemblerZoom` in `src/main.js`), tested with six boxes and three boxes + three crates in `e2e/hud.spec.mjs`.
 - Plugin 0.10.2 is pushed, but `claude plugin marketplace update quasarbright-claude` fails on this
   Mac: the plugin comes through the desktop app, not that CLI marketplace. Sessions pick it up when
   the app refreshes.
@@ -66,3 +65,12 @@ Everything is pushed to `master`. Nothing is half-built. The last stretch shippe
   then wrap the capture in a page with a title and one-line description.
 - Persona sessions (Mark, Pam, Rosa) commit docs locally on the Mac and can't push; the build thread
   pushed for them with `git pull --rebase -q && git push` from the repo folder.
+
+## Added by the cloud build thread (2026-11-19)
+
+- The build thread now runs in the cloud; `npm test` (all 54+ e2e) passes there with the stand-ins of
+  decision 92. Screenshot scripts in the cloud import Playwright by path
+  (`node_modules/playwright/index.mjs`) and route outside files with `offlineRoutes` from
+  `tools/playtest-browser.mjs`.
+- A thread can hit a limit on attached files; then name the files in `/mnt/project-files` instead.
+- The colored bar under the Assembler is its wear meter (same as Paint's), not a waiting meter.

@@ -287,6 +287,13 @@ const CRATE_SVG = `<svg viewBox="0 0 88 72" aria-hidden="true">
   <rect x="6" y="53" width="13" height="13"/><rect x="69" y="53" width="13" height="13"/></g>
   <rect x="15" y="24" width="58" height="23" rx="5" fill="#efe6cf" stroke="#3a2210" stroke-width="2.5"/>
   <rect x="22" y="29.5" width="12" height="12" rx="2" fill="#e05a47"/><rect x="38" y="29.5" width="12" height="12" rx="2" fill="#4a86e8"/><rect x="54" y="29.5" width="12" height="12" rx="2" fill="#4caf6a"/></svg>`;
+// The Assembler holds up to six boxes and crates on one row: once they'd overflow its tile, the
+// whole row shrinks to fit instead of wrapping to a second row (widths in --u, from index.html).
+const ASSEMBLER_ROW = 15.4, BOX_W = 2.6, CRATE_W = 4.4, ASSEMBLER_GAP = 0.3;
+const assemblerZoom = (items) => {
+  const need = items.reduce((w, it) => w + (it.kind === "crate" ? CRATE_W : BOX_W), 0) + ASSEMBLER_GAP * Math.max(0, items.length - 1);
+  return need > ASSEMBLER_ROW ? String(Math.floor((ASSEMBLER_ROW / need) * 1000) / 1000) : "";
+};
 const itemHTML = (it, clickable = false) => it.kind === "crate"
   // One crate drawing in every state (Mike): while it's being assembled, the same crate appears
   // left to right over its own faint outline, like a box filling in at Pack.
@@ -1157,7 +1164,9 @@ function render() {
     lastVersion = game.version;
     for (const [key, el] of Object.entries(ui.stations)) {
       const items = game.stations[key];
-      el.querySelector(".ct-st-items").innerHTML = items.map((it) => itemHTML(it, true)).join("");
+      const row = el.querySelector(".ct-st-items");
+      row.innerHTML = items.map((it) => itemHTML(it, true)).join("");
+      if (kindOf(key) === "ASSEMBLE") row.style.zoom = assemblerZoom(items);
       el.querySelector(".ct-st-cap").textContent = el.dataset.cap ? `${items.length}/${el.dataset.cap}` : "";
       if (wears(key)) {
         el.querySelector(".ct-wear i").style.transform = `scaleX(${game.wear[key] / 100})`;

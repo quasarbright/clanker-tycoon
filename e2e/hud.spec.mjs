@@ -61,3 +61,32 @@ test("a crate is drawn as a crate: the X-braced case, no colored dots like a box
   expect(tops).toHaveLength(4);
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(10);
 });
+
+test("a full Assembler keeps everything on one row inside its tile: six boxes, or three boxes and three crates", async ({ page }) => {
+  await page.goto("/");
+  await page.evaluate(() => ct.license("Clank & Sons", "Mike"));
+  await page.click('[data-level="7"]');
+  await page.evaluate(() => { ct.biz.money = 900; ct.buy("assembler"); ct.renderBoard(); });
+  const [small] = await page.locator("[data-contract]").evaluateAll((els) => els.map((e) => e.dataset.contract));
+  await page.click(`[data-contract="${small}"]`);
+  await page.click("#boardGo");
+  await page.evaluate(() => ct.begin());
+  const fill = (kinds) => page.evaluate((kinds) => {
+    const g = ct.game;
+    g.stations.ASSEMBLE = kinds.map((k, i) => k === "crate" ? { id: ++g.ids, kind: "crate" } : { id: ++g.ids, kind: "box", colors: Array(3).fill(["red", "blue", "green"][i % 3]) });
+    g.version++; ct.step(0.02);
+  }, kinds);
+  for (const kinds of [["box", "box", "box", "box", "box", "box"], ["box", "box", "box", "crate", "crate", "crate"], ["box", "crate"]]) {
+    await fill(kinds);
+    const r = await page.locator('.ct-st[data-key="ASSEMBLE"]').evaluate((st) => {
+      const box = st.getBoundingClientRect(), items = [...st.querySelectorAll(".ct-st-items > *")].map((e) => e.getBoundingClientRect());
+      return { n: items.length, rows: new Set(items.map((i) => Math.round(i.top))).size, left: Math.min(...items.map((i) => i.left)) - box.left, right: box.right - Math.max(...items.map((i) => i.right)), zoom: st.querySelector(".ct-st-items").style.zoom };
+    });
+    expect(r.n).toBe(kinds.length);
+    expect(r.rows).toBe(1);
+    expect(r.left).toBeGreaterThanOrEqual(0);
+    expect(r.right).toBeGreaterThanOrEqual(0);
+    // Only a crowded Assembler shrinks; one box and one crate stay full size.
+    expect(r.zoom === "").toBe(kinds.length === 2);
+  }
+});
