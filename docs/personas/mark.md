@@ -158,9 +158,14 @@ contract that needs it:
 |---|---|---|---|
 | 1 | Contracts, reputation, the floor editor | The Large red needs the swap, so the editor is the lesson | Red Small/Large, no side contract |
 | 2 | Recruit | The Large 99 needs a second hauler even on a swapped floor | Red Small/Large, no side contract |
-| 3 | Machines and the lender | The first painted contract needs an $80 paint machine; the lender covers it if you're short. Recruit already offers a painter | Green main, red side |
+| 3 | Machines | The first painted contract needs an $80 paint machine. Recruit already offers a painter | Green main, red side |
 | 4 | Training | You have a crew worth shaping; teach Blip to paint instead of paying a third wage | Blue main, red side |
 | 5+ | The assembler appears in Machines | Crates contracts once you own one | As now |
+
+**The lender** (Mike, 2026-11-19: "maybe we only introduce the loan guy the first time something
+in the shop can't be afforded"): he shows up the first time you look at something in the shop you
+can't afford, on no fixed quarter. That ties him to the moment a loan means something. In practice
+it's usually the paint machine in Q3, or a recruit in Q2. Once he's shown up, he stays on the board.
 
 The side contracts on boards 1 and 2 go away (they're painted, and you can't paint yet). Locked
 sections show as a closed shutter with a date, in the game's official voice ("Hiring hall opens
