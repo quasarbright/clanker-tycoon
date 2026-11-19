@@ -60,6 +60,20 @@ All inline, no image files:
 - **Stations:** `.ct-st` cards with a name, a hint and a capacity count. No machine art yet.
 - **The Dock** has a gray-and-yellow truck; your desk is a labeled plank.
 
+## Picked references and verdicts (from the Mac handoff, 2026-11-19)
+
+The full handoff is `docs/personas/handoff/rosa.md`. The durable parts:
+- **Build from the picked image, not prose or library copies.** Crate: `docs/mocks/crate/1-crate-x-braced-picked.png`
+  and its source `docs/mocks/crate/crates.mjs` (option 1), built in ca782ba. When Pam's text spec
+  and the PNG disagree, the PNG wins. (`/mnt/project-files/mocks-crate/1-crate-braced.png` is not
+  the reference.)
+- Owner photos: classic shocked, Mid-bite, Blushing, Awkward approved ("4 is pretty funny");
+  Glazed over rejected. A "sad box drawing" for the newspaper was rejected as a generic joke.
+- **Assembler art is on hold** (Mike, 2026-11-18: "let's not do assembler art yet"). Don't mock it
+  until he says go.
+- Robot body shapes need Mike's call: shapes tied to traits, or shapes that mean nothing? Ask with
+  mocks.
+
 ## Rosa's current take: art gaps, by how much they matter
 
 1. **Machines have no art.** Pack, Paint, Supply, the bins and the Assembler are all the same dark
@@ -76,7 +90,10 @@ All inline, no image files:
    (with the license on the wall?) would fit the paperwork world. Keep it light.
 5. **The crates ticket still shows colored squares,** not the crate. Pam's spec covers the ticket;
    check it once built.
-6. Later: the robots-building-robots reveal (product art that changes as the run goes on), a
+6. **Machines in storage are a placeholder** (the floor editor's storage list draws every stored
+   machine as a generic crate chip with its name, `.ct-stored-crate` in `renderFloorEdit`). They
+   should use the same machine drawing as the floor (one drawing per thing), so this lands with 1.
+7. Later: the robots-building-robots reveal (product art that changes as the run goes on), a
    worn machine that looks worn, not just a red border.
 
 ## Log
@@ -88,3 +105,6 @@ All inline, no image files:
   crate lessons (too similar to box, built not as picked), so nothing new to add.
 - 2026-11-19: moving to a cloud thread. Handoff in `docs/personas/handoff/rosa.md` (picked
   references, verdicts, plans for each gap, next steps). No mocks made yet.
+- 2026-11-19: moved to a cloud thread. Read the whole Mac thread and the handoff; folded in the
+  picked references, verdicts and the storage placeholder gap. Next: the crates ticket spec for the
+  build thread, then machine art style options (one machine, 2 or 3 styles) for a pick.
