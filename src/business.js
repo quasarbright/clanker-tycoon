@@ -20,18 +20,22 @@ import { newFloor, addToStorage, positionsOf } from "./floor.js";
 export const START_MONEY = 100;
 
 /**
- * The dollar-eyed robot is a lender (decisions #61, #64). Borrow at the board, no interest. Each
- * loan takes 10% of every contract you finish until it's paid back, so two loans take 20%.
- * `biz.loans` is what's still owed on each.
+ * The dollar-eyed robot is a lender (decisions #61, #64). Borrow at the board. A loan costs a flat
+ * 10% fee: borrow $100 and you owe $110 (Mike, 2026-11-19). Each loan takes 10% of every contract
+ * you finish until it's paid back, fee included, so two loans take 20%. `biz.loans` is what's
+ * still owed on each.
  */
-export const LENDER = { share: 0.1, amounts: [100, 250], max: 3 }; // at most 3 loans at once
+export const LENDER = { share: 0.1, fee: 0.1, amounts: [100, 250], max: 3 }; // at most 3 loans at once
 
-/** Take a loan: the money now, and one more loan taking its share until it's paid. */
+/** What you pay back on a loan of `amount`: the amount plus the flat fee. */
+export const payBackOf = (amount) => Math.round(amount * (1 + LENDER.fee));
+
+/** Take a loan: the money now, and one more loan taking its share until it's paid, fee and all. */
 export function borrow(biz, i) {
   const amount = LENDER.amounts[i];
   if (!amount || biz.loans.length >= LENDER.max) return false;
   biz.money += amount;
-  biz.loans.push(amount);
+  biz.loans.push(payBackOf(amount));
   return true;
 }
 

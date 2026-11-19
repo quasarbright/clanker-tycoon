@@ -15,7 +15,7 @@ import { startShift, logEvent, downloadLog } from "./playlog.js";
 import { SLOTS, ANCHORS, NEVER_STORED, inSlot, place, store, keepInStorage, placeLeftovers } from "./floor.js";
 import { headLooks, toolLooks, faceHTML, ownerHeadSVG, ownerHatSVG, ownerPhoto } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, signed as signedText, shippedOf, shiftCost } from "./quarter.js";
-import { LENDER, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, missingFor, trainableNow, canAdd, floorLevel, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
+import { LENDER, payBackOf, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, missingFor, trainableNow, canAdd, floorLevel, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
   RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers, crewCost,
   randomBusinessName, outOfBusiness, START_MONEY, cheapestWage } from "./business.js";
 import { headline } from "./headlines.js";
@@ -1583,10 +1583,10 @@ function renderBoard() {
   $("#investorLine").innerHTML = n >= LENDER.max
     ? `"I'm not lending you any more money until you pay up, deadbeat! You owe me <b class="is-debt">$${debtOf(biz)}</b> on ${n} loans, and I take <b class="is-debt">${now}</b> of every contract you finish until you're paid up."`
     : n
-    ? `"You owe me <b class="is-debt">$${debtOf(biz)}</b>${n > 1 ? ` on ${n} loans` : ""}, and I take <b class="is-debt">${now}</b> of every contract you finish until you're paid up."`
-    : `"Short on cash? Borrow from me, no interest. Each loan takes ${pct} of every contract you finish until it's paid off; two loans take ${Math.round(LENDER.share * 200)}%."`;
+    ? `You owe <b class="is-debt">$${debtOf(biz)}</b> · <b class="is-debt">${now}</b> of every contract until it's paid`
+    : `"Short on cash? Borrow from me. You pay me back ${Math.round(LENDER.fee * 100)}% more, out of ${pct} of every contract you finish; two loans take ${Math.round(LENDER.share * 200)}%."`;
   $("#loans").innerHTML = LENDER.amounts.map((a, i) => `<button class="ct-btn" data-loan="${i}" ${n >= LENDER.max ? "disabled" : ""} data-tooltip="${n >= LENDER.max ? `You have ${LENDER.max} loans, the most he'll give. He's paid back from your contracts, 10% of each per loan.`
-    : `You'd owe $${a}, paid back by ${pct} of every contract you finish${n ? `, on top of the ${now} you already pay` : ""}.`}">Borrow $${a}</button>`).join("");
+    : `You'd owe $${payBackOf(a)} ($${a} and a ${Math.round(LENDER.fee * 100)}% fee), paid back by ${pct} of every contract you finish${n ? `, on top of the ${now} you already pay` : ""}.`}">Borrow $${a} · pay back $${payBackOf(a)}</button>`).join("");
   $("#loans").querySelectorAll("[data-loan]").forEach((b) => b.addEventListener("click", () => {
     if (borrow(biz, +b.dataset.loan)) { logEvent(null, "borrow", { amount: LENDER.amounts[+b.dataset.loan], funds: Math.floor(biz.money), loans: [...biz.loans] }); renderBoard(); }
   }));
@@ -1642,8 +1642,9 @@ function renderBoard() {
   const f = forecast(biz, picked);
   const row = (label, v, cls = "", tip = "") => `<span class="${cls}" ${tip ? `data-tooltip="${tip}"` : ""}>${label}</span><b class="${cls}">${v}</b>`;
   $("#forecast").innerHTML = !picked.length ? "" : row("Contracts pay, if they all ship", signed(f.pay), "is-in")
-    + (n ? row(`${WORDS.toLender} (${now})`, signed(-f.repay), "is-out", `After this quarter you'd owe $${f.debtAfter}.`)
-      + row("You keep", signed(f.gain), "is-total") : "");
+    + (n ? row(`${WORDS.toLender} (${now})`, signed(-f.repay), "is-out")
+      + row("You keep", signed(f.gain), "is-total")
+      + row(`${WORDS.stillOwed} after`, `$${f.debtAfter}`, "is-out") : "");
 
   // ----- recruit: three robots this visit
   $("#recruits").innerHTML = recruitOffers(biz).map((id) => {
@@ -1848,7 +1849,9 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
   const cs = level.contracts, n = quarter.shift;
   logEvent(game.t, "end", { won, contracts: cs.map((c) => c.id), quarter: { shift: n, of: QUARTER_SHIFTS }, shipped: `${done}/${total}`, labor: Math.round(game.laborCost), money: Math.floor(quarter.money), crew: crewSummary() });
   const over = won || last;
-  const pays = payouts(cs, quarter.done, [...biz.loans]);
+  const loansAfter = [...biz.loans]; // payouts takes the lender's cut out of these
+  const pays = payouts(cs, quarter.done, loansAfter);
+  const owedAfter = over ? loansAfter.reduce((a, l) => a + l, 0) : 0;
   const paid = pays.reduce((a, p) => a + p.pay, 0), cut = pays.reduce((a, p) => a + p.cut, 0);
   const shipped = pays.filter((p) => p.won).length;
   $("#endTitle").textContent = won ? (n < QUARTER_SHIFTS ? "Quarter over early" : "Every contract shipped") : over ? "Quarter over" : `Shift ${n} done`;
@@ -1870,7 +1873,7 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
   const stats = over ? [["Paid", `$${paid}`], [`${WORDS.crewPay}, all shifts`, `$${crewPayAll}`], ...(cut ? [[WORDS.toLender, `$${cut}`]] : []), [WORDS.funds, money(quarter.money + paid - cut)]]
     : [[`Shipped ${WORDS.thisShift.toLowerCase()}`, `${done - shippedBefore}`], [`${WORDS.crewPay} ${WORDS.thisShift.toLowerCase()}`, `$${Math.round(game.laborCost)}`, LOSS], [WORDS.funds, money(quarter.money), GAIN]];
   const repBefore = biz.rep ?? REP.max, repAfter = afterQuarter(repBefore, pays);
-  if (over) setEndStats(rows + recapHTML({ start: level.quarter.budget, paid, cut, crew: crewPayAll, rep: [repBefore, repAfter] }), []);
+  if (over) setEndStats(rows + recapHTML({ start: level.quarter.budget, paid, cut, crew: crewPayAll, rep: [repBefore, repAfter], owed: owedAfter }), []);
   else setEndStats(rows, stats);
   const btns = over ? [["board", WORDS.toBoard, true]]
     : [["next", "Next shift", true], ["restart", WORDS.replayShift]];
@@ -1896,7 +1899,7 @@ function endBusinessShift(won, last, done, total, shippedBefore) {
  * what came in and went out (no $0 lines), the budget now, and the quarter's result. Lines tally in
  * one after another; a click on the card shows them all at once (Pam's spec, decision 72).
  */
-function recapHTML({ start, paid, cut, crew, rep }) {
+function recapHTML({ start, paid, cut, crew, rep, owed = 0 }) {
   const now = start + paid - cut - crew, net = now - start;
   const lender = `<img class="ct-recap-face" src="favicon.svg" alt="">`;
   const lines = [
@@ -1905,6 +1908,8 @@ function recapHTML({ start, paid, cut, crew, rep }) {
     ...(cut ? [[`${WORDS.lendersCut} ${lender}`, signed(-cut), "is-out"]] : []),
     ...(crew ? [[WORDS.crewPayAll, signed(-crew), "is-out"]] : []),
     [WORDS.fundsNow, money(now), "is-total"],
+    // What's left on your loans, fee included, after the lender's cut (not money you have).
+    ...(owed ? [[WORDS.stillOwed, `$${owed}`, "is-out"]] : []),
   ];
   const row = ([l, v, cls], i) => `<span class="${cls}" style="--i:${i}">${l}</span><b class="${cls}" style="--i:${i}">${v}</b>`;
   const [before, after] = rep ?? [REP.max, REP.max], i = lines.length;

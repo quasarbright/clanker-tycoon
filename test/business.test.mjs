@@ -42,11 +42,12 @@ test("picking one size rules out the other: one contract per color", () => {
   assert.ok(!B.clashes([small], side));
 });
 
-test("loans: no interest, 10% per loan, stacking, three at most", () => {
+test("loans: a flat 10% fee (borrow $100, owe $110), 10% of each contract per loan, stacking, three at most", () => {
   const b = B.newBusiness();
   assert.ok(B.borrow(b, 0));
-  assert.equal(b.money, 200);
-  assert.equal(B.debtOf(b), 100);
+  assert.equal(b.money, 200, "you get the whole $100");
+  assert.equal(B.debtOf(b), 110, "and owe it back with the fee");
+  assert.equal(B.payBackOf(250), 275);
   assert.equal(B.repayOf(b, 150), 15);
   assert.ok(B.borrow(b, 1));
   assert.equal(B.shareOf(b), 0.2);
@@ -55,11 +56,25 @@ test("loans: no interest, 10% per loan, stacking, three at most", () => {
   assert.equal(B.borrow(b, 1), false, "a fourth loan is refused");
   assert.equal(b.loans.length, 3);
   assert.equal(b.money, 550);
+  assert.equal(B.debtOf(b), 110 + 275 + 110);
+});
+
+test("the fee is paid back like the loan: 10% of each finished contract until $110 is paid", () => {
+  const b = B.newBusiness();
+  B.borrow(b, 0);
+  const c = { id: "x", size: "small", color: "red", count: 1, pay: 400 };
+  for (const cut of [40, 40, 30]) {
+    const before = b.money;
+    b.quarters = 0;
+    B.settle(b, [c], [1], b.money);
+    assert.equal(b.money - before, 400 - cut, `this contract pays $${400 - cut} after a $${cut} cut`);
+  }
+  assert.deepEqual(b.loans, [], "paid off at $110, not $100");
 });
 
 test("a loan never takes more than what's left on it, and paid-off loans go away", () => {
   const b = B.newBusiness();
-  B.borrow(b, 0); // owe 100
+  B.borrow(b, 0); // owe 110
   b.loans[0] = 5;
   assert.equal(B.repayOf(b, 1000), 5);
   const cs = B.board(b).slice(0, 1);
@@ -76,7 +91,7 @@ test("settle: only contracts that shipped in full pay, and the lender's share co
   assert.equal(b.money, before - 30 + small.pay - Math.round(small.pay * 0.1));
   assert.equal(b.wins, 1);
   assert.equal(b.quarters, 1);
-  assert.equal(B.debtOf(b), 100 - Math.round(small.pay * 0.1));
+  assert.equal(B.debtOf(b), 110 - Math.round(small.pay * 0.1));
 });
 
 test("forecast: pay if everything ships, minus the lender, no wages", () => {
@@ -88,7 +103,7 @@ test("forecast: pay if everything ships, minus the lender, no wages", () => {
   assert.equal(f.repay, 2 * Math.round(small.pay * 0.1));
   assert.equal(f.gain, f.pay - f.repay);
   assert.equal(f.budget, b.money);
-  assert.equal(b.loans.reduce((a, l) => a + l, 0), 350, "a forecast doesn't touch the real loans");
+  assert.equal(b.loans.reduce((a, l) => a + l, 0), 385, "a forecast doesn't touch the real loans");
 });
 
 test("recruits: one per tier, stable through the visit, and the recruit is trainable right away", () => {

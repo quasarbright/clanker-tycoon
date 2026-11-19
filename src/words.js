@@ -27,6 +27,7 @@ export const WORDS = {
   startedWith: "Started with",
   contractsPaid: "Contracts paid",
   lendersCut: "Lender's cut",
+  stillOwed: "Still owed to the lender",
   crewPayAll: "Crew pay, all shifts",
   fundsNow: "Funds now",
   fundsLeft: "Funds left",

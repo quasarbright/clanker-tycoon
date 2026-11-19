@@ -57,12 +57,14 @@ test("disabled buttons are flat: no gold, no lip", async ({ page }) => {
   expect(style.shadow).not.toMatch(/0px 4px 0px/); // the lip
 });
 
-test("loans: 10% each, three at most, then he won't lend", async ({ page }) => {
+test("loans: a flat 10% fee, 10% of each contract per loan, three at most, then he won't lend", async ({ page }) => {
   await openBoard(page);
-  await expect(page.locator("#investorLine")).toContainText("no interest");
+  await expect(page.locator("#investorLine")).toContainText("You pay me back 10% more");
+  await expect(page.locator('[data-loan="0"]')).toHaveText("Borrow $100 · pay back $110");
+  await expect(page.locator('[data-loan="1"]')).toHaveText("Borrow $250 · pay back $275");
   await page.click('[data-loan="0"]');
   await expect(page.locator("#bizMoney")).toHaveText("$200");
-  await expect(page.locator("#investorLine")).toContainText("You owe me $100, and I take 10% of every contract you finish until you're paid up.");
+  await expect(page.locator("#investorLine")).toHaveText("You owe $110 · 10% of every contract until it's paid");
   await page.click('[data-loan="1"]');
   await expect(page.locator("#investorLine")).toContainText("20%");
   await page.click('[data-loan="0"]');
@@ -72,6 +74,7 @@ test("loans: 10% each, three at most, then he won't lend", async ({ page }) => {
   const [small] = await contracts(page).evaluateAll((els) => els.map((e) => e.dataset.contract));
   await page.click(`[data-contract="${small}"]`);
   await expect(page.locator("#forecast")).toContainText("To the lender (30%)");
+  await expect(page.locator("#forecast")).toContainText("Still owed to the lender after");
 });
 
 test("recruit a cheap robot and train them in the same visit", async ({ page }) => {
@@ -428,7 +431,8 @@ test("the quarter card is a recap: started with, paid, lender, crew, budget now,
   await endShift(page); // everything ships in shift 1: crew $15, contract $150, lender $15
   await expect(page.locator("#endScreen .ct-mascot")).toBeHidden();
   expect(await recap(page)).toEqual({
-    lines: [["Started with", "$200"], ["Contracts paid", "+$150"], ["Lender's cut", "−$15"], ["Crew pay, all shifts", "−$15"], ["Funds now", "$320"]],
+    lines: [["Started with", "$200"], ["Contracts paid", "+$150"], ["Lender's cut", "−$15"], ["Crew pay, all shifts", "−$15"], ["Funds now", "$320"],
+      ["Still owed to the lender", "$95"]], // $110 with the fee, less the $15 cut
     net: "This quarter +$120",
   });
   await expect(page.locator(".ct-recap-face")).toHaveCount(1);
