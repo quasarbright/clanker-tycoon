@@ -50,4 +50,9 @@ test("a crate is drawn as a crate: the X-braced case, no colored dots like a box
   await expect(crate).toHaveCount(1);
   await expect(crate.locator("svg")).toHaveCount(1);
   await expect(crate.locator("i")).toHaveCount(0);
+  // Being assembled, it's the same drawing appearing, not a different crate (Mike: "we just agreed on the crate art").
+  await page.evaluate(() => { const g = ct.game; g.stations.ASSEMBLE.push({ id: ++g.ids, kind: "crate", building: { start: g.t, until: g.t + 3 } }); g.version++; ct.step(0.02); });
+  const svgs = await page.locator('.ct-st[data-key="ASSEMBLE"] .ct-crate').evaluateAll((els) => els.map((e) => [...e.querySelectorAll("svg")].map((s) => s.outerHTML)));
+  expect(svgs).toHaveLength(2);
+  expect(new Set(svgs.flat()).size).toBe(1);
 });
