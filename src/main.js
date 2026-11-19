@@ -273,8 +273,13 @@ function buildFloor() {
   lastVersion = -1;
 }
 
+// The crate: dark frame, a lighter panel, an X brace and a cream stencil dot (Mike's pick).
+const CRATE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="2.5" fill="#3d2510"/>
+  <rect x="3.5" y="3.5" width="17" height="17" fill="#6b4520" stroke="#c9935c" stroke-width="1.2"/>
+  <path d="M4.8 4.8L19.2 19.2M19.2 4.8L4.8 19.2" stroke="#3d2510" stroke-width="3"/>
+  <circle cx="12" cy="12" r="3.4" fill="#e8d6a0" stroke="#3d2510" stroke-width="1.2"/></svg>`;
 const itemHTML = (it, clickable = false) => it.kind === "crate"
-  ? `<span class="ct-crate${it.building ? " is-building" : ""}" data-id="${it.id ?? ""}"${clickable && !it.building ? ` data-pick="crate"` : ""}>${it.building ? `<span class="ct-box-fill"></span>` : ""}${CRATE.map((c) => `<i class="c-${c}"></i>`).join("")}</span>`
+  ? `<span class="ct-crate${it.building ? " is-building" : ""}" data-id="${it.id ?? ""}"${clickable && !it.building ? ` data-pick="crate"` : ""}>${it.building ? `<span class="ct-box-fill"></span>` : ""}${CRATE_SVG}</span>`
   : it.kind === "box"
   ? `<span class="ct-box${it.building ? " is-building" : ""}" data-id="${it.id ?? ""}"${clickable && !it.building ? ` data-pick="box"` : ""}>${it.building ? `<span class="ct-box-fill"></span>` : ""}${it.colors.map((c) => `<i class="c-${c}"></i>`).join("")}</span>`
   : `<span class="ct-dot c-${it.color}" data-id="${it.id ?? ""}"${clickable ? ` data-pick="${it.color}"` : ""}></span>`;
