@@ -171,6 +171,21 @@ The side contracts on boards 1 and 2 go away (they're painted, and you can't pai
 sections show as a closed shutter with a date, in the game's official voice ("Hiring hall opens
 Quarter 2"), so the player knows what's coming. Exact copy and look are Pam's.
 
+## Proposal: a fee on loans (2026-11-19, not decided)
+
+Mike: with no interest, taking every loan is always right. Mark agrees: a loan costs nothing but
+time, so borrowing the most you can, as early as you can, beats everything else. The balance runs
+don't model loans, so this comes from the rules, not from a run.
+- **A flat fee, not interest over time:** "Borrow $100, pay back $110", and $250 → $275. No rate
+  that grows each quarter, so it's predictable and fits on the button.
+- **10%, Mike's number.** Borrowing money you don't spend now costs you $10 for nothing, which
+  ends "always borrow". Borrowing for something that earns (a paint machine opens a $240 contract)
+  still pays easily, and that's the choice we want. If playtests still show players borrowing
+  everything, go to 20%.
+- **Repayment stays a 10% cut of each finished contract**, until the fee-included amount is paid.
+- **Lender's card:** the buttons say "Borrow $100 · pay back $110". While you owe, it shows "You owe
+  $85 · 10% of every contract until it's paid".
+
 ## Open questions Mark is watching
 
 - How a run ends (above), what a late contract does, what the lender does when you can't pay.
