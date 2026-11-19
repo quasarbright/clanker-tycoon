@@ -1296,3 +1296,20 @@ counts should double with it, and pay stays the same, so the money side doesn't 
 Large red goes to 75 boxes, between 66 and 84, so the cheapest crew misses it on the starting floor
 and makes it after one swap, which is Mike's teaching moment. Board 1's Small red goes to 36. The
 red contracts on boards 2 to 4 need re-running on the new starting floor before they're set.
+
+### 89. Loans cost a flat 10% fee (2026-11-19)
+
+**Problem:** Mike: "strategically, you should always take loans right? ... the net money is the
+same, you're basically just paying for stuff more slowly which is always better. maybe we need a
+concept of interest after all to penalize loans ... maybe just have 'Borrow $100, pay back $110'".
+With no interest (#64), borrowing the most you could, as early as you could, always won.
+**Options (Mark):** a flat fee or interest that grows over time; 10% or 20%.
+**Picked (Mike, on the review page):** "Yes, a flat 10% fee." Replaces the no-interest part of #64.
+- Borrow $100, pay back $110; borrow $250, pay back $275. The owed amount never grows over time.
+- Repayment stays 10% of every finished contract per loan, until the full amount, fee included,
+  is paid.
+- The lender's buttons read "Borrow $100 · pay back $110"; while you owe, "You owe $N · 10% of
+  every contract until it's paid".
+- Why 10% is enough: borrowed money you don't spend now costs you something, so "always borrow"
+  stops being right, while a loan for something that earns (a paint machine that opens a $240
+  contract) still pays easily. If playtests show players still borrowing everything, go to 20%.

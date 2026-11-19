@@ -34,8 +34,8 @@ with detail and open questions, is an entry in [ideas.md](ideas.md). Reasons and
 ![The board between quarters in level 7: contracts, the lender, recruit, training, machines](mocks/progression/12-board.png)
 
 You run your own small factory business. You start with a little money of your own. The
-dollar-eyed robot from the favicon is a **lender**: borrow from him at the board, no interest, and
-each loan takes 10% of every contract you finish until it's paid back (two loans, 20%). Your money
+dollar-eyed robot from the favicon is a **lender**: borrow from him at the board for a flat 10% fee
+(borrow $100, pay back $110), and each loan takes 10% of every contract you finish until it's paid back (two loans, 20%). Your money
 is the quarter's budget; wages come out of it as the shifts run.
 
 **The loop (built in level 7):**

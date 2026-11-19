@@ -171,7 +171,7 @@ The side contracts on boards 1 and 2 go away (they're painted, and you can't pai
 sections show as a closed shutter with a date, in the game's official voice ("Hiring hall opens
 Quarter 2"), so the player knows what's coming. Exact copy and look are Pam's.
 
-## Proposal: a fee on loans (2026-11-19, not decided)
+## A fee on loans (2026-11-19, decided: Mike picked a flat 10%, decision 89)
 
 Mike: with no interest, taking every loan is always right. Mark agrees: a loan costs nothing but
 time, so borrowing the most you can, as early as you can, beats everything else. The balance runs

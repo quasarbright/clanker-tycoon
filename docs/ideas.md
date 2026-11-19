@@ -73,9 +73,9 @@ Agreed direction, not built yet. Roughly in roadmap order.
   First version built (decision 53). Later: several at once, late pay, how often the board refreshes.
 - **Money comes in.** Contracts pay. Wages, recruiting, training, machines and loan repayments go
   out. You can't start a shift you can't pay for.
-- **The lender.** The dollar-eyed robot lends you money at the board, no interest; each loan
-  takes 10% of every contract you finish until it's paid, so two loans take 20%. Built (decisions
-  61, 64). Open: what happens when you can't pay him
+- **The lender.** The dollar-eyed robot lends you money at the board for a flat 10% fee (borrow
+  $100, pay back $110; decision 89); each loan takes 10% of every contract you finish until it's
+  paid, so two loans take 20%. Built (decisions 61, 64). Open: what happens when you can't pay him
   back, and whether loans get pricier the more you owe.
 - **How a run ends.** Endless (decision 69): you keep going, the contracts get crazier, and
   eventually you go under. Open: how the game scales bigger without piling up new concepts.
