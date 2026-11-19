@@ -1325,3 +1325,24 @@ The quasarbright plugin keeps one doc per area: `TASTE.md` and `UX-CHECKLIST.md`
 lesson there in the same turn. Here, Pam owns the UI/UX and writing docs, Rosa art and Mark game
 design, and each cleans its docs up now and then. Clanker-only choices stay in this repo.
 A catch-up pass seeded the docs from this log, the persona briefs and the review page (plugin 0.10.0).
+
+### 91. Cloud playtests reach Haiku through a file bridge (2026-11-19)
+
+**Problem:** blind playtests and other automated play need real worker replies, but a cloud Claude
+session has neither of the game's model paths: `claude -p` isn't signed in there
+("Authentication error") and there's no OpenRouter key. Its network also blocks the CDN the page
+loads acorn from.
+**Options:** put an OpenRouter key in the cloud environment; fake the model (no real replies);
+Mike's idea, a file bridge: "the talking to a worker, just write something to a file, and then we
+have a sub-agent watching for the file that is running Haiku".
+**Picked:** the file bridge, opt-in with `LLM_BRIDGE=<dir>` on the server. Each call becomes a
+request file; a Haiku subagent of the session claims it with `tools/llm-bridge.mjs next`, answers in
+the same JSON contract, and `answer` checks it against the schema before the server takes it. The
+browser side doesn't change, so the game's own prompts, dry run and logs all run as normal, and
+nothing provider-specific enters the game. `tools/playtest-browser.mjs` serves acorn from
+`node_modules` so the page loads offline. One long-running answerer rather than a fresh subagent
+per call: spawning per call needs the session itself to stay awake as a dispatcher, and a single
+loop was fast enough.
+**Evidence:** level 3 played in a cloud session with Blip hauling and Pip packing; both
+instructions compiled through the bridge in 3.5 s and 7 s (claude -p takes 2 to 7 s). How to run
+it and its limits: `docs/cloud-playtest.md`.

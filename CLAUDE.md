@@ -280,6 +280,11 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   localhost) and what a new player knows, plays a run, and reports where it got confused, stuck or
   bored. No docs, no repo, no memory between runs; it's a testing step, not a persona. See
   the quasarbright plugin's `WORKING.md`, "Before you show it".
+- **Playtesting from a cloud session**: playtest on the Mac when it's online; only when it isn't
+  (Mike, 2026-11-19), use the cloud bridge (no `claude -p` login, no OpenRouter key, CDN blocked): run
+  the server with `LLM_BRIDGE=logs/bridge`, start a background Haiku subagent briefed with
+  `tools/llm-bridge-answerer.md` to answer the model calls, and open the page with
+  `tools/playtest-browser.mjs`. Steps and limits: `docs/cloud-playtest.md` (decision 91).
 - **Model usage and cost:** every call's tokens, cost at API prices and source (`play` for Mike's
   games, `test` for automated browsers, `check` for thinking-check) go into `logs/llm.jsonl`.
   `npm run usage -- --since 2d` (or `--source play`, `--until <date>`) totals any window.

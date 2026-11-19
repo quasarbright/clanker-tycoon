@@ -4,6 +4,10 @@
 // file and switches the game's backend to OpenRouter (see src/llm.js).
 //
 //   node server.mjs [port]     then open http://localhost:<port>
+//   LLM_BRIDGE=<dir> node server.mjs [port]
+//                              model calls go through files in <dir> instead of `claude -p`, for
+//                              automated playtests in a cloud session (server/bridge.mjs,
+//                              docs/cloud-playtest.md). The browser side doesn't change.
 //
 // It listens on 127.0.0.1 only, since it runs `claude` with your login.
 import http from "node:http";
@@ -11,6 +15,7 @@ import { readFile, appendFile, mkdir, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { ask, summarize, MODEL } from "./server/claude.mjs";
+import { bridgeAsk, prepare as prepareBridge } from "./server/bridge.mjs";
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = +process.argv[2] || 8473;
@@ -18,6 +23,8 @@ const MAX_CLAUDE = 4; // concurrent `claude -p` processes
 const LOG = path.join(ROOT, "logs", "llm.jsonl");
 const PLAY = path.join(ROOT, "logs", "play"); // one file per day of play, see src/playlog.js
 await mkdir(PLAY, { recursive: true });
+const BRIDGE = process.env.LLM_BRIDGE ? path.resolve(process.env.LLM_BRIDGE) : null;
+if (BRIDGE) await prepareBridge(BRIDGE);
 
 const MIME = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
@@ -62,6 +69,7 @@ async function handleLlm(req, res) {
   if (typeof system !== "string" || typeof prompt !== "string") return send(res, 400, { error: "need system and prompt" });
 
   const started = Date.now();
+  if (BRIDGE) return handleBridge(res, { system, prompt, schema, shift, test, source, started });
   // A normal call takes 2–7 s. Now and then `claude -p` hangs; give up after 40 s and try once more.
   const call = () => withSlot(() => ask({ system, turns: [prompt], schema: schema || null, effort: "low", timeoutMs: 40000 }));
   let out = await call();
@@ -85,6 +93,18 @@ async function handleLlm(req, res) {
     costUsd: s.cost_usd_cumulative_cli, model: MODEL, durationMs: s.duration_ms, apiMs: s.duration_api_ms_cumulative, ttftMs: s.ttft_ms, iterations: s.iterations };
   appendFile(LOG, JSON.stringify({ at: new Date().toISOString(), source, shift, test, ms: Date.now() - started, usage, system, prompt, data }) + "\n").catch(() => {});
   send(res, 200, { data, ms: Date.now() - started, tokens: { input: s.input_tokens, output: s.output_tokens } });
+}
+
+// The same call through the file bridge: whoever answers it stands in for the model.
+async function handleBridge(res, { system, prompt, schema, shift, test, source, started }) {
+  let data;
+  try { data = await bridgeAsk({ dir: BRIDGE, system, prompt, schema, meta: { shift, source } }); } catch (e) {
+    console.error("bridge:", e.message);
+    return send(res, 502, { error: e.message });
+  }
+  console.log(`llm (bridge) ${Date.now() - started}ms`);
+  appendFile(LOG, JSON.stringify({ at: new Date().toISOString(), source, shift, test, ms: Date.now() - started, usage: { model: "bridge" }, system, prompt, data }) + "\n").catch(() => {});
+  send(res, 200, { data, ms: Date.now() - started });
 }
 
 // The play log: the game posts batches of lines, appended to that day's file.
@@ -117,4 +137,4 @@ http.createServer(async (req, res) => {
     console.error(e);
     send(res, 500, { error: String(e.message || e) });
   }
-}).listen(PORT, "127.0.0.1", () => console.log(`clanker tycoon on http://localhost:${PORT}`));
+}).listen(PORT, "127.0.0.1", () => console.log(`clanker tycoon on http://localhost:${PORT}${BRIDGE ? ` (model calls through the file bridge in ${BRIDGE})` : ""}`));

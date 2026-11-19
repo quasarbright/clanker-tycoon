@@ -243,3 +243,9 @@ dropping one on another swaps them, and what you buy waits in storage, with the 
 you place it or say to keep it there. The first new machine to arrive that way was the assembler:
 three boxes, one of each color, into a crate.
 
+
+**2026-11-19, playtesting from the cloud.** Cloud sessions couldn't run the workers at all: no
+signed-in `claude -p`, no OpenRouter key. Mike: "maybe in a Claude playtest, the talking to a
+worker, just write something to a file, and then we have a sub-agent watching for the file that is
+running Haiku". That's what got built: the server drops each model call in a folder and a Haiku
+subagent answers it. It turned out barely slower than the real thing, a few seconds a call.
