@@ -148,6 +148,24 @@ slot, and 24 with Pack one slot closer to Supply. Mark's calls:
   don't help. Settled as is. One answer is right for crates (paint more), and the spare shift is
   room to take a painted side contract too, so the slack is the payoff for a pricey upgrade.
 
+## Proposal: the board grows a section at a time (2026-11-19, not decided)
+
+Mike found the quarter board overwhelming and suggested starting with contracts only and opening
+the shop one section at a time. Mark's schedule, by quarter of the run, with each unlock tied to the
+contract that needs it:
+
+| Quarter | Opens | Why now | Board |
+|---|---|---|---|
+| 1 | Contracts, reputation, the floor editor | The Large red needs the swap, so the editor is the lesson | Red Small/Large, no side contract |
+| 2 | Recruit | The Large 99 needs a second hauler even on a swapped floor | Red Small/Large, no side contract |
+| 3 | Machines and the lender | The first painted contract needs an $80 paint machine; the lender covers it if you're short. Recruit already offers a painter | Green main, red side |
+| 4 | Training | You have a crew worth shaping; teach Blip to paint instead of paying a third wage | Blue main, red side |
+| 5+ | The assembler appears in Machines | Crates contracts once you own one | As now |
+
+The side contracts on boards 1 and 2 go away (they're painted, and you can't paint yet). Locked
+sections show as a closed shutter with a date, in the game's official voice ("Hiring hall opens
+Quarter 2"), so the player knows what's coming. Exact copy and look are Pam's.
+
 ## Open questions Mark is watching
 
 - How a run ends (above), what a late contract does, what the lender does when you can't pay.
