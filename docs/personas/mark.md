@@ -37,13 +37,16 @@ docs. See the plugin's `WORKING.md`, "Lessons from his verdicts".
 - **Few first-class concepts.** Foremen are one; growth can't add a new concept per tier.
 - Story and writing wait for the polish phase.
 
-## Where the design is (2026-11-17)
+## Where the design is (2026-11-19)
 
 Level 7 is the loop: a quarter of 3 shifts, a board of a Small/Large main contract plus a side
 contract, recruit (three tiers), train ($20 a skill or trait, a jump at the third), machines (paint,
-sturdy paint, bigger pack, bigger bins), and a lender (10% of each finished contract per loan, at
-most three, no interest). Four hand-written boards; past the last, the last one repeats at 15% more
-pay. Source: `src/business.js`, decisions 53 to 67.
+sturdy paint, bigger pack, bigger bins, the assembler, and two of a kind), a floor editor
+(decisions 85 to 88), reputation (3 pips; the run ends at 0; decisions 78 to 84), and a lender (a
+flat 10% fee, repaid as 10% of each finished contract per loan, at most three; decision 89). Four
+hand-written boards; past the last, the last one repeats at 15% more pay. Source:
+`src/business.js`. The handoff note `docs/personas/handoff/mark.md` has the balance numbers and how
+they were measured.
 
 ## Mark's current take
 
@@ -199,12 +202,20 @@ don't model loans, so this comes from the rules, not from a run.
 
 ## Open questions Mark is watching
 
-- How a run ends (above), what a late contract does, what the lender does when you can't pay.
+- What a late contract does, and what the lender does when you can't pay.
+- Escalating contracts: the next mechanic. Tune against the swapped and tidy floors.
+- Smart is a dead trait in Training; never put to Mike. Propose dropping it until thinking matters.
+- From playtests: whether a whole pip back per clean quarter is too fast (cap at 1 a quarter),
+  and whether a 10% fee still leaves players borrowing everything (go to 20%).
 - When the second line arrives, and whether it's the source of new verbs.
 - Whether the Large contract is a choice or a trap at each board (playtests: red Large ships 3 in
   4, painted Large about half).
 
 ## Log
+
+- 2026-11-19: moving to a cloud thread; handoff note at `docs/personas/handoff/mark.md`. Recent:
+  the editor and assembler shipped, the starting floor teaches the swap (#88), boards and crates
+  retuned, a flat 10% loan fee (#89), lessons moved to the plugin's `GAME-DESIGN.md` (#90).
 
 - 2026-11-18: missing a contract cost nothing, so extra contracts were free bets. Mark offered a
   deposit, a penalty, strikes or a carry-over; Mike picked strikes as reputation (decision 78).
