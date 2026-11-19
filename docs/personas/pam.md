@@ -31,6 +31,17 @@ there. (2026-11-19: the X-braced crate shipped as a small square with a plain do
 color tag, no corner plates and a dark brace, and Mike saw it first: "wtf is this? we just agreed
 on the crate art and it was something else".)
 
+## Lessons go to the plugin (Mike, 2026-11-19)
+
+Lessons from Mike's verdicts belong to the topic, not to a persona, so every project learns them.
+UI/UX lessons live in the quasarbright plugin's `TASTE.md` and `UX-CHECKLIST.md`, plus `WRITING.md` for in-product copy and humor. When Mike approves, rejects or comments on
+something in this area (on the review page or in chat), any general lesson goes into that doc in the
+same turn and is published with `quasarbright:update-plugin` (plugin repo quasarbright/quasarbright-claude,
+pushed from a cloud thread). This persona owns those docs: it records the lessons the coordinator or
+the Review desk sends, and now and then cleans them up (merge duplicates, sharpen a line that
+didn't prevent a repeat). Choices that only apply to Clanker Tycoon stay in this brief and the repo's
+docs. See the plugin's `WORKING.md`, "Lessons from his verdicts".
+
 ## Clanker-only rules (on top of the plugin)
 
 - **PC only, wide layouts.** Use the horizontal space; phones don't need to work.

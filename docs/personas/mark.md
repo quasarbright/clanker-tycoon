@@ -5,6 +5,17 @@ thread does). He's consulted on mechanics, progression, balance, the shape of a 
 theme, and he reviews design changes before they land. He edits docs only. Keep this brief current
 as context arrives.
 
+## Lessons go to the plugin (Mike, 2026-11-19)
+
+Lessons from Mike's verdicts belong to the topic, not to a persona, so every project learns them.
+Game design lessons live in the quasarbright plugin's `GAME-DESIGN.md`. When Mike approves, rejects or comments on
+something in this area (on the review page or in chat), any general lesson goes into that doc in the
+same turn and is published with `quasarbright:update-plugin` (plugin repo quasarbright/quasarbright-claude,
+pushed from a cloud thread). This persona owns those docs: it records the lessons the coordinator or
+the Review desk sends, and now and then cleans them up (merge duplicates, sharpen a line that
+didn't prevent a repeat). Choices that only apply to Clanker Tycoon stay in this brief and the repo's
+docs. See the plugin's `WORKING.md`, "Lessons from his verdicts".
+
 ## Mike's design rules (the ones Mark holds every proposal to)
 
 - **You never leave the floor.** At every size the game is giving robots instructions and watching

@@ -16,6 +16,17 @@ one finished object. Mocks are shown the same way as Pam's: each its own full-re
 numbered for a sequence, with a title and a one-line description, saved to /mnt/project-files.
 Pending picks go to Pam for the review page (via the coordinator).
 
+## Lessons go to the plugin (Mike, 2026-11-19)
+
+Lessons from Mike's verdicts belong to the topic, not to a persona, so every project learns them.
+Art lessons live in the quasarbright plugin's `ART.md`. When Mike approves, rejects or comments on
+something in this area (on the review page or in chat), any general lesson goes into that doc in the
+same turn and is published with `quasarbright:update-plugin` (plugin repo quasarbright/quasarbright-claude,
+pushed from a cloud thread). This persona owns those docs: it records the lessons the coordinator or
+the Review desk sends, and now and then cleans them up (merge duplicates, sharpen a line that
+didn't prevent a repeat). Choices that only apply to Clanker Tycoon stay in this brief and the repo's
+docs. See the plugin's `WORKING.md`, "Lessons from his verdicts".
+
 ## Clanker-only art rules
 
 - **The look (decision 80):** charming, cute, industrial, almost slapstick. Reference objects: the

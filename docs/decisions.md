@@ -1313,3 +1313,15 @@ With no interest (#64), borrowing the most you could, as early as you could, alw
 - Why 10% is enough: borrowed money you don't spend now costs you something, so "always borrow"
   stops being right, while a loan for something that earns (a paint machine that opens a $240
   contract) still pays easily. If playtests show players still borrowing everything, go to 20%.
+
+### 90. Lessons from Mike's verdicts live by topic, in the plugin (2026-11-19)
+
+**Question:** where do the lessons in Mike's approvals and rejections go, so the next screen, drawing
+or mechanic doesn't repeat a miss? They were scattered across Pam's, Mark's and Rosa's logs, where
+only this project (and only that persona) would see them.
+**Picked (Mike: "Yes sounds good re persona learning"):** lessons belong to a topic, not a persona.
+The quasarbright plugin keeps one doc per area: `TASTE.md` and `UX-CHECKLIST.md` (UI/UX), `ART.md`,
+`GAME-DESIGN.md` and `WRITING.md` (copy and humor). Whoever handles a verdict records any general
+lesson there in the same turn. Here, Pam owns the UI/UX and writing docs, Rosa art and Mark game
+design, and each cleans its docs up now and then. Clanker-only choices stay in this repo.
+A catch-up pass seeded the docs from this log, the persona briefs and the review page (plugin 0.10.0).
