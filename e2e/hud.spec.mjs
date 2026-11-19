@@ -55,4 +55,9 @@ test("a crate is drawn as a crate: the X-braced case, no colored dots like a box
   const svgs = await page.locator('.ct-st[data-key="ASSEMBLE"] .ct-crate').evaluateAll((els) => els.map((e) => [...e.querySelectorAll("svg")].map((s) => s.outerHTML)));
   expect(svgs).toHaveLength(2);
   expect(new Set(svgs.flat()).size).toBe(1);
+  // Two boxes and two crates sit on one row in the Assembler (review desk).
+  await page.evaluate(() => { const g = ct.game; for (const c of ["red", "blue"]) g.stations.ASSEMBLE.unshift({ id: ++g.ids, kind: "box", colors: [c, c, c] }); g.version++; ct.step(0.02); });
+  const tops = await page.locator('.ct-st[data-key="ASSEMBLE"] .ct-st-items > *').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+  expect(tops).toHaveLength(4);
+  expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(10);
 });
