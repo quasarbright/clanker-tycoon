@@ -9,7 +9,9 @@ alongside it, so it's for automated playtests, never for players. Decision 91.
 
 The cloud network also blocks `cdn.jsdelivr.net` and `quasarbright.github.io`, where the page gets
 acorn and the shared footer, so the browser opens the game through `tools/playtest-browser.mjs`,
-which serves acorn from `node_modules` and leaves the footer out.
+which fetches each outside file for real and, when that fails, serves a local copy: acorn from
+`node_modules`, the shared `cohesion.js`/`.css` from `tools/vendor` (a snapshot of
+sketches/shared), and system fonts.
 
 ## When to use it
 
@@ -17,8 +19,8 @@ Playtest on Mike's Mac when it's online (the normal server, real `claude -p`); u
 only when the Mac isn't reachable (Mike, 2026-11-19: "we should playtest on Mac when possible, but
 if the Mac is not alive, then playtest on the cloud thing with that bridge").
 
-The browser suite (`npm run test:e2e`) also can't load the page in the cloud, for the same CDN
-reason: all but one test time out there, with or without the bridge. Run it on the Mac.
+The browser suite (`npm run test:e2e`) runs in the cloud too: `e2e/fixtures.mjs` gives every test
+the same stand-ins as the playtest browser (decision 92).
 
 ## Running one
 

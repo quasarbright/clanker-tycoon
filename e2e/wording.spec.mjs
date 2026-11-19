@@ -2,7 +2,7 @@
 // never hired or fired (Mike: "Didn't I tell you to change the wording of hire to something
 // else?"). Checks the visible text, tooltips included, on every level's planning screen, a
 // running shift, the end-of-shift card and the board.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.mjs";
 import { BANNED_WORDS as BANNED, WORDS } from "../src/words.js";
 async function visibleText(page) {
   return page.evaluate(() => {

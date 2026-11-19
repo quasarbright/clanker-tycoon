@@ -1346,3 +1346,15 @@ loop was fast enough.
 **Evidence:** level 3 played in a cloud session with Blip hauling and Pip packing; both
 instructions compiled through the bridge in 3.5 s and 7 s (claude -p takes 2 to 7 s). How to run
 it and its limits: `docs/cloud-playtest.md`.
+
+### 92. The browser tests run in the cloud too (2026-11-19)
+
+**Problem:** Mike: "Browser tests can't run in cloud? Why not?" The cloud network blocks
+cdn.jsdelivr.net (acorn), quasarbright.github.io (the shared cohesion.js and .css) and the Google
+font files, so the page never loaded and 52 of 53 e2e tests timed out.
+**Picked:** the e2e suite uses the same stand-ins as the playtest browser (decision 91). Every
+spec imports `test` from `e2e/fixtures.mjs`, which routes each outside file: the real one when it
+can be fetched, a local copy when it can't (acorn from node_modules, cohesion from a snapshot in
+`tools/vendor`, system fonts). On the Mac the tests still load the real files; the live page is
+unchanged. `e2e/offline.spec.mjs` cuts the network off and checks the stand-ins load the whole game.
+**Evidence:** all 54 e2e tests pass in a cloud session (23.7 s).

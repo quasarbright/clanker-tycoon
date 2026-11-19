@@ -1,6 +1,6 @@
 // The shift header and the quick actions you get by hand (Mike, 2026-11-19: "not enough margin",
 // and on the green level blue was the first paint suggestion).
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.mjs";
 
 test("the shift header has room: funds clear of the contracts row, nothing scrolls", async ({ page }) => {
   for (const size of [{ width: 1440, height: 900 }, { width: 1280, height: 720 }]) {

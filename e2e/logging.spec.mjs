@@ -1,6 +1,6 @@
 // The play log is comprehensive (Mike, 2026-11-18): business actions, UI events and errors all
 // reach it, and the web build keeps it in the browser with a Download log link (decision 83).
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.mjs";
 import { readFileSync } from "node:fs";
 
 /** Capture what the page posts to /api/play. */

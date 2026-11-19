@@ -1,6 +1,6 @@
 // The floor editor (decision 85): before a shift you arrange your business's floor. Bought
 // machines wait in storage and Edit floor pulses until you place them or keep them there (Mike).
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.mjs";
 
 async function toPlan(page, { buy = [] } = {}) {
   const errors = [];

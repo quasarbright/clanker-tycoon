@@ -1,7 +1,7 @@
 // The web build's model access: an OpenRouter key from sign-in (OAuth PKCE), a pasted key, or
 // ?api-key=, stored under the key all of Mike's sites share, and model calls going to OpenRouter.
 // OpenRouter itself is faked with page.route; no real key or account is needed.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.mjs";
 
 const KEY = "quasarbright:openrouter-key";
 const WEB = "/?llm=openrouter";

@@ -268,7 +268,9 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
     thinking in `brains.js` against a fake model (`useFakeLlm` in `src/llm.js`).
   - `tools/lang-test.mjs` and `tools/dryrun-test.mjs`: the worker language and the dry run.
   - `e2e/*.spec.mjs` (Playwright 1.63.0, its own server on port 8981): level 7 in a browser, with the
-    model faked through `window.ct.useFakeLlm`. No real model calls in any of these.
+    model faked through `window.ct.useFakeLlm`. No real model calls in any of these. Specs import
+    `test` from `e2e/fixtures.mjs`, not `@playwright/test`: it serves local stand-ins for the CDN
+    files when they can't be fetched, so the suite also runs in a cloud session (decision 92).
   Every change comes with tests for what it changes, and `npm test` passes before every push. A bug
   gets a failing test first.
 - **The web build** talks to OpenRouter from the browser (`src/openrouter-auth.js`, decision #65).

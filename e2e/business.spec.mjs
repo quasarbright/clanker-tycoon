@@ -1,6 +1,6 @@
 // Level 7, "Your business", in a real browser: the board between quarters (contracts, the lender,
 // recruit, training, machines), the floor, and the end-of-quarter card. The model is faked.
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures.mjs";
 
 /** Open the page, watch the console, and open level 7's board. */
 async function openBoard(page) {
