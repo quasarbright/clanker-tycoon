@@ -55,7 +55,8 @@ All inline, no image files:
 - **Owner photos:** `ownerHeadSVG` and `OWNER_PHOTOS` in `src/looks.js`: shocked, mid-bite,
   blushing, awkward, all the same head, hard hat and wall shadow.
 - **Items:** widgets are dots (`.ct-dot`), boxes plain cardboard (`.ct-box`), crates the X-braced
-  wooden crate (`.ct-crate`, Mike's pick 2026-11-19, spec in Pam's log).
+  wooden crate (`.ct-crate`, built in ca782ba from the picked PNG in `docs/mocks/crate`; the PNG
+  wins over any prose spec).
 - **Stations:** `.ct-st` cards with a name, a hint and a capacity count. No machine art yet.
 - **The Dock** has a gray-and-yellow truck; your desk is a labeled plank.
 
@@ -85,3 +86,5 @@ All inline, no image files:
 - 2026-11-19: plugin 0.10.0 (decision 90): Rosa owns the plugin's `ART.md`. General rules moved
   out of this brief to point there; only Clanker specifics stay. ART.md's seed already covers the
   crate lessons (too similar to box, built not as picked), so nothing new to add.
+- 2026-11-19: moving to a cloud thread. Handoff in `docs/personas/handoff/rosa.md` (picked
+  references, verdicts, plans for each gap, next steps). No mocks made yet.
