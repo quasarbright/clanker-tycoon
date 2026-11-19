@@ -273,11 +273,20 @@ function buildFloor() {
   lastVersion = -1;
 }
 
-// The crate: dark frame, a lighter panel, an X brace and a cream stencil dot (Mike's pick).
-const CRATE_SVG = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect width="24" height="24" rx="2.5" fill="#3d2510"/>
-  <rect x="3.5" y="3.5" width="17" height="17" fill="#6b4520" stroke="#c9935c" stroke-width="1.2"/>
-  <path d="M4.8 4.8L19.2 19.2M19.2 4.8L4.8 19.2" stroke="#3d2510" stroke-width="3"/>
-  <circle cx="12" cy="12" r="3.4" fill="#e8d6a0" stroke="#3d2510" stroke-width="1.2"/></svg>`;
+// The crate Mike picked (review "crate-look", option 1, Pam's mock): dark planks in a heavy frame,
+// an X brace across the front, metal corner plates, and the three colors on a small paper tag.
+// Drawn in the mock's own pixels (88 × 72), wider and taller than a box.
+const CRATE_SVG = `<svg viewBox="0 0 88 72" aria-hidden="true">
+  <rect width="88" height="72" rx="4" fill="#3a2210"/>
+  <rect x="6" y="6" width="76" height="60" fill="#6b4520"/>
+  <rect x="6" y="6" width="76" height="4" fill="#8a5a2c"/><rect x="6" y="62" width="76" height="4" fill="#8a5a2c"/>
+  <rect x="6" y="6" width="4" height="60" fill="#8a5a2c"/><rect x="78" y="6" width="4" height="60" fill="#8a5a2c"/>
+  <path d="M6 6L82 66M82 6L6 66" stroke="#3a2210" stroke-width="10"/>
+  <path d="M6 6L82 66M82 6L6 66" stroke="#8a5a2c" stroke-width="7"/>
+  <g fill="#9aa0a8" stroke="#4a4a4a" stroke-width="1.5"><rect x="6" y="6" width="13" height="13"/><rect x="69" y="6" width="13" height="13"/>
+  <rect x="6" y="53" width="13" height="13"/><rect x="69" y="53" width="13" height="13"/></g>
+  <rect x="15" y="24" width="58" height="23" rx="5" fill="#efe6cf" stroke="#3a2210" stroke-width="2.5"/>
+  <rect x="22" y="29.5" width="12" height="12" rx="2" fill="#e05a47"/><rect x="38" y="29.5" width="12" height="12" rx="2" fill="#4a86e8"/><rect x="54" y="29.5" width="12" height="12" rx="2" fill="#4caf6a"/></svg>`;
 const itemHTML = (it, clickable = false) => it.kind === "crate"
   // One crate drawing in every state (Mike): while it's being assembled, the same crate appears
   // left to right over its own faint outline, like a box filling in at Pack.
