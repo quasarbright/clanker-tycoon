@@ -51,7 +51,7 @@ painting and servicing show their progress. At Pack, click the widgets you want 
 Vision and design principles are in `CLAUDE.md`. The design in progress, the decision log and the
 project's history are in `docs/`.
 
-Robots have skills (Packing, Painting, Repair) and attributes (Fast, Nimble, Steady, Smart); wage is
+Robots have skills (Packing, Painting, Repair) and attributes (Fast, Nimble, Steady); wage is
 $3/min plus $2 for each. Levels are in `src/levels.js`; progress is kept in memory only.
 `tools/player-check.mjs` times the by-hand levels headless; `tools/balance.mjs` checks crew levels against their shift length.
 

@@ -56,7 +56,7 @@ for (const [name, L, crew] of CASES) {
 // shift, paid at Start. Each shift starts from what's shipped so far, on a fresh floor, as in the
 // game. Prints the quota progress after each shift and the money left.
 const Q = level("First quarter");
-const QB = { blip: [[], []], dot: [[], []], pip: [["packing"], []], gary: [["packing"], ["fast"]], rusty: [["repair"], ["steady"]], vex: [["painting"], ["fast", "smart"]] };
+const QB = { blip: [[], []], dot: [[], []], pip: [["packing"], []], gary: [["packing"], ["fast"]], rusty: [["repair"], ["steady"]], vex: [["painting"], ["fast"]] };
 // "you" stands in for the player servicing the paint machine yourself: a free repair worker.
 QB.you = [["repair"], []];
 const qr = (id) => (id === "you" ? { ...robot(id, ...QB[id]), wage: 0 } : robot(id, ...QB[id]));

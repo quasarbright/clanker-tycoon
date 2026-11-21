@@ -100,7 +100,8 @@ export const TRAINABLE = ["packing", "painting", "assembly", "repair"];
 /** What you can train now: Assembly only once you own an assembler (it's no use before). */
 export const trainableNow = (biz) => TRAINABLE.filter((k) => k !== "assembly" || machinesOf(biz, "assemble").length > 0);
 // Attributes can be trained too, at the same price, and count the same way toward the wage.
-export const TRAINABLE_ATTRS = ["fast", "nimble", "steady", "smart"];
+// No Smart for now (decision 93): robots rarely think, so it bought nothing.
+export const TRAINABLE_ATTRS = ["fast", "nimble", "steady"];
 
 /** A robot (`c`, from brains.js CANDIDATES) as your business has them: their own skills plus what
  *  you've trained. */

@@ -35,9 +35,9 @@ let lastVersion = -1, lastClock = null, lastOrder = "", lastHands = "", lastList
 const ui = { bots: {}, stations: {}, thinking: {}, bubbleTimers: {}, oopsTimers: {}, open: null };
 
 // The thinking budget: how many thoughts a worker can spend on their own (something unexpected, or
-// think() in their program). It refills slowly while the shift runs; Smart workers hold more and
-// refill faster. Talking to them is free: they always answer you.
-const BUDGET = { max: 3, every: 20, smartMax: 5, smartEvery: 12 };
+// think() in their program). It refills slowly while the shift runs. Talking to them is free: they
+// always answer you. (Smart, a bigger budget, is out until contracts bring surprises: decision 93.)
+const BUDGET = { max: 3, every: 20 };
 // The same problem coming back this soon after they thought about it sends them to your desk.
 const REPEAT_WINDOW = 45;
 // Progress lives in memory only for now (no localStorage while iterating). Every level is open.
@@ -797,11 +797,7 @@ function flashRow(w) {
 }
 
 function budgetOf(w) {
-  if (!w.budget) {
-    const smart = hasAttr(w, "smart");
-    const max = smart ? BUDGET.smartMax : BUDGET.max;
-    w.budget = { n: max, max, every: smart ? BUDGET.smartEvery : BUDGET.every, next: null };
-  }
+  if (!w.budget) w.budget = { n: BUDGET.max, max: BUDGET.max, every: BUDGET.every, next: null };
   return w.budget;
 }
 function refill(w) {

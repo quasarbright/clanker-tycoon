@@ -21,8 +21,8 @@ test("wages: $5 + $5 a skill or trait, and a third skill or third trait adds $20
   assert.equal(wageOf(["packing"], []), 10);
   assert.equal(wageOf(["packing", "painting"], ["fast"]), 20);
   assert.equal(wageOf(["packing", "painting", "repair"], []), 40);
-  assert.equal(wageOf([], ["fast", "smart", "steady"]), 40);
-  assert.equal(wageOf(["packing", "painting", "repair"], ["fast", "smart", "steady"]), 5 + 30 + 40);
+  assert.equal(wageOf([], ["fast", "nimble", "steady"]), 40);
+  assert.equal(wageOf(["packing", "painting", "repair"], ["fast", "nimble", "steady"]), 5 + 30 + 40);
 });
 
 test("the board: a small and a large of one color, and a side contract of another", () => {
@@ -233,7 +233,7 @@ test("shift cost by Start: budget after, and whether shifts like this cover the 
 
 test("the board's whole-crew cost is the sum of every robot's wage (decision 71)", () => {
   const biz = B.newBusiness();
-  const cands = [{ id: "blip", skills: [], attributes: [] }, { id: "pip", skills: ["packing"], attributes: [] }, { id: "cog", skills: ["painting"], attributes: ["smart"] }];
+  const cands = [{ id: "blip", skills: [], attributes: [] }, { id: "pip", skills: ["packing"], attributes: [] }, { id: "cog", skills: ["painting"], attributes: ["fast"] }];
   biz.crew = ["blip", "pip"];
   assert.equal(B.crewCost(biz, cands), 5 + 10);
   biz.crew.push("cog"); biz.trained.pip = ["painting"];

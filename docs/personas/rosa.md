@@ -36,7 +36,7 @@ docs. See the plugin's `WORKING.md`, "Lessons from his verdicts".
   at real size, one drawing per thing, charm on real objects, build the picked mock literally).
   Here, only how they apply to this game:
   - Skills are tools a robot carries (box for Packing, brush for Painting, screwdriver for Assembly,
-    wrench for Repair); traits change the body (glasses for Smart, turning wheels for Fast).
+    wrench for Repair); traits change the body (turning wheels for Fast; Smart and its glasses are out for now, decision 93).
   - Boxes are plain cardboard; crates are the dark X-braced wooden crate (Mike's pick, 2026-11-19;
     mock and source in `docs/mocks/crate`).
   - Real size is the floor's `--u` at 1440x900 and on a big monitor. Meaningful color: the red,

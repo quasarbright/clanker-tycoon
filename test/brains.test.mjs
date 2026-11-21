@@ -145,3 +145,15 @@ test("robots call you by your name, never boss: the prompt says so, and their ca
   assert.match(r.reply, /^Mike, /);
   assert.doesNotMatch(r.reply, /\bboss\b/i);
 });
+
+test("no Smart anywhere for now (decision 93): not trainable, no robot has it, no look, no bigger thinking budget", async () => {
+  const { ATTRIBUTES } = await import("../src/brains.js");
+  const B = await import("../src/business.js");
+  const { headLooks } = await import("../src/looks.js");
+  assert.ok(!("smart" in ATTRIBUTES));
+  assert.ok(!B.TRAINABLE_ATTRS.includes("smart"));
+  for (const c of CANDIDATES) assert.ok(!c.attributes.includes("smart"), c.id);
+  assert.equal(headLooks({ skills: [], attributes: ["smart"] }), "");
+  const fs = await import("node:fs");
+  assert.doesNotMatch(fs.readFileSync(new URL("../src/main.js", import.meta.url), "utf8"), /hasAttr\(w, "smart"\)|smartMax/);
+});

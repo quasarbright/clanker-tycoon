@@ -30,7 +30,6 @@ export const ATTRIBUTES = {
   fast: { label: "Fast", tip: "Walks 1.5× faster." },
   nimble: { label: "Nimble", tip: "Works machines faster: packing, painting and servicing take 40% less time." },
   steady: { label: "Steady", tip: "Machines wear half as fast in their hands." },
-  smart: { label: "Smart", tip: "Can think things through more often (more thoughts, refilling faster)." },
 };
 // Wage: a flat rate for a shift, from their skills and attributes (wages.js).
 const robot = (r) => ({ ...r, wage: wageOf(r.skills, r.attributes) });
@@ -61,7 +60,7 @@ export const CANDIDATES = [
     persona: "You are Rusty, a laid-back old factory robot. Nothing rattles you and you talk slow and friendly.",
   }),
   robot({
-    id: "vex", name: "Vex", color: "#7c8cf8", skills: ["painting"], attributes: ["fast", "smart"],
+    id: "vex", name: "Vex", color: "#7c8cf8", skills: ["painting"], attributes: ["fast"],
     blurb: "Ambitious. Talks like a startup founder.",
     persona: "You are Vex, an ambitious factory robot who talks like a startup founder and wants a promotion.",
   }),
