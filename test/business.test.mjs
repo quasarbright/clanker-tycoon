@@ -9,11 +9,16 @@ import { LEVELS } from "../src/levels.js";
 const BASE = LEVELS.find((l) => l.business);
 const bot = (id, skills = [], attributes = []) => ({ id, name: id, skills, attributes });
 
-test("you start with $100 of your own, no debt, Blip and Pip", () => {
+test("board 1 is sized for one person by hand: 24 for $90 or 33 for $150 (decision 96)", () => {
+  const [small, large] = B.board(B.newBusiness());
+  assert.deepEqual([small.count, small.pay, large.count, large.pay], [24, 90, 33, 150]);
+});
+
+test("you start with $100 of your own, no debt, and nobody but you (decision 95)", () => {
   const b = B.newBusiness();
   assert.equal(b.money, 100);
   assert.deepEqual(b.loans, []);
-  assert.deepEqual(b.crew, ["blip", "pip"]);
+  assert.deepEqual(b.crew, []);
 });
 
 test("wages: $5 + $5 a skill or trait, and a third skill or third trait adds $20", () => {
@@ -145,7 +150,7 @@ test("a recruit keeps the kit they came with in later quarters", () => {
 
 test("training: $20 a skill or trait, raises the wage, never twice, only your crew", () => {
   const b = B.newBusiness();
-  b.money = 100;
+  b.money = 100; b.crew = ["blip", "pip"];
   const pip = bot("pip", ["packing"]);
   assert.ok(B.train(b, pip, "painting"));
   assert.equal(b.money, 80);
@@ -178,7 +183,7 @@ test("machines: a paint machine is offered until you own one; two of a kind at m
 
 test("the quarter's level: stations are what's placed on your floor, at your layout; wear per machine; caps from upgrades", async () => {
   const F = await import("../src/floor.js");
-  const b = { ...B.newBusiness(), quarters: 2 };
+  const b = { ...B.newBusiness(), quarters: 2, crew: ["blip", "pip"] };
   b.money = 1000;
   const [small, , side] = B.board(b);
   let L = B.quarterLevel(BASE, b, [small]);

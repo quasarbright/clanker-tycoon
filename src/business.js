@@ -71,7 +71,7 @@ export const SHOP = [
 // Your crew (decision #56): the robots you can put on a shift. You start with two; between
 // quarters you can recruit more (a one-time fee) and train the ones you have in a new skill. A
 // trained skill raises the wage like any skill, and a third skill jumps it a tier (wages.js).
-export const START_CREW = ["blip", "pip"];
+export const START_CREW = []; // a run starts with just you (decision 95)
 export const RECRUITS = { dot: 10, nib: 10, cog: 10, tock: 10, gary: 40, rusty: 40, vex: 60, doris: 80, bolt: 120 };
 // Every visit offers one of each tier (Mike: "at least one low-skill worker and one high skill
 // expensive worker and then maybe something in between"): a blank robot to train up yourself, one
@@ -184,7 +184,7 @@ export function train(biz, c, skill) {
 // supply only gives out red, so blue and green need a paint machine.
 const TIERS = [
   // Boards 1 and 2 have no side contract: it would be painted, and Machines opens in quarter 3 (decision 94).
-  { main: { color: "red", small: [36, 150], large: [75, 290] }, side: null },
+  { main: { color: "red", small: [24, 90], large: [33, 150] }, side: null }, // one person by hand (decision 96)
   { main: { color: "red", small: [54, 230], large: [99, 450] }, side: null },
   { main: { color: "green", small: [12, 330], large: [18, 510] }, side: { color: "red", count: 75, pay: 310 } },
   { main: { color: "blue", small: [15, 420], large: [22, 620] }, side: { color: "red", count: 78, pay: 360 } },

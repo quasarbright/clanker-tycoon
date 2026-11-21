@@ -3,7 +3,7 @@
 import { test, expect } from "./fixtures.mjs";
 
 /** Open the page, watch the console, and open level 7's board, at quarter `q` + 1 (0: the first). */
-async function openBoard(page, q = 0) {
+async function openBoard(page, q = 0, crew = ["blip", "pip"]) {
   const errors = [];
   page.on("console", (m) => { if (m.type() === "error" || m.type() === "warning") errors.push(m.text()); });
   page.on("pageerror", (e) => errors.push(e.message));
@@ -11,7 +11,9 @@ async function openBoard(page, q = 0) {
   await page.evaluate(() => ct.license("Clank & Sons", "Mike")); // skip the license (its own test below)
   await page.click('[data-level="7"]');
   await expect(page.locator("#boardScreen")).toBeVisible();
-  if (q) await page.evaluate((q) => { ct.biz.quarters = q; ct.openBoard(); }, q);
+  // Most of these tests are about a crew: they give the business the two robots runs used to start
+  // with. A run itself starts with just you (decision 95, its own test below).
+  await page.evaluate(({ q, crew }) => { ct.biz.quarters = q; ct.biz.crew = crew; ct.openBoard(); }, { q, crew });
   return errors;
 }
 /** Every section open (quarter 4 on, decision 94). */
@@ -258,10 +260,10 @@ test("a shift card says plainly what has shipped and how many shifts are left; t
   await page.click(`[data-contract="${small}"]`);
   await page.click("#boardGo");
   await page.evaluate(() => { ct.hire("blip"); ct.hire("pip"); });
-  await endShift(page, [6]); // 6 of 36 in the first shift
+  await endShift(page, [6]); // 6 of 24 in the first shift
   await expect(page.locator("#endNote")).toContainText("2 shifts left. Your crew");
-  await expect(page.locator("#endNote")).not.toContainText("6 of 36"); // the contract row says it
-  await expect(page.locator(".ct-end-contract")).toContainText("6 of 36 shipped");
+  await expect(page.locator("#endNote")).not.toContainText("6 of 24"); // the contract row says it
+  await expect(page.locator(".ct-end-contract")).toContainText("6 of 24 shipped");
   await expect(page.locator("#endScreen .ct-mascot")).toBeHidden();
   await expect(page.locator("#endNote")).not.toContainText("pace");
   await expect(page.locator("#endStats")).toContainText("Shipped this shift");
@@ -524,12 +526,12 @@ test("the quarter card is a recap: started with, paid, lender, crew, budget now,
   await page.locator("[data-contract]").first().click();
   await page.click("#boardGo");
   await page.evaluate(() => { ct.hire("blip"); ct.hire("pip"); });
-  await endShift(page); // everything ships in shift 1: crew $15, contract $150, lender $15
+  await endShift(page); // everything ships in shift 1: crew $15, contract $90, lender $9
   await expect(page.locator("#endScreen .ct-mascot")).toBeHidden();
   expect(await recap(page)).toEqual({
-    lines: [["Started with", "$200"], ["Contracts paid", "+$150"], ["Lender's cut", "−$15"], ["Crew pay, all shifts", "−$15"], ["Funds now", "$320"],
-      ["Still owed to the lender", "$95"]], // $110 with the fee, less the $15 cut
-    net: "This quarter +$120",
+    lines: [["Started with", "$200"], ["Contracts paid", "+$90"], ["Lender's cut", "−$9"], ["Crew pay, all shifts", "−$15"], ["Funds now", "$266"],
+      ["Still owed to the lender", "$101"]], // $110 with the fee, less the $9 cut
+    net: "This quarter +$66",
   });
   await expect(page.locator(".ct-recap-face")).toHaveCount(1);
   await expect(page.locator('[data-go="restart"]')).toHaveCount(0);
@@ -537,7 +539,7 @@ test("the quarter card is a recap: started with, paid, lender, crew, budget now,
   // It fits the window.
   expect(await page.evaluate(() => { const c = document.querySelector("#endScreen .ct-card-big").getBoundingClientRect(); return c.top >= 0 && c.bottom <= innerHeight; })).toBe(true);
   await page.click('[data-go="board"]');
-  await expect(page.locator("#boardLast")).toHaveText("Last quarter: 1 of 1 contract shipped, +$120");
+  await expect(page.locator("#boardLast")).toHaveText("Last quarter: 1 of 1 contract shipped, +$66");
 });
 
 test("a losing quarter: no $0 lines, no lender line without a loan, the result in red", async ({ page }) => {
@@ -686,10 +688,10 @@ test("reputation on the board: pips under Funds, struck full numbers with the ho
   const large = page.locator("[data-contract]").nth(1);
   const tips = await large.locator(".ct-struck").evaluateAll((els) => els.map((e) => [e.textContent, e.dataset.tooltip]));
   expect(tips).toEqual([
-    ["75", "Clients ask for 80% of the boxes while Clank & Sons' reputation is questionable. Restore reputation for the full 75."],
-    ["$290", "Clients pay 80% while Clank & Sons' reputation is questionable. Restore reputation for the full $290."],
+    ["33", "Clients ask for 80% of the boxes while Clank & Sons' reputation is questionable. Restore reputation for the full 33."],
+    ["$150", "Clients pay 80% while Clank & Sons' reputation is questionable. Restore reputation for the full $150."],
   ]);
-  await expect(large.locator(".ct-size-count")).toContainText("60 boxes");
+  await expect(large.locator(".ct-size-count")).toContainText("26 boxes");
   await expect(page.locator("#bizRep")).not.toHaveClass(/is-danger/);
   // At one pip: red, and a warning by name.
   await page.evaluate(() => { ct.biz.rep = 4; ct.openBoard(); });
