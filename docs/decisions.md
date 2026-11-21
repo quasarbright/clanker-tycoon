@@ -1399,3 +1399,44 @@ only the sticker price. Once he's shown up he stays on the board.
 **Why:** each unlock arrives with the contract that teaches it, one idea at a time, matching the
 tutorial rule and GAME-DESIGN.md's "introduce a system when the player first needs it".
 
+### 95. A main menu replaces level select; the tutorial is separate from the run (2026-11-21)
+
+**Problem:** Mike: "I'm getting a little tired of this whole level select thing. I think we should
+move to what will end up in the actual game, which is a main menu". The game opened on a list of
+seven levels: five tutorial levels, the quarter sandbox (6) and the business (7). He wants the
+tutorial to teach moving and using machines, and a real run to have no guidance at all: "the first
+quarter or the first couple quarters are contracts where you don't have any employees and it's just
+you." He left the details to Mark and Pam: whether the first New run plays the tutorial or offers
+it, and how saves and continuing work.
+**Picked (Mark):**
+- **The menu:** Continue (only when a run is saved; resumes the most recent one), New run, Load
+  (only when there's more than one saved run), Tutorial. Nothing else for now. Level select goes;
+  tests keep a URL parameter to open a level directly.
+- **The tutorial** is today's levels 1, 2, 3 and 4, in that order: walk and carry (By hand), pack
+  (Boxes), give a robot instructions (Crew), paint and service (Paint). Crew is Mark's addition to
+  Mike's "moving and machines": instructing robots is the game's main verb, and a run has no
+  guidance when Recruit opens in quarter 2, so it gets taught once here. Levels 5 (Full floor) and
+  6 (First quarter) go: the run's early quarters cover what they taught.
+- **The first New run plays the tutorial without asking**, with a "Skip tutorial" button visible the
+  whole time. Finishing or skipping it goes straight to the license and quarter 1. Mark's reasons:
+  a prompt is one more question before anything happens, and a new player can't judge whether they
+  need it; the skip button serves the ones who don't. After that, New run goes straight to the
+  license, and the menu's Tutorial button replays it any time (it never touches a saved run).
+  "Seen the tutorial" is remembered in the browser.
+- **The run starts with just you.** No starting crew (Blip and Pip go). Quarter 1 is solo by
+  construction: Recruit opens in quarter 2 (decision 94). So you play quarter 1 by hand, the floor
+  editor's Supply/Pack swap now shortens your own walk, and the first robots you take on are ones
+  you chose. Board 1's contracts are retuned for one person by hand.
+- **Saves:** one save per run, named from the license ("Clank & Sons · Mike"), as in ideas.md's
+  multiple saves. The game saves itself at the board and at the end of every shift; there's no save
+  button. Continuing mid-quarter puts you at the start of the next shift; a shift you left halfway
+  replays from its Start, with funds as they were then (like Try again). Load lists each run with
+  its quarter, funds and reputation, and a run can be deleted there (with a confirm). A run that
+  ends (reputation hits zero) leaves the list after its newspaper. Saves live in the browser's
+  localStorage for now (cloud saves or a Steam app later, ideas.md).
+**Replaces:** the level select, START_CREW (Blip and Pip), and levels 5 and 6.
+**Open:** the exact solo numbers for board 1 (measure a person playing by hand, like
+`tools/player-check.mjs`), and whether a second solo quarter is ever needed (Mike said "the first
+quarter or the first couple"; decision 94 already makes quarter 1 solo, and a player can choose not
+to recruit in quarter 2).
+

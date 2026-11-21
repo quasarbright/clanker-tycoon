@@ -47,6 +47,12 @@ Quarter 2"). Boards 1 and 2 have no side contract, since you can't paint yet. Th
 the first time something in the shop is out of reach, counting the funds left after crew pay for
 the contracts you've picked, and stays after that.
 
+**Starting a run** (decision 95). The game opens on a menu: Continue, New run, Load, Tutorial.
+The tutorial teaches walking, packing, instructing a robot and painting; the first New run plays it
+(with a Skip button), and after that a run starts straight at the license with no guidance. You
+start alone: quarter 1 is you on the floor by hand, and robots come once Recruit opens in quarter 2.
+Each run is its own save, named from the license and saved automatically.
+
 **The loop (built in level 7):**
 1. **Pick contracts** for the quarter from the board: one color in a Small or Large size, and a side
    contract in another color. All of a quarter's contracts are due at its end and never share a

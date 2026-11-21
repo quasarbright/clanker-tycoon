@@ -249,3 +249,9 @@ signed-in `claude -p`, no OpenRouter key. Mike: "maybe in a Claude playtest, the
 worker, just write something to a file, and then we have a sub-agent watching for the file that is
 running Haiku". That's what got built: the server drops each model call in a folder and a Haiku
 subagent answers it. It turned out barely slower than the real thing, a few seconds a call.
+
+**2026-11-21, a real main menu.** The game had always opened on a list of levels. Mike: "I'm
+getting a little tired of this whole level select thing." It became a menu (Continue, New run,
+Load, Tutorial), the tutorial shrank to four short lessons, and a run now starts with nobody but you
+on the floor: "it's just you".
+

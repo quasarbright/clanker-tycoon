@@ -30,8 +30,8 @@ What's being built.
   machines is fun before building more.
 
 - **Training and a growing crew.** Built in level 7 (decisions 56, 58): three robots to recruit
-  each quarter, and training skills or traits for $20. Your business starts with Blip
-  and Pip; between quarters you take on more robots for a one-time fee and train skills for $50
+  each quarter, and training skills or traits for $20. Your business starts with just you
+  (decision 95); between quarters you take on more robots for a one-time fee and train skills for $50
   each. Every skill adds $5 a shift, and a robot's third skill adds $20 more, so one robot who can do
   everything costs more than a crew (the "Bolt does everything" problem). Later: experience making
   training cheaper (issue #4), a hiring pool that changes between quarters.
@@ -56,9 +56,12 @@ Agreed direction, not built yet. Roughly in roadmap order.
   editor; Q2 Recruit; Q3 Machines; Q4 Training; Q5 on, the assembler and crates. Locked sections
   are dated shutters, boards 1 and 2 have no side contract, and the lender appears the first time
   something is out of reach. Approved as mocked (Mike, 2026-11-21).
-- **Multiple saves, named by company and owner.** Each run is a save named by its business and
-  your name from the license ("Clank & Sons · Mike"). Mike, 2026-11-18: "Later on let's make it so
-  you can have multiple saves, and the company name and your name is the name of the save."
+- **A main menu and saves** (decision 95). Continue, New run, Load and Tutorial replace level
+  select. The tutorial is levels 1 to 4 (walk, pack, instruct a robot, paint and service); the first
+  New run plays it with a Skip button. A run starts with just you, no crew. Each run is a save named
+  by its business and your name from the license ("Clank & Sons · Mike"; Mike, 2026-11-18: "the
+  company name and your name is the name of the save"), saved automatically at the board and after
+  every shift, in localStorage for now.
 
 - **Teach the pause.** Players need to learn they can pause and fix things. For example, a
   tutorial moment where something goes wrong and the coach says to pause and sort it out.

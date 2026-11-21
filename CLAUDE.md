@@ -21,7 +21,9 @@ long-term goal is growing your own factory business: start alone on one small li
 contracts, buy equipment and lines, hand lines to foremen (`docs/progression-design.md`). Realistic enough to be interesting, but fun and
 game-y in the right amount.
 
-Right now the game is a short, level-based tutorial that works out the core mechanics. Long-term
+The game opens on a main menu (Continue, New run, Load, Tutorial; decision 95). The tutorial is
+four short lessons (walk, pack, instruct a robot, paint and service); a run has no guidance and
+starts with just you, no crew, and saves itself. Long-term
 ideas live in `docs/ideas.md` and don't get built until Mike asks.
 
 ## Principles
@@ -218,6 +220,9 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
 - **The board opens a section at a time** (decision 94): each shop section opens the quarter its
   first contract needs it (Q1 contracts and the floor editor, Q2 Recruit, Q3 Machines, Q4 Training,
   Q5 the assembler). The lender shows up the first time something is out of reach.
+- **No guidance in a run** (Mike, 2026-11-21: "in the real game when we're not doing a tutorial,
+  we will have no guidance. It will just be straight into contracts"). Teaching lives in the
+  Tutorial; a run starts with just you on the floor (decision 95).
 - Delegation comes from scale, not rules: you can only talk to one robot at a time.
 - Runs are endless (Mike: "the contracts get crazier and eventually they'll die"). Growing bigger
   can't mean a new first-class concept per tier: foremen are one, and there's only room for a few.
