@@ -1440,3 +1440,24 @@ it, and how saves and continuing work.
 quarter or the first couple"; decision 94 already makes quarter 1 solo, and a player can choose not
 to recruit in quarter 2).
 
+### 96. Board 1 is sized for one person by hand (2026-11-21)
+
+**Problem:** a run now starts with just you (decision 95), so quarter 1 is played by hand. Board 1
+asked for 36 red (Small, $150) or 75 (Large, $290), sized for Blip and Pip.
+**Evidence:** `tools/solo-throughput.mjs` (build thread), a perfect headless player, red boxes in
+120 s shifts: 15 a shift on the starting floor (45 a quarter), 16 on the swapped floor (48). A
+real person with the mouse and keyboard is slower; Mark assumes 65 to 75% of that.
+**Picked:** Small 24 red for $90, Large 33 red for $150.
+- Small is 8 boxes a shift, about half of perfect play, so a newcomer makes it with room for
+  mistakes. Large is 11 a shift, about 70% of perfect: steady play makes it, and it can be missed,
+  which is the point of choosing it (a miss costs a pip).
+- Pay: quarter 1 has no wages, so all of it is profit. $100 + $90 is $190 going into quarter 2,
+  enough for two cheap recruits ($10 each) and three shifts of their wages with room to spare;
+  Large leaves $250. Large pays 1.67x for 1.38x the boxes, so the risk is worth taking.
+- The Supply/Pack swap is worth only 1 box a shift to a person carrying by hand, so it stops being
+  quarter 1's lesson (decision 88). It bites in quarter 2, when a hauler and a packer walk it all
+  shift. The editor stays open from quarter 1.
+**Replaces:** board 1's numbers in `TIERS` (decision 88's retune). **To check:** board 2
+(54 / 99 red) was tuned for Blip, Pip and a recruit; now it's you plus whoever you recruit in
+quarter 2. Run it with you plus two cheap recruits (hauler and packer) before changing it.
+

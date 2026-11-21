@@ -60,7 +60,8 @@ they were measured.
   same number), add the entry, update the progression doc, `ideas.md`, `CLAUDE.md` and this brief
   where they state the old rule, then rebuild and republish both artifacts with their exact titles,
   "Clanker Tycoon Progression" and "Clanker Tycoon Ideas".
-- Balance method and current numbers: `docs/personas/handoff/mark.md`.
+- Balance method and current numbers: `docs/personas/handoff/mark.md`. Since then: board 1 is solo,
+  24/$90 and 33/$150 (decision 96); a perfect solo player ships 15 red a shift (16 swapped).
 
 ## Mark's current take
 
