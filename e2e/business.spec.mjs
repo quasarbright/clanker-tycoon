@@ -2,8 +2,8 @@
 // recruit, training, machines), the floor, and the end-of-quarter card. The model is faked.
 import { test, expect } from "./fixtures.mjs";
 
-/** Open the page, watch the console, and open level 7's board. */
-async function openBoard(page) {
+/** Open the page, watch the console, and open level 7's board, at quarter `q` + 1 (0: the first). */
+async function openBoard(page, q = 0) {
   const errors = [];
   page.on("console", (m) => { if (m.type() === "error" || m.type() === "warning") errors.push(m.text()); });
   page.on("pageerror", (e) => errors.push(e.message));
@@ -11,8 +11,11 @@ async function openBoard(page) {
   await page.evaluate(() => ct.license("Clank & Sons", "Mike")); // skip the license (its own test below)
   await page.click('[data-level="7"]');
   await expect(page.locator("#boardScreen")).toBeVisible();
+  if (q) await page.evaluate((q) => { ct.biz.quarters = q; ct.openBoard(); }, q);
   return errors;
 }
+/** Every section open (quarter 4 on, decision 94). */
+const ALL_OPEN = 3;
 const contracts = (page) => page.locator("[data-contract]");
 /** Finish the running quarter's shift as if `fill` boxes of each contract shipped (all, by default). */
 const endShift = (page, fill = []) => page.evaluate((fill) => {
@@ -23,10 +26,11 @@ const endShift = (page, fill = []) => page.evaluate((fill) => {
   g.events.push({ type: "end" }); ct.step(0);
 }, fill);
 
-test("the board fits the window, offers three contracts, and Start waits for a pick", async ({ page }) => {
+test("the board fits the window, offers Small and Large, and Start waits for a pick", async ({ page }) => {
   const errors = await openBoard(page);
-  await expect(contracts(page)).toHaveCount(3);
+  await expect(contracts(page)).toHaveCount(2); // no side contract on boards 1 and 2 (decision 94)
   await expect(page.locator("#boardGo")).toBeDisabled();
+  await expect(page.locator("#boardNote")).toHaveText("← Pick a contract first");
   await expect(page.locator("#forecast")).toBeEmpty();
   const scroll = await page.evaluate(() => {
     const o = document.querySelector("#boardScreen");
@@ -36,18 +40,75 @@ test("the board fits the window, offers three contracts, and Start waits for a p
   expect(errors).toEqual([]);
 });
 
-test("Small and Large are one choice; the side contract needs a paint machine", async ({ page }) => {
-  await openBoard(page);
+test("Small and Large are one choice; a painted contract needs a paint machine", async ({ page }) => {
+  await openBoard(page, 2); // board 3: green Small and Large, a red side contract
   const [small, large, side] = await contracts(page).evaluateAll((els) => els.map((e) => e.dataset.contract));
-  await expect(page.locator(`[data-contract="${side}"]`)).toBeDisabled();
+  await expect(page.locator(`[data-contract="${small}"]`)).toBeDisabled();
+  await expect(page.locator(`[data-contract="${side}"]`)).toBeEnabled();
+  await page.evaluate(() => { ct.biz.money = 500; ct.renderBoard(); });
+  await page.click('[data-buy="paint"]');
   await page.click(`[data-contract="${small}"]`);
   await page.click(`[data-contract="${large}"]`);
   await expect(page.locator(".ct-size.is-on")).toHaveCount(1);
   await expect(page.locator(`[data-contract="${large}"]`)).toHaveClass(/is-on/);
   await expect(page.locator("#boardGo")).toBeEnabled();
   await expect(page.locator("#forecast")).toContainText("Contracts pay");
-  await page.click('[data-buy="paint"]');
-  await expect(page.locator(`[data-contract="${side}"]`)).toBeEnabled();
+});
+
+test("the shop opens a section a quarter: dated shutters, then Now open (decision 94)", async ({ page }) => {
+  await openBoard(page);
+  const shut = () => page.locator(".ct-shop-col.is-shut").evaluateAll((els) => els.map((e) => [e.dataset.section, e.querySelector(".ct-opens").textContent]));
+  expect(await shut()).toEqual([["recruit", "Opens quarter 2"], ["machines", "Opens quarter 3"], ["training", "Opens quarter 4"]]);
+  await expect(page.locator("[data-recruit], [data-buy], [data-train-open], [data-lender]").locator("visible=true")).toHaveCount(0);
+  await expect(page.locator(".ct-now-open")).toHaveCount(0);
+  for (const [q, part] of [[1, "recruit"], [2, "machines"], [3, "training"]]) {
+    await page.evaluate((q) => { ct.biz.quarters = q; ct.openBoard(); }, q);
+    await expect(page.locator(".ct-now-open")).toHaveCount(1);
+    await expect(page.locator(`[data-section="${part}"] .ct-now-open`)).toHaveText("Now open");
+    await expect(page.locator(`[data-section="${part}"]`)).not.toHaveClass(/is-shut/);
+  }
+  await expect(page.locator(".ct-shutter")).toHaveCount(0);
+  // The Assembler joins Machines in quarter 5.
+  await page.evaluate(() => { ct.biz.money = 9999; ct.renderBoard(); });
+  await expect(page.locator('[data-buy="assembler"]')).toHaveCount(0);
+  await page.evaluate(() => { ct.biz.quarters = 4; ct.openBoard(); });
+  expect(await page.evaluate(() => ct.biz && document.querySelectorAll(".ct-shutter").length)).toBe(0);
+});
+
+test("the board lines up: one height per row of contracts, header blocks and shop cards, buttons in one spot (Pam, Mike)", async ({ page }) => {
+  await openBoard(page, ALL_OPEN);
+  // The fullest board: a crates contract, five robots, two loans, lowered reputation, the lender peeking.
+  await page.evaluate(() => { const b = ct.biz; b.quarters = 4; b.money = 900; ct.buy("paint"); ct.buy("assembler"); b.crew.push("dot", "gary", "rusty");
+    b.trained.pip = ["painting", "repair"]; b.loans = [110, 275]; b.rep = 5; b.money = 60; b.boughtNow = []; ct.openBoard(); });
+  await page.locator("[data-contract]:not([disabled])").first().click();
+  const m = await page.evaluate(() => {
+    const vis = (sel) => [...document.querySelectorAll(sel)].filter((e) => e.offsetParent);
+    const box = (e) => e.getBoundingClientRect();
+    const offers = vis(".ct-offer").map(box), go = box(document.querySelector(".ct-board-go"));
+    const cards = vis(".ct-shop-list > .ct-biz-bot");
+    return {
+      offerHeights: new Set(offers.map((r) => Math.round(r.height))).size,
+      goTop: Math.round(go.top - offers[0].top), goBottom: Math.round(go.bottom - offers[0].bottom),
+      titlesOneLine: vis(".ct-offer-title b").every((b) => b.getClientRects().length === 1 && box(b).height < 30),
+      head: new Set(vis(".ct-board-head > div").map((e) => Math.round(box(e).height))).size,
+      cards: cards.length, cardHeights: new Set(cards.map((c) => Math.round(box(c).height))).size,
+      buttonSpots: new Set(cards.map((c) => { const b = box(c.querySelector(".ct-btn")), r = box(c); return `${Math.round(r.right - b.right)},${Math.round(b.top - r.top)},${Math.round(b.width)}`; })).size,
+      tagRows: cards.every((c) => { const t = c.querySelector(".ct-skills"); return !t || t.scrollWidth <= t.clientWidth + 1; }),
+      pageScroll: document.documentElement.scrollHeight > innerHeight,
+    };
+  });
+  expect(m).toEqual({ offerHeights: 1, goTop: 0, goBottom: 0, titlesOneLine: true, head: 1, cards: m.cards, cardHeights: 1, buttonSpots: 1, tagRows: true, pageScroll: false });
+  expect(m.cards).toBeGreaterThan(8);
+});
+
+test("a robot's tags that don't fit in a shop card fold into a +N tag that lists them", async ({ page }) => {
+  await openBoard(page, ALL_OPEN);
+  await page.evaluate(() => { ct.biz.crew.push("dot"); ct.biz.trained.dot = ["packing", "painting", "repair", "fast", "nimble", "steady"]; ct.openBoard(); });
+  const more = page.locator("#bizCrew .ct-skill.is-more");
+  await expect(more).toHaveCount(1);
+  await expect(more).toHaveAttribute("data-tooltip", /^Also: .*Steady$/);
+  const rows = await page.locator("#bizCrew .ct-skills").evaluateAll((els) => els.every((t) => t.scrollWidth <= t.clientWidth + 1));
+  expect(rows).toBe(true);
 });
 
 test("disabled buttons are flat: no gold, no lip", async ({ page }) => {
@@ -57,28 +118,61 @@ test("disabled buttons are flat: no gold, no lip", async ({ page }) => {
   expect(style.shadow).not.toMatch(/0px 4px 0px/); // the lip
 });
 
-test("loans: a flat 10% fee, 10% of each contract per loan, three at most, then he won't lend", async ({ page }) => {
-  await openBoard(page);
-  await expect(page.locator("#investorLine")).toContainText("You pay me back 10% more");
+test("the lender peeks out beside what you can't afford, after the quarter's crew pay (decision 94)", async ({ page }) => {
+  await openBoard(page, ALL_OPEN);
+  // $100, crew $15 a shift: $55 left after three shifts of pay. Over that, he peeks.
+  const peeks = await page.locator("[data-recruit], [data-buy]").evaluateAll((els) => els.map((b) => {
+    const price = +b.textContent.match(/\$(\d+)/)[1];
+    return [price, !!b.parentElement.querySelector("[data-lender]")];
+  }));
+  expect(peeks.length).toBeGreaterThan(0);
+  for (const [price, peek] of peeks) expect(peek).toBe(price > 55);
+  await expect(page.locator("[data-lender]").first()).toContainText("Need some money?");
+  await expect(page.locator(".ct-investor")).toHaveCount(0); // no fixed spot on the board
+});
+
+test("loans: his slip, a flat 10% fee, 10% of each contract per loan, three at most, then he won't lend", async ({ page }) => {
+  await openBoard(page, ALL_OPEN);
+  const broke = () => page.evaluate(() => { ct.biz.money = 30; ct.renderBoard(); });
+  await broke();
+  await expect(page.locator("#lenderSlip")).toBeHidden();
+  await page.locator("[data-lender]").first().click();
+  await expect(page.locator("#lenderSlip")).toBeVisible();
+  // Mike: no subtitle and no fee sentence, but the 10% line stays.
+  await expect(page.locator("#lenderSlip p")).toHaveText(`"I take 10% of every contract you finish until you're paid up."`);
   await expect(page.locator('[data-loan="0"]')).toHaveText("Borrow $100 · pay back $110");
   await expect(page.locator('[data-loan="1"]')).toHaveText("Borrow $250 · pay back $275");
+  for (const b of await page.locator("[data-loan]").all()) await expect(b).toHaveClass(/is-gold/);
+  await page.click("[data-slip-close]");
+  await expect(page.locator("#lenderSlip")).toBeHidden();
+  await page.locator("[data-lender]").first().click();
   await page.click('[data-loan="0"]');
-  await expect(page.locator("#bizMoney")).toHaveText("$200");
-  await expect(page.locator("#investorLine")).toHaveText("You owe $110 · 10% of every contract until it's paid");
+  await expect(page.locator("#lenderSlip")).toBeHidden();
+  await expect(page.locator("#bizMoney")).toHaveText("$130");
+  await expect(page.locator("#bizOwed")).toHaveText("Owe the lender $110 · 10% of every contract");
+  await broke();
+  await page.locator("[data-lender]").first().click();
+  await expect(page.locator("#lenderSlip p")).toContainText("You owe me $110, and I take 10%");
   await page.click('[data-loan="1"]');
-  await expect(page.locator("#investorLine")).toContainText("20%");
+  await expect(page.locator("#bizOwed")).toContainText("20%");
+  await broke();
+  await page.locator("[data-lender]").first().click();
   await page.click('[data-loan="0"]');
-  await expect(page.locator("#investorLine")).toContainText("until you pay up, deadbeat!");
+  await broke();
+  await page.locator("[data-lender]").first().click();
+  await expect(page.locator("#lenderSlip p")).toContainText("until you pay up, deadbeat!");
   await expect(page.locator("[data-loan]")).toHaveCount(2);
   for (const b of await page.locator("[data-loan]").all()) await expect(b).toBeDisabled();
-  const [small] = await contracts(page).evaluateAll((els) => els.map((e) => e.dataset.contract));
-  await page.click(`[data-contract="${small}"]`);
+  await page.keyboard.press("Escape");
+  await expect(page.locator("#lenderSlip")).toBeHidden();
+  const [, , side] = await contracts(page).evaluateAll((els) => els.map((e) => e.dataset.contract));
+  await page.click(`[data-contract="${side}"]`); // red: no paint machine needed
   await expect(page.locator("#forecast")).toContainText("To the lender (30%)");
   await expect(page.locator("#forecast")).toContainText("Still owed to the lender after");
 });
 
 test("recruit a cheap robot and train them in the same visit", async ({ page }) => {
-  await openBoard(page);
+  await openBoard(page, ALL_OPEN);
   const id = await page.locator("[data-recruit]").first().getAttribute("data-recruit");
   await page.click(`[data-recruit="${id}"]`);
   await expect(page.locator("#recruits")).toContainText("Recruited");
@@ -133,7 +227,8 @@ test("a quarter: schedule the crew, a faked model gives instructions, robots shi
 });
 
 test("the end-of-quarter card: a missed contract pays nothing, the shipped one pays", async ({ page }) => {
-  await openBoard(page);
+  await openBoard(page, ALL_OPEN);
+  await page.evaluate(() => { ct.biz.money = 500; ct.renderBoard(); });
   await page.click('[data-buy="paint"]');
   const [small, , side] = await contracts(page).evaluateAll((els) => els.map((e) => e.dataset.contract));
   await page.click(`[data-contract="${small}"]`);
@@ -315,7 +410,7 @@ test("reading and thinking look the same everywhere: the word, no dots, no speec
 });
 
 test("Training: one row per robot with one Train picker that lists what's left and what it adds", async ({ page }) => {
-  await openBoard(page);
+  await openBoard(page, ALL_OPEN);
   await page.evaluate(() => { ct.biz.trained.pip = ["painting"]; ct.openBoard(); }); // Pip: packing + painting
   const pip = page.locator("#bizCrew .ct-robot", { hasText: "Pip" });
   await expect(pip.locator("[data-train]")).toHaveCount(0); // closed until you open it
@@ -342,7 +437,7 @@ test("Training: one row per robot with one Train picker that lists what's left a
 });
 
 test("a Train item you can't afford keeps its wage cost and says how much you're short", async ({ page }) => {
-  await openBoard(page);
+  await openBoard(page, ALL_OPEN);
   await page.locator('#bizCrew [data-train-open="pip"]').click(); // open while you can afford it
   await page.evaluate(() => { ct.biz.money = 12; ct.renderBoard(); });
   const fast = page.locator('[data-train="pip:fast"]');
@@ -390,7 +485,7 @@ test("before a shift the coach doesn't repeat who needs instructions; the chip a
 });
 
 test("everything on the board you can't afford says how much you're short, the same way (Recruit, Buy, Training)", async ({ page }) => {
-  await openBoard(page);
+  await openBoard(page, ALL_OPEN);
   await page.evaluate(() => { ct.biz.money = 12; ct.openBoard(); });
   const checks = await page.evaluate(() => [...document.querySelectorAll("[data-recruit], [data-buy]")].map((b) => {
     const price = +b.textContent.match(/\$(\d+)/)[1];
@@ -405,7 +500,7 @@ test("everything on the board you can't afford says how much you're short, the s
   await expect(page.locator(".ct-train-pick .ct-short").first()).toHaveText("$8 short");
   // One look for the note everywhere: same color and opacity as under Recruit and Buy.
   const look = (sel) => page.locator(sel).first().evaluate((e) => { const st = getComputedStyle(e); let o = 1; for (let n = e; n; n = n.parentElement) o *= +getComputedStyle(n).opacity; return [st.color, st.fontFamily, o]; });
-  const recruitLook = await look("[data-recruit] ~ .ct-short, [data-buy] ~ .ct-short");
+  const recruitLook = await look("[data-recruit] ~ .ct-short-slot .ct-short, [data-buy] ~ .ct-short-slot .ct-short");
   expect(await look(".ct-train-pick .ct-short")).toEqual(recruitLook);
   await page.evaluate(() => { ct.biz.money = 25; ct.openBoard(); });
   await page.locator('#bizCrew [data-train-open="pip"]').click();
@@ -424,7 +519,7 @@ const recap = (page) => page.locator(".ct-recap").evaluate((r) => {
 test("the quarter card is a recap: started with, paid, lender, crew, budget now, and the quarter's result (decision 72)", async ({ page }) => {
   await openBoard(page);
   await expect(page.locator("#boardLast")).toBeHidden(); // nothing to recap in quarter 1
-  await page.click('[data-loan="0"]'); // $200, one loan: the lender takes 10%
+  await page.evaluate(() => { ct.borrow(0); ct.renderBoard(); }); // $200, one loan: the lender takes 10%
   await page.locator("[data-contract]").first().click();
   await page.click("#boardGo");
   await page.evaluate(() => { ct.hire("blip"); ct.hire("pip"); });
@@ -583,7 +678,7 @@ test("reputation on the board: pips under Funds, struck full numbers with the ho
   await expect(page.locator(".ct-struck")).toHaveCount(0); // nothing is lowered at full reputation
   await expect(page.locator("#missLine")).toHaveText("Miss any contract: −1 reputation");
   const gains = await page.locator("[data-contract] .ct-rep-gain").allTextContents();
-  expect(gains).toEqual(["Ship it: +⅓ reputation", "Ship it: +⅔ reputation", "Ship it: +⅓ reputation"]);
+  expect(gains).toEqual(["Ship it: +⅓ reputation", "Ship it: +⅔ reputation"]);
   await page.evaluate(() => { ct.biz.rep = 7; ct.openBoard(); });
   await expect(page.locator("#bizRep .ct-rep-text")).toHaveText("2⅓ of 3 · offers at 80%");
   await expect(page.locator("#bizRep")).not.toHaveClass(/is-full/);
@@ -611,7 +706,7 @@ test("reputation on the board: pips under Funds, struck full numbers with the ho
 
 test("the recap stamps each contract and moves reputation; at zero the front page says why (decisions 78, 80)", async ({ page }) => {
   await openBoard(page);
-  await page.evaluate(() => { ct.biz.rep = 4; ct.openBoard(); });
+  await page.evaluate(() => { ct.biz.rep = 4; ct.biz.quarters = 3; ct.biz.money = 500; ct.openBoard(); });
   await page.click('[data-buy="paint"]');
   const ids = await page.locator("[data-contract]").evaluateAll((els) => els.map((e) => e.dataset.contract));
   await page.click(`[data-contract="${ids[1]}"]`); await page.click(`[data-contract="${ids[2]}"]`);

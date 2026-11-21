@@ -118,7 +118,8 @@ test("the assembler: bought, placed, a crates contract on the board, and Assembl
   await page.goto("/");
   await page.evaluate(() => ct.license("Clank & Sons", "Mike"));
   await page.click('[data-level="7"]');
-  await page.evaluate(() => { ct.biz.money = 900; ct.buy("assembler"); ct.buy("paint"); ct.renderBoard(); });
+  // Quarter 5: the assembler and crates arrive (decision 94).
+  await page.evaluate(() => { ct.biz.quarters = 4; ct.biz.money = 900; ct.buy("assembler"); ct.buy("paint"); ct.openBoard(); });
   await expect(page.locator("#offers")).toContainText("Crates");
   await expect(page.locator("#offers")).toContainText("Each crate is a red, a blue and a green box.");
   // What you have is "Owned so far" (Mike), never "Bought so far".

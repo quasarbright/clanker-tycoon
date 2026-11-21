@@ -18,6 +18,9 @@ export const WORDS = {
   funds: "Funds", // your money (never "budget": Mike, 2026-11-18, "let's just say funds")
   startQuarter: "Start the quarter",
   lender: "The lender",
+  needMoney: "Need some money?", // the lender, peeking out beside something you can't afford
+  pickFirst: "← Pick a contract first", // under Start while nothing is picked
+  nowOpen: "Now open", // a board section that opened this quarter (decision 94)
   toLender: "To the lender",
   crewPay: "Crew pay",
   thisShift: "This shift",

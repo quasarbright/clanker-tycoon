@@ -25,8 +25,9 @@ test("wages: $5 + $5 a skill or trait, and a third skill or third trait adds $20
   assert.equal(wageOf(["packing", "painting", "repair"], ["fast", "nimble", "steady"]), 5 + 30 + 40);
 });
 
-test("the board: a small and a large of one color, and a side contract of another", () => {
-  for (let q = 0; q < 6; q++) {
+test("the board: a small and a large of one color, and from quarter 3 a side contract of another", () => {
+  for (let q = 0; q < 2; q++) assert.deepEqual(B.board({ ...B.newBusiness(), quarters: q }).map((c) => c.size), ["small", "large"], "no side contract before Machines opens (decision 94)");
+  for (let q = 2; q < 6; q++) {
     const [small, large, side] = B.board({ ...B.newBusiness(), quarters: q });
     assert.equal(small.size, "small"); assert.equal(large.size, "large"); assert.equal(side.size, "side");
     assert.equal(small.color, large.color);
@@ -37,7 +38,7 @@ test("the board: a small and a large of one color, and a side contract of anothe
 });
 
 test("picking one size rules out the other: one contract per color", () => {
-  const [small, large, side] = B.board(B.newBusiness());
+  const [small, large, side] = B.board({ ...B.newBusiness(), quarters: 2 });
   assert.ok(B.clashes([small], large));
   assert.ok(!B.clashes([small], side));
 });
@@ -83,14 +84,14 @@ test("a loan never takes more than what's left on it, and paid-off loans go away
 });
 
 test("settle: only contracts that shipped in full pay, and the lender's share comes out", () => {
-  const b = B.newBusiness();
+  const b = { ...B.newBusiness(), quarters: 2 };
   B.borrow(b, 0);
   const [small, , side] = B.board(b);
   const before = b.money;
   B.settle(b, [small, side], [small.count, side.count - 1], before - 30);
   assert.equal(b.money, before - 30 + small.pay - Math.round(small.pay * 0.1));
   assert.equal(b.wins, 1);
-  assert.equal(b.quarters, 1);
+  assert.equal(b.quarters, 3);
   assert.equal(B.debtOf(b), 110 - Math.round(small.pay * 0.1));
 });
 
@@ -177,7 +178,7 @@ test("machines: a paint machine is offered until you own one; two of a kind at m
 
 test("the quarter's level: stations are what's placed on your floor, at your layout; wear per machine; caps from upgrades", async () => {
   const F = await import("../src/floor.js");
-  const b = B.newBusiness();
+  const b = { ...B.newBusiness(), quarters: 2 };
   b.money = 1000;
   const [small, , side] = B.board(b);
   let L = B.quarterLevel(BASE, b, [small]);
@@ -273,7 +274,7 @@ test("reputation shapes the board: 100%, 80%, 60% of size and pay by whole pips 
 });
 
 test("settling a quarter moves reputation, and at zero the business is out (decisions 78, 76)", () => {
-  const biz = B.newBusiness();
+  const biz = { ...B.newBusiness(), quarters: 2 };
   const [small, , side] = B.board(biz);
   B.settle(biz, [small, side], [small.count, 0], biz.money);
   assert.equal(biz.rep, 9 + 1 - 3, "shipped the Small (+⅓), missed the side (−1)");

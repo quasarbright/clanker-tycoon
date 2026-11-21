@@ -101,6 +101,11 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   2026-11-18). `ownerLine` in `src/brains.js` tells the model; "boss" is a banned word in the tests.
 - Your money is **funds**, never "budget" (Mike, 2026-11-18: "should we even call it budget anymore? let's just say funds"). `WORDS.funds` in `src/words.js`; "budget" is a banned word in the tests.
 - **Showing screenshots and mocks:** each screenshot or mock is its own full-resolution PNG (2x), saved to /mnt/project-files and numbered in order for sequences (1-…, 2-…). No combined images, no gallery pages or artifacts for them (Mike, 2026-11-17: one big image is awkward, hard to zoom, and loses quality; he reads on mobile). Every mock and screenshot carries a title and a one-line description, in the image itself or in its filename plus caption (Mike, 2026-11-17).
+- **Everything in a row is the same height; like things form a grid** (Mike, 2026-11-21: "when you
+  have something in a row, all of the heights should be the same"). Cards in one section share a
+  size, captions get a clamped slot, and every card's button sits in the same spot. Measure row
+  heights in the browser (e2e "the board lines up") and screenshot the fullest state. Details in the
+  plugin's `UX-CHECKLIST.md`.
 - PC only (Mike, 2026-11-17: "This is going to be a PC only game"). Design for wide windows and
   use the horizontal space; phones don't need to work.
 - You can see what a robot can do by looking at it: skills are tools they carry, attributes change

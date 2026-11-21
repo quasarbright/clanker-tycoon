@@ -16,7 +16,7 @@ import { SLOTS, ANCHORS, NEVER_STORED, inSlot, place, store, keepInStorage, plac
 import { headLooks, toolLooks, faceHTML, ownerHeadSVG, ownerHatSVG, ownerPhoto } from "./looks.js";
 import { newQuarter, shiftPayroll, payShift, closeShift, nextShift, restartShift, money, signed as signedText, shippedOf, shiftCost } from "./quarter.js";
 import { LENDER, payBackOf, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine, missingFor, trainableNow, canAdd, floorLevel, buy, owns, quarterLevel, payouts, settle, borrow, repayOf, forecast, debtOf, shareOf,
-  RECRUITS, recruitPrice, TRAIN_PRICE, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers, crewCost,
+  RECRUITS, recruitPrice, TRAIN_PRICE, OPENS, isOpen, justOpened, TRAINABLE, TRAINABLE_ATTRS, robotOf, recruit, train, recruitOffers, machineOffers, crewCost,
   randomBusinessName, outOfBusiness, START_MONEY, cheapestWage } from "./business.js";
 import { headline } from "./headlines.js";
 import { REP, wholePips, offerShare, pipsText, deltaText, gainOf, afterQuarter, ruined, onTheEdge } from "./reputation.js";
@@ -526,6 +526,23 @@ const skillBadges = (h) => `<div class="ct-skills">${h.skills.length
   ? h.skills.map((k) => `<span class="ct-skill" data-tooltip="${SKILLS[k].label}: ${SKILLS[k].tip}">${SKILLS[k].label}</span>`).join("")
   : h.attributes?.length ? "" : `<span class="ct-skill is-none" data-tooltip="No skills: carries things between stations, but can't pack, paint or repair.">No skills</span>`}${
   (h.attributes ?? []).map((k) => `<span class="ct-skill is-attr" data-tooltip="${ATTRIBUTES[k].label}: ${ATTRIBUTES[k].tip}">${ATTRIBUTES[k].label}</span>`).join("")}</div>`;
+
+// Shop cards keep a robot's tags on one row: what doesn't fit folds into a "+N" tag that lists them.
+function fitTags(row) {
+  const tags = [...row.querySelectorAll(".ct-skill")];
+  if (row.scrollWidth <= row.clientWidth) return;
+  const more = document.createElement("span");
+  more.className = "ct-skill is-more";
+  row.append(more);
+  const hidden = [];
+  while (tags.length > 1 && row.scrollWidth > row.clientWidth) {
+    const t = tags.pop();
+    t.hidden = true;
+    hidden.unshift(t.textContent);
+    more.textContent = `+${hidden.length}`;
+  }
+  more.dataset.tooltip = `Also: ${hidden.join(", ")}`;
+}
 
 // A robot as this level has them: your business's crew can have trained skills (business.js).
 const candidate = (id) => level.roster?.[id] ?? CANDIDATES.find((c) => c.id === id);
@@ -1605,51 +1622,54 @@ function renderBoard() {
   $("#boardLast").hidden = !L;
   if (L) $("#boardLast").innerHTML = `${WORDS.lastQuarter}: ${L.won} of ${L.of} ${L.of === 1 ? "contract" : "contracts"} shipped, <b class="${L.net >= 0 ? "is-in" : "is-out"}">${signed(L.net)}</b>`;
   $("#boardShifts").textContent = `${QUARTER_SHIFTS} shifts. Every contract is due at the end of the last one.`;
-  // The lender: no interest; each loan takes 10% of every contract you finish until it's paid back.
+  // The lender has no spot on the board (Mike, 2026-11-19): he peeks out beside anything you can't
+  // afford, and clicking him opens his loan slip. While you owe him, Funds says so.
   const n = biz.loans.length;
-  $("#investorLine").innerHTML = n >= LENDER.max
-    ? `"I'm not lending you any more money until you pay up, deadbeat! You owe me <b class="is-debt">$${debtOf(biz)}</b> on ${n} loans, and I take <b class="is-debt">${now}</b> of every contract you finish until you're paid up."`
-    : n
-    ? `You owe <b class="is-debt">$${debtOf(biz)}</b> · <b class="is-debt">${now}</b> of every contract until it's paid`
-    : `"Short on cash? Borrow from me. You pay me back ${Math.round(LENDER.fee * 100)}% more, out of ${pct} of every contract you finish; two loans take ${Math.round(LENDER.share * 200)}%."`;
-  $("#loans").innerHTML = LENDER.amounts.map((a, i) => `<button class="ct-btn" data-loan="${i}" ${n >= LENDER.max ? "disabled" : ""} data-tooltip="${n >= LENDER.max ? `You have ${LENDER.max} loans, the most he'll give. He's paid back from your contracts, 10% of each per loan.`
-    : `You'd owe $${payBackOf(a)} ($${a} and a ${Math.round(LENDER.fee * 100)}% fee), paid back by ${pct} of every contract you finish${n ? `, on top of the ${now} you already pay` : ""}.`}">Borrow $${a} · pay back $${payBackOf(a)}</button>`).join("");
-  $("#loans").querySelectorAll("[data-loan]").forEach((b) => b.addEventListener("click", () => {
-    if (borrow(biz, +b.dataset.loan)) { logEvent(null, "borrow", { amount: LENDER.amounts[+b.dataset.loan], funds: Math.floor(biz.money), loans: [...biz.loans] }); renderBoard(); }
-  }));
+  $("#bizOwed").hidden = !n;
+  if (n) $("#bizOwed").textContent = `Owe the lender $${debtOf(biz)} · ${now} of every contract`;
+  // "Can't afford" counts what's left after paying the crew for the whole quarter (decision 94).
+  const spendable = biz.money - (biz.crew.length ? crewCost(biz, CANDIDATES) * QUARTER_SHIFTS : 0);
+  const peek = (price) => (price > spendable ? lenderPeekHTML() : "");
+  // Every shop card's action column has the same two rows, so buttons sit in the same spot.
+  const shopAct = (button, price) => `${button}<div class="ct-short-slot">${shortNote(price)}</div><div class="ct-peek-slot">${peek(price)}</div>`;
 
   // ----- contracts: one card with a small and a large size (take one or neither), and a side one
   const offers = board(biz);
   picked = picked.filter((p) => offers.some((c) => c.id === p.id));
   const isOn = (c) => picked.some((p) => p.id === c.id);
-  const [small, large, side, crates] = offers;
+  const small = offers.find((c) => c.size === "small"), large = offers.find((c) => c.size === "large");
+  const side = offers.find((c) => c.size === "side"), crates = offers.find((c) => c.size === "crate");
   const blocked = (c) => missingFor(biz, c);
   const size = (c) => `<button type="button" class="ct-size ${isOn(c) ? "is-on" : ""}" data-contract="${c.id}" ${blocked(c) ? "disabled" : ""}>
       <span class="ct-size-name">${isOn(c) ? CHECK : ""}${c.size === "small" ? "Small" : "Large"}</span>
       ${offerNumbers(c)}${keepLine(c)}
     </button>`;
-  const painted = (c) => (c.needs ? `<span class="ct-offer-keep">Painted: the supply only gives out red.</span>` : "");
+  const offerHead = (color, title, kind) => `<div class="ct-offer-head">${ticketHTML(color, "")}<div class="ct-offer-title"><b>${title}</b><span class="ct-offer-keep">${kind}</span></div></div>`;
+  // Every card keeps the same slot at its bottom for its notes, empty or not, so the cards line up.
+  const offerFoot = (c, about = "") => `<div class="ct-offer-foot"><div class="ct-offer-note is-bad">${blocked(c)}</div>${
+    c.needs ? `<span class="ct-offer-keep">Painted: the supply only gives out red.</span>` : ""}${about ? `<span class="ct-offer-keep">${about}</span>` : ""}</div>`;
   $("#offers").classList.toggle("has-crates", !!crates);
+  $("#offers").classList.toggle("is-one", !side && !crates);
   $("#offers").innerHTML = `<div class="ct-offer ct-pair ${isOn(small) || isOn(large) ? "is-picked" : ""}">
-      <div class="ct-offer-head">${ticketHTML(small.color, "")}<b>${cap(small.color)} boxes</b><span class="ct-offer-keep">Pick one size</span></div>
+      ${offerHead(small.color, `${cap(small.color)} boxes`, "Pick one size")}
       <div class="ct-sizes">${size(small)}${size(large)}</div>
-      <div class="ct-offer-note is-bad">${blocked(small)}</div>${painted(small)}
-    </div>
+      ${offerFoot(small)}
+    </div>${side ? `
     <div class="ct-offer ct-side ${isOn(side) ? "is-picked" : ""}">
-      <div class="ct-offer-head">${ticketHTML(side.color, "")}<b>${cap(side.color)} boxes</b><span class="ct-offer-keep">Side contract</span></div>
+      ${offerHead(side.color, `${cap(side.color)} boxes`, "Side contract")}
       <div class="ct-sizes"><button type="button" class="ct-size ${isOn(side) ? "is-on" : ""}" data-contract="${side.id}" ${blocked(side) ? "disabled" : ""}>
         <span class="ct-size-name">${isOn(side) ? CHECK : ""}${isOn(side) ? "Taking it" : "Take it"}</span>
         ${offerNumbers(side)}${keepLine(side)}
       </button></div>
-      <div class="ct-offer-note is-bad">${blocked(side)}</div>${painted(side)}
-    </div>${crates ? `
+      ${offerFoot(side)}
+    </div>` : ""}${crates ? `
     <div class="ct-offer ct-side ${isOn(crates) ? "is-picked" : ""}">
-      <div class="ct-offer-head">${ticketHTML("crate", "")}<b>Crates</b><span class="ct-offer-keep">Assembler contract</span></div>
+      ${offerHead("crate", "Crates", "Assembler contract")}
       <div class="ct-sizes"><button type="button" class="ct-size ${isOn(crates) ? "is-on" : ""}" data-contract="${crates.id}" ${blocked(crates) ? "disabled" : ""}>
         <span class="ct-size-name">${isOn(crates) ? CHECK : ""}${isOn(crates) ? "Taking it" : "Take it"}</span>
         ${offerNumbers(crates)}${keepLine(crates)}
       </button></div>
-      <div class="ct-offer-note is-bad">${blocked(crates)}</div><span class="ct-offer-keep">Each crate is a red, a blue and a green box.</span>
+      ${offerFoot(crates, "Each crate is a red, a blue and a green box.")}
     </div>` : ""}`;
   $("#offers").querySelectorAll("[data-contract]").forEach((b) => b.addEventListener("click", () => {
     const c = offers.find((o) => o.id === b.dataset.contract);
@@ -1662,7 +1682,8 @@ function renderBoard() {
   const total = picked.reduce((a, c) => a + boxesIn(c), 0);
   $("#boardGo").disabled = !picked.length;
   $("#boardGo").textContent = WORDS.startQuarter;
-  $("#boardNote").textContent = !picked.length ? "Pick at least one contract."
+  $("#boardNote").className = picked.length ? "ct-planbar-note" : "ct-planbar-note ct-pick-first";
+  $("#boardNote").textContent = !picked.length ? WORDS.pickFirst
     : `${total} boxes in ${QUARTER_SHIFTS} shifts. A contract only pays if all its boxes ship.`;
   // The quarter at a glance: your money is the budget wages come out of (you don't know them until
   // the shifts run), and what the picked contracts bring in at the end if they all ship.
@@ -1673,14 +1694,23 @@ function renderBoard() {
       + row("You keep", signed(f.gain), "is-total")
       + row(`${WORDS.stillOwed} after`, `$${f.debtAfter}`, "is-out") : "");
 
+  // ----- the shop opens a section a quarter (decision 94): a closed one is a dated shutter
+  for (const col of $$("#boardScreen [data-section]")) {
+    const part = col.dataset.section, open = isOpen(biz, part);
+    col.classList.toggle("is-shut", !open);
+    for (const old of col.querySelectorAll(".ct-now-open, .ct-shutter")) old.outerHTML = "";
+    if (justOpened(biz, part)) col.querySelector(".ct-board-sec").insertAdjacentHTML("beforeend", `<span class="ct-now-open">${WORDS.nowOpen}</span>`);
+    if (!open) col.insertAdjacentHTML("beforeend", shutterHTML(part));
+  }
+
   // ----- recruit: three robots this visit
   $("#recruits").innerHTML = recruitOffers(biz).map((id) => {
     const r = robotOf(biz, CANDIDATES.find((c) => c.id === id)), done = biz.crew.includes(id), price = recruitPrice(biz, id);
-    return robotCard(r, { cls: `ct-biz-bot ${done ? "is-done" : ""}`, action: `${done ? `<span class="ct-owned">${CHECK} ${WORDS.recruited}</span>` : `<button class="ct-btn is-gold" data-recruit="${id}" ${short(price)}>${WORDS.recruit} $${price}</button>${shortNote(price)}`}` });
+    return robotCard(r, { cls: `ct-biz-bot ${done ? "is-done" : ""}`, action: `${done ? `<span class="ct-owned">${CHECK} ${WORDS.recruited}</span>` : `${shopAct(`<button class="ct-btn is-gold" data-recruit="${id}" ${short(price)}>${WORDS.recruit} $${price}</button>`, price)}`}` });
   }).join("") || `<p class="ct-offer-note">Everyone's already on your crew.</p>`;
 
   // ----- training: your crew
-  $("#crewNote").textContent = `$${TRAIN_PRICE} a skill or trait. Each adds $5 a shift to their pay; a third skill, or a third trait, adds $${SKILL_TIER.extra} more.`;
+  $("#crewNote").textContent = `$${TRAIN_PRICE} a skill or trait. Each adds $5 a shift to their pay; a third skill or trait adds $${SKILL_TIER.extra} more.`;
   $("#bizCrew").innerHTML = biz.crew.map((id) => {
     const r = robotOf(biz, CANDIDATES.find((c) => c.id === id));
     // One Train picker per robot: what's left to learn, and what each adds to their pay.
@@ -1696,7 +1726,7 @@ function renderBoard() {
     // Nothing in the list affordable (everything costs the same): the Train button itself is
     // greyed out with the same "short" note as Recruit and Buy.
     const picker = skills.length + traits.length
-      ? `<div class="ct-train-pick"><button class="ct-btn ct-train-open ${open ? "is-on" : ""}" data-train-open="${id}" aria-expanded="${open}" ${short(TRAIN_PRICE)}>Train ${CHEVRON_DOWN}</button>${shortNote(TRAIN_PRICE)}${menu}</div>`
+      ? `<div class="ct-train-pick">${shopAct(`<button class="ct-btn ct-train-open ${open ? "is-on" : ""}" data-train-open="${id}" aria-expanded="${open}" ${short(TRAIN_PRICE)}>Train ${CHEVRON_DOWN}</button>`, TRAIN_PRICE)}${menu}</div>`
       : `<span class="ct-owned">Knows everything</span>`;
     return robotCard(r, { cls: "ct-biz-bot ct-trainee", blurb: false, action: picker });
   }).join("");
@@ -1708,8 +1738,8 @@ function renderBoard() {
     const done = biz.boughtNow.includes(m.id) && !(m.station && canAdd(biz, m));
     const replaces = m.station && biz.machines.some((x) => SHOP.find((y) => y.id === x.id).kind === m.kind) ? " A second one: it goes in storage as " + STATIONS[`${m.station}_2`].label + "." : m.station ? " It goes in storage; place it with Edit floor." : "";
     return `<div class="ct-biz-bot ct-machine ${done ? "is-done" : ""}">
-      <div><div><b>${m.name}</b></div><div class="ct-biz-blurb">${m.blurb}${replaces}</div></div>
-      <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} ${WORDS.bought}</span>` : `<button class="ct-btn is-gold" data-buy="${m.id}" ${short(m.price)}>Buy $${m.price}</button>${shortNote(m.price)}`}</div>
+      <div><div><b>${m.name}</b></div><div class="ct-biz-blurb" data-tooltip="${escapeHTML(m.blurb + replaces)}">${m.blurb}${replaces}</div></div>
+      <div class="ct-biz-act">${done ? `<span class="ct-owned">${CHECK} ${WORDS.bought}</span>` : `${shopAct(`<button class="ct-btn is-gold" data-buy="${m.id}" ${short(m.price)}>Buy $${m.price}</button>`, m.price)}`}</div>
     </div>`;
   }).join("") + `<p class="ct-offer-note">${WORDS.ownedSoFar}: ${mine.length ? mine.join(", ") : "nothing yet"}.</p>`;
 
@@ -1725,6 +1755,13 @@ function renderBoard() {
     if (train(biz, CANDIDATES.find((c) => c.id === id), k)) { logEvent(null, "train", { robot: id, learned: k, funds: Math.floor(biz.money) }); trainOpen = null; renderBoard(); }
   }));
   placeTrainMenu();
+  $$("#boardScreen .ct-biz-bot .ct-skills").forEach(fitTags);
+  $("#boardScreen").querySelectorAll("[data-lender]").forEach((b, i) => b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    slipAt = slipAt === i ? null : i;
+    renderSlip();
+  }));
+  renderSlip();
   $("#boardScreen").querySelectorAll("[data-train-open]").forEach((b) => b.addEventListener("click", (e) => {
     e.stopPropagation();
     trainOpen = trainOpen === b.dataset.trainOpen ? null : b.dataset.trainOpen;
@@ -1732,6 +1769,50 @@ function renderBoard() {
   }));
 }
 const cap = (s) => s[0].toUpperCase() + s.slice(1);
+
+// The closed sections' notices, in the game's official voice (Pam's mocks, decision 94).
+const SHUTTERS = {
+  recruit: { name: "Recruiting office", line: "Applicants are still reading their instructions.", tilt: -2 },
+  machines: { name: "Machine showroom", line: "The paint machine is still drying.", tilt: 1.5 },
+  training: { name: "Training room", line: "The instructor is having a think.", tilt: -1.5 },
+};
+const shutterHTML = (part) => `<div class="ct-shutter"><div class="ct-notice" style="--tilt:${SHUTTERS[part].tilt}deg"><b>${SHUTTERS[part].name}</b><span class="ct-opens">Opens quarter ${OPENS[part] + 1}</span><p>${SHUTTERS[part].line}</p></div></div>`;
+const lenderPeekHTML = () => `<button type="button" class="ct-lender-peek" data-lender><img src="favicon.svg" alt="${WORDS.lender}"><span>${WORDS.needMoney}</span></button>`;
+
+// The lender's loan slip, opened from whichever peek you clicked (`slipAt`, its index on the board).
+let slipAt = null;
+function renderSlip() {
+  const slip = $("#lenderSlip"), peeks = $$("#boardScreen [data-lender]");
+  const at = slipAt == null ? null : peeks[slipAt];
+  slip.hidden = !at;
+  if (!at) { slipAt = null; return; }
+  const n = biz.loans.length, now = `${Math.round(shareOf(biz) * 100)}%`, share = `${Math.round(LENDER.share * 100)}%`;
+  // Mike, 2026-11-19: no subtitle and no fee sentence (the buttons say it), but keep the 10% line.
+  const line = n >= LENDER.max
+    ? `"I'm not lending you any more money until you pay up, deadbeat! You owe me <b>$${debtOf(biz)}</b>, and I take <b>${now}</b> of every contract you finish until you're paid up."`
+    : n ? `"You owe me <b>$${debtOf(biz)}</b>, and I take <b>${now}</b> of every contract you finish until you're paid up. Another loan takes ${share} more."`
+    : `"I take ${share} of every contract you finish until you're paid up."`;
+  slip.innerHTML = `<div class="ct-slip-head"><img src="favicon.svg" alt=""><b>${WORDS.lender}</b></div><p>${line}</p>`
+    + LENDER.amounts.map((a, i) => `<button class="ct-btn is-gold" data-loan="${i}" ${n >= LENDER.max ? `disabled data-tooltip="You have ${LENDER.max} loans, the most he'll give."` : ""}>Borrow $${a} · pay back $${payBackOf(a)}</button>`).join("")
+    + `<button type="button" class="ct-slip-no" data-slip-close>Not now</button>`;
+  slip.querySelectorAll("[data-loan]").forEach((b) => b.addEventListener("click", (e) => {
+    e.stopPropagation();
+    if (borrow(biz, +b.dataset.loan)) { logEvent(null, "borrow", { amount: LENDER.amounts[+b.dataset.loan], funds: Math.floor(biz.money), loans: [...biz.loans] }); slipAt = null; renderBoard(); }
+  }));
+  slip.querySelector("[data-slip-close]").addEventListener("click", (e) => { e.stopPropagation(); slipAt = null; renderSlip(); });
+  // Above the peek, its tail pointing at him; below if there's no room.
+  const r = at.getBoundingClientRect(), h = slip.offsetHeight, w = slip.offsetWidth;
+  const above = r.top - 14 - h >= 8;
+  const left = Math.max(8, Math.min(innerWidth - w - 8, r.left + 13 - 40));
+  slip.classList.toggle("is-below", !above);
+  slip.style.top = `${above ? r.top - 14 - h : r.bottom + 14}px`;
+  slip.style.left = `${left}px`;
+  slip.style.setProperty("--tail", `${Math.max(12, r.left + 13 - left - 10)}px`);
+}
+document.addEventListener("click", (e) => { if (slipAt != null && !e.target.closest?.("#lenderSlip, [data-lender]")) { slipAt = null; renderSlip(); } });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && slipAt != null) { slipAt = null; renderSlip(); } });
+addEventListener("resize", () => slipAt != null && renderSlip());
+
 /** Just these fields of an object, for the log. */
 const pick = (o, ...keys) => Object.fromEntries(keys.filter((k) => o[k] !== undefined).map((k) => [k, o[k]]));
 
@@ -1995,7 +2076,7 @@ window.ct = {
   step: (dt) => { if (started) step(game, dt); handleEvents(); render(); },
   give: (id, text) => giveInstructions(worker(id), text), say: (id, text) => message(worker(id), "message", text),
   setPaused, begin: () => begin({ force: true }), startBlocker: () => startBlocker(), thinking: (id, d) => setThinking(worker(id), d), hire, playerActions, openBoard, renderBoard, get biz() { return biz; }, set biz(b) { biz = b; },
-  buy: (id) => buy(biz, id), paintChoices: (c) => paintChoices(c), openEditor, closeEditor, relayout, get editing() { return editing; }, get level() { return level; },
+  buy: (id) => buy(biz, id), borrow: (i) => borrow(biz, i), paintChoices: (c) => paintChoices(c), openEditor, closeEditor, relayout, get editing() { return editing; }, get level() { return level; },
   showGameOver: (r) => showGameOver(r), license: (name, owner) => { if (!biz) biz = newBusiness(); biz.name = name; biz.owner = owner; },
   useFakeLlm, // e2e: answer model calls without a model
 };

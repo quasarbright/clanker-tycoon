@@ -130,6 +130,16 @@ function pickFew(list, n, seed) {
 // The pools are what you didn't have when this visit started, so buying or recruiting one keeps the
 // same three on show (marked done) instead of dealing a new one.
 
+// The board opens a section at a time (decision 94, Mark's schedule; Mike approved Pam's mocks):
+// quarter 1 is contracts, reputation and the floor editor; Recruit opens in quarter 2, Machines in
+// 3, Training in 4, and the Assembler joins Machines in 5. Values are `biz.quarters` (0 = quarter 1).
+// The board shows a closed section as a shutter; recruit(), train() and buy() themselves don't check.
+export const OPENS = { recruit: 1, machines: 2, training: 3, assembler: 4 };
+/** Is this part of the board open yet? */
+export const isOpen = (biz, part) => biz.quarters >= OPENS[part];
+/** It opened this quarter (the board marks it "Now open"). */
+export const justOpened = (biz, part) => biz.quarters === OPENS[part];
+
 /** The three robots you can recruit this visit (fewer once most of them work for you). */
 export const recruitOffers = (biz) => TIERS_OF_RECRUITS
   .map((ids, t) => pickFew(ids.filter((id) => !biz.crew.includes(id) || biz.recruitedNow.includes(id)), 1, biz.quarters * 3 + t + 1)[0])
@@ -140,7 +150,7 @@ export function machineOffers(biz) {
   // A floor machine is on offer until you have two of its kind; an upgrade until you have it.
   const had = (id) => { const m = SHOP.find((x) => x.id === id); return m.station ? !canAdd(biz, m) && !biz.boughtNow.includes(id) : owns(biz, id) && !biz.boughtNow.includes(id); };
   const hadPaint = biz.machines.some((x) => kindOfMachine(x) === "paint" && !biz.boughtNow.includes(x.id));
-  const open = SHOP.filter((m) => !had(m.id));
+  const open = SHOP.filter((m) => !had(m.id) && (m.id !== "assembler" || isOpen(biz, "assembler")));
   const paint = hadPaint ? [] : open.filter((m) => m.id === "paint");
   const rest = pickFew(open.filter((m) => !paint.includes(m)).map((m) => m.id), 3 - paint.length, biz.quarters + 7);
   return [...paint, ...open.filter((m) => rest.includes(m.id))].sort((x, y) => x.price - y.price);
@@ -173,8 +183,9 @@ export function train(biz, c, skill) {
 // neither) and a side contract of another color. Boxes of 3; pay when they've all shipped. The
 // supply only gives out red, so blue and green need a paint machine.
 const TIERS = [
-  { main: { color: "red", small: [36, 150], large: [75, 290] }, side: { color: "blue", count: 9, pay: 240 } },
-  { main: { color: "red", small: [54, 230], large: [99, 450] }, side: { color: "green", count: 9, pay: 250 } },
+  // Boards 1 and 2 have no side contract: it would be painted, and Machines opens in quarter 3 (decision 94).
+  { main: { color: "red", small: [36, 150], large: [75, 290] }, side: null },
+  { main: { color: "red", small: [54, 230], large: [99, 450] }, side: null },
   { main: { color: "green", small: [12, 330], large: [18, 510] }, side: { color: "red", count: 75, pay: 310 } },
   { main: { color: "blue", small: [15, 420], large: [22, 620] }, side: { color: "red", count: 78, pay: 360 } },
 ];
@@ -217,8 +228,9 @@ export function cheapestWage(biz, candidates) {
 }
 
 /**
- * This quarter's three contracts, as a flat list: the small and large of the main color (`size`
- * "small" / "large"), then the side contract ("side"). Past the last board, the last one again at
+ * This quarter's contracts, as a flat list: the small and large of the main color (`size`
+ * "small" / "large"), then the side contract ("side", from board 3 on), then crates if you own an
+ * assembler. Past the last board, the last one again at
  * 15% more pay per quarter.
  */
 export function board(biz) {
@@ -230,7 +242,7 @@ export function board(biz) {
   return [
     { id: `${q}-s`, size: "small", color: T.main.color, count: T.main.small[0], pay: pay(T.main.small[1]), needs: needs(T.main.color) },
     { id: `${q}-l`, size: "large", color: T.main.color, count: T.main.large[0], pay: pay(T.main.large[1]), needs: needs(T.main.color) },
-    { id: `${q}-x`, size: "side", color: T.side.color, count: T.side.count, pay: pay(T.side.pay), needs: needs(T.side.color) },
+    ...(T.side ? [{ id: `${q}-x`, size: "side", color: T.side.color, count: T.side.count, pay: pay(T.side.pay), needs: needs(T.side.color) }] : []),
     // Once you own an assembler, a crates contract too: a red, a blue and a green box each, so it
     // also needs paint (decision 85).
     ...(machinesOf(biz, "assemble").length ? [{ id: `${q}-c`, size: "crate", color: "crate", ...cratesOffer(q), needs: "assembler" }] : []),

@@ -26,6 +26,9 @@ test("a run's business, UI and errors all reach the play log", async ({ page }) 
   await page.fill("#licenseOwner", "Mike");
   await page.click("#licenseGo");
   await expect(page.locator("#boardScreen")).toBeVisible();
+  // Quarter 2, short of money: the lender peeks out beside a recruit (decision 94).
+  await page.evaluate(() => { ct.biz.quarters = 1; ct.biz.money = 30; ct.openBoard(); });
+  await page.locator("[data-lender]").first().click();
   await page.click('[data-loan="0"]');
   await page.locator("[data-recruit]").first().click();
   await page.locator("[data-contract]").first().click();
