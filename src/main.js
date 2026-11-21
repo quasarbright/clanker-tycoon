@@ -135,8 +135,8 @@ const STATION_HINTS = {
   BIN_1: "storage",
   BIN_2: "storage",
   PAINT_2: "repaints a widget, wears with use",
-  ASSEMBLE: "red + blue + green box → 1 crate",
-  ASSEMBLE_2: "red + blue + green box → 1 crate",
+  ASSEMBLE: "red + blue + green → crate",
+  ASSEMBLE_2: "red + blue + green → crate",
 };
 /** Machines with a wear meter. */
 const wears = (key) => ["PAINT", "ASSEMBLE"].includes(kindOf(key));
@@ -289,11 +289,19 @@ const CRATE_SVG = `<svg viewBox="0 0 88 72" aria-hidden="true">
   <rect x="22" y="29.5" width="12" height="12" rx="2" fill="#e05a47"/><rect x="38" y="29.5" width="12" height="12" rx="2" fill="#4a86e8"/><rect x="54" y="29.5" width="12" height="12" rx="2" fill="#4caf6a"/></svg>`;
 // The Assembler holds up to six boxes and crates on one row: once they'd overflow its tile, the
 // whole row shrinks to fit instead of wrapping to a second row (widths in --u, from index.html).
-const ASSEMBLER_ROW = 15.4, BOX_W = 2.6, CRATE_W = 4.4, ASSEMBLER_GAP = 0.3;
-const assemblerZoom = (items) => {
-  const need = items.reduce((w, it) => w + (it.kind === "crate" ? CRATE_W : BOX_W), 0) + ASSEMBLER_GAP * Math.max(0, items.length - 1);
-  return need > ASSEMBLER_ROW ? String(Math.floor((ASSEMBLER_ROW / need) * 1000) / 1000) : "";
-};
+// What a station holds sits in one row of identical cells, the same size on every station (Mike,
+// 2026-11-21: "almost grid-like with shit having the same height and/or width"). A station with a
+// capacity shows a cell per place, empty ones too, so it never overflows: full takes nothing more.
+// Past CELLS places (Bigger bins' 10), each cell holds a pile of two. Supply, which never runs out,
+// shows a cell per widget waiting there.
+const CELLS = 6;
+function cellsHTML(items, cap) {
+  const per = cap > CELLS ? Math.ceil(cap / CELLS) : 1, n = cap ? Math.ceil(cap / per) : Math.min(items.length, CELLS);
+  return Array.from({ length: n }, (_, i) => {
+    const pile = items.slice(i * per, i * per + per);
+    return `<span class="ct-cell${pile.length > 1 ? " is-pile" : ""}">${pile.map((it) => itemHTML(it, true)).join("")}</span>`;
+  }).join("");
+}
 const itemHTML = (it, clickable = false) => it.kind === "crate"
   // One crate drawing in every state (Mike): while it's being assembled, the same crate appears
   // left to right over its own faint outline, like a box filling in at Pack.
@@ -1178,8 +1186,7 @@ function render() {
     for (const [key, el] of Object.entries(ui.stations)) {
       const items = game.stations[key];
       const row = el.querySelector(".ct-st-items");
-      row.innerHTML = items.map((it) => itemHTML(it, true)).join("");
-      if (kindOf(key) === "ASSEMBLE") row.style.zoom = assemblerZoom(items);
+      row.innerHTML = cellsHTML(items, +el.dataset.cap);
       el.querySelector(".ct-st-cap").textContent = el.dataset.cap ? `${items.length}/${el.dataset.cap}` : "";
       if (wears(key)) {
         el.querySelector(".ct-wear i").style.transform = `scaleX(${game.wear[key] / 100})`;

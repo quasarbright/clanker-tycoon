@@ -57,12 +57,12 @@ test("a crate is drawn as a crate: the X-braced case, no colored dots like a box
   expect(new Set(svgs.flat()).size).toBe(1);
   // Two boxes and two crates sit on one row in the Assembler (review desk).
   await page.evaluate(() => { const g = ct.game; for (const c of ["red", "blue"]) g.stations.ASSEMBLE.unshift({ id: ++g.ids, kind: "box", colors: [c, c, c] }); g.version++; ct.step(0.02); });
-  const tops = await page.locator('.ct-st[data-key="ASSEMBLE"] .ct-st-items > *').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
+  const tops = await page.locator('.ct-st[data-key="ASSEMBLE"] .ct-cell > *').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().top)));
   expect(tops).toHaveLength(4);
   expect(Math.max(...tops) - Math.min(...tops)).toBeLessThan(10);
 });
 
-test("a full Assembler keeps everything on one row inside its tile: six boxes, or three boxes and three crates", async ({ page }) => {
+test("the Assembler is a grid: six equal cells in one row, a box and a crate the same size, empty, half full or full (Mike)", async ({ page }) => {
   await page.goto("/");
   await page.evaluate(() => ct.license("Clank & Sons", "Mike"));
   await page.click('[data-level="7"]');
@@ -76,17 +76,27 @@ test("a full Assembler keeps everything on one row inside its tile: six boxes, o
     g.stations.ASSEMBLE = kinds.map((k, i) => k === "crate" ? { id: ++g.ids, kind: "crate" } : { id: ++g.ids, kind: "box", colors: Array(3).fill(["red", "blue", "green"][i % 3]) });
     g.version++; ct.step(0.02);
   }, kinds);
-  for (const kinds of [["box", "box", "box", "box", "box", "box"], ["box", "box", "box", "crate", "crate", "crate"], ["box", "crate"]]) {
+  for (const kinds of [[], ["box", "crate"], ["box", "box", "box", "box", "box", "box"], ["box", "box", "box", "crate", "crate", "crate"]]) {
     await fill(kinds);
     const r = await page.locator('.ct-st[data-key="ASSEMBLE"]').evaluate((st) => {
-      const box = st.getBoundingClientRect(), items = [...st.querySelectorAll(".ct-st-items > *")].map((e) => e.getBoundingClientRect());
-      return { n: items.length, rows: new Set(items.map((i) => Math.round(i.top))).size, left: Math.min(...items.map((i) => i.left)) - box.left, right: box.right - Math.max(...items.map((i) => i.right)), zoom: st.querySelector(".ct-st-items").style.zoom };
+      const box = st.getBoundingClientRect(), cells = [...st.querySelectorAll(".ct-st-items > .ct-cell")].map((e) => e.getBoundingClientRect());
+      const things = [...st.querySelectorAll(".ct-cell > *")].map((e) => e.getBoundingClientRect());
+      const sizes = (rs) => new Set(rs.map((i) => `${Math.round(i.width)}x${Math.round(i.height)}`)).size;
+      return { cells: cells.length, rows: new Set(cells.map((i) => Math.round(i.top))).size, cellSizes: sizes(cells), items: things.length, itemSizes: things.length ? sizes(things) : 1,
+        inside: cells.every((c) => c.left >= box.left && c.right <= box.right) };
     });
-    expect(r.n).toBe(kinds.length);
-    expect(r.rows).toBe(1);
-    expect(r.left).toBeGreaterThanOrEqual(0);
-    expect(r.right).toBeGreaterThanOrEqual(0);
-    // Only a crowded Assembler shrinks; one box and one crate stay full size.
-    expect(r.zoom === "").toBe(kinds.length === 2);
+    expect(r).toEqual({ cells: 6, rows: 1, cellSizes: 1, items: kinds.length, itemSizes: 1, inside: true });
   }
+  // Every station on the floor is one size, full or empty, and its cells are the Assembler's size:
+  // Pack with six boxes, bins with ten things (piles of two), Supply, the Dock.
+  await page.evaluate(() => { const g = ct.game; g.stations.PACK = Array.from({ length: 6 }, () => ({ id: ++g.ids, kind: "box", colors: ["red", "red", "red"] }));
+    for (const k of Object.keys(g.stations)) if (k.startsWith("BIN")) g.stations[k] = Array.from({ length: 10 }, (_, i) => i % 2 ? { id: ++g.ids, kind: "box", colors: ["blue", "blue", "blue"] } : { id: ++g.ids, kind: "widget", color: "red" });
+    g.version++; ct.step(0.02); });
+  const floor = await page.evaluate(() => {
+    const sts = [...document.querySelectorAll(".ct-st")].map((e) => e.getBoundingClientRect());
+    const cells = [...document.querySelectorAll(".ct-cell")].map((e) => e.getBoundingClientRect());
+    const rows = [...document.querySelectorAll(".ct-st-items")].map((e) => new Set([...e.children].map((c) => Math.round(c.getBoundingClientRect().top))).size);
+    return { sizes: new Set(sts.map((r) => `${Math.round(r.width)}x${Math.round(r.height)}`)).size, cellSizes: new Set(cells.map((r) => `${Math.round(r.width)}x${Math.round(r.height)}`)).size, maxRows: Math.max(...rows) };
+  });
+  expect(floor).toEqual({ sizes: 1, cellSizes: 1, maxRows: 1 });
 });
