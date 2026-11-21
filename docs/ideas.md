@@ -157,15 +157,15 @@ Ideas worth keeping that aren't planned yet.
   library of parts and accessories (little articles of clothing and the like); the model generates
   a personality and picks parts to match. Mike: "Ooh, I like the idea of hats": personality on
   the head (hats), skills on the body (tools). Open: whether that still gets crowded.
-- **Make Smart matter.** Robots rarely think, so the Smart attribute (a bigger thinking budget)
-  barely changes anything yet. Maybe it matters late, for foremen; maybe early contracts need more
-  surprises to think about.
+- **Bring Smart back once thinking matters.** Smart (a bigger thinking budget) was cut because
+  robots rarely run out of thoughts (decision 93). It returns if shifts get enough surprises (rush
+  orders, contracts that change mid-quarter, a crowded floor) or for foremen.
 - **A fast decision model for acting, Haiku for talking** (issue #13). A model like JEV picks
   each robot's next actions from the floor state; Haiku only talks. Not now: the compiled program
   already picks actions instantly and for free, and it's what makes a shift traceable to your words
   and testable in the dry run (decisions 36, 37). A decision model can't read your instructions, so
   it would act on something other than what you said. Thinking is rare because little surprising
-  happens, not because it's slow, so a faster brain wouldn't make Smart matter. Worth revisiting if
+  happens, not because it's slow, so a faster brain wouldn't make a thinking trait matter. Worth revisiting if
   robots end up needing to react in real time to lots of surprises; first cheap step then is the
   API backend with thinking off (about 2 s a call instead of 4 to 5).
 - **Recovering from problems.** Time controls, clear alerts, buffers, one-click cleanup (issue #10).

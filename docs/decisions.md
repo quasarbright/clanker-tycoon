@@ -1358,3 +1358,20 @@ can be fetched, a local copy when it can't (acorn from node_modules, cohesion fr
 `tools/vendor`, system fonts). On the Mac the tests still load the real files; the live page is
 unchanged. `e2e/offline.spec.mjs` cuts the network off and checks the stand-ins load the whole game.
 **Evidence:** all 54 e2e tests pass in a cloud session (23.7 s).
+
+### 93. Smart is cut from the game (2026-11-21)
+
+**Problem:** Smart gave a robot 5 thoughts refilling every 12 s instead of 3 every 20 s. Robots only
+think when something unexpected happens, and with clear instructions on a floor with no random
+breakdowns they never ran out. Training Smart cost $20 and a higher wage for nothing the player
+could see, so it was a trap in the shop.
+**Options:** (a) keep it; (b) take it out of Training but leave it on robots who have it (Vex);
+(c) remove it from the game.
+**Picked:** (c). Mark proposed (b); Mike went further: "let's just get rid of smart for now". Smart
+is gone from Training, from recruits (Vex loses it) and from the robots' look (the glasses). The
+think budget is 3 thoughts, one back every 20 s, for everyone. It can come back once shifts have
+enough surprises that robots run out of thoughts (ideas.md, Maybe). This replaces Smart in the list
+of attributes in `CLAUDE.md`.
+**Lesson (plugin GAME-DESIGN.md):** a trait or option with no visible effect is cut outright, not
+hidden from the shop.
+

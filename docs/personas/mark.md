@@ -81,8 +81,8 @@ they were measured.
    raw part, a machine that makes a variant, three assembled into one. Slow reveal: odd gadgets
    first, recognizable parts later, and the late product is the blank robot you recruit. It also
    gives symmetry for free. Keep it a reveal in the art and names, not a new mechanic.
-5. **Smart is a dead trait in the shop.** Robots rarely think, so paying for it is a trap. Either
-   cut it from training until thinking matters, or make contracts with surprises.
+5. **Smart is gone (decision 93).** It was a dead trait: robots rarely think, so paying for it was a
+   trap. Mike cut it from the whole game, not just Training. Bring it back only with surprises.
 
 6. **Escalate along axes we already have.** Crazier contracts stack existing things: more boxes,
    more colors at once, mixed crates, fewer shifts, machines you don't own yet. New verbs come from
@@ -218,7 +218,6 @@ don't model loans, so this comes from the rules, not from a run.
 
 - What a late contract does, and what the lender does when you can't pay.
 - Escalating contracts: the next mechanic. Tune against the swapped and tidy floors.
-- Smart is a dead trait in Training; never put to Mike. Propose dropping it until thinking matters.
 - From playtests: whether a whole pip back per clean quarter is too fast (cap at 1 a quarter),
   and whether a 10% fee still leaves players borrowing everything (go to 20%).
 - When the second line arrives, and whether it's the source of new verbs.

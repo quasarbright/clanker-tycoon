@@ -2,7 +2,7 @@
 
 Status: **built** (2026-11-16), except the Strong attribute (carrying two). The dry run (step 6)
 and "thinking stays inside your instructions" were built 2026-11-17. Choices made while building: talking to a worker is free (only their own
-thinking spends the budget, 3 thoughts refilling one per 20 s, Smart 5 per 12 s); a problem that
+thinking spends the budget, 3 thoughts refilling one per 20 s; the Smart trait that raised it was cut in decision 93); a problem that
 comes back within 45 s of thinking about it sends them to your desk; and a floor where nothing has
 moved for 15 s counts as unexpected for everyone, which is how the runtime catches a program that
 never makes progress.
@@ -59,7 +59,8 @@ loop. Personality only shows in what workers say; it never changes how they act.
   - **Side tasks** (servicing a machine): any program may include them; without the skill they
     silently do nothing.
 - **Attributes** are traits: Fast (walks faster), Strong (carries two), Nimble (works machines
-  faster), Steady (machines wear more slowly in their hands), Smart (more thinking budget).
+  faster), Steady (machines wear more slowly in their hands). Smart (more thinking budget) was cut
+  (decision 93).
 - Everyone is careful, patient, and has a long memory; those aren't traits. No cheap downside
   traits. More skills and better attributes mean a higher wage.
 

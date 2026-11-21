@@ -46,8 +46,9 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
     and only a worker with the Repair skill actually services anything.
   (Long term: pay to train a new skill.)
 - **Attributes** are traits that raise the wage: Fast (walks faster), Strong (carries two),
-  Nimble (works machines faster), Steady (machines wear more slowly in their hands, every machine), Smart
-  (more in-game thinking: a bigger think budget or faster refill). Everyone is patient, careful and
+  Nimble (works machines faster), Steady (machines wear more slowly in their hands, every machine). Smart (a bigger think budget)
+  was cut, Vex's included (decision 93): a trait with no visible effect goes, it isn't just hidden
+  from the shop. It can come back once shifts have enough surprises that thinking runs out. Everyone is patient, careful and
   has a long memory; those aren't traits. No cheap downside traits: they're annoying, not fun. No
   traits we can't really control (thinking speed) or can't define cleanly ("notices problems").
   (Strong isn't built yet.)
@@ -103,7 +104,7 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
 - PC only (Mike, 2026-11-17: "This is going to be a PC only game"). Design for wide windows and
   use the horizontal space; phones don't need to work.
 - You can see what a robot can do by looking at it: skills are tools they carry, attributes change
-  their look (glasses for Smart, wheels for Fast that turn as it moves). New skills and attributes
+  their look (wheels for Fast that turn as it moves). New skills and attributes
   get a look too.
 
 **Levels and tutorials**
