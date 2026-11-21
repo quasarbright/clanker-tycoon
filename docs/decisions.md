@@ -1375,3 +1375,27 @@ of attributes in `CLAUDE.md`.
 **Lesson (plugin GAME-DESIGN.md):** a trait or option with no visible effect is cut outright, not
 hidden from the shop.
 
+### 94. The quarter board opens one section at a time (2026-11-21)
+
+**Problem:** Mike found the quarter board overwhelming: from the first quarter it showed contracts,
+Recruit, Training, Machines and the lender all at once. His idea: start with contracts only and
+open the shop a section at a time, with on-theme locked placeholders.
+**Picked:** Mark's schedule, each section opening the quarter its first contract needs it, as
+mocked by Pam (`/mnt/project-files/mocks-quarter-board-2/`, pictures 1 to 5). Mike approved all
+five pictures with no notes (2026-11-21).
+- Quarter 1: contracts, reputation and the floor editor. The starting floor can't make the Large
+  red; swapping Supply and Pack does (decision 88), so the editor is the lesson.
+- Quarter 2: Recruit. Board 2's Large (99 red) needs a second hauler even on a swapped floor.
+- Quarter 3: Machines. The first painted contract needs the $80 paint machine.
+- Quarter 4: Training. A crew worth shaping; teaching a skill costs less than a third wage.
+- Quarter 5 on: the assembler in Machines, and crate contracts.
+Locked sections show as closed shutters with a date, in the game's official voice ("Hiring hall
+opens Quarter 2"). Boards 1 and 2 lose their side contracts (blue and green), since you can't
+paint before Quarter 3.
+**The lender** appears on no fixed quarter: the first time something in the shop is out of reach
+(Mike, 2026-11-19: "maybe we only introduce the loan guy the first time something in the shop can't
+be afforded"). "Out of reach" counts the funds left after crew pay for the picked contracts, not
+only the sticker price. Once he's shown up he stays on the board.
+**Why:** each unlock arrives with the contract that teaches it, one idea at a time, matching the
+tutorial rule and GAME-DESIGN.md's "introduce a system when the player first needs it".
+

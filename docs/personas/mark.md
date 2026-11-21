@@ -176,7 +176,7 @@ slot, and 24 with Pack one slot closer to Supply. Mark's calls:
   don't help. Settled as is. One answer is right for crates (paint more), and the spare shift is
   room to take a painted side contract too, so the slack is the payoff for a pricey upgrade.
 
-## Proposal: the board grows a section at a time (2026-11-19, not decided)
+## The board grows a section at a time (2026-11-19; approved 2026-11-21, decision 94)
 
 Mike found the quarter board overwhelming and suggested starting with contracts only and opening
 the shop one section at a time. Mark's schedule, by quarter of the run, with each unlock tied to the

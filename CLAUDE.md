@@ -210,6 +210,9 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   You can own two of a machine ("Paint 2"), each with its own wear. Supply moves too but never goes in storage; the Dock
   and your desk are bolted down. The starting floor runs backwards on purpose (Supply by the Dock):
   the first lesson is swapping Supply and Pack (decision 88).
+- **The board opens a section at a time** (decision 94): each shop section opens the quarter its
+  first contract needs it (Q1 contracts and the floor editor, Q2 Recruit, Q3 Machines, Q4 Training,
+  Q5 the assembler). The lender shows up the first time something is out of reach.
 - Delegation comes from scale, not rules: you can only talk to one robot at a time.
 - Runs are endless (Mike: "the contracts get crazier and eventually they'll die"). Growing bigger
   can't mean a new first-class concept per tier: foremen are one, and there's only room for a few.

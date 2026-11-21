@@ -52,6 +52,10 @@ What's being built.
 
 Agreed direction, not built yet. Roughly in roadmap order.
 
+- **The board opens a section at a time** (decision 94). Q1 contracts, reputation and the floor
+  editor; Q2 Recruit; Q3 Machines; Q4 Training; Q5 on, the assembler and crates. Locked sections
+  are dated shutters, boards 1 and 2 have no side contract, and the lender appears the first time
+  something is out of reach. Approved as mocked (Mike, 2026-11-21).
 - **Multiple saves, named by company and owner.** Each run is a save named by its business and
   your name from the license ("Clank & Sons · Mike"). Mike, 2026-11-18: "Later on let's make it so
   you can have multiple saves, and the company name and your name is the name of the save."

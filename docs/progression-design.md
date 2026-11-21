@@ -38,6 +38,15 @@ dollar-eyed robot from the favicon is a **lender**: borrow from him at the board
 (borrow $100, pay back $110), and each loan takes 10% of every contract you finish until it's paid back (two loans, 20%). Your money
 is the quarter's budget; wages come out of it as the shifts run.
 
+**The board opens a section at a time** (decision 94). Each section opens the quarter its first
+contract needs it: Quarter 1 contracts, reputation and the floor editor (the Supply/Pack swap is
+what makes the first Large); Quarter 2 Recruit (board 2's Large needs a second hauler); Quarter 3
+Machines (the first painted contract needs a paint machine); Quarter 4 Training; Quarter 5 on, the
+assembler and crate contracts. Locked sections are closed shutters with a date ("Hiring hall opens
+Quarter 2"). Boards 1 and 2 have no side contract, since you can't paint yet. The lender appears
+the first time something in the shop is out of reach, counting the funds left after crew pay for
+the contracts you've picked, and stays after that.
+
 **The loop (built in level 7):**
 1. **Pick contracts** for the quarter from the board: one color in a Small or Large size, and a side
    contract in another color. All of a quarter's contracts are due at its end and never share a
