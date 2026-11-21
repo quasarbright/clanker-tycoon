@@ -93,11 +93,12 @@ test("the board lines up: one height per row of contracts, header blocks and sho
       head: new Set(vis(".ct-board-head > div").map((e) => Math.round(box(e).height))).size,
       cards: cards.length, cardHeights: new Set(cards.map((c) => Math.round(box(c).height))).size,
       buttonSpots: new Set(cards.map((c) => { const b = box(c.querySelector(".ct-btn")), r = box(c); return `${Math.round(r.right - b.right)},${Math.round(b.top - r.top)},${Math.round(b.width)}`; })).size,
+      nameSpots: new Set(cards.map((c) => Math.round(box(c.querySelector("b")).top - box(c).top))).size,
       tagRows: cards.every((c) => { const t = c.querySelector(".ct-skills"); return !t || t.scrollWidth <= t.clientWidth + 1; }),
       pageScroll: document.documentElement.scrollHeight > innerHeight,
     };
   });
-  expect(m).toEqual({ offerHeights: 1, goTop: 0, goBottom: 0, titlesOneLine: true, head: 1, cards: m.cards, cardHeights: 1, buttonSpots: 1, tagRows: true, pageScroll: false });
+  expect(m).toEqual({ offerHeights: 1, goTop: 0, goBottom: 0, titlesOneLine: true, head: 1, cards: m.cards, cardHeights: 1, buttonSpots: 1, nameSpots: 1, tagRows: true, pageScroll: false });
   expect(m.cards).toBeGreaterThan(8);
 });
 
