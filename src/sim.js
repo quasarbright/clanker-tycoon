@@ -326,7 +326,9 @@ export function playerSteer(s, vx, vy) {
 export function playerDo(s, a) {
   const p = s.player;
   if (p.act) return;
-  p.station = stationNear(s, p.x, p.y);
+  // Where you walked to wins over whatever is nearest: on the starting floor the Dock's near side
+  // is also the edge of Supply, and a box carried to the Dock went to Supply instead.
+  if (!(p.station && distToTile(p.station, p.x, p.y) <= RULES.reach)) p.station = stationNear(s, p.x, p.y);
   if (!p.station) return fail(s, p, a, "you're not at a station");
   start(s, p, a);
 }

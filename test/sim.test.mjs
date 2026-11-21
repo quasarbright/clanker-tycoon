@@ -72,3 +72,17 @@ test("robots put on the floor never start on top of you or each other, on any le
     }
   }
 });
+
+test("on the starting business floor, a box you carry to the Dock ships, though Supply's edge is nearer", async () => {
+  const { playerGo } = await import("../src/sim.js");
+  const { newBusiness, quarterLevel } = await import("../src/business.js");
+  const biz = newBusiness(); biz.crew = [];
+  const L = quarterLevel(LEVELS.find((l) => l.id === 7), biz, [{ id: "x", color: "red", count: 99, pay: 1 }]);
+  const g = newGame(L, [], 1);
+  g.player.holding = { id: ++g.ids, kind: "box", colors: ["red", "red", "red"] };
+  g.player.x = 34; g.player.y = 50; // by Pack, which is left of Supply, which is left of the Dock
+  playerGo(g, "DOCK", { action: "putDown" });
+  run(g, 10);
+  assert.equal(g.order[0].done, 1);
+  assert.equal(g.stations.SUPPLY.length <= 4, true);
+});

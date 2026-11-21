@@ -255,3 +255,10 @@ getting a little tired of this whole level select thing." It became a menu (Cont
 Load, Tutorial), the tutorial shrank to four short lessons, and a run now starts with nobody but you
 on the floor: "it's just you".
 
+
+**2026-11-21, you couldn't ship by hand on the starting floor.** Measuring how many boxes one person
+can ship alone (for the "it's just you" start), the headless player shipped zero. On the starting
+floor Supply sits just left of the Dock, and walking to the Dock from Pack stops at Supply's edge;
+your hands then acted on the nearest station, so every box went "to Supply" and failed. Robots were
+fine (they act where they walked to). Now you do too. Alone, with perfect reactions, you ship 15
+boxes a shift on the starting floor and 16 with Supply and Pack swapped.
