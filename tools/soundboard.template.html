@@ -48,7 +48,8 @@
   .controls input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
   .clock { font: 600 1rem var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
   .log { background: var(--panel); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; min-width: 0; }
-  .log ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; overflow: hidden; flex: 1; min-height: 0; }
+  .log ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; overflow: hidden; flex: 1; min-height: 0;
+    -webkit-mask-image: linear-gradient(#000 75%, transparent); mask-image: linear-gradient(#000 75%, transparent); }
   .log li { display: grid; grid-template-columns: 38px 70px minmax(0, 1fr); gap: 8px; align-items: baseline; font-size: .88rem; }
   .log li .t { font: .78rem var(--font-mono); color: var(--faint); font-variant-numeric: tabular-nums; }
   .log li .s { font: 600 .78rem var(--font-mono); color: var(--accent); }
@@ -62,7 +63,7 @@
     min-width: 0; transition: background .25s; }
   .pad.is-hit { background: #3a3215; transition: none; }
   .pad .top { display: flex; align-items: center; gap: 8px; min-width: 0; }
-  .pad .name { font: 600 .95rem var(--font-mono); color: var(--text); flex: 1; min-width: 0; }
+  .pad .name { font: 600 .88rem var(--font-mono); color: var(--text); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .pad .what { font-size: .85rem; line-height: 1.35; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
   .pad .meta { font: .72rem var(--font-mono); color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .pad .hit { width: 36px; height: 36px; padding: 0; border-radius: 50%; justify-content: center; flex: none; }
@@ -72,9 +73,10 @@
   footer { font-size: .82rem; color: var(--faint); max-width: 90ch; }
   footer code { font-family: var(--font-mono); color: var(--muted); }
 
-  @media (max-width: 1100px) { .pads { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  /* 14 pads: 7 across or 2 across, so no row is left short. */
+  @media (max-width: 1000px) { .pads { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 860px) { .replay { grid-template-columns: 1fr; } .log ol { max-height: 220px; } }
-  @media (max-width: 560px) { .pads { grid-template-columns: repeat(2, minmax(0, 1fr)); } h1 { font-size: 1.6rem; } }
+  @media (max-width: 560px) { h1 { font-size: 1.6rem; } }
   @media (prefers-reduced-motion: reduce) { .pad, .btn { transition: none; } }
 </style>
 
@@ -194,23 +196,27 @@ function draw() {
   const at = R.people.map((p, i) => { const [ax, ay] = A.p[i], [bx, by] = B.p[i]; return [ax + (bx - ax) * k, ay + (by - ay) * k]; });
   for (let pass = 0; pass < 4; pass++) for (let i = 0; i < at.length; i++) for (let j = i + 1; j < at.length; j++) {
     const dx = at[j][0] - at[i][0];
-    if (Math.abs(dx) < 6 && Math.abs(at[j][1] - at[i][1]) < 5) { const push = (6 - Math.abs(dx)) / 2 * (dx < 0 ? -1 : 1); at[i][0] -= push; at[j][0] += push; }
+    if (Math.abs(dx) < 8 && Math.abs(at[j][1] - at[i][1]) < 6) { const push = (8 - Math.abs(dx)) / 2 * (dx < 0 ? -1 : 1); at[i][0] -= push; at[j][0] += push; }
   }
   R.people.forEach((p, i) => {
     const hold = A.p[i][2], x = at[i][0] * u, y = at[i][1] * u;
     g.fillStyle = p.you ? css("--accent") : "#c7ccd3";
-    g.beginPath(); g.arc(x, y, 2.1 * u, 0, 7); g.fill();
+    g.beginPath(); g.arc(x, y, 1.9 * u, 0, 7); g.fill();
     if (p.fast) { // wheels
       g.strokeStyle = css("--muted"); g.lineWidth = 0.4 * u; g.setLineDash([0.7 * u, 0.6 * u]);
-      g.beginPath(); g.arc(x, y, 2.9 * u, 0, 7); g.stroke(); g.setLineDash([]);
+      g.beginPath(); g.arc(x, y, 2.6 * u, 0, 7); g.stroke(); g.setLineDash([]);
     }
     if (hold) {
       g.fillStyle = css(COLOR[hold.toLowerCase()] ?? "--muted");
       if (hold === hold.toUpperCase()) g.fillRect(x - 1.2 * u, y - 4.6 * u, 2.4 * u, 2.4 * u);
       else { g.beginPath(); g.arc(x, y - 3.5 * u, 0.9 * u, 0, 7); g.fill(); }
     }
-    g.fillStyle = css("--text"); g.font = `600 ${1.6 * u}px Barlow, system-ui, sans-serif`;
-    g.fillText(p.name, x, y + 3.6 * u);
+    // The name on a small dark tag, so it reads over a station's edge too.
+    const fs = Math.max(1.6 * u, 11 * (devicePixelRatio || 1));
+    g.font = `600 ${fs}px Barlow, system-ui, sans-serif`;
+    const tw = g.measureText(p.name).width + fs * 0.6, ty = y + 2.8 * u + fs * 0.6;
+    g.fillStyle = "rgba(11,12,14,.82)"; roundRect(x - tw / 2, ty - fs * 0.62, tw, fs * 1.24, fs * 0.3); g.fill();
+    g.fillStyle = css("--text"); g.fillText(p.name, x, ty);
   });
   $("#clock").textContent = `${fmt(t)} / ${fmt(R.seconds)}`;
   $("#scrub").value = Math.round((t / R.seconds) * 1000);
@@ -221,8 +227,8 @@ const heardList = $("#heard");
 function hear(c) {
   if (off.has(c.sound)) return;
   sfx.play(c.sound, c.x);
+  if (QUIET.has(c.sound)) return; // footsteps are constant: their pads would never stop flashing
   flash(c.sound);
-  if (QUIET.has(c.sound)) return;
   heardList.querySelector(".empty")?.remove();
   const li = document.createElement("li");
   li.innerHTML = `<span class="t">${fmt(c.t)}</span><span class="s">${c.sound}</span><span class="x"></span>`;
