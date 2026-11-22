@@ -404,11 +404,16 @@ function start(s, w, a) {
       if (!w.isPlayer && !hasSkill(w, PRIMARY[a.action])) return fail(s, w, a, `I don't know how to ${a.action}`);
       // Packing and assembling start right away and fill in; painting takes its time first.
       w.act = { a, kind: a.action, start: s.t, until: s.t + (a.action === "paint" ? machineTime(w, a.action) : 0) };
+      // A paint job that will go through starts now (packing and assembling say so once their box
+      // or crate exists). These "work" events are for sound (src/sound.js) and the play log.
+      if (a.action === "paint" && w.holding?.kind === "widget" && kindOf(w.station ?? "") === "PAINT" && COLORS.includes(a.color) && s.wear[w.station] < 100)
+        emit(s, { type: "work", worker: w.id, kind: "paint", station: w.station });
       return;
     case "service":
       // A side task: without the Repair skill it quietly does nothing.
       if (!w.isPlayer && !hasSkill(w, SIDE.service)) return ok(s, w, a);
       w.act = { a, kind: "service", start: s.t, until: s.t + (s.wear[w.station] > 0 ? machineTime(w, "service") : 0) };
+      if (s.wear[w.station] > 0) emit(s, { type: "work", worker: w.id, kind: "service", station: w.station });
       return;
     case "pickUp": case "putDown":
       w.act = { a, kind: a.action, start: s.t, until: s.t };
@@ -477,6 +482,7 @@ function pickUp(s, w, a, act) {
   // The supply never runs out: another of that color takes its place.
   if (w.station === "SUPPLY" && w.holding.kind === "widget") items.splice(idx, 0, widget(s, w.holding.color));
   s.version++;
+  emit(s, { type: "pickUp", worker: w.id, station: w.station, item: w.holding.kind });
   ok(s, w, a);
 }
 
@@ -503,6 +509,7 @@ function putDown(s, w, a, act) {
     return;
   }
   s.stations[st].push(w.holding);
+  emit(s, { type: "putDown", worker: w.id, station: st, item: w.holding.kind });
   w.holding = null; s.version++;
   ok(s, w, a);
 }
@@ -543,6 +550,7 @@ function assemble(s, w, a, act) {
   const time = machineTime(w, "assemble");
   const crate = { id: ++s.ids, kind: "crate", building: { start: s.t, until: s.t + time } };
   items.push(crate); s.version++;
+  emit(s, { type: "work", worker: w.id, kind: "assemble", station: st });
   wearOut(s, w, st);
   w.act = { a, kind: "assemble", crate, start: s.t, until: s.t + time };
 }
@@ -578,6 +586,7 @@ function pack(s, w, a, act) {
   const time = machineTime(w, "pack");
   const box = { id: ++s.ids, kind: "box", colors: chosen.map((i) => i.color), building: { start: s.t, until: s.t + time } };
   items.push(box); s.version++;
+  emit(s, { type: "work", worker: w.id, kind: "pack", station: w.station });
   w.act = { a, kind: "pack", box, start: s.t, until: s.t + time };
 }
 

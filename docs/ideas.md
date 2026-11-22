@@ -47,6 +47,11 @@ What's being built.
   goes in, and one crate (a bigger package holding the three) comes out and ships at the Dock.
   Every crate is that same mix (decision 86). Contracts can ask for crates. It's the first
   step toward lines feeding lines.
+- **Sound** (decision 97). Footsteps, wheels for Fast robots, pickups and put-downs, each machine,
+  a bell for a delivery and a honk for "not ordered", the shift whistle. Made from code
+  (`tools/sounds.mjs`), judged on the soundboard (https://claude.ai/artifact/HCwACg6yNcWPWWdFb8rtGH). Waiting
+  on Mike's ear. Later, if wanted: sounds for the paperwork (the license stamp, the quarter recap's
+  stamps, the newspaper landing), a volume slider, music.
 
 ## Next
 

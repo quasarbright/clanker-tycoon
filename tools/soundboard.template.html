@@ -1,0 +1,262 @@
+<meta charset="utf-8">
+<title>Clanker Tycoon Soundboard</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Barlow:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<!-- Built by tools/soundboard.mjs from this template; don't edit the published copy. -->
+<style>
+  /* Layout: the game's own look (dark floor, gold accent, Bungee). The replay floor on the left,
+     what you're hearing on the right, every sound as a pad underneath. One dark theme on purpose:
+     it's the game's. */
+  :root {
+    --bg: #121417; --panel: #1b1f24; --panel-2: #242a31; --border: #333a43;
+    --text: #eceae4; --muted: #9aa0a8; --faint: #626872;
+    --accent: #f2c230; --on-accent: #17140a; --lip: #0b0c0e;
+    --red: #e5534b; --blue: #4f8ff0; --green: #4cc06b; --crate: #c9a36a;
+    --floor: #171a1e; --tile: #262c34;
+    --font-ui: "Barlow", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", ui-monospace, monospace;
+    --font-display: "Bungee", "Barlow", system-ui, sans-serif;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { background: var(--bg); color: var(--text); }
+  body { font-family: var(--font-ui); font-size: 15px; line-height: 1.45; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-block: 24px 40px;
+    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+    display: flex; flex-direction: column; gap: 22px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 16px; }
+  h1 { font: 400 2rem/1 var(--font-display); color: var(--accent); margin: 0; text-wrap: balance; }
+  .eyebrow { font: 600 .72rem var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); width: 100%; }
+  header p { margin: 0; color: var(--muted); max-width: 70ch; }
+  h2 { font: 600 .78rem var(--font-ui); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+
+  .btn { border: 0; border-radius: 12px; padding: 9px 16px; cursor: pointer; font: 700 .95rem var(--font-ui);
+    background: var(--panel-2); color: var(--text); box-shadow: 0 4px 0 var(--lip); transition: transform .06s, box-shadow .06s;
+    display: inline-flex; align-items: center; gap: 8px; }
+  .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--lip); }
+  .btn.gold { background: var(--accent); color: var(--on-accent); --lip: #8f6d0c; }
+  .btn:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  .btn svg { width: 16px; height: 16px; }
+
+  /* ---- replay ---- */
+  .replay { display: grid; grid-template-columns: minmax(0, 1fr) 370px; gap: 16px; align-items: stretch; }
+  .stage { background: var(--panel); border-radius: 16px; padding: 12px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+  canvas { display: block; width: 100%; aspect-ratio: 100 / 64; max-width: 100%; border-radius: 10px; background: var(--floor); }
+  .controls { display: flex; align-items: center; gap: 12px; }
+  .controls input[type=range] { flex: 1; min-width: 0; accent-color: var(--accent); }
+  .clock { font: 600 1rem var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+  .log { background: var(--panel); border-radius: 16px; padding: 14px; display: flex; flex-direction: column; min-width: 0; }
+  .log ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; overflow: hidden; flex: 1; min-height: 0; }
+  .log li { display: grid; grid-template-columns: 38px 70px minmax(0, 1fr); gap: 8px; align-items: baseline; font-size: .88rem; }
+  .log li .t { font: .78rem var(--font-mono); color: var(--faint); font-variant-numeric: tabular-nums; }
+  .log li .s { font: 600 .78rem var(--font-mono); color: var(--accent); }
+  .log li .x { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+  .log .empty { color: var(--faint); font-size: .9rem; }
+  .log .note { margin-top: 10px; font-size: .8rem; color: var(--faint); }
+
+  /* ---- the pads ---- */
+  .pads { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 12px; }
+  .pad { background: var(--panel); border-radius: 14px; padding: 12px; display: grid; grid-template-rows: auto 2.7em auto; gap: 8px;
+    min-width: 0; transition: background .25s; }
+  .pad.is-hit { background: #3a3215; transition: none; }
+  .pad .top { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .pad .name { font: 600 .95rem var(--font-mono); color: var(--text); flex: 1; min-width: 0; }
+  .pad .what { font-size: .85rem; line-height: 1.35; color: var(--muted); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  .pad .meta { font: .72rem var(--font-mono); color: var(--faint); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .pad .hit { width: 36px; height: 36px; padding: 0; border-radius: 50%; justify-content: center; flex: none; }
+  .pad .hit svg { width: 14px; height: 14px; margin-left: 2px; }
+  .pad input { accent-color: var(--accent); margin: 0; width: 16px; height: 16px; cursor: pointer; flex: none; }
+  .pad.is-muted .name { color: var(--faint); text-decoration: line-through; }
+  footer { font-size: .82rem; color: var(--faint); max-width: 90ch; }
+  footer code { font-family: var(--font-mono); color: var(--muted); }
+
+  @media (max-width: 1100px) { .pads { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  @media (max-width: 860px) { .replay { grid-template-columns: 1fr; } .log ol { max-height: 220px; } }
+  @media (max-width: 560px) { .pads { grid-template-columns: repeat(2, minmax(0, 1fr)); } h1 { font-size: 1.6rem; } }
+  @media (prefers-reduced-motion: reduce) { .pad, .btn { transition: none; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Clanker Tycoon</span>
+    <h1>Soundboard</h1>
+    <p>Every sound in the game, and a replay of a busy floor recorded from the real game, playing each sound when and where the game would.</p>
+  </header>
+
+  <section class="replay" aria-label="Replay">
+    <div class="stage">
+      <canvas id="floor" width="1000" height="640" aria-label="The factory floor: stations as boxes, robots as dots"></canvas>
+      <div class="controls">
+        <button class="btn gold" id="play" type="button"></button>
+        <button class="btn" id="restart" type="button" aria-label="Back to the start">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>
+        </button>
+        <input type="range" id="scrub" min="0" max="1000" value="0" aria-label="Replay time">
+        <span class="clock" id="clock">0:00 / 0:00</span>
+      </div>
+    </div>
+    <div class="log">
+      <h2>Just heard</h2>
+      <ol id="heard"><li class="empty">Press Play. The floor starts with the shift whistle.</li></ol>
+      <div class="note">Footsteps and wheels play but aren't listed here.</div>
+    </div>
+  </section>
+
+  <section aria-label="Sounds">
+    <h2>Every sound</h2>
+    <div class="pads" id="pads"></div>
+  </section>
+
+  <footer>
+    Sounds made <span id="made">/*MADE*/</span> by <code>tools/sounds.mjs</code> in the clanker-tycoon repo; the replay is 75 seconds of a real shift
+    (seven robots and you, both paint machines and the assembler) recorded by <code>tools/soundboard.mjs</code>.
+    Untick a sound&rsquo;s box to leave it out of the replay. A ring of wheels marks a Fast robot; the gold dot is you.
+  </footer>
+</div>
+
+<script>
+const SOUNDS = /*SOUNDS*/;
+const createSoundPlayer = /*PLAYER*/;
+const sfx = createSoundPlayer(SOUNDS, (name) => `sounds/${name}.mp3`);
+const QUIET = new Set(["step", "roll"]); // not listed in "Just heard"
+const $ = (s) => document.querySelector(s);
+const ICON = {
+  play: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16l13-8z" fill="currentColor"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="4" width="5" height="16" rx="1.2" fill="currentColor"/><rect x="14" y="4" width="5" height="16" rx="1.2" fill="currentColor"/></svg>',
+};
+const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+const COLOR = { r: "--red", b: "--blue", g: "--green", c: "--crate" };
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+
+let R = null, t = 0, playing = false, last = 0, nextCue = 0;
+const off = new Set(), counts = {};
+
+// ---- pads ----
+const pads = $("#pads");
+for (const [name, spec] of Object.entries(SOUNDS)) {
+  const el = document.createElement("div");
+  el.className = "pad"; el.id = `pad-${name}`;
+  el.innerHTML = `<div class="top"><input type="checkbox" id="on-${name}" checked aria-label="Play ${name} in the replay" title="Untick to leave it out of the replay">
+    <span class="name">${name}</span><button class="btn gold hit" type="button" id="hit-${name}" aria-label="Play ${name}">${ICON.play}</button></div>
+    <div class="what">${spec.what}</div>
+    <div class="meta" id="meta-${name}"></div>`;
+  pads.append(el);
+  el.querySelector("button").addEventListener("click", () => { sfx.play(name, 50); flash(name); });
+  el.querySelector("input").addEventListener("change", (e) => { e.target.checked ? off.delete(name) : off.add(name); el.classList.toggle("is-muted", !e.target.checked); });
+}
+function flash(name) {
+  const el = document.getElementById(`pad-${name}`);
+  el.classList.remove("is-hit"); void el.offsetWidth; el.classList.add("is-hit");
+  clearTimeout(el._t); el._t = setTimeout(() => el.classList.remove("is-hit"), 120);
+}
+
+// ---- replay ----
+const canvas = $("#floor"), g = canvas.getContext("2d");
+function size() {
+  const r = canvas.getBoundingClientRect(), k = devicePixelRatio || 1;
+  canvas.width = Math.round(r.width * k); canvas.height = Math.round(r.height * k);
+  draw();
+}
+function frameAt(time) {
+  const i = Math.min(R.frames.length - 1, Math.max(0, time / R.frame)), a = Math.floor(i), b = Math.min(R.frames.length - 1, a + 1);
+  return { A: R.frames[a], B: R.frames[b], k: i - a };
+}
+function draw() {
+  if (!R) return;
+  const W = canvas.width, H = canvas.height, u = W / R.floor.w;
+  g.clearRect(0, 0, W, H);
+  const { A, B, k } = frameAt(t);
+  g.textAlign = "center"; g.textBaseline = "middle";
+  // stations: a box with its name, what's on it as little squares, a wear bar on machines
+  for (const [key, st] of Object.entries(R.stations)) {
+    const x = (st.x - 8) * u, y = (st.y - 5.5) * u, w = 16 * u, h = 11 * u;
+    g.fillStyle = css("--tile"); roundRect(x, y, w, h, 1.2 * u); g.fill();
+    g.fillStyle = css("--muted"); g.font = `600 ${1.9 * u}px Barlow, system-ui, sans-serif`;
+    g.fillText(st.label, st.x * u, (st.y - 3) * u);
+    const items = A.s[key] ?? "";
+    const n = Math.min(items.length, 12);
+    for (let j = 0; j < n; j++) {
+      const c = items[j], big = c === c.toUpperCase();
+      const col = j % 6, row = Math.floor(j / 6);
+      const ix = (st.x - 6.6 + col * 2.4) * u, iy = (st.y - 0.6 + row * 2.4) * u;
+      g.fillStyle = css(COLOR[c.toLowerCase()] ?? "--muted");
+      if (big) { g.fillRect(ix, iy, 2 * u, 2 * u); } else { g.beginPath(); g.arc(ix + u, iy + u, 0.8 * u, 0, 7); g.fill(); }
+    }
+    if (key in A.w) {
+      g.fillStyle = "#0b0c0e"; g.fillRect(x + u, y + h - 1.6 * u, w - 2 * u, 0.7 * u);
+      g.fillStyle = A.w[key] >= 100 ? css("--red") : css("--accent"); g.fillRect(x + u, y + h - 1.6 * u, (w - 2 * u) * A.w[key] / 100, 0.7 * u);
+    }
+  }
+  // people: a dot each, what they hold on top, their name under it
+  // Robots standing in the same spot spread out side by side, as in the game.
+  const at = R.people.map((p, i) => { const [ax, ay] = A.p[i], [bx, by] = B.p[i]; return [ax + (bx - ax) * k, ay + (by - ay) * k]; });
+  for (let pass = 0; pass < 4; pass++) for (let i = 0; i < at.length; i++) for (let j = i + 1; j < at.length; j++) {
+    const dx = at[j][0] - at[i][0];
+    if (Math.abs(dx) < 6 && Math.abs(at[j][1] - at[i][1]) < 5) { const push = (6 - Math.abs(dx)) / 2 * (dx < 0 ? -1 : 1); at[i][0] -= push; at[j][0] += push; }
+  }
+  R.people.forEach((p, i) => {
+    const hold = A.p[i][2], x = at[i][0] * u, y = at[i][1] * u;
+    g.fillStyle = p.you ? css("--accent") : "#c7ccd3";
+    g.beginPath(); g.arc(x, y, 2.1 * u, 0, 7); g.fill();
+    if (p.fast) { // wheels
+      g.strokeStyle = css("--muted"); g.lineWidth = 0.4 * u; g.setLineDash([0.7 * u, 0.6 * u]);
+      g.beginPath(); g.arc(x, y, 2.9 * u, 0, 7); g.stroke(); g.setLineDash([]);
+    }
+    if (hold) {
+      g.fillStyle = css(COLOR[hold.toLowerCase()] ?? "--muted");
+      if (hold === hold.toUpperCase()) g.fillRect(x - 1.2 * u, y - 4.6 * u, 2.4 * u, 2.4 * u);
+      else { g.beginPath(); g.arc(x, y - 3.5 * u, 0.9 * u, 0, 7); g.fill(); }
+    }
+    g.fillStyle = css("--text"); g.font = `600 ${1.6 * u}px Barlow, system-ui, sans-serif`;
+    g.fillText(p.name, x, y + 3.6 * u);
+  });
+  $("#clock").textContent = `${fmt(t)} / ${fmt(R.seconds)}`;
+  $("#scrub").value = Math.round((t / R.seconds) * 1000);
+}
+function roundRect(x, y, w, h, r) { g.beginPath(); g.roundRect ? g.roundRect(x, y, w, h, r) : g.rect(x, y, w, h); }
+
+const heardList = $("#heard");
+function hear(c) {
+  if (off.has(c.sound)) return;
+  sfx.play(c.sound, c.x);
+  flash(c.sound);
+  if (QUIET.has(c.sound)) return;
+  heardList.querySelector(".empty")?.remove();
+  const li = document.createElement("li");
+  li.innerHTML = `<span class="t">${fmt(c.t)}</span><span class="s">${c.sound}</span><span class="x"></span>`;
+  li.querySelector(".x").textContent = c.text;
+  heardList.prepend(li);
+  while (heardList.children.length > 14) heardList.lastChild.remove();
+}
+function tick(now) {
+  if (!playing) return;
+  const dt = Math.min(0.1, (now - last) / 1000); last = now;
+  t = Math.min(R.seconds, t + dt);
+  while (nextCue < R.cues.length && R.cues[nextCue].t <= t) hear(R.cues[nextCue++]);
+  draw();
+  if (t >= R.seconds) { setPlaying(false); return; }
+  requestAnimationFrame(tick);
+}
+function seek(to) { t = to; nextCue = R.cues.findIndex((c) => c.t > t); if (nextCue < 0) nextCue = R.cues.length; draw(); }
+function setPlaying(p) {
+  if (p && t >= R.seconds) seek(0);
+  playing = p;
+  $("#play").innerHTML = p ? `${ICON.pause}Pause` : `${ICON.play}Play`;
+  if (p) { sfx.loadAll(); last = performance.now(); requestAnimationFrame(tick); }
+}
+$("#play").addEventListener("click", () => R && setPlaying(!playing));
+$("#restart").addEventListener("click", () => { if (!R) return; heardList.innerHTML = ""; seek(0); });
+$("#scrub").addEventListener("input", (e) => R && seek((e.target.value / 1000) * R.seconds));
+document.addEventListener("keydown", (e) => { if (e.key === " " && e.target === document.body) { e.preventDefault(); R && setPlaying(!playing); } });
+$("#play").innerHTML = `${ICON.play}Play`;
+
+fetch("replay.json").then((r) => r.json()).then((data) => {
+  R = data;
+  for (const c of R.cues) counts[c.sound] = (counts[c.sound] ?? 0) + 1;
+  for (const name of Object.keys(SOUNDS)) $(`#meta-${name}`).textContent = counts[name] ? `${counts[name]} in the replay` : "not in the replay";
+  new ResizeObserver(size).observe(canvas);
+  size();
+}).catch(() => { heardList.innerHTML = '<li class="empty">The replay didn\'t load. The pads below still play.</li>'; });
+</script>

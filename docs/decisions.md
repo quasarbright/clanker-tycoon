@@ -1461,3 +1461,46 @@ real person with the mouse and keyboard is slower; Mark assumes 65 to 75% of tha
 (54 / 99 red) was tuned for Blip, Pip and a recruit; now it's you plus whoever you recruit in
 quarter 2. Run it with you plus two cheap recruits (hauler and packer) before changing it.
 
+
+### 97. The game has sound, made from code, with a soundboard to judge it by (2026-11-22)
+
+**Problem:** the game was silent. Mike: "let's add sound! machines could make a sound, picking up
+and putting down, moving, moving with fast (wheels), nice satisfying ding on a delivery but a less
+nice sound for 'not ordered'". He also wanted a soundboard artifact with a replay "based on actual
+gameplay events from a full-steam factory running", rendered very simply ("we don't want this
+artifact to have a bunch of code in it re-implementing everything"), that stays in sync when the
+sounds change, maybe by loading them from GitHub Pages, "but don't try too hard".
+**Options for the sounds:** recorded samples from a free library (better texture, but each one picked
+blind and harder to change), synthesis in the browser at play time (no files, but nothing to listen
+to outside the game), or synthesis offline into files.
+**Picked:** offline synthesis. `tools/sounds.mjs` has one short recipe per sound (tones, noise,
+filters, envelopes) and writes `sounds/<name>.mp3` (14 files, 172 KB). Changing a sound is editing
+its recipe and rerunning the script. The tone is decision 80's: small honest machines and slapstick,
+a desk bell for a delivery and two deflating honks for "not ordered", nothing harsh or sci-fi.
+- The sounds: step, roll (Fast robots' wheels), pickup, putdown, pack, paint, assemble, service,
+  ding, nope (not ordered), worn, fail, huh (something unexpected starts a robot thinking), whistle
+  (the shift whistle, at Start and at the end).
+- `src/sound.js` holds the catalog (name, what it's for, volume), which sim event makes which sound,
+  and footsteps: a step every 7 floor units walked, a wheel clack every 5 for a Fast robot, so speed
+  is heard in the cadence. Sounds pan left and right by where they happen on the floor. The same
+  sound twice within 25 ms plays once (a whole crew stalling says "huh" once).
+- The sim now emits `pickUp`, `putDown` and `work` (pack, paint, assemble, service as they start)
+  events. They go into the play log too, which had no pickups before.
+- A speaker button at the top right turns sound off; the choice is remembered (localStorage
+  `clanker-tycoon:sound`). Sound is on by default and starts on your first click or key, as browsers
+  require.
+**The soundboard:** `tools/soundboard.mjs` plays 75 seconds of a busy floor headless (seven robots
+and you, both paint machines and the assembler, hand-written programs, no model calls), records
+where everyone is and what each station holds 10 times a second, and turns the sim's events into
+sounds with `src/sound.js`'s own rules. The page only draws dots and boxes and plays the sound names
+it's given at the times it's given; its player is `createSoundPlayer` copied in from `src/sound.js`.
+**Loading from Pages:** not possible. An artifact page can't fetch from any other site (its rules
+block every host but a few script CDNs), so the soundboard carries its own copy: the mp3s and the
+replay are published as the artifact's files. Keeping it in sync is manual: after changing a sound,
+run `node tools/sounds.mjs`, `node tools/soundboard.mjs`, and republish the folder to the same
+artifact (https://claude.ai/artifact/HCwACg6yNcWPWWdFb8rtGH).
+**Evidence:** `test/sound.test.mjs` (every asked-for sound happens in the real sim: pickup, putdown,
+footsteps, wheels only for Fast, ding, not ordered, paint, worn, service; the soundboard builds with
+all of them in its replay) and `e2e/sound.spec.mjs` (Start whistles, events play, the files serve as
+audio, the speaker button sticks). **To check:** Mike listening; the recipes were tuned by looking at
+spectrograms, not by ear.

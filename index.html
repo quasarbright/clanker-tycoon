@@ -54,6 +54,10 @@
     .ct-cash.is-funds #labor { color: var(--money); font: 400 1.45rem/1 var(--font-display); vertical-align: -3px; margin-left: 4px; }
     .ct-cash.is-funds #laborLabel { font-size: .8rem; }
     .ct-clock { text-align: right; }
+    #soundBtn { margin-left: auto; }
+    #soundBtn .ct-sound-off, #soundBtn.is-off .ct-sound-on { display: none; }
+    #soundBtn.is-off .ct-sound-off { display: block; }
+    #soundBtn.is-off { color: var(--muted); }
     .ct-clock-value { font: 600 1.3rem var(--font-mono); }
 
     /* ---------- layout ---------- */
@@ -903,6 +907,11 @@
   <header class="ct-top">
     <button class="ct-btn ct-round" id="pauseBtn" aria-label="Pause">
       <svg width="16" height="18" viewBox="0 0 16 18" style="display:block"><rect x="1" y="1" width="5" height="16" rx="1.5" fill="currentColor"/><rect x="10" y="1" width="5" height="16" rx="1.5" fill="currentColor"/></svg>
+    </button>
+    <!-- Sound on and off (decision 97): a speaker, crossed out when off. Remembered between visits. -->
+    <button class="ct-btn ct-round" id="soundBtn" aria-label="Sound on" data-tooltip="Sound is on. Click to turn it off.">
+      <svg class="ct-sound-on" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z" fill="currentColor"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M19 5a10 10 0 0 1 0 14"/></svg>
+      <svg class="ct-sound-off" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 5 6 9H2v6h4l5 4V5z" fill="currentColor"/><path d="m22 9-6 6"/><path d="m16 9 6 6"/></svg>
     </button>
     <!-- The shift, its clock and the money are what matter most, so they take the center; the
          order (or quota) shows as tickets above the floor. -->

@@ -29,7 +29,7 @@ if (BRIDGE) await prepareBridge(BRIDGE);
 const MIME = {
   ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8",
   ".mjs": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8",
-  ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon",
+  ".json": "application/json", ".svg": "image/svg+xml", ".png": "image/png", ".ico": "image/x-icon", ".mp3": "audio/mpeg",
 };
 
 let running = 0;

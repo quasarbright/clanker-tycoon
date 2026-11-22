@@ -108,6 +108,11 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   size, captions get a clamped slot, and every card's button sits in the same spot. Measure row
   heights in the browser (e2e "the board lines up") and screenshot the fullest state. Details in the
   plugin's `UX-CHECKLIST.md`.
+- **Sound** (Mike, 2026-11-22: "let's add sound!"; decision 97): every sound is made from code by
+  `tools/sounds.mjs` into `sounds/*.mp3`; `src/sound.js` says which sim event makes which sound. A
+  delivery is a satisfying ding, "not ordered" is a less nice sound, Fast robots roll on wheels.
+  After changing a sound, rebuild the soundboard (`node tools/soundboard.mjs`) and republish
+  `logs/soundboard/` (index.html, replay.json, sounds/) to https://claude.ai/artifact/HCwACg6yNcWPWWdFb8rtGH.
 - PC only (Mike, 2026-11-17: "This is going to be a PC only game"). Design for wide windows and
   use the horizontal space; phones don't need to work.
 - You can see what a robot can do by looking at it: skills are tools they carry, attributes change
@@ -246,13 +251,13 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
   has `shift` (`<page session>/<attempt>`), game time `t`, and a `type`: `shift` (level opened, with
   the crew carried over), `hire`/`fire`, `chat` (everything said in a worker's conversation,
   both ways), `instructions` (what a worker wrote down), `start`, `you` (your moves), `sim` (every
-  sim event: pickups, ships, fails, waits that gave up, unexpected, desk visits, wear), a
+  sim event: pickups and put-downs, machine work starting, ships, fails, waits that gave up, unexpected, desk visits, wear), a
   `snapshot` every 5 s (where everyone is, holding, doing, station contents, order), and `end`.
   The business layer and the UI too (decision 83): `run_start`, `license`, `board` (offers with
   full and scaled numbers, funds, reputation, loans, crew), `pick`, `recruit`, `train`, `buy`,
   `borrow`, `quarter_start`, `quarter_settle` (each contract, crew pay, funds and reputation before
   and after), `gameover`, `new_run`, `pause`/`resume`, `restart_shift`, `end_card`, `menu`,
-  `chat_open`, `start_blocked` (with why), the floor editor (`floor_edit`, `floor_move`,
+  `chat_open`, `start_blocked` (with why), `sound` (the speaker button), the floor editor (`floor_edit`, `floor_move`,
   `floor_done`, `floor_keep`, `floor_auto`), and `error`/`llm_error` (uncaught errors, console.error,
   failed model calls). Mike (2026-11-18): logs "pretty comprehensive, so if I do a playtest and then
   I report that something was weird ... you will be able to look at logs".

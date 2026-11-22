@@ -21,6 +21,7 @@ import { LENDER, payBackOf, SHOP, QUARTER_SHIFTS, newBusiness, board, hasMachine
 import { headline } from "./headlines.js";
 import { REP, wholePips, offerShare, pipsText, deltaText, gainOf, afterQuarter, ruined, onTheEdge } from "./reputation.js";
 import { SKILL_TIER, wageOf } from "./wages.js";
+import { SOUNDS, eventCues, footstepCues, createSoundPlayer } from "./sound.js";
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
@@ -377,6 +378,7 @@ function begin({ force = false } = {}) {
   else game.laborCost = payroll();
   lastSnap = -1e9;
   logEvent(0, "start", { crew: crewSummary() });
+  hear([{ sound: "whistle", x: 50 }]);
   keepTyped();
   buildCrew(); // drop the Let go buttons and the Hire row
 }
@@ -1068,7 +1070,41 @@ function floater(text, x, y, scrap) {
 
 const lastSaid = {};
 
+// ---------- sound (decision 97) ----------
+// The files are made by tools/sounds.mjs; src/sound.js says which event makes which sound. On by
+// default; the speaker button turns it off and the choice is remembered.
+const SOUND_KEY = "clanker-tycoon:sound";
+const sfx = createSoundPlayer(SOUNDS, (name) => new URL(`../sounds/${name}.mp3`, import.meta.url).href);
+let soundOn = (() => { try { return localStorage.getItem(SOUND_KEY) !== "off"; } catch { return true; } })();
+const feet = new Map();
+/** Sounds made this frame, for the tests: [{ sound, x }]. */
+const heard = [];
+function hear(cues) {
+  for (const c of cues) {
+    heard.push(c); if (heard.length > 200) heard.shift();
+    if (soundOn) sfx.play(c.sound, c.x);
+  }
+}
+function setSound(on) {
+  soundOn = on;
+  try { localStorage.setItem(SOUND_KEY, on ? "on" : "off"); } catch {}
+  logEvent(game?.t ?? null, "sound", { on });
+  showSound();
+  if (on) sfx.loadAll();
+}
+function showSound() {
+  const on = soundOn, b = $("#soundBtn");
+  b.classList.toggle("is-off", !on);
+  b.setAttribute("aria-label", on ? "Sound on" : "Sound off");
+  b.dataset.tooltip = on ? "Sound is on. Click to turn it off." : "Sound is off. Click to turn it on.";
+}
+showSound();
+$("#soundBtn").addEventListener("click", () => setSound(!soundOn));
+// Browsers only let a page make sound after a click or a key, so the sounds load on the first one.
+for (const kind of ["pointerdown", "keydown"]) document.addEventListener(kind, () => { if (soundOn) sfx.loadAll(); }, { once: true, capture: true });
+
 function handleEvents() {
+  hear(eventCues(game, game.events));
   for (const ev of game.events.splice(0)) {
     if (ev.type !== "say") { const { type, t, ...rest } = ev; logEvent(t, "sim", { event: type, ...rest }); }
     const w = ev.worker && worker(ev.worker);
@@ -1264,7 +1300,8 @@ function renderCoach() {
 function frame(now) {
   const dt = Math.min(0.1, (now - lastFrame) / 1000);
   lastFrame = now;
-  if (game && phase === "run" && started && !paused && !game.over) { step(game, dt); handleEvents(); snapshot(); }
+  if (game && phase === "run" && started && !paused && !game.over) { step(game, dt); hear(footstepCues(game, feet)); handleEvents(); snapshot(); }
+  else feet.clear(); // paused or between shifts: nobody's mid-stride
   if (game) render();
   requestAnimationFrame(frame);
 }
@@ -2080,7 +2117,8 @@ requestAnimationFrame(frame);
 window.ct = {
   get game() { return game; }, get phase() { return phase; }, get started() { return started; }, get quarter() { return quarter; },
   openLevel: (n) => openLevel(LEVELS[n - 1]), unlockAll: () => { unlocked = LEVELS.length; renderLevels(); },
-  step: (dt) => { if (started) step(game, dt); handleEvents(); render(); },
+  step: (dt) => { if (started) { step(game, dt); hear(footstepCues(game, feet)); } handleEvents(); render(); },
+  get heard() { return heard; }, get soundOn() { return soundOn; },
   give: (id, text) => giveInstructions(worker(id), text), say: (id, text) => message(worker(id), "message", text),
   setPaused, begin: () => begin({ force: true }), startBlocker: () => startBlocker(), thinking: (id, d) => setThinking(worker(id), d), hire, playerActions, openBoard, renderBoard, get biz() { return biz; }, set biz(b) { biz = b; },
   buy: (id) => buy(biz, id), borrow: (i) => borrow(biz, i), paintChoices: (c) => paintChoices(c), openEditor, closeEditor, relayout, get editing() { return editing; }, get level() { return level; },

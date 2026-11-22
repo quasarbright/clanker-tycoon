@@ -262,3 +262,11 @@ floor Supply sits just left of the Dock, and walking to the Dock from Pack stops
 your hands then acted on the nearest station, so every box went "to Supply" and failed. Robots were
 fine (they act where they walked to). Now you do too. Alone, with perfect reactions, you ship 15
 boxes a shift on the starting floor and 16 with Supply and Pack swapped.
+
+**2026-11-22, the factory gets loud.** Mike: "let's add sound! ... nice satisfying ding on a delivery
+but a less nice sound for 'not ordered'". Every sound is made from code (a few lines of tones and
+filtered noise each), so none were picked from a library, and none were heard by whoever made them:
+they were tuned by looking at spectrograms. To judge them in context there's a soundboard page with
+a replay of a busy floor, recorded from the real sim, drawn as dots and boxes. Loading the sounds
+from the live game didn't work out: artifact pages can't fetch from other sites, so the soundboard
+keeps its own copy.
