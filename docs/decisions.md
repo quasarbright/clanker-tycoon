@@ -1504,3 +1504,25 @@ footsteps, wheels only for Fast, ding, not ordered, paint, worn, service; the so
 all of them in its replay) and `e2e/sound.spec.mjs` (Start whistles, events play, the files serve as
 audio, the speaker button sticks). **To check:** Mike listening; the recipes were tuned by looking at
 spectrograms, not by ear.
+
+### 98. Six sounds remade from Mike's soundboard comments; the sound button sits by Pause (2026-11-22)
+
+**Problem:** Mike listened on the soundboard and commented on six sounds, and asked for the speaker
+button "next to the pause button" (it was alone at the top right, and its tooltip ran into the
+Schedule panel).
+**Picked (each is Mike's comment, then what changed):**
+- worn, "a little too busy ... make it sound like something grinding to a halt": one motor whose
+  pitch and rattle both slow to a stop, replacing chug, clank and steam.
+- whistle, "more like a steam whistle to give an old factory vibe": three pipes of breathy noise in
+  a low chord, the pitch climbing as the pressure builds and sagging at the end.
+- service, "get rid of the ding": just the two wrench ratchets.
+- assemble, "makes absolutely no sense ... sounds like the paint sound, the last bit of it": one
+  heavy press, ka-CHUNK, with no air release.
+- pack, the tape "sounds too similar to the paint sound": the tape is now a stick-slip crackle that
+  speeds up as it's pulled. The flaps and the pat stay.
+- putdown, "the opposite of the pickup": a falling plop, the pickup's rising plip turned around.
+- The speaker button sits right of Pause at the top left (e2e "next to the pause button").
+**The general rule (Mike):** "Most of these sounds should pretty much just have one component".
+Only the sounds he named changed; the rule is for new sounds and the next pass. Recorded in the
+plugin's ART.md (Sound) and in CLAUDE.md.
+**Replaces:** those six recipes from decision 97, and its "top right" for the button.

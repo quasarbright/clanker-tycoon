@@ -96,21 +96,27 @@ const RECIPES = {
     mix(b, shape(filter(noise(0.01), "highpass", 4000), decay(0.002)), 0, 0.5);
     return b;
   },
-  // Setting it down: a low wooden thunk.
+  // Setting it down: the pickup turned around, a falling plop with a soft knock
+  // (Mike: "the opposite of the pickup").
   putdown: () => {
-    const b = buf(0.2);
-    mix(b, shape(tone(0.2, (t) => lerp(190, 105, Math.min(1, t / 0.06))), decay(0.04)), 0, 1);
-    mix(b, shape(tone(0.08, () => 620), decay(0.012)), 0, 0.3);
-    mix(b, shape(filter(noise(0.05), "lowpass", 900), decay(0.012)), 0, 0.6);
+    const b = buf(0.14);
+    mix(b, shape(tone(0.14, (t) => lerp(1300, 520, Math.min(1, t / 0.05))), decay(0.03)), 0, 0.8);
+    mix(b, shape(filter(noise(0.02), "lowpass", 1500), decay(0.004)), 0.035, 0.4);
     return b;
   },
-  // Packing a box: two cardboard flaps fold in, a strip of tape zips across, a pat on top.
+  // Packing a box: two cardboard flaps fold in, a strip of tape crackles off the roll, a pat on
+  // top. The tape is stick-slip: a run of tiny irregular clicks that speeds up as it's pulled, so it
+  // can't be mistaken for the paint spray's steady hiss (Mike).
   pack: () => {
     const b = buf(1.0);
     for (const at of [0, 0.17]) mix(b, shape(filter(noise(0.1), "bandpass", 650, 1.2), ahr(0.008, 0.02, 0.06)), at, 0.9);
-    const zip = filter(noise(0.38), "bandpass", (t) => lerp(1400, 4200, t / 0.38), 2.5);
-    shape(zip, (t) => ahr(0.03, 0.27, 0.08)(t) * (0.6 + 0.4 * Math.sin(2 * Math.PI * 70 * t)));
-    mix(b, zip, 0.38, 0.8);
+    const tape = buf(0.4);
+    for (let t = 0; t < 0.36;) {
+      const k = t / 0.36, click = shape(filter(noise(0.006), "bandpass", 1800 + 900 * k, 3), decay(0.0012));
+      mix(tape, click, t, 0.6 + 0.4 * Math.abs(rand()));
+      t += (1 / lerp(90, 260, k)) * (0.6 + 0.8 * Math.abs(rand()));
+    }
+    mix(b, shape(tape, ahr(0.02, 0.3, 0.08)), 0.38, 1);
     mix(b, shape(filter(noise(0.06), "lowpass", 500), decay(0.015)), 0.82, 0.9);
     mix(b, shape(tone(0.1, () => 140), decay(0.025)), 0.82, 0.5);
     return b;
@@ -124,24 +130,22 @@ const RECIPES = {
     mix(b, spray, 0.05, 0.55);
     return b;
   },
-  // The assembler: three pneumatic ka-chunks as the boxes go together, then it lets off air.
+  // The assembler: one heavy press, ka-CHUNK, as three boxes become a crate. One sound, no hiss
+  // (Mike: the old one "makes absolutely no sense" and ended like the paint spray).
   assemble: () => {
-    const b = buf(1.4);
-    for (const [at, f] of [[0, 330], [0.3, 300], [0.6, 360]]) {
-      mix(b, shape(filter(noise(0.06), "lowpass", 600), decay(0.015)), at, 0.8);
-      mix(b, metal(0.4, f, [[1, 0.6, 0.12], [2.76, 0.35, 0.06], [5.4, 0.15, 0.03]]), at + 0.03, 0.8);
-    }
-    mix(b, shape(filter(noise(0.4), "bandpass", 3000, 0.8), ahr(0.02, 0.1, 0.28)), 0.95, 0.4);
+    const b = buf(0.6);
+    mix(b, shape(tone(0.4, (t) => lerp(110, 55, Math.min(1, t / 0.12))), decay(0.09)), 0, 1);
+    mix(b, metal(0.5, 240, [[1, 0.5, 0.14], [2.76, 0.25, 0.07], [5.4, 0.1, 0.03]]), 0, 0.6);
+    mix(b, shape(filter(noise(0.04), "lowpass", 1200), decay(0.008)), 0, 0.7);
     return b;
   },
-  // Servicing a machine: a wrench ratchets twice, then a little ting when it's good as new.
+  // Servicing a machine: a wrench ratchets twice (no ding at the end; Mike).
   service: () => {
-    const b = buf(1.5);
+    const b = buf(0.8);
     for (const start of [0, 0.42]) for (let k = 0; k < 7; k++) {
       mix(b, shape(filter(noise(0.015), "bandpass", 4200, 5), decay(0.003)), start + k * 0.042, 0.9);
       mix(b, shape(tone(0.03, () => 2300), decay(0.005)), start + k * 0.042, 0.2);
     }
-    mix(b, metal(0.6, 2600, [[1, 0.7, 0.25], [2.4, 0.2, 0.1]]), 0.9, 0.6);
     return b;
   },
   // Something shipped that was ordered: a bright desk bell.
@@ -159,15 +163,17 @@ const RECIPES = {
     }
     return b;
   },
-  // A machine wears out: the motor chugs and slows, something goes clank, steam escapes.
+  // A machine wears out: one motor grinding to a halt, its pitch and its rattle both slowing down
+  // (Mike: the old chug, clank and steam was "a little too busy").
   worn: () => {
-    const b = buf(1.5);
-    for (const [k, at] of [0, 0.14, 0.31, 0.53].entries()) {
-      mix(b, shape(filter(noise(0.12), "lowpass", 380 - k * 50), ahr(0.01, 0.03, 0.08)), at, 1);
-      mix(b, shape(tone(0.12, () => 95 - k * 12, "saw"), ahr(0.01, 0.03, 0.08)), at, 0.25);
-    }
-    mix(b, metal(0.5, 210, [[1, 0.8, 0.15], [2.76, 0.4, 0.08], [5.4, 0.2, 0.04]]), 0.78, 0.9);
-    mix(b, shape(filter(noise(0.6), "highpass", 1800), ahr(0.03, 0.12, 0.45)), 0.85, 0.35);
+    const sec = 1.3, b = buf(sec);
+    const f = (t) => lerp(150, 28, Math.min(1, t / 1.1) ** 0.7);
+    const grind = tone(sec, f, "saw");
+    // The motor's own rotation rattles it, so the rattle slows with the pitch.
+    let ph = 0;
+    for (let i = 0; i < grind.length; i++) { ph += f(i / RATE) / 6 / RATE; grind[i] *= 0.55 + 0.45 * Math.sin(2 * Math.PI * ph) ** 2; }
+    mix(b, shape(filter(grind, "lowpass", 900), ahr(0.02, 0.75, 0.5)), 0, 1);
+    mix(b, shape(filter(noise(sec), "bandpass", (t) => f(t) * 8, 2), ahr(0.02, 0.75, 0.5)), 0, 0.5);
     return b;
   },
   // A worker's action didn't work: a small descending boop-boop.
@@ -183,16 +189,25 @@ const RECIPES = {
     mix(b, shape(filter(tone(0.2, (t) => lerp(320, 560, (t / 0.2) ** 1.5), "square"), "lowpass", 1600), ahr(0.01, 0.12, 0.07)), 0.14, 0.4);
     return b;
   },
-  // The shift whistle, at Start and when the shift ends: a steam whistle, three pipes in a chord.
+  // The shift whistle, at Start and when the shift ends: an old factory steam whistle (Mike: "more
+  // like a steam whistle to give an old factory vibe"). Mostly steam: breathy noise ringing in a
+  // pipe, a low chord, the pitch climbing as the pressure builds and sagging as it runs out.
   whistle: () => {
-    const sec = 1.7, b = buf(sec);
-    const env = ahr(0.09, 1.05, 0.5);
-    for (const f of [392, 494, 587]) {
-      const scoop = (t) => f * (1 - 0.06 * Math.exp(-t / 0.05));
-      const pipe = filter(tone(sec, scoop, "saw"), "lowpass", f * 3);
-      mix(b, shape(pipe, env), 0, 0.3);
-      mix(b, shape(filter(noise(sec), "bandpass", f, 12), env), 0, 0.5);
+    const sec = 2.3, b = buf(sec);
+    const env = (t) => (t < 0.25 ? (t / 0.25) ** 1.5 : t < 1.6 ? 1 : Math.max(0, 1 - (t - 1.6) / 0.7) ** 1.5);
+    const bend = (t) => (t < 0.3 ? 0.86 + 0.14 * (t / 0.3) ** 0.6 : t > 1.6 ? 1 - 0.05 * ((t - 1.6) / 0.7) : 1);
+    const wobble = (t) => 1 + 0.004 * Math.sin(2 * Math.PI * 5.3 * t) + 0.003 * Math.sin(2 * Math.PI * 1.7 * t);
+    // Each band is set to the same loudness before mixing: a narrow band of noise is far quieter
+    // than broad hiss, and the hiss drowned the pipes until this.
+    const rms = (x) => { let a = 0; for (const v of x) a += v * v; const r = Math.sqrt(a / x.length) || 1; return x.map((v) => v / r); };
+    for (const [f0, amp] of [[262, 1], [330, 0.8], [392, 0.7]]) {
+      const pitch = (t) => f0 * bend(t) * wobble(t);
+      mix(b, shape(rms(filter(filter(noise(sec), "bandpass", pitch, 25), "bandpass", pitch, 25)), env), 0, amp);
+      mix(b, shape(rms(filter(noise(sec), "bandpass", (t) => pitch(t) * 2, 20)), env), 0, 0.3 * amp);
+      mix(b, shape(rms(tone(sec, pitch)), env), 0, 0.25 * amp);
     }
+    // the hiss of steam around the pipe
+    mix(b, shape(rms(filter(noise(sec), "highpass", 2500)), (t) => env(t) * (t < 0.2 ? 1.6 : 0.5)), 0, 0.18);
     return b;
   },
 };

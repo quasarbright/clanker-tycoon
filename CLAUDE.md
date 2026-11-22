@@ -111,6 +111,9 @@ ideas live in `docs/ideas.md` and don't get built until Mike asks.
 - **Sound** (Mike, 2026-11-22: "let's add sound!"; decision 97): every sound is made from code by
   `tools/sounds.mjs` into `sounds/*.mp3`; `src/sound.js` says which sim event makes which sound. A
   delivery is a satisfying ding, "not ordered" is a less nice sound, Fast robots roll on wheels.
+  Most sounds have one component, one gesture (Mike: "Most of these sounds should pretty much just
+  have one component"), and no two actions share a texture (the tape once sounded like the paint
+  spray). The speaker button sits next to Pause (decision 98).
   After changing a sound, rebuild the soundboard (`node tools/soundboard.mjs`) and republish
   `logs/soundboard/` (index.html, replay.json, sounds/) to https://claude.ai/artifact/HCwACg6yNcWPWWdFb8rtGH.
 - PC only (Mike, 2026-11-17: "This is going to be a PC only game"). Design for wide windows and

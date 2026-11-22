@@ -33,3 +33,12 @@ test("the speaker button turns sound off, and it stays off after a reload", asyn
   await page.locator("#soundBtn").click();
   expect(await page.evaluate(() => ct.soundOn)).toBe(true);
 });
+
+test("the sound button sits right next to the pause button (Mike)", async ({ page }) => {
+  await page.goto("/");
+  await page.click('[data-level="5"]');
+  const [p, s] = await Promise.all(["#pauseBtn", "#soundBtn"].map((id) => page.locator(id).boundingBox()));
+  expect(Math.abs(p.y - s.y)).toBeLessThan(1);
+  expect(s.x - (p.x + p.width)).toBeGreaterThanOrEqual(4);
+  expect(s.x - (p.x + p.width)).toBeLessThanOrEqual(16);
+});
