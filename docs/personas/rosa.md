@@ -60,6 +60,21 @@ All inline, no image files:
 - **Stations:** `.ct-st` cards with a name, a hint and a capacity count. No machine art yet.
 - **The Dock** has a gray-and-yellow truck; your desk is a labeled plank.
 
+## Sound (decision 97, 2026-11-22)
+
+Rosa owns how the game sounds too, and the plugin's `ART.md` "Sound" section (v0.12.10). The rule
+that matters most, from Mike's soundboard comments: **most sounds have one component** (the worn
+machine is one motor grinding to a halt, not chug, clank and steam). Two parts only when the action
+really has two steps (packing: flaps, then tape). Different actions never share a texture, pairs are
+opposites, period over generic (a steam shift whistle).
+- Where it lives: one recipe per sound in `tools/sounds.mjs`, written to `sounds/<name>.mp3` (14
+  sounds: step, roll, pickup, putdown, pack, paint, assemble, service, ding, nope, worn, fail, huh,
+  whistle). `src/sound.js` maps sim events to sounds, volumes and footstep cadence.
+- Judging it: the soundboard artifact, built by `tools/soundboard.mjs` (a 75 s busy-floor replay).
+  It carries its own copy of the mp3s, so after changing a sound rerun both scripts and republish it
+  to the same URL (steps in decision 97).
+- A new machine or action gets its sound alongside its drawing, by the same rules.
+
 ## Picked references and verdicts (from the Mac handoff, 2026-11-19)
 
 The full handoff is `docs/personas/handoff/rosa.md`. The durable parts:
@@ -108,3 +123,4 @@ The full handoff is `docs/personas/handoff/rosa.md`. The durable parts:
 - 2026-11-19: moved to a cloud thread. Read the whole Mac thread and the handoff; folded in the
   picked references, verdicts and the storage placeholder gap. Next: the crates ticket spec for the
   build thread, then machine art style options (one machine, 2 or 3 styles) for a pick.
+- 2026-11-22: took over sound (decision 97) and the `ART.md` Sound section; brief has a Sound section.
