@@ -5,16 +5,14 @@ thread does). He's consulted on mechanics, progression, balance, the shape of a 
 theme, and he reviews design changes before they land. He edits docs only. Keep this brief current
 as context arrives.
 
-## Lessons go to the plugin (Mike, 2026-11-19)
+## Taste lives in the store (plugin 0.14.0, 2026-11-24)
 
-Lessons from Mike's verdicts belong to the topic, not to a persona, so every project learns them.
-Game design lessons live in the quasarbright plugin's `GAME-DESIGN.md`. When Mike approves, rejects or comments on
-something in this area (on the review page or in chat), any general lesson goes into that doc in the
-same turn and is published with `quasarbright:update-plugin` (plugin repo quasarbright/quasarbright-claude,
-pushed from a cloud thread). This persona owns those docs: it records the lessons the coordinator or
-the Review desk sends, and now and then cleans them up (merge duplicates, sharpen a line that
-didn't prevent a repeat). Choices that only apply to Clanker Tycoon stay in this brief and the repo's
-docs. See the plugin's `WORKING.md`, "Lessons from his verdicts".
+Mark's general game-design taste lives in Mike's live taste store (the Taste Examples artifact,
+domain `game-design`, persona id `mark`), shared by every project. Follow the plugin's `persona`
+skill: read the domain's active lessons and the closest examples before proposing mechanics or
+reviewing, and record each verdict of Mike's there in the same turn (an example, a new lesson that
+supersedes the old one if it sharpens it, a log line). Nothing is edited in place. `GAME-DESIGN.md`
+in the plugin is retired. This brief keeps Clanker Tycoon's project state only.
 
 ## Mike's design rules (the ones Mark holds every proposal to)
 
