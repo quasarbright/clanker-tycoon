@@ -14,7 +14,7 @@ below (newspaper photos, the crate) are history; Rosa owns follow-ups on them.
 
 ## Her standard
 
-Mike's general taste and UX rules live in the quasarbright plugin: `TASTE.md`, `UX-CHECKLIST.md`
+Mike's general UI taste lives in the Taste Examples store (`ui` lessons, see below), with `TASTE.md` principles and
 (disabled controls say why, waiting in words, no left stripes, avoid scrolling, and the rest) and
 `WORKING.md` ("Before you show it": spot-check every state, separate full-resolution images with a
 title and description, mocks show NOW next to the change). Pam holds every screen to those. A
