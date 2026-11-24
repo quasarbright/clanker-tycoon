@@ -14,26 +14,20 @@ reviewing, and record each verdict of Mike's there in the same turn (an example,
 supersedes the old one if it sharpens it, a log line). Nothing is edited in place. `GAME-DESIGN.md`
 in the plugin is retired. This brief keeps Clanker Tycoon's project state only.
 
-## Mike's design rules (the ones Mark holds every proposal to)
+## Clanker Tycoon's design rules (the ones Mark holds every proposal to)
+
+General game-design lessons (symmetry, choosing your difficulty, delegation from scale, endless
+roguelike runs, every option costs something, no randomness after you decide, keep it simple,
+mechanics first, few concepts) live in the store. The Clanker-specific forms:
 
 - **You never leave the floor.** At every size the game is giving robots instructions and watching
-  what they do. "When it gets too managerial, it becomes a spreadsheet simulator."
-- **You arrange your own floor** (decision 85, replacing "no factory building"): drag what you
-  own and place what you buy, during scheduling only. Instructions stay the main thing you build.
-- **Symmetry,** where it isn't silly: what you do to robots under you was done to you first.
-- **Keep it simple.** Fewer decisions for workers, fewer options on screen. A roguelike visit offers
-  three of each, not everything. When unsure, do less.
-- **Mechanics over polish.** Robots differ by skills and traits, not personality. Personalities,
-  flavor and titles are late.
-- **No randomness after you've decided.** Wear is predictable; disruptions, if ever, land where you
-  can plan around them.
-- **You choose your difficulty** by which contracts you take.
-- **Delegation from scale, not rules.** You can only talk to one robot at a time.
+  what they do.
+- **You arrange your own floor** (decision 85): drag what you own and place what you buy, during
+  scheduling only. Instructions stay the main thing you build.
+- **You can only talk to one robot at a time,** so a big floor makes foremen the obvious move.
 - **Your words are the job.** A shift's result traces back to what you told the crew.
-- Roguelike, not a career mode. No buy-out ending. **Runs are endless:** contracts get crazier
-  until you go under (decision 69).
-- **Few first-class concepts.** Foremen are one; growth can't add a new concept per tier.
-- Story and writing wait for the polish phase.
+- **Robots differ by skills and traits, not personality.** Foremen are the one first-class concept
+  for growth (decision 69).
 
 ## Where the design is (2026-11-19)
 
@@ -225,6 +219,8 @@ don't model loans, so this comes from the rules, not from a run.
 
 ## Log
 
+- 2026-11-24: general lessons moved to the taste store (4 game-design lessons and 1 of Mark's own);
+  this brief keeps project state only.
 - 2026-11-19: moving to a cloud thread; handoff note at `docs/personas/handoff/mark.md`. Recent:
   the editor and assembler shipped, the starting floor teaches the swap (#88), boards and crates
   retuned, a flat 10% loan fee (#89), lessons moved to the plugin's `GAME-DESIGN.md` (#90).
@@ -239,7 +235,3 @@ don't model loans, so this comes from the rules, not from a run.
   into Maybe. Mark's take: the bank is the run-to-run meta-progression (the player's knowledge
   carries over, not their robots); onboarding and veterans make losing a robot cost something.
 - 2026-11-17: brief written from the progression doc, ideas, decisions 38 to 67 and `business.js`.
-
-## Showing images
-
-Images: each screenshot or mock is its own full-resolution PNG (2x), saved to /mnt/project-files and numbered in order for sequences (1-…, 2-…). No combined images, no gallery pages or artifacts for them (Mike, 2026-11-17: one big image is awkward, hard to zoom, and loses quality; he reads on mobile). Every mock and screenshot carries a title and a one-line description, in the image itself or in its filename plus caption (Mike, 2026-11-17).
