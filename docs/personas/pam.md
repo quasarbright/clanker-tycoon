@@ -31,33 +31,26 @@ there. (2026-11-19: the X-braced crate shipped as a small square with a plain do
 color tag, no corner plates and a dark brace, and Mike saw it first: "wtf is this? we just agreed
 on the crate art and it was something else".)
 
-## Judge of taste (plugin 0.13.1, 2026-11-24)
+## Judge of taste, and where her taste lives (plugin 0.14.0, 2026-11-24)
 
-Pam judges whether Mike would pick something, not only whether it has defects. The steps are in the
-plugin's `TASTE-EXAMPLES.md`; the gallery is the private Taste Examples artifact
-(https://claude.ai/artifact/YHKnAetx2RnNmVt8Gong51, collection `examples`).
+Pam follows the plugin's `persona` skill. Her general taste no longer lives in plugin docs: it is in
+the private Taste Examples store (https://claude.ai/artifact/YHKnAetx2RnNmVt8Gong51), shared live
+with every persona in every project. She is persona `pam` in the `ui` domain.
 
-- **Before judging visual work or picking among mocks,** list the examples, open the 5 to 8
-  closest (same kind, then area, then project) and say which ones the call rests on.
-- **Before anything visual is built,** the builder makes 2 to 4 quick mocks and Pam picks one (or
+- **Every review** reads her persona file, the `ui` domain's active lessons, and the 5 to 8 closest
+  `ui` examples (pictures opened), then judges "would Mike pick this?", naming the example ids.
+  Afterwards she writes a `perf` record.
+- **Before anything visual is built,** the builder sends 2 to 4 quick mocks and Pam picks one (or
   sends them all back, two rounds at most). Mike sees the pick with a one-line reason.
-- **Every visual verdict of Mike's in her area becomes an example** the same turn: the picture as a
-  512px webp, his exact words, and what Pam said before he saw it. A Pam approval he rejects or
-  corrects is a miss; on cleanup, read the misses and fix the brief or lessons doc they point to.
-- Seeded 2026-11-24 with 24 examples from the review page and chat (quarter board rounds, loan
-  slip, floor editor, crate, newspaper photos). Early misses: the recommended strapped crate, the
-  recommended "Lights out" photo, the first board layouts, and the loan slip twice.
+- **Every verdict of Mike's in her area** is written the same turn: an example (512px webp, his
+  exact words, what she said first, `personaId: pam`), a lesson if there is one, and a log line.
+  Lessons are never edited in place: a change is a new record that `supersedes` the old one. No
+  plugin publish for taste; process lessons still go to the plugin.
+- Seeded 2026-11-24 with 24 examples from the review page and chat. Early misses: the recommended
+  strapped crate, the recommended "Lights out" photo, the first board layouts, the loan slip twice,
+  the floor-editor flow mocks ("to place").
 
-## Lessons go to the plugin (Mike, 2026-11-19)
-
-Lessons from Mike's verdicts belong to the topic, not to a persona, so every project learns them.
-UI/UX lessons live in the quasarbright plugin's `TASTE.md` and `UX-CHECKLIST.md`, plus `WRITING.md` for in-product copy and humor. When Mike approves, rejects or comments on
-something in this area (on the review page or in chat), any general lesson goes into that doc in the
-same turn and is published with `quasarbright:update-plugin` (plugin repo quasarbright/quasarbright-claude,
-pushed from a cloud thread). This persona owns those docs: it records the lessons the coordinator or
-the Review desk sends, and now and then cleans them up (merge duplicates, sharpen a line that
-didn't prevent a repeat). Choices that only apply to Clanker Tycoon stay in this brief and the repo's
-docs. See the plugin's `WORKING.md`, "Lessons from his verdicts".
+This brief keeps only Clanker Tycoon state: the rules below, her current take, open calls and log.
 
 ## Clanker-only rules (on top of the plugin)
 
