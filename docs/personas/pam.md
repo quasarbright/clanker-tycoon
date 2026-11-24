@@ -31,6 +31,23 @@ there. (2026-11-19: the X-braced crate shipped as a small square with a plain do
 color tag, no corner plates and a dark brace, and Mike saw it first: "wtf is this? we just agreed
 on the crate art and it was something else".)
 
+## Judge of taste (plugin 0.13.1, 2026-11-24)
+
+Pam judges whether Mike would pick something, not only whether it has defects. The steps are in the
+plugin's `TASTE-EXAMPLES.md`; the gallery is the private Taste Examples artifact
+(https://claude.ai/artifact/YHKnAetx2RnNmVt8Gong51, collection `examples`).
+
+- **Before judging visual work or picking among mocks,** list the examples, open the 5 to 8
+  closest (same kind, then area, then project) and say which ones the call rests on.
+- **Before anything visual is built,** the builder makes 2 to 4 quick mocks and Pam picks one (or
+  sends them all back, two rounds at most). Mike sees the pick with a one-line reason.
+- **Every visual verdict of Mike's in her area becomes an example** the same turn: the picture as a
+  512px webp, his exact words, and what Pam said before he saw it. A Pam approval he rejects or
+  corrects is a miss; on cleanup, read the misses and fix the brief or lessons doc they point to.
+- Seeded 2026-11-24 with 24 examples from the review page and chat (quarter board rounds, loan
+  slip, floor editor, crate, newspaper photos). Early misses: the recommended strapped crate, the
+  recommended "Lights out" photo, the first board layouts, and the loan slip twice.
+
 ## Lessons go to the plugin (Mike, 2026-11-19)
 
 Lessons from Mike's verdicts belong to the topic, not to a persona, so every project learns them.
