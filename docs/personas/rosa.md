@@ -9,10 +9,7 @@ current as context arrives.
 
 ## Her standard
 
-Mike's general taste lives in the quasarbright plugin (`TASTE.md`, `DESIGN.md`, `WORKING.md`).
-For art the lines that matter most: real things look like the real thing (a faked stand-in breaks
-trust), theme by hinting and know when to stop, and one visual language so everything feels like
-one finished object. Mocks are shown the same way as Pam's: each its own full-resolution PNG (2x),
+Mike's general taste lives in the plugin's `TASTE.md` and the taste store (below). Mocks are shown the same way as Pam's: each its own full-resolution PNG (2x),
 numbered for a sequence, with a title and a one-line description, saved to /mnt/project-files.
 Pending picks go to Pam for the review page (via the coordinator).
 
@@ -32,9 +29,8 @@ things stand, the current take and open calls.
 - **The look (decision 80):** charming, cute, industrial, almost slapstick. Reference objects: the
   business license and its APPROVED stamp, the newspaper on your floor, the recap's SHIPPED/MISSED
   stamps. Chunky factory things and official paperwork that land with a thunk.
-- **General art rules are in the taste store (domain `art`)** (different things never read alike, readable
-  at real size, one drawing per thing, charm on real objects, build the picked mock literally).
-  Here, only how they apply to this game:
+- **General art and sound rules are in the taste store (domain `art`).** Here, only how they
+  apply to this game:
   - Skills are tools a robot carries (box for Packing, brush for Painting, screwdriver for Assembly,
     wrench for Repair); traits change the body (turning wheels for Fast; Smart and its glasses are out for now, decision 93).
   - Boxes are plain cardboard; crates are the dark X-braced wooden crate (Mike's pick, 2026-11-19;
@@ -62,11 +58,9 @@ All inline, no image files:
 
 ## Sound (decision 97, 2026-11-22)
 
-Rosa owns how the game sounds too (the store's `art` domain covers sound). The rule
-that matters most, from Mike's soundboard comments: **most sounds have one component** (the worn
-machine is one motor grinding to a halt, not chug, clank and steam). Two parts only when the action
-really has two steps (packing: flaps, then tape). Different actions never share a texture, pairs are
-opposites, period over generic (a steam shift whistle).
+Rosa owns how the game sounds too. The general sound rules (one gesture per sound, no shared
+textures, pairs as opposites, period over generic) are in the store's `art` domain. Here: the worn
+machine is one motor grinding to a halt, packing is flaps then tape, the shift whistle is steam.
 - Where it lives: one recipe per sound in `tools/sounds.mjs`, written to `sounds/<name>.mp3` (14
   sounds: step, roll, pickup, putdown, pack, paint, assemble, service, ding, nope, worn, fail, huh,
   whistle). `src/sound.js` maps sim events to sounds, volumes and footstep cadence.
@@ -78,10 +72,9 @@ opposites, period over generic (a steam shift whistle).
 ## Picked references and verdicts (from the Mac handoff, 2026-11-19)
 
 The full handoff is `docs/personas/handoff/rosa.md`. The durable parts:
-- **Build from the picked image, not prose or library copies.** Crate: `docs/mocks/crate/1-crate-x-braced-picked.png`
-  and its source `docs/mocks/crate/crates.mjs` (option 1), built in ca782ba. When Pam's text spec
-  and the PNG disagree, the PNG wins. (`/mnt/project-files/mocks-crate/1-crate-braced.png` is not
-  the reference.)
+- **The picked crate files** (the general rule is the store's `art-20261124-picked-image-exact-file`): `docs/mocks/crate/1-crate-x-braced-picked.png`
+  and its source `docs/mocks/crate/crates.mjs` (option 1), built in ca782ba. Pam's old text spec
+  is a summary only. `/mnt/project-files/mocks-crate/1-crate-braced.png` is not the reference.
 - Owner photos: classic shocked, Mid-bite, Blushing, Awkward approved ("4 is pretty funny");
   Glazed over rejected. A "sad box drawing" for the newspaper was rejected as a generic joke.
 - **Assembler art is on hold** (Mike, 2026-11-18: "let's not do assembler art yet"). Don't mock it
@@ -126,3 +119,5 @@ The full handoff is `docs/personas/handoff/rosa.md`. The durable parts:
 - 2026-11-22: took over sound (decision 97) and the `ART.md` Sound section; brief has a Sound section.
 - 2026-11-24: plugin 0.14.0. Lessons moved to the taste store; Rosa mapped onto the existing `art`
   domain and has a `personas/rosa` record there. ART.md is retired; brief points to the store.
+- 2026-11-24: moved general lessons out of this brief into the store (one new lesson superseding
+  the picked-mock rule; the rest were already there). The brief keeps project state only.
