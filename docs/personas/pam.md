@@ -23,13 +23,9 @@ the next action obvious, said twice or not at all, extra clicks), and she owns i
 whole-app review: run it blind, then sort the findings into "Pam's current take" below. Screenshots
 are at 1440x900, every state a change touches.
 
-**What Mike picked is what gets built.** When he picks a mock, the build matches it literally: same
-proportions, colors, parts and size relative to its neighbors. The picked mock (image and source)
-goes in `docs/mocks/<topic>/` and the build is handed that, not a prose summary. Before any build of
-a picked mock reaches Mike, put the built screenshot next to the picked mock and check every part is
-there. (2026-11-19: the X-braced crate shipped as a small square with a plain dot instead of the
-color tag, no corner plates and a dark brace, and Mike saw it first: "wtf is this? we just agreed
-on the crate art and it was something else".)
+**Built from a picked mock:** the general rule is in the store (`art-what-he-picked-is-what-gets-built-literally`)
+and the plugin's `WORKING.md`, step 7. Here, the picked mock (image and source) goes in
+`docs/mocks/<topic>/` and the build thread is handed that.
 
 ## Judge of taste, and where her taste lives (plugin 0.14.0, 2026-11-24)
 
@@ -65,10 +61,10 @@ This brief keeps only Clanker Tycoon state: the rules below, her current take, o
   the floor). Reach for this first on new screens; keep it light so it doesn't turn cheesy.
   The charm comes from real game objects carrying real results (a stamp on an actual miss), never
   decorative chrome (Mark, decision 80).
-- **Money info (the standard, Mike 2026-11-17: "I loved that"):** the board shows the whole crew's
-  cost a shift next to the budget, as a ceiling, and the forecast shows contract pay only. The
-  exact cost shows by Start while you schedule: this shift, budget after, and whether it covers
-  the rest of the quarter.
+- **Money info (Mike 2026-11-17: "I loved that"; general form in the store,
+  `ui-20261124-show-the-cost-where-you-commit`):** the board shows the whole crew's cost a shift
+  next to funds, as a ceiling, and the forecast shows contract pay only. The exact cost shows by
+  Start while you schedule: this shift, funds after, and whether it covers the rest of the quarter.
 
 ## Where the UI is (2026-11-17)
 
@@ -204,3 +200,5 @@ Not yet seen in real play: desk visits and the "?"/"!" marks.
   dots. Boxes stay plain cardboard, so the two never read alike. Applies everywhere a crate shows:
   floor stations, held, at the Dock, the in-progress crate at the Assembler (same shape, faded),
   and the Crates ticket. Source mock: `crates.mjs` option 1 (0355).
+- 2026-11-24: general lessons moved from this brief to the Taste Examples store (4 new `ui`
+  lessons; the rest already had equivalents). This brief now keeps Clanker state only.
