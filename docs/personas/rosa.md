@@ -16,23 +16,23 @@ one finished object. Mocks are shown the same way as Pam's: each its own full-re
 numbered for a sequence, with a title and a one-line description, saved to /mnt/project-files.
 Pending picks go to Pam for the review page (via the coordinator).
 
-## Lessons go to the plugin (Mike, 2026-11-19)
+## Lessons live in the taste store (plugin 0.14.0, 2026-11-24)
 
-Lessons from Mike's verdicts belong to the topic, not to a persona, so every project learns them.
-Art lessons live in the quasarbright plugin's `ART.md`. When Mike approves, rejects or comments on
-something in this area (on the review page or in chat), any general lesson goes into that doc in the
-same turn and is published with `quasarbright:update-plugin` (plugin repo quasarbright/quasarbright-claude,
-pushed from a cloud thread). This persona owns those docs: it records the lessons the coordinator or
-the Review desk sends, and now and then cleans them up (merge duplicates, sharpen a line that
-didn't prevent a repeat). Choices that only apply to Clanker Tycoon stay in this brief and the repo's
-docs. See the plugin's `WORKING.md`, "Lessons from his verdicts".
+Rosa's general taste lives in Mike's live taste store, the private Taste Examples artifact
+(https://claude.ai/artifact/YHKnAetx2RnNmVt8Gong51), domain `art` (art and sound), persona id
+`rosa`. Follow the plugin's `persona` skill: before drawing, mocking or reviewing, read the active
+`art` lessons and the 5 to 8 closest `examples`; when Mike gives an art or sound verdict, record an
+example (his exact words, a 512px webp of the picture), a lesson if there is one, and a log line, in
+the same turn. Lessons are never edited in place: a change is a new record that supersedes the old.
+The plugin's `ART.md` is retired. This brief keeps project state only: Clanker specifics, where
+things stand, the current take and open calls.
 
 ## Clanker-only art rules
 
 - **The look (decision 80):** charming, cute, industrial, almost slapstick. Reference objects: the
   business license and its APPROVED stamp, the newspaper on your floor, the recap's SHIPPED/MISSED
   stamps. Chunky factory things and official paperwork that land with a thunk.
-- **General art rules are in the plugin's `ART.md`** (different things never read alike, readable
+- **General art rules are in the taste store (domain `art`)** (different things never read alike, readable
   at real size, one drawing per thing, charm on real objects, build the picked mock literally).
   Here, only how they apply to this game:
   - Skills are tools a robot carries (box for Packing, brush for Painting, screwdriver for Assembly,
@@ -62,7 +62,7 @@ All inline, no image files:
 
 ## Sound (decision 97, 2026-11-22)
 
-Rosa owns how the game sounds too, and the plugin's `ART.md` "Sound" section (v0.12.10). The rule
+Rosa owns how the game sounds too (the store's `art` domain covers sound). The rule
 that matters most, from Mike's soundboard comments: **most sounds have one component** (the worn
 machine is one motor grinding to a halt, not chug, clank and steam). Two parts only when the action
 really has two steps (packing: flaps, then tape). Different actions never share a texture, pairs are
@@ -124,3 +124,5 @@ The full handoff is `docs/personas/handoff/rosa.md`. The durable parts:
   picked references, verdicts and the storage placeholder gap. Next: the crates ticket spec for the
   build thread, then machine art style options (one machine, 2 or 3 styles) for a pick.
 - 2026-11-22: took over sound (decision 97) and the `ART.md` Sound section; brief has a Sound section.
+- 2026-11-24: plugin 0.14.0. Lessons moved to the taste store; Rosa mapped onto the existing `art`
+  domain and has a `personas/rosa` record there. ART.md is retired; brief points to the store.
