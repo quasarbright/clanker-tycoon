@@ -1526,3 +1526,15 @@ Schedule panel).
 Only the sounds he named changed; the rule is for new sounds and the next pass. Recorded in the
 plugin's ART.md (Sound) and in CLAUDE.md.
 **Replaces:** those six recipes from decision 97, and its "top right" for the button.
+
+### 99. One solo quarter is enough (2026-11-25)
+
+**Question:** Mike's direction for decision 95 said "the first quarter or the first couple quarters"
+are solo. Should a run force a second solo quarter by keeping Recruit closed in quarter 2?
+**Options:** (a) no, one solo quarter; Recruit opens in quarter 2 as in decision 94, and a player
+who wants to stay solo simply doesn't recruit; (b) yes, Recruit opens in quarter 3 and boards 1 and 2
+are both sized for one person.
+**Picked:** (a), Mark's recommendation. Mike picked "No, one solo quarter is enough" on the review
+page (2026-11-25, comment "this"). Decision 94's schedule and board 2's numbers stay as they are.
+**Closes:** decision 95's open question about a second solo quarter.
+

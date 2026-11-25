@@ -219,6 +219,7 @@ don't model loans, so this comes from the rules, not from a run.
 
 ## Log
 
+- 2026-11-25: Mike picked one solo quarter, not two (decision 99).
 - 2026-11-24: general lessons moved to the taste store (4 game-design lessons and 1 of Mark's own);
   this brief keeps project state only.
 - 2026-11-19: moving to a cloud thread; handoff note at `docs/personas/handoff/mark.md`. Recent:
