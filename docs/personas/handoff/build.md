@@ -27,7 +27,7 @@ Everything is pushed to `master`. Nothing is half-built. The last stretch shippe
   Mac: the plugin comes through the desktop app, not that CLI marketplace. Sessions pick it up when
   the app refreshes.
 - Machine art: machines in storage show a plain wooden crate with their name (`.ct-stored-crate`), a
-  placeholder until Rosa's machine art exists. Don't confuse it with the shipping crate.
+  placeholder until Squidward's machine art exists. Don't confuse it with the shipping crate.
 
 ## Gotchas learned the hard way
 
@@ -63,7 +63,7 @@ Everything is pushed to `master`. Nothing is half-built. The last stretch shippe
   at 1440×900, `deviceScaleFactor: 2`, `ct.license(...)`, click level 7, drive state through the
   `window.ct` hook (`ct.buy`, `ct.begin`, `ct.step`, `ct.relayout`, `ct.photoSeed`, `ct.paintChoices`),
   then wrap the capture in a page with a title and one-line description.
-- Persona sessions (Mark, Pam, Rosa) commit docs locally on the Mac and can't push; the build thread
+- Persona sessions (Mark, Pam, Squidward) commit docs locally on the Mac and can't push; the build thread
   pushed for them with `git pull --rebase -q && git push` from the repo folder.
 
 ## Added by the cloud build thread (2026-11-19)
